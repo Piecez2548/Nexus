@@ -395,4 +395,56 @@ describe("syncEngine", () => {
 
     expect(await db.syncTombstones.toArray()).toHaveLength(0);
   });
+
+  it("treats an encrypted-shaped row as an opaque blob on both push and pull, never inspecting its content", async () => {
+    // Pins the invariant the encryption-at-rest feature depends on: the sync
+    // engine only ever reads syncId/updatedAt at the top level and forwards
+    // everything else (here, an AES-GCM envelope) completely opaquely — see
+    // encryptedRepository.ts and the "Key design" section of the encryption
+    // plan. A future change to this file must not start assuming more about
+    // row shape than that.
+    const envelope = { v: 1, iv: "AAAAAAAAAAAAAAAA", ct: "c3VwZXItc2VjcmV0LWNpcGhlcnRleHQ=" };
+
+    await db.transactions.add({
+      syncId: "enc-1",
+      updatedAt: "2026-07-21T00:00:00.000Z",
+      encryptedContent: envelope,
+    } as never);
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({
+        data: [
+          {
+            id: "enc-2",
+            table_name: "transactions",
+            data: {
+              syncId: "enc-2",
+              updatedAt: "2026-07-21T00:00:00.000Z",
+              encryptedContent: envelope,
+            },
+            updated_at: "2026-07-21T00:00:00.000Z",
+            deleted_at: null,
+          },
+        ],
+        error: null,
+      }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const [payload] = mockUpsert.mock.calls[0];
+    const push = payload.find(
+      (p: { table_name: string; id: string }) => p.table_name === "transactions" && p.id === "enc-1"
+    );
+    expect(push.data.encryptedContent).toEqual(envelope);
+    expect(push.data.title).toBeUndefined();
+
+    const stored = await db.transactions.toArray();
+    const pulled = stored.find((t) => t.syncId === "enc-2") as unknown as
+      | { encryptedContent?: unknown; title?: string }
+      | undefined;
+    expect(pulled?.encryptedContent).toEqual(envelope);
+    expect(pulled?.title).toBeUndefined();
+  });
 });
