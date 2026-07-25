@@ -223,6 +223,31 @@ describe("AppLockGate", () => {
       expect(screen.queryByText("พบข้อมูลที่เข้ารหัสจากอุปกรณ์อื่น")).not.toBeInTheDocument();
     });
 
+    it("shows the NORMAL PIN unlock screen, not the catch-up screen, on the device that originally enabled encryption itself", async () => {
+      // This is the regression this describe block exists to guard against:
+      // encryptionEnabled=true locally (this device has its own valid,
+      // already-wrapped DEK) plus encrypted data plus no session DEK yet
+      // (true on every fresh load, before ANY unlock — PIN-based or not).
+      // Without checking the local flag, this device would be wrongly
+      // forced through account-password recovery on every single reload,
+      // even though its own PIN is all it should ever need.
+      await seedEncryptedTransaction();
+      useAuthStore.setState({ user: { id: "u1", email: "me@nexus.app" } as never });
+      await useAppLockStore.getState().setupPin("1234", false);
+      const dek = await generateDek();
+      await useAppLockStore.getState().attachEncryption("1234", dek);
+      useAppLockStore.getState().lock(); // clears the session DEK, as a fresh load would be
+
+      render(
+        <AppLockGate>
+          <p>Protected content</p>
+        </AppLockGate>
+      );
+
+      expect(await screen.findByRole("heading", { name: "ปลดล็อก Nexus" })).toBeInTheDocument();
+      expect(screen.queryByText("พบข้อมูลที่เข้ารหัสจากอุปกรณ์อื่น")).not.toBeInTheDocument();
+    });
+
     it("does not show the catch-up screen once the session DEK is already resident", async () => {
       await seedEncryptedTransaction();
       useAuthStore.setState({ user: { id: "u1", email: "me@nexus.app" } as never });

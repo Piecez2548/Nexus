@@ -26,15 +26,18 @@ export default function AppLockGate({ children }: Props) {
 
   const [catchUpNeeded, setCatchUpNeeded] = useState(false);
 
-  // A device's own `encryptionEnabled` flag only reflects whether *this*
-  // device has ever run the enable/recovery flow — it says nothing about
-  // whether the account's data is encrypted. A different, already-enabled
-  // device can sync down already-encrypted rows before this one has ever
-  // unlocked, at which point this device has no way to read them at all.
-  // Re-checked after every sync (lastSyncedAt) since that's when new
-  // encrypted rows would actually arrive locally.
+  // Cross-device catch-up only applies to a device that has NEVER run the
+  // enable/recovery flow itself (`encryptionEnabled` locally false) — one
+  // that has (true) already has its own valid wrappedDek and must always go
+  // through its normal PIN unlock first, never this account-password
+  // recovery screen. Getting this wrong would force EVERY device through
+  // account-password recovery on every fresh load (since hasSessionDek is
+  // trivially false before any unlock, PIN-based or not), even the device
+  // that originally enabled encryption and has a perfectly good local PIN.
+  // Re-checked after every sync (lastSyncedAt) since that's when a *new*
+  // device would actually receive encrypted rows for the first time.
   useEffect(() => {
-    if (!user || hasSessionDek) {
+    if (!user || hasSessionDek || encryptionEnabled) {
       setCatchUpNeeded(false);
       return;
     }
@@ -47,7 +50,7 @@ export default function AppLockGate({ children }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [user, hasSessionDek, lastSyncedAt]);
+  }, [user, hasSessionDek, encryptionEnabled, lastSyncedAt]);
 
   // Once encryption is enabled, "remember" can still skip PIN re-entry
   // within a tab that's already unlocked — but it can never skip it on a
