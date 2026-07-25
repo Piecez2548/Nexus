@@ -1,8 +1,11 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { useAppLockStore } from "@/store/appLockStore";
+import { useAuthStore } from "@/features/sync/store/authStore";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
+import { hasUndecryptableLocalData } from "@/features/encryption/catchUp";
 import AppLockScreen from "@/features/lock/components/AppLockScreen";
+import EncryptionRecoveryFlow from "@/features/encryption/components/EncryptionRecoveryFlow";
 
 const ACTIVITY_EVENTS = ["mousemove", "keydown", "click", "touchstart"] as const;
 const CHECK_INTERVAL_MS = 30_000;
@@ -18,6 +21,33 @@ export default function AppLockGate({ children }: Props) {
   const recordActivity = useAppLockStore((s) => s.recordActivity);
   const checkAutoLock = useAppLockStore((s) => s.checkAutoLock);
   const hasSessionDek = useEncryptionSessionStore((s) => s.dek !== null);
+  const user = useAuthStore((s) => s.user);
+  const lastSyncedAt = useAuthStore((s) => s.lastSyncedAt);
+
+  const [catchUpNeeded, setCatchUpNeeded] = useState(false);
+
+  // A device's own `encryptionEnabled` flag only reflects whether *this*
+  // device has ever run the enable/recovery flow — it says nothing about
+  // whether the account's data is encrypted. A different, already-enabled
+  // device can sync down already-encrypted rows before this one has ever
+  // unlocked, at which point this device has no way to read them at all.
+  // Re-checked after every sync (lastSyncedAt) since that's when new
+  // encrypted rows would actually arrive locally.
+  useEffect(() => {
+    if (!user || hasSessionDek) {
+      setCatchUpNeeded(false);
+      return;
+    }
+
+    let cancelled = false;
+    hasUndecryptableLocalData().then((result) => {
+      if (!cancelled) setCatchUpNeeded(result);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, hasSessionDek, lastSyncedAt]);
 
   // Once encryption is enabled, "remember" can still skip PIN re-entry
   // within a tab that's already unlocked — but it can never skip it on a
@@ -27,7 +57,7 @@ export default function AppLockGate({ children }: Props) {
   const needsUnlockScreen = (isEnabled && isLocked) || (encryptionEnabled && !hasSessionDek);
 
   useEffect(() => {
-    if (!isEnabled || needsUnlockScreen) return;
+    if (!isEnabled || needsUnlockScreen || catchUpNeeded) return;
 
     ACTIVITY_EVENTS.forEach((event) => window.addEventListener(event, recordActivity));
     const interval = setInterval(checkAutoLock, CHECK_INTERVAL_MS);
@@ -36,7 +66,22 @@ export default function AppLockGate({ children }: Props) {
       ACTIVITY_EVENTS.forEach((event) => window.removeEventListener(event, recordActivity));
       clearInterval(interval);
     };
-  }, [isEnabled, needsUnlockScreen, recordActivity, checkAutoLock]);
+  }, [isEnabled, needsUnlockScreen, catchUpNeeded, recordActivity, checkAutoLock]);
+
+  // Checked before the normal PIN/unlock screen — a fresh device can hit
+  // this with no PIN set up at all yet, which the normal needsUnlockScreen
+  // check would otherwise let straight through to the (unreadable) data.
+  if (catchUpNeeded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
+        <EncryptionRecoveryFlow
+          onDone={() => setCatchUpNeeded(false)}
+          title="พบข้อมูลที่เข้ารหัสจากอุปกรณ์อื่น"
+          description="อุปกรณ์นี้ยังไม่สามารถอ่านข้อมูลที่เข้ารหัสไว้ได้ ยืนยันตัวตนด้วยบัญชี Sync เพื่อปลดล็อกข้อมูลบนอุปกรณ์นี้"
+        />
+      </div>
+    );
+  }
 
   if (needsUnlockScreen) {
     return (

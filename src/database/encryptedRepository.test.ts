@@ -104,6 +104,37 @@ describe("encryptedRepository", () => {
     await expect(repo.getAll()).rejects.toThrow(EncryptionLockedError);
   });
 
+  it("throws EncryptionLockedError for a row synced down from another device, even though this device's own encryptionEnabled flag is still false", async () => {
+    // This device has never run the enable/recovery flow locally, but the
+    // account's data is already encrypted elsewhere — syncEngine.ts pulls
+    // remote rows down opaquely, so an encrypted-shaped row can land here
+    // regardless of the local flag. Reading it must fail loudly (and
+    // distinctly), never silently return a row missing all its fields.
+    await db.transactions.add({
+      syncId: "tx-from-other-device",
+      updatedAt: "2026-07-25T00:00:00.000Z",
+      encryptedContent: { v: 1, iv: "AAAAAAAAAAAAAAAA", ct: "c3VwZXItc2VjcmV0" },
+    } as never);
+
+    expect(useAppLockStore.getState().encryptionEnabled).toBe(false);
+    await expect(repo.getAll()).rejects.toThrow(EncryptionLockedError);
+  });
+
+  it("decrypts a row synced from another device once a session DEK becomes resident, even before the local encryptionEnabled flag flips true", async () => {
+    // Mirrors the moment right after completeRecovery unwraps the DEK but
+    // before its own `set({ encryptionEnabled: true })` call — decryption
+    // must key off the row's own shape, not only the local flag.
+    const dek = await generateDek();
+    useAppLockStore.setState({ encryptionEnabled: true });
+    useEncryptionSessionStore.getState().setDek(dek);
+    const id = await repo.add(sample({ syncId: "tx-from-other-device" }));
+
+    useAppLockStore.setState({ encryptionEnabled: false }); // simulates catch-up ordering
+    const rows = await repo.getAll();
+
+    expect(rows).toEqual([sample({ id, syncId: "tx-from-other-device" })]);
+  });
+
   describe("decryptOptional", () => {
     it("passes a plaintext row through unchanged when encryption is disabled", async () => {
       const id = await repo.add(sample());
@@ -131,6 +162,16 @@ describe("encryptedRepository", () => {
     it("passes undefined through when no row was found", async () => {
       const result = await repo.decryptOptional(undefined);
       expect(result).toBeUndefined();
+    });
+
+    it("throws EncryptionLockedError for an encrypted-shaped row even when the local encryptionEnabled flag is false", async () => {
+      const row = {
+        syncId: "tx-from-other-device",
+        updatedAt: "2026-07-25T00:00:00.000Z",
+        encryptedContent: { v: 1, iv: "AAAAAAAAAAAAAAAA", ct: "c3VwZXItc2VjcmV0" },
+      } as unknown as Transaction;
+
+      await expect(repo.decryptOptional(row)).rejects.toThrow(EncryptionLockedError);
     });
   });
 });

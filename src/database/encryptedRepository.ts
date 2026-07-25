@@ -43,6 +43,19 @@ function requireSessionDek(): CryptoKey {
   return dek;
 }
 
+// `encryptionEnabled` is a local, per-device flag — it only reflects
+// whether *this* device has ever run the enable/recovery flow. It is NOT
+// enough to decide whether a table needs decrypting: a table can contain
+// rows encrypted by a *different* device (synced down as an opaque blob,
+// same as any other row — see syncEngine.ts) before this device has ever
+// enabled encryption itself. Trusting the local flag alone would silently
+// hand back ciphertext-shaped rows (no plaintext fields at all) as if they
+// were normal data. Checking the rows' own shape as well is what lets
+// requireSessionDek's EncryptionLockedError surface correctly instead.
+function anyRowEncrypted(rows: unknown[]): boolean {
+  return rows.some((row) => (row as EncryptedRow).encryptedContent !== undefined);
+}
+
 // Exported so the "Enable Encryption" migration can produce the exact same
 // row shape a normal repository write would, instead of duplicating this
 // logic — the migration writes rows directly (it has to touch every
@@ -99,7 +112,7 @@ export function createEncryptedRepository<T extends SyncMeta & { id?: number }>(
 
   async function getAll(): Promise<T[]> {
     const rows = await table.toArray();
-    if (!isEncryptionEnabled()) return rows;
+    if (!isEncryptionEnabled() && !anyRowEncrypted(rows)) return rows;
 
     const dek = requireSessionDek();
     return Promise.all(rows.map((row) => decryptRow<T>(dek, row as unknown as EncryptedRow)));
@@ -127,7 +140,7 @@ export function createEncryptedRepository<T extends SyncMeta & { id?: number }>(
   // through getAll — decrypts a single row the same way getAll would.
   async function decryptOptional(row: T | undefined): Promise<T | undefined> {
     if (row === undefined) return undefined;
-    if (!isEncryptionEnabled()) return row;
+    if (!isEncryptionEnabled() && !anyRowEncrypted([row])) return row;
 
     const dek = requireSessionDek();
     return decryptRow<T>(dek, row as unknown as EncryptedRow);
