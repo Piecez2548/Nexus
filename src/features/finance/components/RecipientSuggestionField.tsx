@@ -1,0 +1,80 @@
+import { useEffect, useRef, useState } from "react";
+import type {
+  UseFormRegister,
+  UseFormWatch,
+  UseFormSetValue,
+} from "react-hook-form";
+
+import type { TransactionFormData } from "@/features/finance/schemas/transactionSchema";
+import {
+  categorySuggestionService,
+  type CategorySuggestion,
+} from "@/features/finance/services/categorySuggestionService";
+import FormField from "@/components/ui/FormField";
+
+const inputClassName =
+  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-violet-500";
+
+interface Props {
+  register: UseFormRegister<TransactionFormData>;
+  watch: UseFormWatch<TransactionFormData>;
+  setValue: UseFormSetValue<TransactionFormData>;
+}
+
+// Rule Engine, wired into the form: as the user types a recipient (or a
+// title matching a known merchant), suggest — and pre-fill — a category
+// learned from past transactions, instead of asking every time.
+export default function RecipientSuggestionField({ register, watch, setValue }: Props) {
+  const recipient = watch("recipient");
+  const title = watch("title");
+  const [suggestion, setSuggestion] = useState<CategorySuggestion | null>(null);
+  const lastLookupKey = useRef<string | null>(null);
+
+  useEffect(() => {
+    const lookupKey = `${recipient ?? ""}|${title ?? ""}`;
+    if (lookupKey === "|") return;
+    if (lastLookupKey.current === lookupKey) return;
+
+    let cancelled = false;
+
+    const handle = setTimeout(async () => {
+      const result = await categorySuggestionService.suggest(recipient || undefined, title ?? "");
+      if (cancelled) return;
+
+      lastLookupKey.current = lookupKey;
+      setSuggestion(result);
+
+      if (result) {
+        setValue("category", result.category, { shouldValidate: true });
+        if (result.account) {
+          setValue("account", result.account, { shouldValidate: true });
+        }
+      }
+    }, 400);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+  }, [recipient, title, setValue]);
+
+  return (
+    <FormField label="ผู้รับ / เบอร์โทร / PromptPay" htmlFor="transaction-recipient">
+      <input
+        id="transaction-recipient"
+        {...register("recipient")}
+        placeholder="เช่น 0812345678 (ไม่บังคับ)"
+        className={inputClassName}
+      />
+
+      {suggestion && (
+        <p className="mt-1 text-xs text-violet-400">
+          🤖 แนะนำหมวดหมู่ "{suggestion.category}" จาก
+          {suggestion.source === "recipient"
+            ? ` ประวัติ (${suggestion.label}, ${suggestion.confidence}%)`
+            : ` ฐานข้อมูลร้านค้า (${suggestion.label})`}
+        </p>
+      )}
+    </FormField>
+  );
+}

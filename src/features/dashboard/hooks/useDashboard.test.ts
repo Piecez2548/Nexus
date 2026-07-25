@@ -1,0 +1,98 @@
+import { describe, expect, it, beforeEach } from "vitest";
+import { renderHook } from "@testing-library/react";
+
+import { useDashboard } from "./useDashboard";
+import { useTransactionStore } from "@/features/finance/store/transactionStore";
+import type { Transaction } from "@/features/finance/types";
+
+const NOW = new Date(2026, 6, 21); // 2026-07-21
+
+function seed(transactions: Transaction[]) {
+  useTransactionStore.setState({ transactions });
+}
+
+describe("useDashboard", () => {
+  beforeEach(() => {
+    useTransactionStore.setState({ transactions: [], loading: false });
+  });
+
+  it("returns zeroed values with no transactions", () => {
+    const { result } = renderHook(() => useDashboard(NOW));
+
+    expect(result.current).toEqual({
+      income: 0,
+      expense: 0,
+      balance: 0,
+      saving: 0,
+      changes: { income: 0, expense: 0, saving: 0, balance: 0 },
+      monthly: {
+        current: { income: 0, expense: 0, saving: 0 },
+        previous: { income: 0, expense: 0, saving: 0 },
+      },
+    });
+  });
+
+  it("sums income and expense separately", () => {
+    seed([
+      { title: "Salary", amount: 30000, type: "income", category: "Salary", account: "Bank", date: "2026-07-01", status: "completed" },
+      { title: "Rent", amount: 8000, type: "expense", category: "Housing", account: "Bank", date: "2026-07-02", status: "completed" },
+      { title: "Food", amount: 1500, type: "expense", category: "Food", account: "Cash", date: "2026-07-03", status: "completed" },
+    ]);
+
+    const { result } = renderHook(() => useDashboard(NOW));
+
+    expect(result.current.income).toBe(30000);
+    expect(result.current.expense).toBe(9500);
+    expect(result.current.balance).toBe(20500);
+    expect(result.current.saving).toBe(20500);
+  });
+
+  it("recomputes when the transaction list changes", () => {
+    const { result, rerender } = renderHook(() => useDashboard(NOW));
+
+    expect(result.current.balance).toBe(0);
+
+    seed([
+      { title: "Salary", amount: 1000, type: "income", category: "Salary", account: "Bank", date: "2026-07-01", status: "completed" },
+    ]);
+    rerender();
+
+    expect(result.current.balance).toBe(1000);
+  });
+
+  it("computes month-over-month % change for income, expense, and saving", () => {
+    seed([
+      // Previous month (June 2026)
+      { title: "Salary", amount: 20000, type: "income", category: "Salary", account: "Bank", date: "2026-06-01", status: "completed" },
+      { title: "Rent", amount: 8000, type: "expense", category: "Housing", account: "Bank", date: "2026-06-02", status: "completed" },
+      // Current month (July 2026)
+      { title: "Salary", amount: 30000, type: "income", category: "Salary", account: "Bank", date: "2026-07-01", status: "completed" },
+      { title: "Rent", amount: 4000, type: "expense", category: "Housing", account: "Bank", date: "2026-07-02", status: "completed" },
+    ]);
+
+    const { result } = renderHook(() => useDashboard(NOW));
+
+    // Income: 20000 -> 30000 = +50%
+    expect(result.current.changes.income).toBe(50);
+    // Expense: 8000 -> 4000 = -50%
+    expect(result.current.changes.expense).toBe(-50);
+    // Saving: 12000 -> 26000 = +116.67%
+    expect(result.current.changes.saving).toBeCloseTo(116.67, 1);
+
+    expect(result.current.monthly).toEqual({
+      current: { income: 30000, expense: 4000, saving: 26000 },
+      previous: { income: 20000, expense: 8000, saving: 12000 },
+    });
+  });
+
+  it("returns null change when there is no prior-month data to compare", () => {
+    seed([
+      { title: "Salary", amount: 30000, type: "income", category: "Salary", account: "Bank", date: "2026-07-01", status: "completed" },
+    ]);
+
+    const { result } = renderHook(() => useDashboard(NOW));
+
+    expect(result.current.changes.income).toBeNull();
+    expect(result.current.changes.expense).toBe(0);
+  });
+});

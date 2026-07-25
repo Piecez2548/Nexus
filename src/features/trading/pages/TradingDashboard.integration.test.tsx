@@ -1,0 +1,107 @@
+import { describe, expect, it, beforeEach } from "vitest";
+import { render, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+
+import TradingDashboard from "./TradingDashboard";
+import { db } from "@/database/db";
+import { useTradeStore } from "@/features/trading/store/tradeStore";
+
+describe("TradingDashboard (real data flow)", () => {
+  beforeEach(async () => {
+    await db.trades.clear();
+    useTradeStore.setState({ trades: [], loading: false, error: null });
+  });
+
+  it("shows zeroed stats with no trades", async () => {
+    render(<TradingDashboard />, { wrapper: MemoryRouter });
+
+    expect(await screen.findByText("Trading Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("0.0%")).toBeInTheDocument(); // win rate
+    expect(screen.getAllByText("0").length).toBeGreaterThan(0); // open positions, etc.
+  });
+
+  it("reflects closed-trade stats and lists recent trades", async () => {
+    await db.trades.bulkAdd([
+      {
+        symbol: "AAPL",
+        market: "stocks",
+        direction: "long",
+        status: "closed",
+        entryPrice: 100,
+        exitPrice: 120,
+        quantity: 10,
+        strategy: "Breakout",
+        entryDate: "2026-07-20",
+        exitDate: "2026-07-20",
+      },
+      {
+        symbol: "MSFT",
+        market: "stocks",
+        direction: "long",
+        status: "open",
+        entryPrice: 300,
+        quantity: 5,
+        entryDate: "2026-07-21",
+      },
+    ]);
+
+    render(<TradingDashboard />, { wrapper: MemoryRouter });
+
+    const table = await screen.findByRole("table");
+    expect(within(table).getByText("AAPL")).toBeInTheDocument();
+    expect(within(table).getByText("MSFT")).toBeInTheDocument();
+    expect(screen.getByText("100.0%")).toBeInTheDocument(); // win rate: 1/1 closed trades won
+
+    // "Breakout" appears both in the recent-trades row and the best-strategy card.
+    expect(screen.getAllByText("Breakout").length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("shows empty states for the analytics section with no closed trades", async () => {
+    render(<TradingDashboard />, { wrapper: MemoryRouter });
+
+    expect(await screen.findByText("Equity Curve")).toBeInTheDocument();
+    expect(screen.getByText("Drawdown")).toBeInTheDocument();
+    expect(screen.getByText("No Session data yet")).toBeInTheDocument();
+    expect(screen.getByText("Performance Calendar")).toBeInTheDocument();
+  });
+
+  it("populates the analytics section from closed trades with session and stop-loss data", async () => {
+    await db.trades.bulkAdd([
+      {
+        symbol: "AAPL",
+        market: "stocks",
+        direction: "long",
+        status: "closed",
+        entryPrice: 100,
+        exitPrice: 120,
+        stopLoss: 90,
+        quantity: 10,
+        session: "london",
+        entryDate: "2026-07-20",
+        exitDate: "2026-07-20",
+      },
+      {
+        symbol: "MSFT",
+        market: "stocks",
+        direction: "long",
+        status: "closed",
+        entryPrice: 300,
+        exitPrice: 280,
+        stopLoss: 310,
+        quantity: 5,
+        session: "asian",
+        entryDate: "2026-07-21",
+        exitDate: "2026-07-21",
+      },
+    ]);
+
+    render(<TradingDashboard />, { wrapper: MemoryRouter });
+
+    // Recharts' ResponsiveContainer needs real layout dimensions to render
+    // its SVG (axis ticks, etc.), which jsdom doesn't provide — so the
+    // charts themselves aren't asserted on here, only the plain-HTML
+    // session panel that reads from the same hook.
+    expect(await screen.findByText("London")).toBeInTheDocument();
+    expect(screen.getByText("Asian")).toBeInTheDocument();
+  });
+});

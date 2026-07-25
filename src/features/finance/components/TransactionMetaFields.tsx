@@ -1,0 +1,39 @@
+import { Controller, type Control, type UseFormRegister } from "react-hook-form";
+import type { TransactionFormData } from "@/features/finance/schemas/transactionSchema";
+
+import FormField from "@/components/ui/FormField";
+import FileField from "@/components/ui/FileField";
+
+const inputClassName =
+  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-violet-500";
+
+interface Props {
+  control: Control<TransactionFormData>;
+  register: UseFormRegister<TransactionFormData>;
+}
+
+export default function TransactionMetaFields({ control, register }: Props) {
+  return (
+    <>
+      <FormField label="ไฟล์แนบ" htmlFor="transaction-attachment">
+        <Controller
+          name="attachment"
+          control={control}
+          render={({ field }) => (
+            <FileField id="transaction-attachment" value={field.value} onChange={field.onChange} />
+          )}
+        />
+      </FormField>
+
+      <FormField label="หมายเหตุ" htmlFor="transaction-note">
+        <textarea
+          id="transaction-note"
+          {...register("note")}
+          rows={3}
+          placeholder="รายละเอียดเพิ่มเติม"
+          className={inputClassName}
+        />
+      </FormField>
+    </>
+  );
+}
