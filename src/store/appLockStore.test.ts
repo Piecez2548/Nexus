@@ -240,5 +240,37 @@ describe("appLockStore", () => {
       expect(useAppLockStore.getState().isEnabled()).toBe(true);
       expect(useAppLockStore.getState().encryptionEnabled).toBe(true);
     });
+
+    it("completeRecovery sets a brand-new PIN and re-wraps the given DEK, with no old PIN required", async () => {
+      const dek = await generateDek();
+      const envelope = await encryptField(dek, { title: "Coffee", amount: 120 });
+
+      await useAppLockStore.getState().completeRecovery("9999", dek);
+
+      const state = useAppLockStore.getState();
+      expect(state.encryptionEnabled).toBe(true);
+      expect(state.isEnabled()).toBe(true);
+      expect(state.isLocked()).toBe(false);
+      expect(useEncryptionSessionStore.getState().dek).toBe(dek);
+
+      useAppLockStore.getState().lock();
+      const success = await useAppLockStore.getState().unlock("9999", false);
+      expect(success).toBe(true);
+
+      const restoredDek = useEncryptionSessionStore.getState().dek;
+      const decrypted = await decryptField<{ title: string; amount: number }>(restoredDek!, envelope);
+      expect(decrypted).toEqual({ title: "Coffee", amount: 120 });
+    });
+
+    it("completeRecovery replaces a stale existing PIN entirely (the old one stops working)", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      const dek = await generateDek();
+
+      await useAppLockStore.getState().completeRecovery("4321", dek);
+
+      useAppLockStore.getState().lock();
+      expect(await useAppLockStore.getState().unlock("1234", false)).toBe(false);
+      expect(await useAppLockStore.getState().unlock("4321", false)).toBe(true);
+    });
   });
 });

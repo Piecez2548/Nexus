@@ -79,6 +79,13 @@ interface AppLockState {
   // generated and escrowed — wraps the given DEK with a PIN-derived KEK
   // and starts requiring it on unlock. Never generates a new DEK itself.
   attachEncryption: (pin: string, dek: CryptoKey) => Promise<void>;
+
+  // Called only by the "Forgot PIN" recovery flow, after recoverDekFromEscrow
+  // has already unwrapped the DEK via the account password. There is no old
+  // PIN to verify here (that's the entire point of recovery) — this replaces
+  // the PIN outright and re-wraps the *same* recovered DEK, so every row
+  // already encrypted with it stays readable.
+  completeRecovery: (newPin: string, dek: CryptoKey) => Promise<void>;
 }
 
 export const useAppLockStore = create<AppLockState>()(
@@ -249,6 +256,28 @@ export const useAppLockStore = create<AppLockState>()(
           wrappedDek,
           kekSalt: bytesToBase64(kekSalt),
           kekIterations: PBKDF2_ITERATIONS,
+        });
+      },
+
+      async completeRecovery(newPin, dek) {
+        const salt = generateSalt();
+        const pinHash = await hashPin(newPin, salt);
+
+        const kekSalt = generateRandomBytes(KEK_SALT_BYTES);
+        const kek = await deriveKek(newPin, kekSalt, PBKDF2_ITERATIONS);
+        const wrappedDek = await wrapDek(dek, kek);
+
+        writeSessionUnlocked(true);
+        useEncryptionSessionStore.getState().setDek(dek);
+        set({
+          pinHash,
+          salt,
+          encryptionEnabled: true,
+          wrappedDek,
+          kekSalt: bytesToBase64(kekSalt),
+          kekIterations: PBKDF2_ITERATIONS,
+          sessionUnlocked: true,
+          rememberUntil: null,
         });
       },
     }),
