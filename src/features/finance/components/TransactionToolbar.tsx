@@ -197,31 +197,29 @@ export default function TransactionToolbar({
 
         {/* Date range */}
 
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3">
-            <span className="text-sm text-zinc-600 dark:text-zinc-500">{t("transactions.dateFrom")}</span>
-            <input
-              type="date"
-              aria-label={t("transactions.dateFrom")}
-              value={filterDateFrom}
-              onChange={(e) => setFilterDateFrom(e.target.value)}
-              max={filterDateTo || undefined}
-              className="bg-transparent outline-none [color-scheme:light] dark:[color-scheme:dark]"
-            />
-          </label>
+        <label className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3">
+          <span className="text-sm text-zinc-600 dark:text-zinc-500">{t("transactions.dateFrom")}</span>
+          <input
+            type="date"
+            aria-label={t("transactions.dateFrom")}
+            value={filterDateFrom}
+            onChange={(e) => setFilterDateFrom(e.target.value)}
+            max={filterDateTo || undefined}
+            className="w-0 min-w-[8.5rem] bg-transparent outline-none [color-scheme:light] dark:[color-scheme:dark]"
+          />
+        </label>
 
-          <label className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3">
-            <span className="text-sm text-zinc-600 dark:text-zinc-500">{t("transactions.dateTo")}</span>
-            <input
-              type="date"
-              aria-label={t("transactions.dateTo")}
-              value={filterDateTo}
-              onChange={(e) => setFilterDateTo(e.target.value)}
-              min={filterDateFrom || undefined}
-              className="bg-transparent outline-none [color-scheme:light] dark:[color-scheme:dark]"
-            />
-          </label>
-        </div>
+        <label className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3">
+          <span className="text-sm text-zinc-600 dark:text-zinc-500">{t("transactions.dateTo")}</span>
+          <input
+            type="date"
+            aria-label={t("transactions.dateTo")}
+            value={filterDateTo}
+            onChange={(e) => setFilterDateTo(e.target.value)}
+            min={filterDateFrom || undefined}
+            className="w-0 min-w-[8.5rem] bg-transparent outline-none [color-scheme:light] dark:[color-scheme:dark]"
+          />
+        </label>
 
         {/* Reset */}
 

@@ -142,6 +142,40 @@ async function pullTable(userId: string, table: SyncTableName) {
   await setSyncState(lastPulledKey, newest);
 }
 
+// Belt-and-suspenders against concurrent sync passes (e.g. a manual "Sync
+// Now" overlapping the periodic background sync on a slow connection):
+// `syncId` has no unique constraint at the Dexie schema level, so a race
+// between two overlapping pulls checking "does this row already exist
+// locally?" can each miss the other's not-yet-committed insert and both add
+// their own copy. Runs every sync pass — cheap (local reads/deletes only,
+// no network) — and folds any duplicates down to the oldest (first
+// inserted) copy of each syncId.
+async function dedupeSyncedTables() {
+  for (const table of SYNCED_TABLES) {
+    const dexieTable = localTable(table);
+    const rows: { id?: number; syncId?: string }[] = await dexieTable.toArray();
+
+    const bySyncId = new Map<string, { id?: number }[]>();
+    for (const row of rows) {
+      if (!row.syncId) continue;
+      const group = bySyncId.get(row.syncId) ?? [];
+      group.push(row);
+      bySyncId.set(row.syncId, group);
+    }
+
+    for (const group of bySyncId.values()) {
+      if (group.length <= 1) continue;
+
+      const duplicateIds = [...group]
+        .sort((a, b) => (a.id ?? 0) - (b.id ?? 0))
+        .slice(1)
+        .map((row) => row.id!);
+
+      await dexieTable.bulkDelete(duplicateIds);
+    }
+  }
+}
+
 async function refreshAllStores() {
   await Promise.all([
     useTransactionStore.getState().loadTransactions(),
@@ -184,6 +218,8 @@ export async function runFullSync(userId: string): Promise<void> {
   for (const table of SYNCED_TABLES) {
     await attempt(() => pullTable(userId, table));
   }
+
+  await attempt(() => dedupeSyncedTables());
 
   await refreshAllStores();
 

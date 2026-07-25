@@ -334,6 +334,45 @@ describe("syncEngine", () => {
     expect(await db.syncTombstones.toArray()).toHaveLength(0);
   });
 
+  it("folds duplicate local rows sharing the same syncId down to the oldest one", async () => {
+    // Simulates the aftermath of two overlapping sync passes (e.g. a manual
+    // "Sync Now" racing the periodic background sync) each inserting their
+    // own copy of the same remote record, since syncId has no unique
+    // constraint at the Dexie schema level.
+    const firstId = await db.transactions.add({
+      title: "Coffee",
+      amount: 100,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+      syncId: "dup-1",
+      updatedAt: "2026-07-21T00:00:00.000Z",
+    });
+
+    await db.transactions.add({
+      title: "Coffee",
+      amount: 100,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+      syncId: "dup-1",
+      updatedAt: "2026-07-21T00:00:00.000Z",
+    });
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({ data: [], error: null }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const stored = await db.transactions.toArray();
+    expect(stored).toHaveLength(1);
+    expect(stored[0].id).toBe(firstId);
+  });
+
   it("pushes and clears local tombstones after a successful sync", async () => {
     await db.syncTombstones.add({
       table: "transactions",

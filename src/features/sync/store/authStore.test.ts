@@ -122,6 +122,28 @@ describe("authStore", () => {
     expect(mockRunFullSync).not.toHaveBeenCalled();
   });
 
+  it("ignores a second sync call while one is already in flight", async () => {
+    useAuthStore.setState({ user: { id: "u1" } as never });
+
+    let resolveFirstSync: () => void = () => {};
+    mockRunFullSync.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveFirstSync = resolve;
+      })
+    );
+
+    // Simulates the periodic background sync or a "back online" event firing
+    // while a manual "Sync Now" click is still in flight — both call sync()
+    // directly, with no UI-level disabled state to stop the second one.
+    const firstCall = useAuthStore.getState().sync();
+    await useAuthStore.getState().sync();
+
+    expect(mockRunFullSync).toHaveBeenCalledTimes(1);
+
+    resolveFirstSync();
+    await firstCall;
+  });
+
   it("records an error message when sync fails", async () => {
     useAuthStore.setState({ user: { id: "u1" } as never });
     mockRunFullSync.mockRejectedValue(new Error("Network unreachable"));

@@ -99,8 +99,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   async sync() {
-    const { user } = get();
-    if (!user) return;
+    const { user, syncing } = get();
+    if (!user || syncing) return;
 
     set({ syncing: true, error: null });
 

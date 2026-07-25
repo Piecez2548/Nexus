@@ -28,3 +28,34 @@ create policy "Users can manage their own records"
   for all
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+-- The client always sends its own `updated_at` in the upsert payload (its
+-- own device clock), which bypasses the `default now()` above entirely —
+-- and every device's pull cursor is "give me everything with updated_at >=
+-- the last row I saw." If one device's clock runs even slightly behind
+-- another's, anything it writes (including a deletion) can land with a
+-- timestamp "before" the other device's already-advanced cursor, making it
+-- permanently invisible to that device no matter how many times it
+-- resyncs. This trigger makes the column authoritative from Postgres's own
+-- clock — identical for every request regardless of which device sent it
+-- — so the pull cursor is immune to client clock skew.
+create or replace function public.set_synced_records_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists set_synced_records_updated_at on public.synced_records;
+
+create trigger set_synced_records_updated_at
+  before insert or update on public.synced_records
+  for each row
+  execute function public.set_synced_records_updated_at();
+
+-- One-time nudge for rows already stuck behind a skewed device's cursor
+-- from before this trigger existed — a no-op update still fires the
+-- trigger above, refreshing every row's updated_at to the server's clock
+-- so pending changes (including deletions) can finally be seen.
+update public.synced_records set updated_at = updated_at;
