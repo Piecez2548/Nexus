@@ -10,6 +10,7 @@ import {
   LineChart,
   BookOpen,
   ListChecks,
+  Flame,
   type LucideIcon,
 } from "lucide-react";
 
@@ -37,4 +38,5 @@ export const tradingMenus: MenuItem[] = [
 
 export const personalMenus: MenuItem[] = [
   { icon: ListChecks, labelKey: "nav.todo", path: "/todo" },
+  { icon: Flame, labelKey: "nav.habits", path: "/habits" },
 ];

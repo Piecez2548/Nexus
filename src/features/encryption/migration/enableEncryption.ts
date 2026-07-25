@@ -31,6 +31,7 @@ const TABLES_TO_MIGRATE: SyncTableName[] = [
   "transactionTemplates",
   "trades",
   "todos",
+  "habits",
 ];
 
 // Must stay in sync with each repository's plaintextKeys option (see the
@@ -191,7 +192,7 @@ export interface EnableEncryptionParams {
 /**
  * Turns on encryption-at-rest: escrows a new DEK to the user's Supabase
  * account, wraps it locally with a PIN-derived key, then re-encrypts every
- * existing row across all 9 synced tables. Safe to call again after any
+ * existing row across all 10 synced tables. Safe to call again after any
  * interruption — see migrateTable's idempotency predicate above.
  */
 export async function enableEncryption({ pin, accountPassword, onProgress }: EnableEncryptionParams): Promise<void> {

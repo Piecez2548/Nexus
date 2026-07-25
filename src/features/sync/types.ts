@@ -9,7 +9,8 @@ export type SyncTableName =
   | "goals"
   | "transactionTemplates"
   | "trades"
-  | "todos";
+  | "todos"
+  | "habits";
 
 export interface Tombstone {
   id?: number;

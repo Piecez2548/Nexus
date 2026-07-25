@@ -1,7 +1,6 @@
 import {
   Briefcase,
   CalendarDays,
-  Flame,
   Sparkles,
 } from "lucide-react";
 
@@ -11,7 +10,6 @@ import { useTranslation } from "@/i18n/useTranslation";
 const MODULES = [
   { icon: Briefcase, titleKey: "dashboard.portfolio", descriptionKey: "dashboard.portfolioDescription" },
   { icon: CalendarDays, titleKey: "dashboard.calendar", descriptionKey: "dashboard.calendarDescription" },
-  { icon: Flame, titleKey: "dashboard.habitTracker", descriptionKey: "dashboard.habitTrackerDescription" },
   { icon: Sparkles, titleKey: "dashboard.aiDailySummary", descriptionKey: "dashboard.aiDailySummaryDescription" },
 ];
 

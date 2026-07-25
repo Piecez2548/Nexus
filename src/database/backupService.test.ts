@@ -19,6 +19,7 @@ describe("backupService", () => {
       db.goals.clear(),
       db.transactionTemplates.clear(),
       db.todos.clear(),
+      db.habits.clear(),
     ]);
     useAppLockStore.setState({ encryptionEnabled: false, wrappedDek: null, kekSalt: null, kekIterations: null });
     useEncryptionSessionStore.getState().clearDek();
@@ -106,6 +107,30 @@ describe("backupService", () => {
     expect(await db.todos.count()).toBe(0);
   });
 
+  it("imports a legacy backup file that predates habits", async () => {
+    const legacyBackup = {
+      version: 1,
+      exportedAt: "2025-06-01T00:00:00.000Z",
+      data: {
+        transactions: [],
+        accounts: [{ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" }],
+        categories: [],
+        trades: [],
+        recipientProfiles: [],
+        merchants: [],
+        budgets: [],
+        goals: [],
+        transactionTemplates: [],
+        todos: [],
+        // habits deliberately absent
+      },
+    };
+
+    await expect(importBackup(JSON.stringify(legacyBackup))).resolves.not.toThrow();
+    expect(await db.accounts.count()).toBe(1);
+    expect(await db.habits.count()).toBe(0);
+  });
+
   it("rejects a malformed backup without touching existing data", async () => {
     await db.accounts.add({ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" });
 
@@ -127,6 +152,7 @@ describe("backupService", () => {
       status: "completed",
     });
     await db.todos.add({ title: "Leftover todo", completed: false, priority: "low" } as never);
+    await db.habits.add({ name: "Leftover habit", frequency: "daily", completedDates: [] } as never);
 
     await resetAllData();
 
@@ -134,9 +160,11 @@ describe("backupService", () => {
     const accounts = await db.accounts.toArray();
     const categories = await db.categories.toArray();
     const todos = await db.todos.toArray();
+    const habits = await db.habits.toArray();
 
     expect(transactions).toHaveLength(0);
     expect(todos).toHaveLength(0);
+    expect(habits).toHaveLength(0);
     expect(accounts.length).toBeGreaterThan(0);
     expect(categories.length).toBeGreaterThan(0);
   });

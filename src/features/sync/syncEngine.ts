@@ -12,6 +12,7 @@ import { useRecipientProfileStore } from "@/features/finance/store/recipientProf
 import { useTransactionTemplateStore } from "@/features/finance/store/transactionTemplateStore";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
+import { useHabitStore } from "@/features/habits/store/habitStore";
 
 const SYNCED_TABLES: SyncTableName[] = [
   "transactions",
@@ -23,6 +24,7 @@ const SYNCED_TABLES: SyncTableName[] = [
   "transactionTemplates",
   "trades",
   "todos",
+  "habits",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -187,6 +189,7 @@ async function refreshAllStores() {
     useTransactionTemplateStore.getState().loadTemplates(),
     useTradeStore.getState().loadTrades(),
     useTodoStore.getState().loadTodos(),
+    useHabitStore.getState().loadHabits(),
   ]);
 }
 

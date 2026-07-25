@@ -12,5 +12,6 @@ export const RecipientProfiles = lazy(() => import("@/features/finance/pages/Rec
 export const TradingDashboard = lazy(() => import("@/features/trading/pages/TradingDashboard"));
 export const TradingJournal = lazy(() => import("@/features/trading/pages/TradingJournal"));
 export const Todo = lazy(() => import("@/features/todo/pages/Todo"));
+export const Habits = lazy(() => import("@/features/habits/pages/Habits"));
 export const Settings = lazy(() => import("@/pages/Settings"));
 export const NotFound = lazy(() => import("@/pages/NotFound"));

@@ -46,6 +46,7 @@ const SYNCED_TABLES = [
   "transactionTemplates",
   "trades",
   "todos",
+  "habits",
 ] as const;
 
 async function clearAllSyncedTables() {

@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 
@@ -8,6 +8,8 @@ import { db } from "@/database/db";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
+import { useHabitStore } from "@/features/habits/store/habitStore";
+import { toLocalDateString } from "@/features/habits/utils/streak";
 
 describe("Dashboard (real data flow)", () => {
   beforeEach(async () => {
@@ -17,6 +19,8 @@ describe("Dashboard (real data flow)", () => {
     useTradeStore.setState({ trades: [], loading: false, error: null });
     await db.todos.clear();
     useTodoStore.setState({ todos: [], loading: false, error: null });
+    await db.habits.clear();
+    useHabitStore.setState({ habits: [], loading: false, error: null });
   });
 
   it("shows an empty state with no transactions", async () => {
@@ -77,13 +81,12 @@ describe("Dashboard (real data flow)", () => {
 
     render(<Dashboard />, { wrapper: MemoryRouter });
 
-    // Four "coming soon" placeholder modules (Todo and Notifications are
+    // Three "coming soon" placeholder modules (Todo and Habit Tracker are
     // real, working features now, so they're not among these).
     expect(await screen.findByText("Portfolio")).toBeInTheDocument();
     expect(screen.getByText("Calendar")).toBeInTheDocument();
-    expect(screen.getByText("Habit Tracker")).toBeInTheDocument();
     expect(screen.getByText("AI Daily Summary")).toBeInTheDocument();
-    expect(screen.getAllByText("Coming Soon")).toHaveLength(4);
+    expect(screen.getAllByText("Coming Soon")).toHaveLength(3);
 
     // Trading overview reflects the real trade data: the AAPL trade closed
     // today falls within both the "today" and "monthly" P/L windows, so
@@ -111,5 +114,27 @@ describe("Dashboard (real data flow)", () => {
     await screen.findByText("Nothing to do right now");
     const stored = await db.todos.toArray();
     expect(stored.find((t) => t.title === "ส่งรายงาน")?.completed).toBe(true);
+  });
+
+  it("shows habits in the Habit Tracker preview panel and lets you check one in", async () => {
+    await db.habits.add({
+      name: "ออกกำลังกาย",
+      frequency: "daily",
+      completedDates: [],
+      createdAt: "2026-07-20T00:00:00.000Z",
+    } as never);
+
+    render(<Dashboard />, { wrapper: MemoryRouter });
+
+    expect(await screen.findByText("ออกกำลังกาย")).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: /mark ออกกำลังกาย done for today/i }));
+
+    await waitFor(async () => {
+      const stored = await db.habits.toArray();
+      const today = toLocalDateString(new Date());
+      expect(stored[0].completedDates).toContain(today);
+    });
   });
 });
