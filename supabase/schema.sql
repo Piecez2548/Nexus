@@ -59,3 +59,26 @@ create trigger set_synced_records_updated_at
 -- trigger above, refreshing every row's updated_at to the server's clock
 -- so pending changes (including deletions) can finally be seen.
 update public.synced_records set updated_at = updated_at;
+
+-- Encryption-at-rest: escrows a copy of each user's Data Encryption Key
+-- (DEK), wrapped with a key derived from their account password, so a
+-- forgotten PIN can still be recovered by signing back in (see
+-- src/features/encryption/migration/enableEncryption.ts and
+-- src/features/encryption/recovery/recoverDekFromEscrow.ts). RLS scopes
+-- every row strictly to its own owner — Supabase itself never sees the
+-- plaintext DEK, only the wrapped (AES-GCM ciphertext) form.
+create table if not exists public.user_encryption_keys (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  wrapped_dek text not null,
+  dek_iv text not null,
+  escrow_salt text not null,
+  escrow_iterations int not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.user_encryption_keys enable row level security;
+
+drop policy if exists "Users manage their own key" on public.user_encryption_keys;
+
+create policy "Users manage their own key" on public.user_encryption_keys
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
