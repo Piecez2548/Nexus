@@ -36,9 +36,14 @@ function sumByCategory(transactions: Transaction[]): Map<string, number> {
 }
 
 export function useSpendingInsights(): SpendingInsight[] {
-  const { transactions } = useTransactionStore();
+  const { transactions: allTransactions } = useTransactionStore();
 
   return useMemo(() => {
+    // Tolerate a malformed/legacy row with no valid date (e.g. from an old
+    // import or a partial sync) instead of crashing every consumer of this
+    // hook — see monthKey below, which assumes a real date string.
+    const transactions = allTransactions.filter((t) => typeof t.date === "string" && t.date.length >= 7);
+
     const insights: SpendingInsight[] = [];
     const currentMonth = monthKey(new Date().toISOString().slice(0, 10));
     const previousMonth = shiftMonth(currentMonth, -1);
@@ -137,5 +142,5 @@ export function useSpendingInsights(): SpendingInsight[] {
     }
 
     return insights;
-  }, [transactions]);
+  }, [allTransactions]);
 }

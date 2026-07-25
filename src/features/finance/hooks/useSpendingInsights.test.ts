@@ -180,4 +180,16 @@ describe("useSpendingInsights", () => {
     const { result } = renderHook(() => useSpendingInsights());
     expect(result.current.some((i) => i.id.startsWith("unusual-daily-spend"))).toBe(false);
   });
+
+  it("does not crash when a transaction has a missing or malformed date (legacy/corrupt row)", () => {
+    seed([
+      { title: "Coffee", amount: 100, type: "expense", category: "Food", account: "Cash", date: "2026-07-15", status: "completed" },
+      // Simulates a legacy/corrupt row — real Transaction data is never
+      // guaranteed to match the compile-time type once it's round-tripped
+      // through storage (IndexedDB, sync, import).
+      { title: "Bad row", amount: 50, type: "expense", category: "Food", account: "Cash", date: undefined as unknown as string, status: "completed" },
+    ]);
+
+    expect(() => renderHook(() => useSpendingInsights())).not.toThrow();
+  });
 });
