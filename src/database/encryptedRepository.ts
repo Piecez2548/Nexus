@@ -16,7 +16,7 @@ export class EncryptionLockedError extends Error {
   }
 }
 
-interface EncryptedRow {
+export interface EncryptedRow {
   id?: number;
   syncId?: string;
   updatedAt?: string;
@@ -43,7 +43,11 @@ function requireSessionDek(): CryptoKey {
   return dek;
 }
 
-async function encryptRow<T extends SyncMeta & { id?: number }>(
+// Exported so the "Enable Encryption" migration can produce the exact same
+// row shape a normal repository write would, instead of duplicating this
+// logic — the migration writes rows directly (it has to touch every
+// existing row, not just ones passing through add/update).
+export async function encryptRow<T extends SyncMeta & { id?: number }>(
   dek: CryptoKey,
   row: T,
   plaintextKeys: (keyof T)[]
