@@ -6,6 +6,11 @@ import { runFullSync } from "@/features/sync/syncEngine";
 interface AuthState {
   user: User | null;
   initialized: boolean;
+  // True once we definitively know whether a session exists — distinct from
+  // `initialized`, which flips true synchronously as a re-entrancy guard
+  // before the async session check even starts. The auth gate waits on this
+  // one so it doesn't flash the login screen before a valid session loads.
+  sessionChecked: boolean;
   loading: boolean;
   error: string | null;
   needsEmailConfirmation: boolean;
@@ -22,6 +27,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   initialized: false,
+  sessionChecked: false,
   loading: false,
   error: null,
   needsEmailConfirmation: false,
@@ -32,10 +38,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (get().initialized) return;
     set({ initialized: true });
 
-    if (!isSyncConfigured || !supabase) return;
+    if (!isSyncConfigured || !supabase) {
+      set({ sessionChecked: true });
+      return;
+    }
 
     const { data } = await supabase.auth.getSession();
-    set({ user: data.session?.user ?? null });
+    set({ user: data.session?.user ?? null, sessionChecked: true });
 
     supabase.auth.onAuthStateChange((_event, session) => {
       set({ user: session?.user ?? null });

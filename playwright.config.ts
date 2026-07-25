@@ -21,7 +21,14 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run build && npm run preview -- --port 4173",
+    // Force-unset the Supabase vars for this build regardless of what a
+    // developer's local .env.local has configured, so the login gate never
+    // triggers here — every existing spec assumes it's already "inside" the
+    // app. The gate itself (spinner -> login form -> authenticated content)
+    // is covered by AuthGate.test.tsx/LoginScreen.test.tsx with a mocked
+    // Supabase client instead of a real network round-trip in E2E.
+    command:
+      "cross-env VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= npm run build && npm run preview -- --port 4173",
     url: "http://localhost:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

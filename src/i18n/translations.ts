@@ -371,6 +371,12 @@ export const translations = {
       description: "An unexpected error occurred. Your local data is safe — try reloading the app.",
       reload: "Reload App",
     },
+    login: {
+      welcomeBack: "Welcome back",
+      welcomeBackSubtitle: "Sign in to continue to Nexus",
+      createAccount: "Create your account",
+      createAccountSubtitle: "Sign up to start using Nexus",
+    },
   },
   th: {
     common: {
@@ -737,6 +743,12 @@ export const translations = {
       title: "เกิดข้อผิดพลาดบางอย่าง",
       description: "เกิดข้อผิดพลาดที่ไม่คาดคิด ข้อมูลในเครื่องของคุณยังปลอดภัยดี ลองโหลดแอปใหม่อีกครั้ง",
       reload: "โหลดแอปใหม่",
+    },
+    login: {
+      welcomeBack: "ยินดีต้อนรับกลับมา",
+      welcomeBackSubtitle: "เข้าสู่ระบบเพื่อใช้งาน Nexus ต่อ",
+      createAccount: "สร้างบัญชีของคุณ",
+      createAccountSubtitle: "สมัครสมาชิกเพื่อเริ่มใช้งาน Nexus",
     },
   },
 } as const;

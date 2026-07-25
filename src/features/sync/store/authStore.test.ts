@@ -31,6 +31,7 @@ describe("authStore", () => {
     useAuthStore.setState({
       user: null,
       initialized: false,
+      sessionChecked: false,
       loading: false,
       error: null,
       needsEmailConfirmation: false,
@@ -129,5 +130,22 @@ describe("authStore", () => {
 
     expect(useAuthStore.getState().error).toBe("Network unreachable");
     expect(useAuthStore.getState().syncing).toBe(false);
+  });
+
+  it("loads the existing session and marks sessionChecked once initialize resolves", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: { user: { id: "u1" } } } });
+
+    expect(useAuthStore.getState().sessionChecked).toBe(false);
+    await useAuthStore.getState().initialize();
+
+    expect(useAuthStore.getState().user).toMatchObject({ id: "u1" });
+    expect(useAuthStore.getState().sessionChecked).toBe(true);
+  });
+
+  it("does not re-run the session check on a second initialize call", async () => {
+    await useAuthStore.getState().initialize();
+    await useAuthStore.getState().initialize();
+
+    expect(mockGetSession).toHaveBeenCalledTimes(1);
   });
 });
