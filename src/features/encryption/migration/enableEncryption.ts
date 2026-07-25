@@ -106,6 +106,20 @@ async function escrowDek(dek: CryptoKey, accountPassword: string): Promise<void>
     throw new Error("You must be signed in to enable encryption");
   }
   const userId = sessionData.session.user.id;
+  const email = sessionData.session.user.email;
+
+  // Nothing else here checks that `accountPassword` is actually correct —
+  // deriving a KEK from a wrong/mistyped password would still "succeed"
+  // and silently escrow an unrecoverable DEK, with no symptom until a
+  // different device tries to recover it later. Verifying it re-authenticates
+  // against Supabase up front turns that into a loud, immediate failure
+  // instead of a silent one discovered only during a future recovery.
+  if (email) {
+    const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: accountPassword });
+    if (verifyError) {
+      throw new Error("รหัสผ่านบัญชี Sync ไม่ถูกต้อง — กรุณาลองใหม่อีกครั้ง");
+    }
+  }
 
   const escrowSalt = generateRandomBytes(16);
   const escrowKek = await deriveKek(accountPassword, escrowSalt, PBKDF2_ITERATIONS);

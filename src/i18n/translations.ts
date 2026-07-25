@@ -368,6 +368,7 @@ export const translations = {
       encryptionNeedsPin: "Set up an App Lock PIN first (see Security above).",
       encryptionRolloutWarning: "Enabling this will download a plaintext backup, then encrypt all your existing data. Any other device signed in with the same account will be unable to read your synced data until it's updated to a build that supports encryption.",
       encryptionEnableButton: "Enable Encryption",
+      encryptionReescrowButton: "Update recovery key",
     },
     notFound: {
       message: "This page doesn't exist.",
@@ -748,6 +749,7 @@ export const translations = {
       encryptionNeedsPin: "ตั้งค่า PIN สำหรับ App Lock ก่อน (ดูหัวข้อความปลอดภัยด้านบน)",
       encryptionRolloutWarning: "การเปิดใช้งานจะดาวน์โหลดไฟล์สำรองข้อมูลแบบข้อความล้วน จากนั้นเข้ารหัสข้อมูลที่มีอยู่ทั้งหมด อุปกรณ์อื่นที่ล็อกอินด้วยบัญชีเดียวกันจะไม่สามารถอ่านข้อมูลที่ซิงค์มาได้ จนกว่าจะอัปเดตเป็นเวอร์ชันที่รองรับการเข้ารหัส",
       encryptionEnableButton: "เปิดใช้งานการเข้ารหัส",
+      encryptionReescrowButton: "อัปเดตกุญแจสำรอง",
     },
     notFound: {
       message: "ไม่พบหน้านี้",

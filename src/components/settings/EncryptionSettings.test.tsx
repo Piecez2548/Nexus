@@ -68,7 +68,7 @@ describe("EncryptionSettings", () => {
     expect(await screen.findByText("เปิดใช้งานการเข้ารหัสข้อมูล")).toBeInTheDocument();
   });
 
-  it("shows the enabled status once encryption has been turned on", () => {
+  it("shows the enabled status and an update-recovery-key option once encryption has been turned on", () => {
     useAuthStore.setState({ user: { id: "u1", email: "me@nexus.app" } as never });
     useAppLockStore.setState({ pinHash: "hash", salt: "salt", encryptionEnabled: true });
 
@@ -76,5 +76,19 @@ describe("EncryptionSettings", () => {
 
     expect(screen.getByText(/encryption is enabled/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /enable encryption/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /update recovery key/i })).toBeInTheDocument();
+  });
+
+  it("opens the update-recovery-key drawer when that button is clicked", async () => {
+    const { default: userEvent } = await import("@testing-library/user-event");
+    useAuthStore.setState({ user: { id: "u1", email: "me@nexus.app" } as never });
+    useAppLockStore.setState({ pinHash: "hash", salt: "salt", encryptionEnabled: true });
+
+    const user = userEvent.setup();
+    render(<EncryptionSettings />);
+
+    await user.click(screen.getByRole("button", { name: /update recovery key/i }));
+
+    expect(await screen.findByText("อัปเดตกุญแจสำรอง", { selector: "h2" })).toBeInTheDocument();
   });
 });

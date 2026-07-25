@@ -8,6 +8,7 @@ import type { EncryptedRow } from "@/database/encryptedRepository";
 
 const mockDownloadFile = vi.fn();
 const mockGetSession = vi.fn();
+const mockSignInWithPassword = vi.fn();
 const mockUpsert = vi.fn();
 const mockRunFullSync = vi.fn().mockResolvedValue(undefined);
 
@@ -20,6 +21,7 @@ vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
     auth: {
       getSession: (...args: unknown[]) => mockGetSession(...args),
+      signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
     },
     from: () => ({
       upsert: (...args: unknown[]) => mockUpsert(...args),
@@ -176,7 +178,10 @@ describe("enableEncryption (full orchestration)", () => {
     await clearAllSyncedTables();
     resetStores();
     mockDownloadFile.mockReset();
-    mockGetSession.mockReset().mockResolvedValue({ data: { session: { user: { id: "user-123" } } }, error: null });
+    mockGetSession
+      .mockReset()
+      .mockResolvedValue({ data: { session: { user: { id: "user-123", email: "a@b.com" } } }, error: null });
+    mockSignInWithPassword.mockReset().mockResolvedValue({ data: {}, error: null });
     mockUpsert.mockReset().mockResolvedValue({ error: null });
     mockRunFullSync.mockReset().mockResolvedValue(undefined);
 
@@ -217,6 +222,32 @@ describe("enableEncryption (full orchestration)", () => {
     expect(distinctPhaseSequence).toEqual(["backup", "escrow", "encrypting", "verifying", "done"]);
 
     // The migration lock must be released on success.
+    expect(await db.syncState.get("encryption:migrationLock")).toBeUndefined();
+  });
+
+  it("rejects a wrong account password up front, without ever escrowing or touching local data", async () => {
+    mockSignInWithPassword.mockResolvedValue({ data: {}, error: { message: "Invalid login credentials" } });
+
+    await db.transactions.add({
+      title: "Coffee",
+      amount: 120,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-01",
+      status: "completed",
+      syncId: "tx-1",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    } as never);
+
+    await expect(
+      enableEncryption({ pin: "1234", accountPassword: "wrong-password" })
+    ).rejects.toThrow(/รหัสผ่านบัญชี Sync ไม่ถูกต้อง/);
+
+    expect(mockUpsert).not.toHaveBeenCalled();
+    expect(useAppLockStore.getState().encryptionEnabled).toBe(false);
+
+    const [row] = await db.transactions.toArray();
+    expect(row).not.toHaveProperty("encryptedContent");
     expect(await db.syncState.get("encryption:migrationLock")).toBeUndefined();
   });
 
