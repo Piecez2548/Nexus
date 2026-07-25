@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import DashboardHeader from "@/features/dashboard/components/DashboardHeader";
 import SummaryCardsGrid from "@/features/dashboard/components/SummaryCardsGrid";
 import CashFlowSection from "@/features/dashboard/components/CashFlowSection";
-import CategoryBreakdownTable from "@/features/dashboard/components/CategoryBreakdownTable";
 import RecentTransactionsList from "@/features/dashboard/components/RecentTransactionsList";
 import QuickActions from "@/features/dashboard/components/QuickActions";
 import BudgetPreviewPanel from "@/features/dashboard/components/BudgetPreviewPanel";
@@ -77,8 +76,6 @@ export default function Dashboard() {
           />
 
           <CashFlowSection />
-
-          <CategoryBreakdownTable />
 
           <InsightsPanel insights={insights} />
 

@@ -2,7 +2,6 @@ import { useEffect } from "react";
 
 import SummaryCardsGrid from "@/features/dashboard/components/SummaryCardsGrid";
 import CashFlowSection from "@/features/dashboard/components/CashFlowSection";
-import CategoryBreakdownTable from "@/features/dashboard/components/CategoryBreakdownTable";
 import MonthlyOverviewPanel from "@/features/dashboard/components/MonthlyOverviewPanel";
 import BudgetPreviewPanel from "@/features/dashboard/components/BudgetPreviewPanel";
 import GoalsPreviewPanel from "@/features/dashboard/components/GoalsPreviewPanel";
@@ -53,8 +52,6 @@ export default function FinanceDashboard() {
           />
 
           <CashFlowSection />
-
-          <CategoryBreakdownTable />
 
           <div className="grid gap-6 xl:grid-cols-2">
             <MonthlyOverviewPanel monthly={monthly} changes={changes} />

@@ -22,7 +22,7 @@ describe("Dashboard (real data flow)", () => {
   it("shows an empty state with no transactions", async () => {
     render(<Dashboard />, { wrapper: MemoryRouter });
 
-    expect(await screen.findAllByText("No expense data yet")).toHaveLength(2);
+    expect(await screen.findAllByText("No expense data yet")).toHaveLength(1);
     expect(screen.getAllByText("฿0")).toHaveLength(4);
   });
 
