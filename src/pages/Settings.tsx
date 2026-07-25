@@ -3,6 +3,7 @@ import LanguageSettings from "@/components/settings/LanguageSettings";
 import PreferenceSettings from "@/components/settings/PreferenceSettings";
 import SecuritySettings from "@/components/settings/SecuritySettings";
 import SyncSettings from "@/components/settings/SyncSettings";
+import EncryptionSettings from "@/components/settings/EncryptionSettings";
 import DataSettings from "@/components/settings/DataSettings";
 import TransactionDataSettings from "@/components/settings/TransactionDataSettings";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -19,6 +20,7 @@ export default function Settings() {
       <PreferenceSettings />
       <SecuritySettings />
       <SyncSettings />
+      <EncryptionSettings />
       <DataSettings />
       <TransactionDataSettings />
     </div>
