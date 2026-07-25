@@ -1,5 +1,7 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { useAppLockStore } from "./appLockStore";
+import { useAppLockStore, EncryptionStateCorruptedError } from "./appLockStore";
+import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
+import { generateDek, encryptField, decryptField } from "@/features/encryption/crypto/encryption";
 
 function resetStore() {
   sessionStorage.clear();
@@ -11,7 +13,12 @@ function resetStore() {
     rememberUntil: null,
     sessionUnlocked: false,
     lastActivityAt: Date.now(),
+    encryptionEnabled: false,
+    wrappedDek: null,
+    kekSalt: null,
+    kekIterations: null,
   });
+  useEncryptionSessionStore.getState().clearDek();
 }
 
 describe("appLockStore", () => {
@@ -132,5 +139,106 @@ describe("appLockStore", () => {
     useAppLockStore.getState().checkAutoLock();
 
     expect(useAppLockStore.getState().isLocked()).toBe(false);
+  });
+
+  describe("encryption wiring", () => {
+    it("attachEncryption wraps the DEK, enables encryption, and populates the session store", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      const dek = await generateDek();
+
+      await useAppLockStore.getState().attachEncryption("1234", dek);
+
+      const state = useAppLockStore.getState();
+      expect(state.encryptionEnabled).toBe(true);
+      expect(state.wrappedDek).not.toBeNull();
+      expect(state.kekSalt).not.toBeNull();
+      expect(useEncryptionSessionStore.getState().dek).toBe(dek);
+    });
+
+    it("attachEncryption rejects the wrong PIN", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      const dek = await generateDek();
+
+      await expect(useAppLockStore.getState().attachEncryption("0000", dek)).rejects.toThrow();
+      expect(useAppLockStore.getState().encryptionEnabled).toBe(false);
+    });
+
+    it("unlock re-derives and restores the same DEK into the session store", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      const dek = await generateDek();
+      await useAppLockStore.getState().attachEncryption("1234", dek);
+
+      const envelope = await encryptField(dek, { title: "Coffee", amount: 120 });
+
+      useAppLockStore.getState().lock();
+      expect(useEncryptionSessionStore.getState().dek).toBeNull();
+
+      const success = await useAppLockStore.getState().unlock("1234", false);
+      expect(success).toBe(true);
+
+      const restoredDek = useEncryptionSessionStore.getState().dek;
+      expect(restoredDek).not.toBeNull();
+      const decrypted = await decryptField<{ title: string; amount: number }>(restoredDek!, envelope);
+      expect(decrypted).toEqual({ title: "Coffee", amount: 120 });
+    });
+
+    it("unlock throws EncryptionStateCorruptedError when the wrapped DEK is corrupted despite a correct PIN", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      const dek = await generateDek();
+      await useAppLockStore.getState().attachEncryption("1234", dek);
+      useAppLockStore.getState().lock();
+
+      // Simulate corrupted/inconsistent local state (e.g. a botched write)
+      // by swapping in a salt that doesn't match the one the DEK was
+      // actually wrapped with — deriveKek then produces the wrong key,
+      // and unwrapping fails exactly like real corruption would.
+      useAppLockStore.setState({ kekSalt: "AAAAAAAAAAAAAAAAAAAAAA==" });
+
+      await expect(useAppLockStore.getState().unlock("1234", false)).rejects.toThrow(
+        EncryptionStateCorruptedError
+      );
+    });
+
+    it("changePin re-wraps the existing DEK rather than generating a new one", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      const dek = await generateDek();
+      await useAppLockStore.getState().attachEncryption("1234", dek);
+
+      const envelope = await encryptField(dek, { title: "Salary", amount: 30000 });
+
+      const changed = await useAppLockStore.getState().changePin("1234", "5678");
+      expect(changed).toBe(true);
+
+      useAppLockStore.getState().lock();
+      const success = await useAppLockStore.getState().unlock("5678", false);
+      expect(success).toBe(true);
+
+      const restoredDek = useEncryptionSessionStore.getState().dek;
+      const decrypted = await decryptField<{ title: string; amount: number }>(restoredDek!, envelope);
+      expect(decrypted).toEqual({ title: "Salary", amount: 30000 });
+    });
+
+    it("changePin fails when encryption is enabled but the session DEK isn't resident", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      const dek = await generateDek();
+      await useAppLockStore.getState().attachEncryption("1234", dek);
+
+      useAppLockStore.getState().lock(); // clears the session DEK, stays locked
+
+      const changed = await useAppLockStore.getState().changePin("1234", "5678");
+      expect(changed).toBe(false);
+    });
+
+    it("disableLock refuses while encryption is enabled", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      const dek = await generateDek();
+      await useAppLockStore.getState().attachEncryption("1234", dek);
+
+      const result = await useAppLockStore.getState().disableLock("1234");
+
+      expect(result).toBe(false);
+      expect(useAppLockStore.getState().isEnabled()).toBe(true);
+      expect(useAppLockStore.getState().encryptionEnabled).toBe(true);
+    });
   });
 });

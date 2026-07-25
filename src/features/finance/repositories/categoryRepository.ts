@@ -1,15 +1,18 @@
 import { db } from "@/database/db";
 import { withSyncMeta } from "@/utils/syncMeta";
 import { recordTombstone } from "@/features/sync/tombstones";
+import { createEncryptedRepository } from "@/database/encryptedRepository";
 import type { Category } from "../types";
 
-export const categoryRepository = {
-  getAll: () => db.categories.toArray(),
+const encrypted = createEncryptedRepository<Category>(db.categories);
 
-  add: (category: Category) => db.categories.add(withSyncMeta(category)),
+export const categoryRepository = {
+  getAll: () => encrypted.getAll(),
+
+  add: (category: Category) => encrypted.add(withSyncMeta(category)),
 
   update: (id: number, category: Category) =>
-    db.categories.update(id, withSyncMeta(category)),
+    encrypted.update(id, withSyncMeta({ ...category, id })),
 
   remove: async (id: number) => {
     const existing = await db.categories.get(id);

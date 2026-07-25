@@ -1,15 +1,23 @@
 import { db } from "@/database/db";
 import { withSyncMeta } from "@/utils/syncMeta";
 import { recordTombstone } from "@/features/sync/tombstones";
+import { createEncryptedRepository } from "@/database/encryptedRepository";
 import type { Budget } from "../types";
 
-export const budgetRepository = {
-  getAll: () => db.budgets.toArray(),
+// `category` stays plaintext — it backs the `&category` unique Dexie index
+// (one budget per category), which would otherwise be unenforceable once
+// folded into an opaque encrypted blob.
+const encrypted = createEncryptedRepository<Budget>(db.budgets, {
+  plaintextKeys: ["category"],
+});
 
-  add: (budget: Budget) => db.budgets.add(withSyncMeta(budget)),
+export const budgetRepository = {
+  getAll: () => encrypted.getAll(),
+
+  add: (budget: Budget) => encrypted.add(withSyncMeta(budget)),
 
   update: (id: number, budget: Budget) =>
-    db.budgets.put(withSyncMeta({ ...budget, id })),
+    encrypted.update(id, withSyncMeta({ ...budget, id })),
 
   remove: async (id: number) => {
     const existing = await db.budgets.get(id);

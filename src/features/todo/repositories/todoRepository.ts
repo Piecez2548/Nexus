@@ -1,15 +1,18 @@
 import { db } from "@/database/db";
 import { withSyncMeta } from "@/utils/syncMeta";
 import { recordTombstone } from "@/features/sync/tombstones";
+import { createEncryptedRepository } from "@/database/encryptedRepository";
 import type { Todo } from "../types";
 
-export const todoRepository = {
-  getAll: () => db.todos.toArray(),
+const encrypted = createEncryptedRepository<Todo>(db.todos);
 
-  add: (todo: Todo) => db.todos.add(withSyncMeta(todo)),
+export const todoRepository = {
+  getAll: () => encrypted.getAll(),
+
+  add: (todo: Todo) => encrypted.add(withSyncMeta(todo)),
 
   update: (id: number, todo: Todo) =>
-    db.todos.put(withSyncMeta({ ...todo, id })),
+    encrypted.update(id, withSyncMeta({ ...todo, id })),
 
   remove: async (id: number) => {
     const existing = await db.todos.get(id);

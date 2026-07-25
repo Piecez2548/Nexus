@@ -138,6 +138,45 @@ class NexusDatabase extends Dexie {
         "&key",
     });
 
+    // Encryption-at-rest (opt-in — see src/features/encryption): once a row
+    // is encrypted, its business fields live inside one opaque
+    // `encryptedContent` blob and can no longer be indexed directly, so
+    // those per-field indexes are dropped here. This is purely an index
+    // trim — Dexie only stops maintaining these indexes, it does not alter
+    // any row's stored content — so it's safe to ship independently of and
+    // before the actual opt-in migration that rewrites row shapes.
+    // `&recipientKey` and `&category` are kept: those two fields
+    // deliberately stay plaintext (see encryptedRepository.ts) to preserve
+    // their unique-index lookups.
+    this.version(9).stores({
+      transactions:
+        "++id,syncId,updatedAt",
+
+      accounts:
+        "++id,syncId,updatedAt",
+
+      categories:
+        "++id,syncId,updatedAt",
+
+      trades:
+        "++id,syncId,updatedAt",
+
+      recipientProfiles:
+        "++id,&recipientKey,syncId,updatedAt",
+
+      budgets:
+        "++id,&category,syncId,updatedAt",
+
+      goals:
+        "++id,syncId,updatedAt",
+
+      transactionTemplates:
+        "++id,syncId,updatedAt",
+
+      todos:
+        "++id,syncId,updatedAt",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 

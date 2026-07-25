@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Lock, Zap } from "lucide-react";
 
-import { useAppLockStore } from "@/store/appLockStore";
+import { useAppLockStore, EncryptionStateCorruptedError } from "@/store/appLockStore";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 text-center text-lg tracking-[0.5em] outline-none focus:border-violet-500";
@@ -43,16 +43,29 @@ export default function AppLockScreen({ mode, onDone }: Props) {
     }
 
     setSubmitting(true);
-    const success = await unlock(pin, remember);
-    setSubmitting(false);
 
-    if (!success) {
-      setError("PIN ไม่ถูกต้อง");
+    try {
+      const success = await unlock(pin, remember);
+      setSubmitting(false);
+
+      if (!success) {
+        setError("PIN ไม่ถูกต้อง");
+        setPin("");
+        return;
+      }
+
+      onDone?.();
+    } catch (err) {
+      setSubmitting(false);
       setPin("");
-      return;
-    }
 
-    onDone?.();
+      if (err instanceof EncryptionStateCorruptedError) {
+        setError("PIN ถูกต้อง แต่ไม่สามารถปลดล็อกข้อมูลที่เข้ารหัสไว้ได้ ลองกู้คืนผ่านบัญชี Sync ของคุณ");
+        return;
+      }
+
+      throw err;
+    }
   }
 
   return (

@@ -1,15 +1,18 @@
 import { db } from "@/database/db";
 import { withSyncMeta } from "@/utils/syncMeta";
 import { recordTombstone } from "@/features/sync/tombstones";
+import { createEncryptedRepository } from "@/database/encryptedRepository";
 import type { Goal } from "../types";
 
-export const goalRepository = {
-  getAll: () => db.goals.toArray(),
+const encrypted = createEncryptedRepository<Goal>(db.goals);
 
-  add: (goal: Goal) => db.goals.add(withSyncMeta(goal)),
+export const goalRepository = {
+  getAll: () => encrypted.getAll(),
+
+  add: (goal: Goal) => encrypted.add(withSyncMeta(goal)),
 
   update: (id: number, goal: Goal) =>
-    db.goals.put(withSyncMeta({ ...goal, id })),
+    encrypted.update(id, withSyncMeta({ ...goal, id })),
 
   remove: async (id: number) => {
     const existing = await db.goals.get(id);

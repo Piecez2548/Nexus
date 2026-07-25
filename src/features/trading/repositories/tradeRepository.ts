@@ -1,15 +1,18 @@
 import { db } from "@/database/db";
 import { withSyncMeta } from "@/utils/syncMeta";
 import { recordTombstone } from "@/features/sync/tombstones";
+import { createEncryptedRepository } from "@/database/encryptedRepository";
 import type { Trade } from "../types";
 
-export const tradeRepository = {
-  getAll: () => db.trades.toArray(),
+const encrypted = createEncryptedRepository<Trade>(db.trades);
 
-  add: (trade: Trade) => db.trades.add(withSyncMeta(trade)),
+export const tradeRepository = {
+  getAll: () => encrypted.getAll(),
+
+  add: (trade: Trade) => encrypted.add(withSyncMeta(trade)),
 
   update: (id: number, trade: Trade) =>
-    db.trades.put(withSyncMeta({ ...trade, id })),
+    encrypted.update(id, withSyncMeta({ ...trade, id })),
 
   remove: async (id: number) => {
     const existing = await db.trades.get(id);
