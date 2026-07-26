@@ -1,13 +1,20 @@
-import { useRef, useState } from "react";
-import { Download, Upload, TriangleAlert, Merge } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, Upload, TriangleAlert, Merge, Copy } from "lucide-react";
 
 import { exportBackup, importBackup, resetAllData } from "@/database/backupService";
 import { dedupeAccountsAndCategories } from "@/features/finance/utils/dedupeAccountsAndCategories";
+import {
+  findTransactionDuplicates,
+  mergeTransactionDuplicates,
+  type TransactionDuplicateGroup,
+} from "@/features/finance/utils/dedupeTransactions";
 import { useAccountStore } from "@/features/finance/store/accountStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
+import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "@/i18n/useTranslation";
+import Drawer from "@/components/ui/Drawer";
 import SettingsCard from "./SettingsCard";
 
 interface TileProps {
@@ -45,10 +52,16 @@ export default function DataSettings() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [duplicatePreview, setDuplicatePreview] = useState<TransactionDuplicateGroup[] | null>(null);
   const toast = useToast();
   const { loadAccounts } = useAccountStore();
   const { loadCategories } = useCategoryStore();
+  const { transactions, loadTransactions } = useTransactionStore();
   const { t } = useTranslation();
+
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
 
   async function handleExport() {
     setError(null);
@@ -129,6 +142,41 @@ export default function DataSettings() {
     }
   }
 
+  function handleFindTransactionDuplicates() {
+    setError(null);
+    setStatus(null);
+
+    const groups = findTransactionDuplicates(transactions);
+    if (groups.length === 0) {
+      setStatus(t("settings.noTransactionDuplicatesFound"));
+      return;
+    }
+
+    setDuplicatePreview(groups);
+  }
+
+  async function handleConfirmMergeTransactions() {
+    if (!duplicatePreview) return;
+
+    setBusy(true);
+
+    try {
+      const removed = await mergeTransactionDuplicates(duplicatePreview);
+      await loadTransactions();
+      setDuplicatePreview(null);
+
+      const message = t("settings.transactionDuplicatesMergedResult", { count: removed });
+      setStatus(message);
+      toast.success(message);
+    } catch (err) {
+      const message = toErrorMessage(err);
+      setError(message);
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleReset() {
     const confirmed = window.confirm(t("settings.resetConfirmDialog"));
     if (!confirmed) return;
@@ -178,6 +226,14 @@ export default function DataSettings() {
         />
 
         <DataTile
+          icon={<Copy size={20} />}
+          label={t("settings.mergeTransactionDuplicates")}
+          description={t("settings.mergeTransactionDuplicatesDescription")}
+          onClick={handleFindTransactionDuplicates}
+          disabled={busy}
+        />
+
+        <DataTile
           icon={<TriangleAlert size={20} />}
           label={t("settings.resetAllData")}
           description={t("settings.resetAllDataDescription")}
@@ -198,6 +254,55 @@ export default function DataSettings() {
 
       {status && <p className="mt-3 text-sm text-green-500">{status}</p>}
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+
+      <Drawer open={duplicatePreview !== null} onClose={() => setDuplicatePreview(null)}>
+        {duplicatePreview && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">
+              {t("settings.transactionDuplicatesFoundTitle", { count: duplicatePreview.length })}
+            </h2>
+
+            <div className="max-h-[60vh] space-y-3 overflow-y-auto">
+              {duplicatePreview.map((group) => (
+                <div key={group.key} className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{group.keep.title}</span>
+                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                      ฿{group.keep.amount.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{group.keep.date}</p>
+                  <p className="mt-1 text-xs text-green-500">{t("settings.transactionDuplicateKeepNote")}</p>
+                  <p className="text-xs text-red-500">
+                    {t("settings.transactionDuplicateRemoveCount", { count: group.remove.length })}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDuplicatePreview(null)}
+                disabled={busy}
+                className="flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 py-2.5 font-medium transition hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t("common.cancel")}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmMergeTransactions}
+                disabled={busy}
+                className="flex-1 rounded-xl bg-violet-600 py-2.5 font-medium text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t("settings.confirmMergeTransactions")}
+              </button>
+            </div>
+          </div>
+        )}
+      </Drawer>
     </SettingsCard>
   );
 }

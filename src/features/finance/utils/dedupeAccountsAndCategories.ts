@@ -15,7 +15,7 @@ export interface DedupeResult {
 // duplicates since it only matches by syncId, not by name. Groups matches
 // and folds every duplicate into the oldest (first created) one,
 // reassigning its transactions rather than losing them.
-function groupDuplicates<T extends { id?: number }>(items: T[], keyFn: (item: T) => string): T[][] {
+export function groupDuplicates<T extends { id?: number }>(items: T[], keyFn: (item: T) => string): T[][] {
   const groups = new Map<string, T[]>();
 
   for (const item of items) {
