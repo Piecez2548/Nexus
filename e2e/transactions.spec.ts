@@ -67,29 +67,15 @@ test.describe("transaction lifecycle", () => {
     await expect(page.getByText("กรุณากรอกชื่อรายการ")).toBeVisible();
   });
 
-  test("the dashboard's header and Quick Actions buttons both open the transaction drawer", async ({ page }) => {
+  test("the dashboard's header button opens the transaction drawer", async ({ page }) => {
     await page.goto("/");
 
-    // The header button and the Quick Actions button now share identical
-    // text ("Add Transaction" in both languages), so disambiguate by DOM
-    // order: the header renders before the Quick Actions card.
-    const addTransactionButtons = page.getByRole("button", { name: "Add Transaction" });
-
-    await addTransactionButtons.first().click();
+    await page.getByRole("button", { name: "Add Transaction" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeVisible();
 
     // Close via the backdrop.
     await page.mouse.click(10, 10);
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
-
-    // Quick Actions' "Add Transaction" button is a second, independent entry point.
-    await addTransactionButtons.nth(1).click();
-    await expect(page.getByLabel("ชื่อรายการ")).toBeVisible();
-    await page.mouse.click(10, 10);
-
-    // "View All Transactions" navigates to the Transactions page.
-    await page.getByRole("button", { name: "View All Transactions" }).click();
-    await expect(page.getByRole("heading", { name: "Transactions" })).toBeVisible();
   });
 
   test("the slip scanner opens, accepts an image, and starts on-device OCR", async ({ page }) => {

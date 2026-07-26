@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { calculatePnl, calculateRR } from "@/features/trading/utils/pnl";
+import { isDateWithinRange, type PeriodRange } from "@/features/finance/utils/periodRange";
 
 function daysAgo(days: number): Date {
   const date = new Date();
@@ -8,7 +9,11 @@ function daysAgo(days: number): Date {
   return date;
 }
 
-export function useTradingStats() {
+// `periodRange` is optional and purely additive — only the Dashboard page's
+// period-aware overview panel passes one; the standalone Trading page calls
+// this with no argument and keeps its exact original today/rolling-window
+// behavior untouched.
+export function useTradingStats(periodRange?: PeriodRange) {
   const { trades } = useTradeStore();
 
   return useMemo(() => {
@@ -34,6 +39,13 @@ export function useTradingStats() {
     const todayPnl = sumPnlSince(null);
     const weeklyPnl = sumPnlSince(weekStart);
     const monthlyPnl = sumPnlSince(monthStart);
+
+    const inPeriod = periodRange
+      ? withPnl.filter(({ trade }) => trade.exitDate !== undefined && isDateWithinRange(trade.exitDate, periodRange))
+      : null;
+    const periodPnl = inPeriod ? inPeriod.reduce((sum, { pnl }) => sum + pnl, 0) : null;
+    const periodWinRate =
+      inPeriod && inPeriod.length > 0 ? (inPeriod.filter(({ pnl }) => pnl > 0).length / inPeriod.length) * 100 : inPeriod ? 0 : null;
 
     const wins = withPnl.filter(({ pnl }) => pnl > 0);
     const losses = withPnl.filter(({ pnl }) => pnl < 0);
@@ -86,6 +98,8 @@ export function useTradingStats() {
       todayPnl,
       weeklyPnl,
       monthlyPnl,
+      periodPnl,
+      periodWinRate,
       winRate,
       profitFactor,
       averageRR,
@@ -95,5 +109,5 @@ export function useTradingStats() {
       openPositions: trades.filter((t) => t.status === "open").length,
       totalClosedTrades: closedTrades.length,
     };
-  }, [trades]);
+  }, [trades, periodRange]);
 }

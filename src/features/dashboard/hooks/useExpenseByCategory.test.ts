@@ -34,4 +34,16 @@ describe("useExpenseByCategory", () => {
       { name: "Transport", value: 40 },
     ]);
   });
+
+  it("filters to the selected period when a granularity is provided", () => {
+    seed([
+      { title: "June lunch", amount: 100, type: "expense", category: "Food", account: "Cash", date: "2026-06-15", status: "completed" },
+      { title: "July lunch", amount: 250, type: "expense", category: "Food", account: "Cash", date: "2026-07-03", status: "completed" },
+    ]);
+
+    const now = new Date(2026, 6, 21); // 2026-07-21
+    const { result } = renderHook(() => useExpenseByCategory(now, "month"));
+
+    expect(result.current).toEqual([{ name: "Food", value: 250 }]);
+  });
 });

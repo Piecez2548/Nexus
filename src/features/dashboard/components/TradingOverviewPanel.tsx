@@ -2,7 +2,15 @@ import { useNavigate } from "react-router-dom";
 import { LineChart } from "lucide-react";
 
 import { useTradingStats } from "@/features/trading/hooks/useTradingStats";
+import { useDashboardPeriodStore } from "@/features/dashboard/store/dashboardPeriodStore";
+import { getDashboardPeriodRange } from "@/features/dashboard/utils/dashboardPeriodRange";
 import { useTranslation } from "@/i18n/useTranslation";
+
+const PERIOD_LABEL_KEYS = {
+  day: "dashboard.periodDay",
+  month: "dashboard.periodMonth",
+  year: "dashboard.periodYear",
+} as const;
 
 function formatPnl(value: number): string {
   return `${value >= 0 ? "+" : ""}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
@@ -10,8 +18,12 @@ function formatPnl(value: number): string {
 
 export default function TradingOverviewPanel() {
   const navigate = useNavigate();
-  const { todayPnl, monthlyPnl, winRate, openPositions } = useTradingStats();
+  const { granularity } = useDashboardPeriodStore();
+  const range = getDashboardPeriodRange(granularity);
+  const { todayPnl, periodPnl, periodWinRate, openPositions } = useTradingStats(range);
   const { t } = useTranslation();
+
+  const periodLabel = t(PERIOD_LABEL_KEYS[granularity]);
 
   return (
     <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
@@ -33,15 +45,15 @@ export default function TradingOverviewPanel() {
         </div>
 
         <div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("dashboard.monthlyPnl")}</p>
-          <p className={`text-xl font-bold ${monthlyPnl >= 0 ? "text-green-500" : "text-red-500"}`}>
-            {formatPnl(monthlyPnl)}
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("dashboard.periodPnl", { period: periodLabel })}</p>
+          <p className={`text-xl font-bold ${(periodPnl ?? 0) >= 0 ? "text-green-500" : "text-red-500"}`}>
+            {formatPnl(periodPnl ?? 0)}
           </p>
         </div>
 
         <div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("dashboard.winRate")}</p>
-          <p className="text-xl font-bold text-zinc-700 dark:text-zinc-300">{winRate.toFixed(1)}%</p>
+          <p className="text-xl font-bold text-zinc-700 dark:text-zinc-300">{(periodWinRate ?? 0).toFixed(1)}%</p>
         </div>
 
         <div>

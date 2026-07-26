@@ -9,6 +9,7 @@ interface SummaryCardProps {
   color?: string;
   change?: number | null;
   invertChange?: boolean;
+  changeLabel?: string;
 }
 
 export default function SummaryCard({
@@ -18,6 +19,7 @@ export default function SummaryCard({
   color = "#3b82f6",
   change,
   invertChange = false,
+  changeLabel,
 }: SummaryCardProps) {
   const { t } = useTranslation();
 
@@ -40,7 +42,7 @@ export default function SummaryCard({
         {change !== undefined && change !== null && (
           <div className="mt-2 flex items-center gap-1.5">
             <ChangeBadge value={change} invert={invertChange} />
-            <span className="text-xs text-zinc-500 dark:text-zinc-400">{t("dashboard.vsLastMonth")}</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">{changeLabel ?? t("dashboard.vsLastMonth")}</span>
           </div>
         )}
       </div>

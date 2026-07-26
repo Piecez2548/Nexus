@@ -7,6 +7,7 @@ import {
 } from "recharts";
 
 import { useExpenseByCategory } from "@/features/dashboard/hooks/useExpenseByCategory";
+import type { DashboardPeriodGranularity } from "@/features/dashboard/utils/dashboardPeriodRange";
 import { useTranslation } from "@/i18n/useTranslation";
 
 const COLORS = [
@@ -20,8 +21,12 @@ const COLORS = [
     "#84cc16",
 ];
 
-export default function ExpensePieChart() {
-    const data = useExpenseByCategory();
+interface Props {
+    granularity?: DashboardPeriodGranularity;
+}
+
+export default function ExpensePieChart({ granularity }: Props) {
+    const data = useExpenseByCategory(new Date(), granularity);
     const { t } = useTranslation();
 
     if (data.length === 0) {

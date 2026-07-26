@@ -1,11 +1,10 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
 import DashboardHeader from "@/features/dashboard/components/DashboardHeader";
+import DashboardPeriodSelector from "@/features/dashboard/components/DashboardPeriodSelector";
 import SummaryCardsGrid from "@/features/dashboard/components/SummaryCardsGrid";
 import CashFlowSection from "@/features/dashboard/components/CashFlowSection";
 import RecentTransactionsList from "@/features/dashboard/components/RecentTransactionsList";
-import QuickActions from "@/features/dashboard/components/QuickActions";
 import BudgetPreviewPanel from "@/features/dashboard/components/BudgetPreviewPanel";
 import TradingOverviewPanel from "@/features/dashboard/components/TradingOverviewPanel";
 import PortfolioOverviewPanel from "@/features/dashboard/components/PortfolioOverviewPanel";
@@ -22,12 +21,11 @@ import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
+import { useDashboardPeriodStore } from "@/features/dashboard/store/dashboardPeriodStore";
 import { useSpendingInsights } from "@/features/finance/hooks/useSpendingInsights";
 import { useTranslation } from "@/i18n/useTranslation";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-
   const {
     loadTransactions,
     transactions,
@@ -39,6 +37,7 @@ export default function Dashboard() {
   const { loadBudgets } = useBudgetStore();
   const { loadCategories } = useCategoryStore();
   const { loadTrades } = useTradeStore();
+  const { granularity } = useDashboardPeriodStore();
 
   const {
     balance,
@@ -46,7 +45,7 @@ export default function Dashboard() {
     expense,
     saving,
     changes,
-  } = useDashboard();
+  } = useDashboard(new Date(), granularity);
 
   const insights = useSpendingInsights();
   const { t } = useTranslation();
@@ -63,6 +62,8 @@ export default function Dashboard() {
 
       <DashboardHeader onAddTransaction={() => openTransactionDrawer()} />
 
+      <DashboardPeriodSelector />
+
       {error ? (
         <ErrorState message={error} onRetry={loadTransactions} />
       ) : loading && transactions.length === 0 ? (
@@ -75,9 +76,10 @@ export default function Dashboard() {
             expense={expense}
             saving={saving}
             changes={changes}
+            granularity={granularity}
           />
 
-          <CashFlowSection />
+          <CashFlowSection granularity={granularity} />
 
           <InsightsPanel insights={insights} />
 
@@ -87,10 +89,7 @@ export default function Dashboard() {
             <RecentTransactionsList transactions={transactions} />
 
             <div className="space-y-6">
-              <QuickActions
-                onAddTransaction={() => openTransactionDrawer()}
-                onViewTransactions={() => navigate("/transactions")}
-              />
+              <BudgetPreviewPanel />
 
               <TodoPreviewPanel />
 
@@ -99,8 +98,6 @@ export default function Dashboard() {
               <TradingOverviewPanel />
 
               <PortfolioOverviewPanel />
-
-              <BudgetPreviewPanel />
             </div>
           </div>
         </>

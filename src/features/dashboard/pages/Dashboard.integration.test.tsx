@@ -91,8 +91,8 @@ describe("Dashboard (real data flow)", () => {
     expect(screen.getAllByText("Coming Soon")).toHaveLength(2);
 
     // Trading overview reflects the real trade data: the AAPL trade closed
-    // today falls within both the "today" and "monthly" P/L windows, so
-    // "+200" appears twice (Today's P/L and Monthly P/L).
+    // today falls within both "today" and the default "month" period window,
+    // so "+200" appears twice (Today's P/L and the period P/L card).
     expect(await screen.findAllByText("+200")).toHaveLength(2);
     expect(screen.getByText("100.0%")).toBeInTheDocument(); // win rate
     expect(screen.getByText("1")).toBeInTheDocument(); // open positions
@@ -138,6 +138,28 @@ describe("Dashboard (real data flow)", () => {
       const today = toLocalDateString(new Date());
       expect(stored[0].completedDates).toContain(today);
     });
+  });
+
+  it("no longer shows Quick Actions, and switching the period selector doesn't affect the exempt Portfolio panel", async () => {
+    await db.holdings.bulkAdd([
+      { symbol: "AAPL", market: "stocks", quantity: 10, avgCostPrice: 100, currentPrice: 120, createdAt: "2026-07-20T00:00:00.000Z" },
+    ] as never[]);
+
+    render(<Dashboard />, { wrapper: MemoryRouter });
+
+    expect(await screen.findByText("Budget")).toBeInTheDocument();
+    expect(screen.queryByText("Quick Actions")).not.toBeInTheDocument();
+
+    const portfolioPnlBefore = screen.getAllByText("+200 (+20%)").length;
+    expect(portfolioPnlBefore).toBeGreaterThan(0);
+
+    // Switching the period must not change Portfolio — confirmed exempt.
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Day" }));
+    expect(screen.getAllByText("+200 (+20%)")).toHaveLength(portfolioPnlBefore);
+
+    await user.click(screen.getByRole("button", { name: "Year" }));
+    expect(screen.getAllByText("+200 (+20%)")).toHaveLength(portfolioPnlBefore);
   });
 
   it("reflects real holdings data in the Portfolio overview panel", async () => {

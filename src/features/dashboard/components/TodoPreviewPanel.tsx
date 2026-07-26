@@ -4,10 +4,13 @@ import { ListChecks } from "lucide-react";
 
 import { useTodoStore } from "@/features/todo/store/todoStore";
 import { PRIORITY_BADGE_CLASS, getPriorityLabels } from "@/features/todo/constants/labels";
+import { useDashboardPeriodStore } from "@/features/dashboard/store/dashboardPeriodStore";
+import { getDashboardPeriodRange } from "@/features/dashboard/utils/dashboardPeriodRange";
 import { useTranslation } from "@/i18n/useTranslation";
 
 export default function TodoPreviewPanel() {
   const { todos, loadTodos, toggleComplete } = useTodoStore();
+  const { granularity } = useDashboardPeriodStore();
   const { t } = useTranslation();
   const priorityLabels = getPriorityLabels(t);
 
@@ -15,8 +18,15 @@ export default function TodoPreviewPanel() {
     loadTodos();
   }, [loadTodos]);
 
+  const range = getDashboardPeriodRange(granularity);
+  const rangeEndKey = `${range.end.getFullYear()}-${String(range.end.getMonth() + 1).padStart(2, "0")}-${String(range.end.getDate()).padStart(2, "0")}`;
+
+  // Undated todos are evergreen and always shown; a dated todo shows once
+  // its due date falls on/before the end of the selected period, so an
+  // overdue task never silently vanishes from the dashboard. Compared as
+  // "yyyy-MM-dd" strings (not `new Date()`, which parses as UTC).
   const pending = todos
-    .filter((t) => !t.completed)
+    .filter((t) => !t.completed && (t.dueDate === undefined || t.dueDate < rangeEndKey))
     .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"))
     .slice(0, 4);
 

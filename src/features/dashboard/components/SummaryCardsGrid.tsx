@@ -7,6 +7,7 @@ import {
 
 import SummaryCard from "@/components/ui/SummaryCard";
 import { useTranslation } from "@/i18n/useTranslation";
+import type { DashboardPeriodGranularity } from "@/features/dashboard/utils/dashboardPeriodRange";
 
 interface Changes {
   balance: number | null;
@@ -21,7 +22,17 @@ interface Props {
   expense: number;
   saving: number;
   changes?: Changes;
+  // Optional: only the Dashboard page's period selector passes this. When
+  // omitted (e.g. the separate Finance Dashboard page), every card's change
+  // caption stays "vs last month" — its original, unchanged behavior.
+  granularity?: DashboardPeriodGranularity;
 }
+
+const PERIOD_CHANGE_LABEL_KEYS: Record<DashboardPeriodGranularity, string> = {
+  day: "dashboard.vsPreviousDay",
+  month: "dashboard.vsLastMonth",
+  year: "dashboard.vsPreviousYear",
+};
 
 export default function SummaryCardsGrid({
   balance,
@@ -29,8 +40,10 @@ export default function SummaryCardsGrid({
   expense,
   saving,
   changes,
+  granularity,
 }: Props) {
   const { t } = useTranslation();
+  const periodChangeLabel = t(granularity ? PERIOD_CHANGE_LABEL_KEYS[granularity] : "dashboard.vsLastMonth");
 
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -41,6 +54,7 @@ export default function SummaryCardsGrid({
         color="#16a34a"
         icon={<ArrowUpRight size={22} />}
         change={changes?.income}
+        changeLabel={periodChangeLabel}
       />
 
       <SummaryCard
@@ -49,6 +63,7 @@ export default function SummaryCardsGrid({
         color="#dc2626"
         icon={<ArrowDownRight size={22} />}
         change={changes?.expense}
+        changeLabel={periodChangeLabel}
         invertChange
       />
 
@@ -66,6 +81,7 @@ export default function SummaryCardsGrid({
         color="#ca8a04"
         icon={<PiggyBank size={22} />}
         change={changes?.saving}
+        changeLabel={periodChangeLabel}
       />
 
     </div>

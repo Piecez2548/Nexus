@@ -3,16 +3,22 @@ import { Link } from "react-router-dom";
 import { Flame } from "lucide-react";
 
 import { useHabitStore } from "@/features/habits/store/habitStore";
-import { computeStreak, isCompletedToday } from "@/features/habits/utils/streak";
+import { isCompletedToday } from "@/features/habits/utils/streak";
+import { useDashboardPeriodStore } from "@/features/dashboard/store/dashboardPeriodStore";
+import { getDashboardPeriodRange } from "@/features/dashboard/utils/dashboardPeriodRange";
+import { isDateWithinRange } from "@/features/finance/utils/periodRange";
 import { useTranslation } from "@/i18n/useTranslation";
 
 export default function HabitPreviewPanel() {
   const { habits, loadHabits, checkIn } = useHabitStore();
+  const { granularity } = useDashboardPeriodStore();
   const { t } = useTranslation();
 
   useEffect(() => {
     loadHabits();
   }, [loadHabits]);
+
+  const range = getDashboardPeriodRange(granularity);
 
   // Not-yet-done-today habits surface first, same idea as Todo's
   // "pending first" sort — the actionable ones are visible at a glance.
@@ -37,7 +43,7 @@ export default function HabitPreviewPanel() {
         <div className="space-y-3">
           {preview.map((habit) => {
             const done = isCompletedToday(habit.completedDates);
-            const streak = computeStreak(habit.completedDates, habit.frequency);
+            const periodCheckIns = habit.completedDates.filter((d) => isDateWithinRange(d, range)).length;
             return (
               <div key={habit.id} className="flex items-center gap-3">
                 <button
@@ -56,7 +62,7 @@ export default function HabitPreviewPanel() {
 
                 <span className="flex shrink-0 items-center gap-1 rounded-full bg-orange-500/15 px-2 py-0.5 text-xs font-semibold text-orange-500">
                   <Flame size={12} />
-                  {streak}
+                  {periodCheckIns}
                 </span>
               </div>
             );

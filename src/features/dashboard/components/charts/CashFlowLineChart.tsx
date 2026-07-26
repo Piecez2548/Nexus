@@ -10,6 +10,7 @@ import {
 import { format, parse } from "date-fns";
 
 import { useChartData } from "@/features/dashboard/hooks/useChartData";
+import type { DashboardPeriodGranularity } from "@/features/dashboard/utils/dashboardPeriodRange";
 import { useTranslation } from "@/i18n/useTranslation";
 
 interface CashFlowTooltipProps {
@@ -38,8 +39,12 @@ function CashFlowTooltip({ active, label, payload, incomeLabel, expenseLabel, ba
     );
 }
 
-export default function CashFlowLineChart() {
-    const daily = useChartData();
+interface Props {
+    granularity?: DashboardPeriodGranularity;
+}
+
+export default function CashFlowLineChart({ granularity }: Props) {
+    const daily = useChartData(new Date(), granularity);
     const { t } = useTranslation();
 
     const hasData = daily.some((item) => item.income > 0 || item.expense > 0);

@@ -12,7 +12,9 @@ interface Props {
 
 export default function RecentTransactionsList({ transactions }: Props) {
   const { categories } = useCategoryStore();
-  const recent = transactions.slice(0, 5);
+  // Dexie returns rows in ascending-id order; sort by id descending so this
+  // shows the most recently added transactions, not the first ever created.
+  const recent = [...transactions].sort((a, b) => (b.id ?? 0) - (a.id ?? 0)).slice(0, 5);
   const { t } = useTranslation();
 
   function categoryMeta(categoryName?: string) {

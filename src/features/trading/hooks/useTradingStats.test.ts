@@ -29,6 +29,36 @@ describe("useTradingStats", () => {
     expect(result.current.bestStrategy).toBeNull();
   });
 
+  it("leaves periodPnl/periodWinRate null when no periodRange is given", () => {
+    const { result } = renderHook(() => useTradingStats());
+
+    expect(result.current.periodPnl).toBeNull();
+    expect(result.current.periodWinRate).toBeNull();
+  });
+
+  it("computes periodPnl/periodWinRate only from trades exiting within the given range", () => {
+    seed([
+      // Inside the period: winner +100
+      {
+        symbol: "AAPL", market: "stocks", direction: "long", status: "closed",
+        entryPrice: 100, exitPrice: 110, quantity: 10,
+        entryDate: "2026-07-01", exitDate: "2026-07-05",
+      },
+      // Outside the period: loser -999, must not affect the period figures
+      {
+        symbol: "MSFT", market: "stocks", direction: "long", status: "closed",
+        entryPrice: 100, exitPrice: 1, quantity: 999,
+        entryDate: "2026-06-01", exitDate: "2026-06-01",
+      },
+    ]);
+
+    const range = { start: new Date(2026, 6, 1), end: new Date(2026, 7, 1) }; // July 2026
+    const { result } = renderHook(() => useTradingStats(range));
+
+    expect(result.current.periodPnl).toBe(100);
+    expect(result.current.periodWinRate).toBe(100);
+  });
+
   it("counts open positions separately from closed trades", () => {
     seed([
       {

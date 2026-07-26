@@ -50,4 +50,39 @@ describe("useChartData", () => {
     expect(result.current.every((d) => d.expense === 0)).toBe(true);
     expect(result.current.every((d) => d.balance === -8000)).toBe(true);
   });
+
+  it("returns a single bucket for the selected day when granularity is 'day'", () => {
+    seed([
+      { title: "Coffee", amount: 100, type: "expense", category: "Food", account: "Cash", date: "2026-07-24", status: "completed" },
+      { title: "Yesterday", amount: 999, type: "expense", category: "Food", account: "Cash", date: "2026-07-23", status: "completed" },
+    ]);
+
+    const { result } = renderHook(() => useChartData(NOW, "day"));
+
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0]).toEqual({ date: "2026-07-24", income: 0, expense: 100, balance: -999 - 100 });
+  });
+
+  it("returns one bucket per day in the calendar month when granularity is 'month'", () => {
+    const { result } = renderHook(() => useChartData(NOW, "month"));
+
+    expect(result.current).toHaveLength(31); // July has 31 days
+    expect(result.current[0].date).toBe("2026-07-01");
+    expect(result.current[30].date).toBe("2026-07-31");
+  });
+
+  it("returns one bucket per month across the calendar year when granularity is 'year'", () => {
+    seed([
+      { title: "Jan income", amount: 1000, type: "income", category: "Salary", account: "Bank", date: "2026-01-15", status: "completed" },
+      { title: "Jul income", amount: 2000, type: "income", category: "Salary", account: "Bank", date: "2026-07-05", status: "completed" },
+    ]);
+
+    const { result } = renderHook(() => useChartData(NOW, "year"));
+
+    expect(result.current).toHaveLength(12);
+    expect(result.current[0].date).toBe("2026-01-01");
+    expect(result.current[0].income).toBe(1000);
+    expect(result.current[6].date).toBe("2026-07-01");
+    expect(result.current[6].income).toBe(2000);
+  });
 });

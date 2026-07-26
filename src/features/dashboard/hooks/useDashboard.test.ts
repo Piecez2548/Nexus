@@ -95,4 +95,50 @@ describe("useDashboard", () => {
     expect(result.current.changes.income).toBeNull();
     expect(result.current.changes.expense).toBe(0);
   });
+
+  it("scopes income/expense/saving to the selected granularity, while balance stays all-time", () => {
+    seed([
+      // Previous month (June 2026) — should count toward all-time balance
+      // but NOT toward the current period's income/expense/saving.
+      { title: "Salary", amount: 20000, type: "income", category: "Salary", account: "Bank", date: "2026-06-01", status: "completed" },
+      { title: "Rent", amount: 8000, type: "expense", category: "Housing", account: "Bank", date: "2026-06-02", status: "completed" },
+      // Current month (July 2026)
+      { title: "Salary", amount: 30000, type: "income", category: "Salary", account: "Bank", date: "2026-07-01", status: "completed" },
+      { title: "Rent", amount: 4000, type: "expense", category: "Housing", account: "Bank", date: "2026-07-02", status: "completed" },
+    ]);
+
+    const { result } = renderHook(() => useDashboard(NOW, "month"));
+
+    // Period-scoped: only July's figures.
+    expect(result.current.income).toBe(30000);
+    expect(result.current.expense).toBe(4000);
+    expect(result.current.saving).toBe(26000);
+
+    // All-time, unaffected by granularity: both June and July combined.
+    expect(result.current.balance).toBe(20000 - 8000 + 30000 - 4000);
+  });
+
+  it("narrows to a single day under 'day' granularity", () => {
+    seed([
+      { title: "Salary", amount: 30000, type: "income", category: "Salary", account: "Bank", date: "2026-07-01", status: "completed" },
+      { title: "Coffee", amount: 100, type: "expense", category: "Food", account: "Cash", date: "2026-07-21", status: "completed" },
+    ]);
+
+    const { result } = renderHook(() => useDashboard(NOW, "day"));
+
+    expect(result.current.income).toBe(0);
+    expect(result.current.expense).toBe(100);
+  });
+
+  it("widens to the full calendar year under 'year' granularity", () => {
+    seed([
+      { title: "Salary", amount: 20000, type: "income", category: "Salary", account: "Bank", date: "2026-01-15", status: "completed" },
+      { title: "Salary", amount: 30000, type: "income", category: "Salary", account: "Bank", date: "2026-07-01", status: "completed" },
+      { title: "Salary", amount: 99999, type: "income", category: "Salary", account: "Bank", date: "2025-12-31", status: "completed" },
+    ]);
+
+    const { result } = renderHook(() => useDashboard(NOW, "year"));
+
+    expect(result.current.income).toBe(50000);
+  });
 });

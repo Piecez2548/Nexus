@@ -1,20 +1,25 @@
 import { useMemo } from "react";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
+import { getDashboardPeriodRange, getPreviousDashboardPeriodRange, type DashboardPeriodGranularity } from "@/features/dashboard/utils/dashboardPeriodRange";
+import { isDateWithinRange, type PeriodRange } from "@/features/finance/utils/periodRange";
 import type { Transaction } from "@/features/finance/types";
 
 function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function sumByType(transactions: Transaction[], type: "income" | "expense", month?: string) {
+function sumByType(transactions: Transaction[], type: "income" | "expense", range?: PeriodRange) {
   return transactions
-    .filter((t) => t.type === type && (month === undefined || t.date.slice(0, 7) === month))
+    .filter((t) => t.type === type && (range === undefined || isDateWithinRange(t.date, range)))
     .reduce((sum, t) => sum + t.amount, 0);
 }
 
 // Running balance using every transaction dated on or before the end of
 // `upToMonth`, so it reflects the same cumulative total the all-time
-// balance would have shown at that point in time.
+// balance would have shown at that point in time. Balance is a true
+// cumulative/net-worth-like figure — it always compares month-over-month,
+// independent of the dashboard's selected day/month/year granularity,
+// which only scopes income/expense/saving.
 function cumulativeBalanceAsOf(transactions: Transaction[], upToMonth: string) {
   return transactions.reduce((sum, t) => {
     if (t.date.slice(0, 7) > upToMonth) return sum;
@@ -32,24 +37,29 @@ function pctChange(cur: number, prev: number): number | null {
   return ((cur - prev) / Math.abs(prev)) * 100;
 }
 
-export function useDashboard(now = new Date()) {
+// `granularity` defaults to "month" so any caller that doesn't opt into the
+// Dashboard page's day/month/year selector (e.g. the separate Finance
+// Dashboard page) keeps its exact original month-over-month behavior.
+export function useDashboard(now = new Date(), granularity: DashboardPeriodGranularity = "month") {
   const { transactions } = useTransactionStore();
 
   return useMemo(() => {
-    const income = sumByType(transactions, "income");
-    const expense = sumByType(transactions, "expense");
-    const balance = income - expense;
-    const saving = balance;
+    // Balance is all-time and unaffected by the period selector.
+    const balance = sumByType(transactions, "income") - sumByType(transactions, "expense");
+
+    const range = getDashboardPeriodRange(granularity, now);
+    const previousRange = getPreviousDashboardPeriodRange(granularity, now);
+
+    const income = sumByType(transactions, "income", range);
+    const expense = sumByType(transactions, "expense", range);
+    const saving = income - expense;
+
+    const prevIncome = sumByType(transactions, "income", previousRange);
+    const prevExpense = sumByType(transactions, "expense", previousRange);
+    const prevSaving = prevIncome - prevExpense;
 
     const currentMonth = monthKey(now);
     const previousMonth = monthKey(new Date(now.getFullYear(), now.getMonth() - 1, 1));
-
-    const curIncome = sumByType(transactions, "income", currentMonth);
-    const prevIncome = sumByType(transactions, "income", previousMonth);
-    const curExpense = sumByType(transactions, "expense", currentMonth);
-    const prevExpense = sumByType(transactions, "expense", previousMonth);
-    const curSaving = curIncome - curExpense;
-    const prevSaving = prevIncome - prevExpense;
     const curBalance = cumulativeBalanceAsOf(transactions, currentMonth);
     const prevBalance = cumulativeBalanceAsOf(transactions, previousMonth);
 
@@ -59,18 +69,19 @@ export function useDashboard(now = new Date()) {
       balance,
       saving,
       changes: {
-        income: pctChange(curIncome, prevIncome),
-        expense: pctChange(curExpense, prevExpense),
-        saving: pctChange(curSaving, prevSaving),
+        income: pctChange(income, prevIncome),
+        expense: pctChange(expense, prevExpense),
+        saving: pctChange(saving, prevSaving),
         balance: pctChange(curBalance, prevBalance),
       },
-      // Raw current/previous-month figures, for panels that want the actual
-      // numbers rather than just the derived % change (e.g. a month-over-
-      // month comparison view).
+      // Raw current/previous-period figures, for panels that want the
+      // actual numbers rather than just the derived % change (named
+      // `monthly` for its original month-over-month use — the values
+      // reflect whichever `granularity` was requested).
       monthly: {
-        current: { income: curIncome, expense: curExpense, saving: curSaving },
+        current: { income, expense, saving },
         previous: { income: prevIncome, expense: prevExpense, saving: prevSaving },
       },
     };
-  }, [transactions, now]);
+  }, [transactions, now, granularity]);
 }
