@@ -15,6 +15,7 @@ import {
   TradingJournal,
   Todo,
   Habits,
+  Portfolio,
   Settings,
   NotFound,
 } from "./lazyPages";
@@ -71,6 +72,10 @@ export const router = createBrowserRouter([
       {
         path: "trading/journal",
         element: <TradingJournal />,
+      },
+      {
+        path: "trading/portfolio",
+        element: <Portfolio />,
       },
       {
         path: "todo",

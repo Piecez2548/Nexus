@@ -14,6 +14,7 @@ const SYNCED_TABLES = [
   "trades",
   "todos",
   "habits",
+  "holdings",
 ] as const;
 
 describe("hasUndecryptableLocalData", () => {

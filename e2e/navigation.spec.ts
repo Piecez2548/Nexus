@@ -30,6 +30,7 @@ test.describe("sidebar navigation", () => {
     const tradingLinks: Array<[label: string, heading: string | RegExp]> = [
       ["Trading Dashboard", "Trading Dashboard"],
       ["Trading Journal", "Trading Journal"],
+      ["Portfolio", "Portfolio"],
     ];
 
     for (const [label, heading] of tradingLinks) {

@@ -20,6 +20,7 @@ describe("backupService", () => {
       db.transactionTemplates.clear(),
       db.todos.clear(),
       db.habits.clear(),
+      db.holdings.clear(),
     ]);
     useAppLockStore.setState({ encryptionEnabled: false, wrappedDek: null, kekSalt: null, kekIterations: null });
     useEncryptionSessionStore.getState().clearDek();
@@ -131,6 +132,31 @@ describe("backupService", () => {
     expect(await db.habits.count()).toBe(0);
   });
 
+  it("imports a legacy backup file that predates holdings", async () => {
+    const legacyBackup = {
+      version: 1,
+      exportedAt: "2026-01-01T00:00:00.000Z",
+      data: {
+        transactions: [],
+        accounts: [{ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" }],
+        categories: [],
+        trades: [],
+        recipientProfiles: [],
+        merchants: [],
+        budgets: [],
+        goals: [],
+        transactionTemplates: [],
+        todos: [],
+        habits: [],
+        // holdings deliberately absent
+      },
+    };
+
+    await expect(importBackup(JSON.stringify(legacyBackup))).resolves.not.toThrow();
+    expect(await db.accounts.count()).toBe(1);
+    expect(await db.holdings.count()).toBe(0);
+  });
+
   it("rejects a malformed backup without touching existing data", async () => {
     await db.accounts.add({ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" });
 
@@ -153,6 +179,7 @@ describe("backupService", () => {
     });
     await db.todos.add({ title: "Leftover todo", completed: false, priority: "low" } as never);
     await db.habits.add({ name: "Leftover habit", frequency: "daily", completedDates: [] } as never);
+    await db.holdings.add({ symbol: "AAPL", market: "stocks", quantity: 10, avgCostPrice: 100 } as never);
 
     await resetAllData();
 
@@ -161,10 +188,12 @@ describe("backupService", () => {
     const categories = await db.categories.toArray();
     const todos = await db.todos.toArray();
     const habits = await db.habits.toArray();
+    const holdings = await db.holdings.toArray();
 
     expect(transactions).toHaveLength(0);
     expect(todos).toHaveLength(0);
     expect(habits).toHaveLength(0);
+    expect(holdings).toHaveLength(0);
     expect(accounts.length).toBeGreaterThan(0);
     expect(categories.length).toBeGreaterThan(0);
   });

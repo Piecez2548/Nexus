@@ -8,6 +8,7 @@ import RecentTransactionsList from "@/features/dashboard/components/RecentTransa
 import QuickActions from "@/features/dashboard/components/QuickActions";
 import BudgetPreviewPanel from "@/features/dashboard/components/BudgetPreviewPanel";
 import TradingOverviewPanel from "@/features/dashboard/components/TradingOverviewPanel";
+import PortfolioOverviewPanel from "@/features/dashboard/components/PortfolioOverviewPanel";
 import TodoPreviewPanel from "@/features/dashboard/components/TodoPreviewPanel";
 import HabitPreviewPanel from "@/features/dashboard/components/HabitPreviewPanel";
 import LifeModulesSection from "@/features/dashboard/components/LifeModulesSection";
@@ -96,6 +97,8 @@ export default function Dashboard() {
               <HabitPreviewPanel />
 
               <TradingOverviewPanel />
+
+              <PortfolioOverviewPanel />
 
               <BudgetPreviewPanel />
             </div>

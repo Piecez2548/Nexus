@@ -1,5 +1,4 @@
 import {
-  Briefcase,
   CalendarDays,
   Sparkles,
 } from "lucide-react";
@@ -8,7 +7,6 @@ import ComingSoonCard from "@/features/dashboard/components/ComingSoonCard";
 import { useTranslation } from "@/i18n/useTranslation";
 
 const MODULES = [
-  { icon: Briefcase, titleKey: "dashboard.portfolio", descriptionKey: "dashboard.portfolioDescription" },
   { icon: CalendarDays, titleKey: "dashboard.calendar", descriptionKey: "dashboard.calendarDescription" },
   { icon: Sparkles, titleKey: "dashboard.aiDailySummary", descriptionKey: "dashboard.aiDailySummaryDescription" },
 ];

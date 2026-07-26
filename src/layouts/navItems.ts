@@ -9,6 +9,7 @@ import {
   Users,
   LineChart,
   BookOpen,
+  Briefcase,
   ListChecks,
   Flame,
   type LucideIcon,
@@ -34,6 +35,7 @@ export const financeMenus: MenuItem[] = [
 export const tradingMenus: MenuItem[] = [
   { icon: LineChart, labelKey: "nav.tradingDashboard", path: "/trading" },
   { icon: BookOpen, labelKey: "nav.tradingJournal", path: "/trading/journal" },
+  { icon: Briefcase, labelKey: "nav.portfolio", path: "/trading/portfolio" },
 ];
 
 export const personalMenus: MenuItem[] = [

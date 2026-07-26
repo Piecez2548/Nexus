@@ -25,6 +25,7 @@ interface NexusBackup {
     transactionTemplates?: unknown[];
     todos?: unknown[];
     habits?: unknown[];
+    holdings?: unknown[];
   };
 }
 
@@ -84,6 +85,7 @@ export async function exportBackup(): Promise<string> {
     transactionTemplates,
     todos,
     habits,
+    holdings,
   ] = await Promise.all([
     db.transactions.toArray(),
     db.accounts.toArray(),
@@ -96,6 +98,7 @@ export async function exportBackup(): Promise<string> {
     db.transactionTemplates.toArray(),
     db.todos.toArray(),
     db.habits.toArray(),
+    db.holdings.toArray(),
   ]);
 
   const backup: NexusBackup = {
@@ -113,6 +116,7 @@ export async function exportBackup(): Promise<string> {
       transactionTemplates: await decryptForExport(dek, transactionTemplates),
       todos: await decryptForExport(dek, todos),
       habits: await decryptForExport(dek, habits),
+      holdings: await decryptForExport(dek, holdings),
     },
   };
 
@@ -141,7 +145,7 @@ function isNexusBackup(value: unknown): value is NexusBackup {
   if (!requiredKeys.every((key) => Array.isArray(data[key]))) return false;
 
   // Optional — missing entirely (older backup files) just means no rows.
-  const optionalKeys = ["transactionTemplates", "todos", "habits"];
+  const optionalKeys = ["transactionTemplates", "todos", "habits", "holdings"];
   return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
 }
 
@@ -172,6 +176,7 @@ export async function importBackup(jsonText: string): Promise<void> {
     transactionTemplates,
     todos,
     habits,
+    holdings,
   ] = await Promise.all([
     encryptForImport(dek, "transactions", data.transactions),
     encryptForImport(dek, "accounts", data.accounts),
@@ -183,6 +188,7 @@ export async function importBackup(jsonText: string): Promise<void> {
     encryptForImport(dek, "transactionTemplates", data.transactionTemplates ?? []),
     encryptForImport(dek, "todos", data.todos ?? []),
     encryptForImport(dek, "habits", data.habits ?? []),
+    encryptForImport(dek, "holdings", data.holdings ?? []),
   ]);
 
   await db.transaction(
@@ -199,6 +205,7 @@ export async function importBackup(jsonText: string): Promise<void> {
       db.transactionTemplates,
       db.todos,
       db.habits,
+      db.holdings,
     ],
     async () => {
       await Promise.all([
@@ -213,6 +220,7 @@ export async function importBackup(jsonText: string): Promise<void> {
         db.transactionTemplates.clear(),
         db.todos.clear(),
         db.habits.clear(),
+        db.holdings.clear(),
       ]);
 
       await Promise.all([
@@ -227,6 +235,7 @@ export async function importBackup(jsonText: string): Promise<void> {
         db.transactionTemplates.bulkAdd(transactionTemplates as never[]),
         db.todos.bulkAdd(todos as never[]),
         db.habits.bulkAdd(habits as never[]),
+        db.holdings.bulkAdd(holdings as never[]),
       ]);
     }
   );
@@ -247,6 +256,7 @@ export async function resetAllData(): Promise<void> {
       db.transactionTemplates,
       db.todos,
       db.habits,
+      db.holdings,
     ],
     async () => {
       await Promise.all([
@@ -261,6 +271,7 @@ export async function resetAllData(): Promise<void> {
         db.transactionTemplates.clear(),
         db.todos.clear(),
         db.habits.clear(),
+        db.holdings.clear(),
       ]);
     }
   );

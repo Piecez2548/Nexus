@@ -12,6 +12,7 @@ import type {
 import type { Trade } from "@/features/trading/types";
 import type { Todo } from "@/features/todo/types";
 import type { Habit } from "@/features/habits/types";
+import type { Holding } from "@/features/portfolio/types";
 import type { Tombstone, SyncStateRow } from "@/features/sync/types";
 
 class NexusDatabase extends Dexie {
@@ -27,6 +28,7 @@ class NexusDatabase extends Dexie {
   public transactionTemplates;
   public todos;
   public habits;
+  public holdings;
   public syncTombstones;
   public syncState;
 
@@ -185,6 +187,12 @@ class NexusDatabase extends Dexie {
         "++id,syncId,updatedAt",
     });
 
+    // Purely additive — new table, no existing data touched.
+    this.version(11).stores({
+      holdings:
+        "++id,syncId,updatedAt",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -217,6 +225,9 @@ class NexusDatabase extends Dexie {
 
     this.habits =
       this.table<Habit, number>("habits");
+
+    this.holdings =
+      this.table<Holding, number>("holdings");
 
     this.syncTombstones =
       this.table<Tombstone, number>("syncTombstones");

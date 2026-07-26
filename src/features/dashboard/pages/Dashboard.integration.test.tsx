@@ -10,6 +10,7 @@ import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { toLocalDateString } from "@/features/habits/utils/streak";
+import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
 
 describe("Dashboard (real data flow)", () => {
   beforeEach(async () => {
@@ -21,6 +22,8 @@ describe("Dashboard (real data flow)", () => {
     useTodoStore.setState({ todos: [], loading: false, error: null });
     await db.habits.clear();
     useHabitStore.setState({ habits: [], loading: false, error: null });
+    await db.holdings.clear();
+    useHoldingStore.setState({ holdings: [], loading: false, error: null });
   });
 
   it("shows an empty state with no transactions", async () => {
@@ -81,12 +84,11 @@ describe("Dashboard (real data flow)", () => {
 
     render(<Dashboard />, { wrapper: MemoryRouter });
 
-    // Three "coming soon" placeholder modules (Todo and Habit Tracker are
-    // real, working features now, so they're not among these).
-    expect(await screen.findByText("Portfolio")).toBeInTheDocument();
-    expect(screen.getByText("Calendar")).toBeInTheDocument();
+    // Two "coming soon" placeholder modules (Todo, Habit Tracker, and
+    // Portfolio are real, working features now, so they're not among these).
+    expect(await screen.findByText("Calendar")).toBeInTheDocument();
     expect(screen.getByText("AI Daily Summary")).toBeInTheDocument();
-    expect(screen.getAllByText("Coming Soon")).toHaveLength(3);
+    expect(screen.getAllByText("Coming Soon")).toHaveLength(2);
 
     // Trading overview reflects the real trade data: the AAPL trade closed
     // today falls within both the "today" and "monthly" P/L windows, so
@@ -136,5 +138,33 @@ describe("Dashboard (real data flow)", () => {
       const today = toLocalDateString(new Date());
       expect(stored[0].completedDates).toContain(today);
     });
+  });
+
+  it("reflects real holdings data in the Portfolio overview panel", async () => {
+    await db.holdings.bulkAdd([
+      {
+        symbol: "AAPL",
+        market: "stocks",
+        quantity: 10,
+        avgCostPrice: 100,
+        currentPrice: 120,
+        createdAt: "2026-07-20T00:00:00.000Z",
+      },
+      {
+        symbol: "BTC",
+        market: "crypto",
+        quantity: 1,
+        avgCostPrice: 50000,
+        createdAt: "2026-07-20T00:00:00.000Z",
+      },
+    ] as never[]);
+
+    render(<Dashboard />, { wrapper: MemoryRouter });
+
+    // 2 holdings, only 1 priced -> a partial-sum caveat and a real P/L from
+    // the priced holding alone (the unpriced BTC contributes 0 to the total).
+    expect(await screen.findByText("51,000")).toBeInTheDocument(); // total cost basis
+    expect(screen.getByText("+200 (+20%)")).toBeInTheDocument();
+    expect(screen.getByText(/1 of 2 priced/i)).toBeInTheDocument();
   });
 });
