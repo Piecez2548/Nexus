@@ -58,7 +58,10 @@ export default function TransactionTable({
   const { openTransactionDrawer } = useUIStore();
   const { categories } = useCategoryStore();
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>("date");
+  // `null` = no column selected yet, the default view: sorted by insertion
+  // order (most-recently-added first), using the existing Dexie
+  // auto-increment `id` rather than a dedicated "date added" field.
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const toast = useToast();
 
@@ -66,6 +69,9 @@ export default function TransactionTable({
     propTransactions ?? storeTransactions;
 
   const transactions = useMemo(() => {
+    if (sortKey === null) {
+      return [...unsortedTransactions].sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+    }
     const dir = sortDir === "asc" ? 1 : -1;
     return [...unsortedTransactions].sort(
       (a, b) => compareValues(sortValue(a, sortKey), sortValue(b, sortKey)) * dir
@@ -182,11 +188,6 @@ export default function TransactionTable({
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.badgeClass}`}>
                     {meta.label}
                   </span>
-                  {item.status === "pending" && (
-                    <span className="rounded-full bg-zinc-200/60 dark:bg-zinc-700/40 px-2.5 py-0.5 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                      Pending
-                    </span>
-                  )}
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
                     {new Date(item.date).toLocaleDateString("th-TH")}
                   </span>
@@ -243,7 +244,6 @@ export default function TransactionTable({
               <SortHeader label="Account" sortKeyName="account" />
               <SortHeader label="Amount" sortKeyName="amount" align="right" />
               <SortHeader label="Type" sortKeyName="type" align="center" />
-              <th className="px-6 py-4 text-center">Status</th>
               <th className="px-6 py-4 text-center">Action</th>
 
             </tr>
@@ -306,16 +306,6 @@ export default function TransactionTable({
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.badgeClass}`}>
                       {meta.label}
                     </span>
-                  </td>
-
-                  <td className="px-6 py-4 text-center">
-                    {item.status === "pending" ? (
-                      <span className="rounded-full bg-zinc-200/60 dark:bg-zinc-700/40 px-3 py-1 text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                        Pending
-                      </span>
-                    ) : (
-                      <span className="text-zinc-600">—</span>
-                    )}
                   </td>
 
                   <td className="px-6 py-4">

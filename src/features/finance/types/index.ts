@@ -28,7 +28,7 @@ export interface Transaction extends SyncMeta {
   tags?: string[];
   attachment?: string;
   note?: string;
-  status: TransactionStatus;
+  status?: TransactionStatus;
   recurring?: RecurringInfo | null;
   // Identifier used by the Rule Engine / Learning Engine to recognize a
   // recurring payee (e.g. a phone number or PromptPay ID) across visits.

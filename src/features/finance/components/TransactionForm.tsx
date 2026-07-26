@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ChevronDown } from "lucide-react";
 
 import {
   transactionSchema,
@@ -75,6 +76,7 @@ export default function TransactionForm() {
   } = useCategoryStore();
 
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const toast = useToast();
   const { t } = useTranslation();
 
@@ -199,7 +201,20 @@ export default function TransactionForm() {
       </FormField>
 
       {needsCategory && (
-        <RecipientSuggestionField register={register} watch={watch} setValue={setValue} />
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((v) => !v)}
+            className="flex items-center gap-1 text-sm text-violet-500"
+          >
+            <ChevronDown size={16} className={`transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
+            เพิ่มเติม
+          </button>
+
+          <div className={showAdvanced ? "mt-3" : undefined}>
+            <RecipientSuggestionField register={register} watch={watch} setValue={setValue} showInput={showAdvanced} />
+          </div>
+        </div>
       )}
 
       {needsCategory && (
@@ -262,14 +277,7 @@ export default function TransactionForm() {
         </FormField>
       </div>
 
-      <FormField label="สถานะ" htmlFor="transaction-status">
-        <select id="transaction-status" {...register("status")} className={inputClassName}>
-          <option value="completed">เสร็จสิ้น</option>
-          <option value="pending">รอดำเนินการ</option>
-        </select>
-      </FormField>
-
-      <TransactionMetaFields control={control} register={register} />
+      <TransactionMetaFields register={register} />
 
       <RecurringField control={control} />
 

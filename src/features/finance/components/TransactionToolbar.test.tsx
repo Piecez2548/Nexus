@@ -14,8 +14,6 @@ function renderToolbar(overrides: Partial<Parameters<typeof TransactionToolbar>[
     setFilterCategory: vi.fn(),
     filterAccount: "all",
     setFilterAccount: vi.fn(),
-    filterStatus: "all",
-    setFilterStatus: vi.fn(),
     filterDateFrom: "",
     setFilterDateFrom: vi.fn(),
     filterDateTo: "",
@@ -58,15 +56,6 @@ describe("TransactionToolbar", () => {
     expect(props.setFilterAccount).toHaveBeenCalledWith("Bank");
   });
 
-  it("calls setFilterStatus when a status is chosen", async () => {
-    const user = userEvent.setup();
-    const props = renderToolbar();
-
-    await user.selectOptions(screen.getByDisplayValue("All Statuses"), "pending");
-
-    expect(props.setFilterStatus).toHaveBeenCalledWith("pending");
-  });
-
   it("calls setFilterDateFrom and setFilterDateTo when the date range is changed", async () => {
     const user = userEvent.setup();
     const props = renderToolbar();
@@ -78,14 +67,13 @@ describe("TransactionToolbar", () => {
     expect(props.setFilterDateTo).toHaveBeenLastCalledWith("2026-07-31");
   });
 
-  it("resets search, type, category, account, status, and date range together", async () => {
+  it("resets search, type, category, account, and date range together", async () => {
     const user = userEvent.setup();
     const props = renderToolbar({
       search: "coffee",
       filterType: "expense",
       filterCategory: "Food",
       filterAccount: "Cash",
-      filterStatus: "pending",
       filterDateFrom: "2026-07-01",
       filterDateTo: "2026-07-31",
     });
@@ -96,7 +84,6 @@ describe("TransactionToolbar", () => {
     expect(props.setFilterType).toHaveBeenCalledWith("all");
     expect(props.setFilterCategory).toHaveBeenCalledWith("all");
     expect(props.setFilterAccount).toHaveBeenCalledWith("all");
-    expect(props.setFilterStatus).toHaveBeenCalledWith("all");
     expect(props.setFilterDateFrom).toHaveBeenCalledWith("");
     expect(props.setFilterDateTo).toHaveBeenCalledWith("");
   });

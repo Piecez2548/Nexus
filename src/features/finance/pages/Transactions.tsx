@@ -32,7 +32,6 @@ export default function Transactions() {
   const [filterType, setFilterType] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterAccount, setFilterAccount] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -65,11 +64,6 @@ export default function Transactions() {
           ? true
           : item.account === filterAccount || item.toAccount === filterAccount;
 
-      const matchStatus =
-        filterStatus === "all"
-          ? true
-          : item.status === filterStatus;
-
       const matchDateFrom = !filterDateFrom || item.date >= filterDateFrom;
       const matchDateTo = !filterDateTo || item.date <= filterDateTo;
 
@@ -78,7 +72,6 @@ export default function Transactions() {
         matchType &&
         matchCategory &&
         matchAccount &&
-        matchStatus &&
         matchDateFrom &&
         matchDateTo
       );
@@ -89,7 +82,6 @@ export default function Transactions() {
     filterType,
     filterCategory,
     filterAccount,
-    filterStatus,
     filterDateFrom,
     filterDateTo,
   ]);
@@ -136,8 +128,6 @@ export default function Transactions() {
         setFilterCategory={setFilterCategory}
         filterAccount={filterAccount}
         setFilterAccount={setFilterAccount}
-        filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
         filterDateFrom={filterDateFrom}
         setFilterDateFrom={setFilterDateFrom}
         filterDateTo={filterDateTo}

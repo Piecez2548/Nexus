@@ -19,9 +19,6 @@ interface Props {
   filterAccount: string;
   setFilterAccount: (value: string) => void;
 
-  filterStatus: string;
-  setFilterStatus: (value: string) => void;
-
   filterDateFrom: string;
   setFilterDateFrom: (value: string) => void;
 
@@ -43,8 +40,6 @@ export default function TransactionToolbar({
   setFilterCategory,
   filterAccount,
   setFilterAccount,
-  filterStatus,
-  setFilterStatus,
   filterDateFrom,
   setFilterDateFrom,
   filterDateTo,
@@ -175,26 +170,6 @@ export default function TransactionToolbar({
           ))}
         </select>
 
-        {/* Status */}
-
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-violet-500"
-        >
-          <option value="all">
-            {t("transactions.allStatuses")}
-          </option>
-
-          <option value="completed">
-            {t("common.completed")}
-          </option>
-
-          <option value="pending">
-            {t("common.pending")}
-          </option>
-        </select>
-
         {/* Date range */}
 
         <label className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3">
@@ -229,7 +204,6 @@ export default function TransactionToolbar({
             setFilterType("all");
             setFilterCategory("all");
             setFilterAccount("all");
-            setFilterStatus("all");
             setFilterDateFrom("");
             setFilterDateTo("");
           }}

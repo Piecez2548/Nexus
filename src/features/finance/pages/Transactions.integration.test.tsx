@@ -231,7 +231,7 @@ describe("Transactions page (add / edit / delete flow)", () => {
     expect(within(table).getByText("Coffee")).toBeInTheDocument();
   });
 
-  it("sorts the table by date (newest first) by default, and toggles on header click", async () => {
+  it("defaults to insertion order (most recently added first), and switches to date sort on header click", async () => {
     await db.transactions.bulkAdd([
       { title: "Old rent", amount: 8000, type: "expense", category: "Food", account: "Cash", date: "2026-07-01", status: "completed" },
       { title: "New coffee", amount: 120, type: "expense", category: "Food", account: "Cash", date: "2026-07-21", status: "completed" },
@@ -247,11 +247,41 @@ describe("Transactions page (add / edit / delete flow)", () => {
         .slice(1)
         .map((row) => within(row).getAllByRole("cell")[1].textContent);
 
-    // Default: newest date first.
+    // Default: most-recently-added row first ("New coffee" was inserted
+    // second, so it has the higher `id`) — no column header is "active" yet.
     expect(titleCells()).toEqual(["New coffee", "Old rent"]);
 
+    // Clicking "Date" switches to an explicit date-ascending sort.
     await user.click(within(table).getByRole("button", { name: /^Date/i }));
     expect(titleCells()).toEqual(["Old rent", "New coffee"]);
+  });
+
+  it("orders by insertion (id), not by date, when a later-dated row was added first", async () => {
+    await db.transactions.bulkAdd([
+      // Added first (lower id) despite having the later date.
+      { title: "Backfilled July trip", amount: 3000, type: "expense", category: "Food", account: "Cash", date: "2026-07-20", status: "completed" },
+      // Added second (higher id) despite having the earlier date.
+      { title: "Just logged", amount: 50, type: "expense", category: "Food", account: "Cash", date: "2026-01-01", status: "completed" },
+    ]);
+
+    const user = userEvent.setup();
+    renderTransactionsPage();
+
+    const table = await screen.findByRole("table");
+    const titleCells = () =>
+      within(table)
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => within(row).getAllByRole("cell")[1].textContent);
+
+    // Insertion order (highest id first), not date order.
+    expect(titleCells()).toEqual(["Just logged", "Backfilled July trip"]);
+
+    await user.click(within(table).getByRole("button", { name: /^Date/i }));
+    expect(titleCells()).toEqual(["Just logged", "Backfilled July trip"]); // ascending by date
+
+    await user.click(within(table).getByRole("button", { name: /^Date/i }));
+    expect(titleCells()).toEqual(["Backfilled July trip", "Just logged"]); // descending by date
   });
 
   it("sorts the table by amount when the Amount header is clicked", async () => {

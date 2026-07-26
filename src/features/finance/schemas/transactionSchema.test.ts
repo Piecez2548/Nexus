@@ -73,6 +73,12 @@ describe("transactionSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts a transaction with no status at all (the form no longer collects one)", () => {
+    const { status: _status, ...withoutStatus } = validExpense;
+    const result = transactionSchema.safeParse(withoutStatus);
+    expect(result.success).toBe(true);
+  });
+
   it("rejects an empty account", () => {
     const result = transactionSchema.safeParse({
       ...validExpense,

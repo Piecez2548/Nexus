@@ -20,11 +20,11 @@ describe("transactionsToCsv", () => {
     const lines = csv.split("\n");
 
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toBe("date,title,type,category,account,toAccount,amount,status,tags,note,recipient");
+    expect(lines[0]).toBe("date,title,type,category,account,toAccount,amount,tags,note,recipient");
     // Leading apostrophe forces Excel to treat the date as literal text
     // instead of auto-converting it to a date serial number (see
     // forceTextForExcel) — parseTransactionsCsv strips it back off.
-    expect(lines[1]).toBe("'2026-07-21,Coffee,expense,Food,Cash,,58,completed,,,");
+    expect(lines[1]).toBe("'2026-07-21,Coffee,expense,Food,Cash,,58,,,");
   });
 
   it("quotes fields containing commas or quotes", () => {
@@ -118,6 +118,18 @@ describe("parseTransactionsCsv", () => {
 
   it("returns nothing for an empty file", () => {
     expect(parseTransactionsCsv("")).toEqual({ valid: [], errors: [] });
+  });
+
+  it("imports a CSV with no status column at all (the current export format), defaulting status to completed", () => {
+    const csv = [
+      "date,title,type,category,account,toAccount,amount,tags,note,recipient",
+      "2026-07-21,Coffee,expense,Food,Cash,,58,,,",
+    ].join("\n");
+
+    const { valid, errors } = parseTransactionsCsv(csv);
+
+    expect(errors).toHaveLength(0);
+    expect(valid[0].status).toBe("completed");
   });
 
   it("strips a leading apostrophe from the date field (Excel's force-text marker)", () => {

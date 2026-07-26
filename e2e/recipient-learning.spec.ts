@@ -8,6 +8,7 @@ test.describe("Rule Engine / Learning Engine", () => {
     await page.getByRole("button", { name: "Add Transaction" }).click();
     await page.getByLabel("ชื่อรายการ").fill("ก๋วยเตี๋ยว");
     await page.getByLabel("จำนวนเงิน").fill("58");
+    await page.getByRole("button", { name: "เพิ่มเติม" }).click();
     await page.getByLabel("ผู้รับ / เบอร์โทร / PromptPay").fill("0812345678");
     await page.getByLabel("หมวดหมู่").selectOption({ label: "Food" });
     await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
@@ -18,6 +19,7 @@ test.describe("Rule Engine / Learning Engine", () => {
     await page.getByRole("button", { name: "Add Transaction" }).click();
     await page.getByLabel("ชื่อรายการ").fill("มื้อเที่ยง");
     await page.getByLabel("จำนวนเงิน").fill("65");
+    await page.getByRole("button", { name: "เพิ่มเติม" }).click();
     await page.getByLabel("ผู้รับ / เบอร์โทร / PromptPay").fill("0812345678");
 
     await expect(page.getByLabel("หมวดหมู่")).toHaveValue("Food");

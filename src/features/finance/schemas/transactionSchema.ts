@@ -47,7 +47,7 @@ export const transactionSchema = z
 
     recipient: z.string().optional(),
 
-    status: transactionStatusEnum,
+    status: transactionStatusEnum.optional(),
 
     recurring: z
       .object({ frequency: recurringFrequencyEnum })

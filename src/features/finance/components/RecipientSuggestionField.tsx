@@ -19,12 +19,17 @@ interface Props {
   register: UseFormRegister<TransactionFormData>;
   watch: UseFormWatch<TransactionFormData>;
   setValue: UseFormSetValue<TransactionFormData>;
+  // Only the recipient input itself is tucked under the form's "More"
+  // disclosure — the suggestion effect below must keep running regardless,
+  // so a title-only merchant match (no recipient needed) keeps working
+  // without the user ever having to expand it.
+  showInput: boolean;
 }
 
 // Rule Engine, wired into the form: as the user types a recipient (or a
 // title matching a known merchant), suggest — and pre-fill — a category
 // learned from past transactions, instead of asking every time.
-export default function RecipientSuggestionField({ register, watch, setValue }: Props) {
+export default function RecipientSuggestionField({ register, watch, setValue, showInput }: Props) {
   const recipient = watch("recipient");
   const title = watch("title");
   const [suggestion, setSuggestion] = useState<CategorySuggestion | null>(null);
@@ -59,22 +64,26 @@ export default function RecipientSuggestionField({ register, watch, setValue }: 
   }, [recipient, title, setValue]);
 
   return (
-    <FormField label="ผู้รับ / เบอร์โทร / PromptPay" htmlFor="transaction-recipient">
-      <input
-        id="transaction-recipient"
-        {...register("recipient")}
-        placeholder="เช่น 0812345678 (ไม่บังคับ)"
-        className={inputClassName}
-      />
+    <>
+      {showInput && (
+        <FormField label="ผู้รับ / เบอร์โทร / PromptPay" htmlFor="transaction-recipient">
+          <input
+            id="transaction-recipient"
+            {...register("recipient")}
+            placeholder="เช่น 0812345678 (ไม่บังคับ)"
+            className={inputClassName}
+          />
+        </FormField>
+      )}
 
       {suggestion && (
-        <p className="mt-1 text-xs text-violet-400">
+        <p className="text-xs text-violet-400">
           🤖 แนะนำหมวดหมู่ "{suggestion.category}" จาก
           {suggestion.source === "recipient"
             ? ` ประวัติ (${suggestion.label}, ${suggestion.confidence}%)`
             : ` ฐานข้อมูลร้านค้า (${suggestion.label})`}
         </p>
       )}
-    </FormField>
+    </>
   );
 }

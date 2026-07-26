@@ -47,6 +47,7 @@ describe("Rule Engine / Learning Engine (end to end through the real UI)", () =>
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
     await user.type(await screen.findByLabelText("ชื่อรายการ"), "ก๋วยเตี๋ยว");
     await user.type(screen.getByLabelText("จำนวนเงิน"), "58");
+    await user.click(screen.getByRole("button", { name: "เพิ่มเติม" }));
     await user.type(screen.getByLabelText("ผู้รับ / เบอร์โทร / PromptPay"), "0812345678");
     await user.selectOptions(screen.getByLabelText("หมวดหมู่"), "Food");
     await user.selectOptions(screen.getByLabelText("บัญชี"), "Cash");
@@ -62,6 +63,11 @@ describe("Rule Engine / Learning Engine (end to end through the real UI)", () =>
     expect(profile.transactionCount).toBe(1);
 
     // --- Second transaction: same recipient, different title — category should auto-fill. ---
+    // In jsdom, the Drawer's framer-motion exit transition never actually
+    // completes synchronously, so the same TransactionForm instance (and
+    // its local "More" state) survives the close/reopen here — unlike a
+    // real browser, where the drawer fully unmounts and resets it (covered
+    // by e2e/recipient-learning.spec.ts instead). No second click needed.
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
     await user.type(await screen.findByLabelText("ชื่อรายการ"), "เที่ยงวันนี้");
     await user.type(screen.getByLabelText("จำนวนเงิน"), "65");
