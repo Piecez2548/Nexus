@@ -21,7 +21,7 @@ function NavItem({ icon: Icon, labelKey, path }: MenuItem) {
   return (
     <NavLink
       to={path}
-      end={path === "/dashboard"}
+      end
       className={({ isActive }) =>
         `flex items-center gap-3 rounded-xl px-4 py-3 transition-all ${
           isActive
