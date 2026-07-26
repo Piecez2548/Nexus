@@ -10,6 +10,6 @@ export function getFrequencyLabels(t: Translate): Record<HabitFrequency, string>
 }
 
 export const FREQUENCY_BADGE_CLASS: Record<HabitFrequency, string> = {
-  daily: "bg-violet-500/15 text-violet-500",
+  daily: "bg-brand-500/15 text-brand-500",
   weekly: "bg-sky-500/15 text-sky-500",
 };

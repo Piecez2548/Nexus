@@ -46,7 +46,7 @@ export default function ExportTransactionsPanel({ transactions }: Props) {
             disabled={disabled}
             className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-4 transition hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-50"
           >
-            <Icon size={22} className="text-violet-500" />
+            <Icon size={22} className="text-brand-500" />
             <span className="text-sm font-medium">{label}</span>
             <span className="text-xs text-zinc-500 dark:text-zinc-400">{extension}</span>
           </button>

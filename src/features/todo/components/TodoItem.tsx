@@ -66,7 +66,7 @@ export default function TodoItem({ todo, onEdit }: Props) {
           }
           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
             todo.completed
-              ? "border-violet-600 bg-violet-600 text-white"
+              ? "border-brand-600 bg-brand-600 text-white"
               : "border-zinc-300 dark:border-zinc-600"
           }`}
         >
@@ -100,7 +100,7 @@ export default function TodoItem({ todo, onEdit }: Props) {
             )}
 
             {todo.recurring && (
-              <span className="flex items-center gap-1 text-xs text-violet-500">
+              <span className="flex items-center gap-1 text-xs text-brand-500">
                 <Repeat size={12} />
                 {recurringLabels[todo.recurring]}
               </span>
@@ -114,7 +114,7 @@ export default function TodoItem({ todo, onEdit }: Props) {
           <button
             onClick={onEdit}
             aria-label={t("common.editName", { name: todo.title })}
-            className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+            className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
           >
             <Pencil size={16} />
           </button>

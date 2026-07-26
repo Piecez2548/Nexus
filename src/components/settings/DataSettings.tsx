@@ -38,7 +38,7 @@ function DataTile({ icon, label, description, onClick, disabled, tone = "default
           : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700"
       }`}
     >
-      <span className={tone === "danger" ? "text-red-500" : "text-violet-500"}>{icon}</span>
+      <span className={tone === "danger" ? "text-red-500" : "text-brand-500"}>{icon}</span>
 
       <span className={`font-medium ${tone === "danger" ? "text-red-500" : ""}`}>{label}</span>
 
@@ -295,7 +295,7 @@ export default function DataSettings() {
                 type="button"
                 onClick={handleConfirmMergeTransactions}
                 disabled={busy}
-                className="flex-1 rounded-xl bg-violet-600 py-2.5 font-medium text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 rounded-xl bg-brand-600 py-2.5 font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {t("settings.confirmMergeTransactions")}
               </button>

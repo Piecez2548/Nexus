@@ -43,7 +43,7 @@ export default function TradingDashboard() {
 
         <button
           onClick={() => openTradeDrawer()}
-          className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 font-medium transition hover:bg-violet-700"
+          className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 font-medium transition hover:bg-brand-700"
         >
           <Plus size={18} />
           {t("trading.addTrade")}

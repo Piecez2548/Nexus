@@ -24,7 +24,7 @@ interface BatchItem {
 }
 
 const inputClassName =
-  "w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-2 py-1.5 text-sm outline-none focus:border-violet-500";
+  "w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-2 py-1.5 text-sm outline-none focus:border-brand-500";
 
 export default function SlipScanner({ open, onClose }: Props) {
   const { openTransactionDrawerWithDraft } = useUIStore();
@@ -188,7 +188,7 @@ export default function SlipScanner({ open, onClose }: Props) {
 
         {scanning && (
           <div className="flex items-center justify-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 text-sm text-zinc-600 dark:text-zinc-400">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 dark:border-zinc-600 border-t-violet-500" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 dark:border-zinc-600 border-t-brand-500" />
             {scanProgress ? `กำลังอ่านสลิป ${scanProgress.done}/${scanProgress.total}...` : "กำลังอ่านสลิป..."}
           </div>
         )}
@@ -263,7 +263,7 @@ export default function SlipScanner({ open, onClose }: Props) {
               type="button"
               onClick={handleSaveBatch}
               disabled={saving}
-              className="w-full rounded-xl bg-violet-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "กำลังบันทึก..." : `บันทึกทั้งหมด (${batchItems.length})`}
             </button>
@@ -273,8 +273,8 @@ export default function SlipScanner({ open, onClose }: Props) {
         {!batchItems && (
           <>
             <div className="grid grid-cols-2 gap-3">
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center transition hover:border-violet-500">
-                <Camera size={26} className="text-violet-500" />
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center transition hover:border-brand-500">
+                <Camera size={26} className="text-brand-500" />
                 <span className="text-sm font-medium">ถ่ายรูป</span>
 
                 <input
@@ -287,8 +287,8 @@ export default function SlipScanner({ open, onClose }: Props) {
                 />
               </label>
 
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center transition hover:border-violet-500">
-                <Image size={26} className="text-violet-500" />
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center transition hover:border-brand-500">
+                <Image size={26} className="text-brand-500" />
                 <span className="text-sm font-medium">เลือกจากคลังภาพ</span>
 
                 <input

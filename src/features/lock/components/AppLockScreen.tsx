@@ -6,7 +6,7 @@ import { isSyncConfigured } from "@/lib/supabaseClient";
 import EncryptionRecoveryFlow from "@/features/encryption/components/EncryptionRecoveryFlow";
 
 const inputClassName =
-  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 text-center text-lg tracking-[0.5em] outline-none focus:border-violet-500";
+  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 text-center text-lg tracking-[0.5em] outline-none focus:border-brand-500";
 
 interface Props {
   mode: "setup" | "unlock";
@@ -84,7 +84,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
     >
       <div className="flex flex-col items-center gap-3 text-center">
         <div
-          className="flex h-12 w-12 items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-600"
+          className="flex h-12 w-12 items-center justify-center bg-gradient-to-br from-brand-500 to-brand-glow"
           style={{ clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)" }}
         >
           <Zap size={22} className="text-white" fill="currentColor" />
@@ -148,7 +148,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-xl bg-violet-600 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? "กำลังดำเนินการ..." : mode === "setup" ? "ตั้งค่า PIN" : "ปลดล็อก"}
       </button>
@@ -160,7 +160,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
             setError(null);
             setShowRecovery(true);
           }}
-          className="w-full text-center text-sm text-violet-600 hover:underline dark:text-violet-400"
+          className="w-full text-center text-sm text-brand-600 hover:underline dark:text-brand-400"
         >
           ลืม PIN? กู้คืนผ่านบัญชี Sync
         </button>

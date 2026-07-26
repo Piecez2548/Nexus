@@ -44,7 +44,7 @@ export default function Habits() {
 
         <button
           onClick={handleAdd}
-          className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-700"
+          className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700"
         >
           <Plus size={18} />
           {t("habits.addHabit")}

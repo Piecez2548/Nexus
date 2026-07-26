@@ -33,7 +33,7 @@ export default function FileField({ id, value, onChange }: Props) {
         <a
           href={value}
           download
-          className="inline-block text-xs text-violet-400 hover:underline"
+          className="inline-block text-xs text-brand-400 hover:underline"
         >
           ดูไฟล์แนบ
         </a>

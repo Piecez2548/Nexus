@@ -9,7 +9,7 @@ import { useTranslation } from "@/i18n/useTranslation";
 import SettingsCard from "./SettingsCard";
 
 const inputClassName =
-  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-violet-500";
+  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
 
 export default function SyncSettings() {
   const { user, loading, error, needsEmailConfirmation, syncing, lastSyncedAt, signUp, signIn, signOut, sync } =
@@ -91,7 +91,7 @@ export default function SyncSettings() {
             type="button"
             onClick={handleSyncNow}
             disabled={syncing}
-            className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RefreshCw size={16} className={syncing ? "animate-spin" : ""} />
             {t("settings.syncNow")}
@@ -149,7 +149,7 @@ export default function SyncSettings() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-violet-600 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? t("settings.processing") : mode === "signUp" ? t("settings.signUp") : t("settings.signIn")}
         </button>
@@ -157,7 +157,7 @@ export default function SyncSettings() {
         <button
           type="button"
           onClick={() => setMode(mode === "signUp" ? "signIn" : "signUp")}
-          className="w-full text-center text-sm text-violet-500 hover:underline"
+          className="w-full text-center text-sm text-brand-500 hover:underline"
         >
           {mode === "signUp" ? t("settings.hasAccountSignIn") : t("settings.noAccountSignUp")}
         </button>

@@ -22,7 +22,7 @@ export default function DashboardPeriodSelector() {
           aria-pressed={granularity === value}
           className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
             granularity === value
-              ? "bg-violet-600 text-white shadow"
+              ? "bg-brand-600 text-white shadow"
               : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
           }`}
         >

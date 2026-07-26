@@ -108,7 +108,7 @@ export default function Transactions() {
 
           <button
             onClick={handleAddClick}
-            className="hidden items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-zinc-900 dark:text-white transition hover:bg-violet-700 md:flex"
+            className="hidden items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-zinc-900 dark:text-white transition hover:bg-brand-700 md:flex"
           >
             <Plus size={18} />
             {t("transactions.addTransaction")}

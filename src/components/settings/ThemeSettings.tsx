@@ -1,4 +1,4 @@
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun, Monitor, Contrast } from "lucide-react";
 
 import { useAppSettingsStore, type ThemeMode } from "@/store/appSettingsStore";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -8,6 +8,7 @@ const OPTIONS: { mode: ThemeMode; labelKey: string; icon: typeof Sun }[] = [
   { mode: "light", labelKey: "settings.light", icon: Sun },
   { mode: "dark", labelKey: "settings.dark", icon: Moon },
   { mode: "system", labelKey: "settings.system", icon: Monitor },
+  { mode: "mono", labelKey: "settings.mono", icon: Contrast },
 ];
 
 export default function ThemeSettings() {
@@ -28,7 +29,7 @@ export default function ThemeSettings() {
               aria-pressed={isActive}
               className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                 isActive
-                  ? "bg-white dark:bg-zinc-900 text-violet-600 dark:text-violet-400 shadow"
+                  ? "bg-white dark:bg-zinc-900 text-brand-600 dark:text-brand-400 shadow"
                   : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >

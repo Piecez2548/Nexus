@@ -20,7 +20,7 @@ type SortKey = "entryDate" | "symbol" | "quantity" | "entryPrice" | "exitPrice" 
 const PAGE_SIZE = 10;
 
 const RESULT_BADGE_CLASS: Record<string, string> = {
-  open: "bg-violet-500/15 text-violet-400",
+  open: "bg-brand-500/15 text-brand-400",
   win: "bg-green-500/15 text-green-400",
   loss: "bg-red-500/15 text-red-400",
   unknown: "bg-zinc-200/60 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-300",
@@ -131,7 +131,7 @@ export default function TradeHistoryTable({ trades }: Props) {
         <button
           type="button"
           onClick={() => toggleSort(sortKeyName)}
-          className={`flex w-full items-center gap-1 ${alignClass} transition hover:text-violet-500`}
+          className={`flex w-full items-center gap-1 ${alignClass} transition hover:text-brand-500`}
         >
           {label}
           <Icon size={13} />
@@ -211,7 +211,7 @@ export default function TradeHistoryTable({ trades }: Props) {
                 <button
                   onClick={() => openTradeDrawer(trade)}
                   aria-label={t("common.editName", { name: trade.symbol })}
-                  className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+                  className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
                 >
                   <Pencil size={16} />
                 </button>
@@ -306,7 +306,7 @@ export default function TradeHistoryTable({ trades }: Props) {
                       target="_blank"
                       rel="noreferrer"
                       aria-label={t("trading.viewScreenshot", { symbol: trade.symbol })}
-                      className="inline-flex items-center gap-1 rounded-lg p-2 text-zinc-500 transition hover:bg-violet-600/20 hover:text-violet-400"
+                      className="inline-flex items-center gap-1 rounded-lg p-2 text-zinc-500 transition hover:bg-brand-600/20 hover:text-brand-400"
                     >
                       <Image size={16} />
                       {trade.screenshots.length > 1 && (
@@ -329,7 +329,7 @@ export default function TradeHistoryTable({ trades }: Props) {
                     <button
                       onClick={() => openTradeDrawer(trade)}
                       aria-label={t("common.editName", { name: trade.symbol })}
-                      className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+                      className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
                     >
                       <Pencil size={18} />
                     </button>

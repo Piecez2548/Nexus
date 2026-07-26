@@ -6,7 +6,7 @@ import { useTranslation } from "@/i18n/useTranslation";
 import FormField from "@/components/ui/FormField";
 
 const inputClassName =
-  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-violet-500";
+  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
 
 export default function LoginScreen() {
   const { loading, error, needsEmailConfirmation, signUp, signIn } = useAuthStore();
@@ -29,18 +29,18 @@ export default function LoginScreen() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-sm space-y-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8"
+      className="w-full max-w-sm space-y-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 shadow-xl shadow-zinc-900/5 dark:shadow-black/40"
     >
-      <div className="flex flex-col items-center gap-3 text-center">
+      <div className="flex flex-col items-center gap-4 text-center">
         <div
-          className="flex h-12 w-12 items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-600"
+          className="flex h-14 w-14 items-center justify-center bg-gradient-to-br from-brand-500 to-brand-glow"
           style={{ clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)" }}
         >
-          <Zap size={22} className="text-white" fill="currentColor" />
+          <Zap size={24} className="text-white" fill="currentColor" />
         </div>
 
         <div>
-          <h1 className="text-xl font-bold">
+          <h1 className="text-2xl font-extrabold tracking-tight">
             {mode === "signUp" ? t("login.createAccount") : t("login.welcomeBack")}
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -84,7 +84,7 @@ export default function LoginScreen() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-xl bg-violet-600 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-brand-600 py-3.5 text-base font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? t("settings.processing") : mode === "signUp" ? t("settings.signUp") : t("settings.signIn")}
       </button>
@@ -92,7 +92,7 @@ export default function LoginScreen() {
       <button
         type="button"
         onClick={() => setMode(mode === "signUp" ? "signIn" : "signUp")}
-        className="w-full text-center text-sm text-violet-500 hover:underline"
+        className="w-full text-center text-sm font-medium text-brand-500 hover:underline"
       >
         {mode === "signUp" ? t("settings.hasAccountSignIn") : t("settings.noAccountSignUp")}
       </button>

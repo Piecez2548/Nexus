@@ -20,7 +20,7 @@ function TabLink({ to, icon: Icon, labelKey, end }: TabLinkProps) {
       end={end}
       className={({ isActive }) =>
         `flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs transition ${
-          isActive ? "text-violet-500" : "text-zinc-500 dark:text-zinc-400"
+          isActive ? "text-brand-500" : "text-zinc-500 dark:text-zinc-400"
         }`
       }
     >
@@ -51,7 +51,7 @@ export default function MobileTabBar({ onMoreClick }: Props) {
           type="button"
           onClick={() => openTransactionDrawer()}
           aria-label={t("transactions.addTransaction")}
-          className="flex h-14 w-14 -translate-y-4 items-center justify-center rounded-full bg-violet-600 text-white shadow-lg shadow-violet-600/30 transition hover:bg-violet-700"
+          className="flex h-14 w-14 -translate-y-4 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/30 transition hover:bg-brand-700"
         >
           <Plus size={26} />
         </button>

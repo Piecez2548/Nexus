@@ -25,7 +25,7 @@ import RecipientSuggestionField from "@/features/finance/components/RecipientSug
 import { useTranslation } from "@/i18n/useTranslation";
 
 const inputClassName =
-  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-violet-500";
+  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
 
 const TYPE_LABEL_KEYS: Record<TransactionFormData["type"], string> = {
   expense: "transactions.expense",
@@ -205,7 +205,7 @@ export default function TransactionForm() {
           <button
             type="button"
             onClick={() => setShowAdvanced((v) => !v)}
-            className="flex items-center gap-1 text-sm text-violet-500"
+            className="flex items-center gap-1 text-sm text-brand-500"
           >
             <ChevronDown size={16} className={`transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
             เพิ่มเติม
@@ -288,7 +288,7 @@ export default function TransactionForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-xl bg-violet-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
       </button>

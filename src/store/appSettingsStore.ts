@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type ThemeMode = "dark" | "light" | "system";
+export type ThemeMode = "dark" | "light" | "system" | "mono";
 export type Currency = "THB" | "USD" | "EUR" | "GBP" | "JPY";
 export type DateFormat = "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
 export type NumberFormat = "1,234.56" | "1.234,56" | "1 234.56";

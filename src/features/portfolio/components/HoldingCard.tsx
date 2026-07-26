@@ -52,7 +52,7 @@ export default function HoldingCard({ holding, onEdit }: Props) {
       <div className="mb-3 flex items-start justify-between">
         <div>
           <h3 className="font-semibold">{holding.symbol}</h3>
-          <span className="mt-1 inline-block rounded-full bg-violet-500/15 px-2 py-0.5 text-xs font-semibold text-violet-500">
+          <span className="mt-1 inline-block rounded-full bg-brand-500/15 px-2 py-0.5 text-xs font-semibold text-brand-500">
             {MARKET_LABELS[holding.market]}
           </span>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -64,7 +64,7 @@ export default function HoldingCard({ holding, onEdit }: Props) {
           <button
             onClick={onEdit}
             aria-label={t("portfolio.editHolding", { symbol: holding.symbol })}
-            className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+            className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
           >
             <Pencil size={16} />
           </button>
@@ -121,7 +121,7 @@ export default function HoldingCard({ holding, onEdit }: Props) {
           onChange={(e) => setPriceInput(e.target.value)}
           placeholder={t("portfolio.currentPricePlaceholder")}
           aria-label={t("portfolio.currentPriceInputLabel", { symbol: holding.symbol })}
-          className="min-w-0 flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-2 text-sm outline-none focus:border-violet-500"
+          className="min-w-0 flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-2 text-sm outline-none focus:border-brand-500"
         />
         <button
           onClick={handleUpdatePrice}

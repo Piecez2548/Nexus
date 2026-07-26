@@ -10,6 +10,13 @@ export function ThemeEffect() {
 
   useEffect(() => {
     const apply = () => {
+      if (themeMode === "mono") {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.add("mono");
+        return;
+      }
+
+      document.documentElement.classList.remove("mono");
       document.documentElement.classList.toggle("dark", resolveIsDark(themeMode));
     };
 

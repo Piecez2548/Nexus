@@ -14,7 +14,7 @@ function setMatchMedia(matches: boolean) {
 
 describe("ThemeEffect", () => {
   beforeEach(() => {
-    document.documentElement.classList.remove("dark");
+    document.documentElement.classList.remove("dark", "mono");
     useAppSettingsStore.setState({ themeMode: "dark" });
   });
 
@@ -41,6 +41,23 @@ describe("ThemeEffect", () => {
     setMatchMedia(true);
     useAppSettingsStore.setState({ themeMode: "system" });
     render(<ThemeEffect />);
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+  });
+
+  it("adds the mono class (and never dark) when themeMode is mono", () => {
+    setMatchMedia(false);
+    useAppSettingsStore.setState({ themeMode: "mono" });
+    render(<ThemeEffect />);
+    expect(document.documentElement.classList.contains("mono")).toBe(true);
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+  });
+
+  it("removes a stale mono class when switching back to dark", () => {
+    document.documentElement.classList.add("mono");
+    setMatchMedia(false);
+    useAppSettingsStore.setState({ themeMode: "dark" });
+    render(<ThemeEffect />);
+    expect(document.documentElement.classList.contains("mono")).toBe(false);
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 });

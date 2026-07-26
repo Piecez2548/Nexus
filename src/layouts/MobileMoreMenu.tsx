@@ -19,7 +19,7 @@ interface Props {
 const linkClassName = ({ isActive }: { isActive: boolean }) =>
   `flex items-center gap-3 rounded-xl px-4 py-3 transition ${
     isActive
-      ? "bg-violet-600 text-white"
+      ? "bg-brand-600 text-white"
       : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
   }`;
 

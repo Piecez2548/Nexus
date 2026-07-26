@@ -95,7 +95,7 @@ export default function TransactionToolbar({
               setSearch(e.target.value)
             }
             placeholder={t("transactions.searchPlaceholder")}
-            className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 py-3 pl-10 pr-4 outline-none transition focus:border-violet-500"
+            className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 py-3 pl-10 pr-4 outline-none transition focus:border-brand-500"
           />
 
         </div>
@@ -107,7 +107,7 @@ export default function TransactionToolbar({
           onChange={(e) =>
             setFilterType(e.target.value)
           }
-          className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-violet-500"
+          className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-brand-500"
         >
           <option value="all">
             {t("common.all")}
@@ -139,7 +139,7 @@ export default function TransactionToolbar({
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-violet-500"
+          className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-brand-500"
         >
           <option value="all">
             {t("transactions.allCategories")}
@@ -157,7 +157,7 @@ export default function TransactionToolbar({
         <select
           value={filterAccount}
           onChange={(e) => setFilterAccount(e.target.value)}
-          className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-violet-500"
+          className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-brand-500"
         >
           <option value="all">
             {t("transactions.allAccounts")}

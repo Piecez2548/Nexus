@@ -5,7 +5,7 @@ import FormField from "@/components/ui/FormField";
 import { enableEncryption, type MigrationProgress } from "@/features/encryption/migration/enableEncryption";
 
 const inputClassName =
-  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-violet-500";
+  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
 
 interface Props {
   onDone: () => void;
@@ -92,7 +92,7 @@ export default function EnableEncryptionForm({ onDone }: Props) {
       </FormField>
 
       {progress && (
-        <p className="text-sm text-violet-500">
+        <p className="text-sm text-brand-500">
           {PHASE_LABEL[progress.phase]}
           {progress.phase === "encrypting" && progress.tableCount !== undefined && (
             <>
@@ -108,7 +108,7 @@ export default function EnableEncryptionForm({ onDone }: Props) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-xl bg-violet-600 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? "กำลังเข้ารหัส..." : "เริ่มเข้ารหัสข้อมูล"}
       </button>

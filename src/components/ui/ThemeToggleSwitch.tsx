@@ -26,7 +26,7 @@ export default function ThemeToggleSwitch() {
         aria-label={t("topbar.toggleDarkMode")}
         onClick={handleToggle}
         className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-          isDark ? "bg-violet-600" : "bg-zinc-300 dark:bg-zinc-700"
+          isDark ? "bg-brand-600" : "bg-zinc-300 dark:bg-zinc-700"
         }`}
       >
         <span

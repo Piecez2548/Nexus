@@ -31,7 +31,7 @@ export default function HabitPreviewPanel() {
       <div className="mb-5 flex items-center justify-between">
         <h2 className="text-xl font-semibold">{t("dashboard.habitTracker")}</h2>
 
-        <Link to="/habits" className="flex items-center gap-1 text-sm text-violet-500 hover:underline">
+        <Link to="/habits" className="flex items-center gap-1 text-sm text-brand-500 hover:underline">
           <Flame size={16} />
           {t("common.viewAll")}
         </Link>
@@ -53,8 +53,8 @@ export default function HabitPreviewPanel() {
                   aria-label={t(done ? "habits.alreadyDoneToday" : "habits.markDoneToday", { name: habit.name })}
                   className={`h-4 w-4 shrink-0 rounded-full border-2 transition ${
                     done
-                      ? "border-violet-500 bg-violet-500"
-                      : "border-zinc-300 dark:border-zinc-600 hover:border-violet-500"
+                      ? "border-brand-500 bg-brand-500"
+                      : "border-zinc-300 dark:border-zinc-600 hover:border-brand-500"
                   }`}
                 />
 

@@ -38,7 +38,7 @@ export default function TodoPreviewPanel() {
 
         <Link
           to="/todo"
-          className="flex items-center gap-1 text-sm text-violet-500 hover:underline"
+          className="flex items-center gap-1 text-sm text-brand-500 hover:underline"
         >
           <ListChecks size={16} />
           {t("common.viewAll")}
@@ -57,7 +57,7 @@ export default function TodoPreviewPanel() {
                 type="button"
                 onClick={() => todo.id !== undefined && toggleComplete(todo.id)}
                 aria-label={t("todo.markDone", { name: todo.title })}
-                className="h-4 w-4 shrink-0 rounded-full border-2 border-zinc-300 dark:border-zinc-600 transition hover:border-violet-500"
+                className="h-4 w-4 shrink-0 rounded-full border-2 border-zinc-300 dark:border-zinc-600 transition hover:border-brand-500"
               />
 
               <span className="min-w-0 flex-1 truncate text-sm font-medium">{todo.title}</span>

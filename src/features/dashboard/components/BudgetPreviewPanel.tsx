@@ -25,7 +25,7 @@ export default function BudgetPreviewPanel() {
 
         <Link
           to="/budget"
-          className="flex items-center gap-1 text-sm text-violet-500 hover:underline"
+          className="flex items-center gap-1 text-sm text-brand-500 hover:underline"
         >
           <PiggyBank size={16} />
           {t("common.viewAll")}

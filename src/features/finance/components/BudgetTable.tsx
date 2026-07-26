@@ -98,7 +98,7 @@ export default function BudgetTable({ progressList, onEdit }: Props) {
                   <button
                     onClick={() => onEdit(progress)}
                     aria-label={`Edit ${budget.category} budget`}
-                    className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+                    className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
                   >
                     <Pencil size={16} />
                   </button>
@@ -177,7 +177,7 @@ export default function BudgetTable({ progressList, onEdit }: Props) {
                       <button
                         onClick={() => onEdit(progress)}
                         aria-label={`Edit ${budget.category} budget`}
-                        className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+                        className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
                       >
                         <Pencil size={18} />
                       </button>

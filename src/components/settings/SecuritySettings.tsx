@@ -37,7 +37,7 @@ export default function SecuritySettings() {
         <button
           type="button"
           onClick={() => setDrawerContent("setup")}
-          className="flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-white transition hover:bg-violet-700"
+          className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700"
         >
           <Lock size={16} />
           {t("settings.enableAppLock")}
@@ -57,7 +57,7 @@ export default function SecuritySettings() {
               id="auto-lock-minutes"
               value={autoLockMinutes}
               onChange={(e) => setAutoLockMinutes(Number(e.target.value))}
-              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-violet-500"
+              className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500"
             >
               {AUTO_LOCK_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -73,7 +73,7 @@ export default function SecuritySettings() {
               onClick={lock}
               className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-4 transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
             >
-              <Lock size={20} className="text-violet-500" />
+              <Lock size={20} className="text-brand-500" />
               <span className="text-sm font-medium">{t("settings.lockNow")}</span>
             </button>
 
@@ -82,7 +82,7 @@ export default function SecuritySettings() {
               onClick={() => setDrawerContent("change")}
               className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-4 transition hover:bg-zinc-100 dark:hover:bg-zinc-700"
             >
-              <KeyRound size={20} className="text-violet-500" />
+              <KeyRound size={20} className="text-brand-500" />
               <span className="text-sm font-medium">{t("settings.changePin")}</span>
             </button>
 

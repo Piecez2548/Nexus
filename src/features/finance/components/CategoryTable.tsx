@@ -79,7 +79,7 @@ export default function CategoryTable({ categories, onEdit, onMerge }: Props) {
                 <button
                   onClick={() => onEdit(category)}
                   aria-label={`Edit ${category.name}`}
-                  className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+                  className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
                 >
                   <Pencil size={18} />
                 </button>

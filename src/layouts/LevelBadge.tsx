@@ -24,7 +24,7 @@ export default function LevelBadge() {
         aria-expanded={open}
         className="flex items-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-800 px-3 py-2 text-sm transition hover:bg-zinc-100 dark:hover:bg-zinc-900"
       >
-        <span className="font-semibold text-violet-500">Lv.{progress.level}</span>
+        <span className="font-semibold text-brand-500">Lv.{progress.level}</span>
 
         <span className="flex items-center gap-1 text-amber-500">
           <Flame size={14} />
@@ -38,7 +38,7 @@ export default function LevelBadge() {
 
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
             <div
-              className="h-full rounded-full bg-violet-600 transition-all"
+              className="h-full rounded-full bg-brand-600 transition-all"
               style={{ width: `${progress.percentage}%` }}
             />
           </div>

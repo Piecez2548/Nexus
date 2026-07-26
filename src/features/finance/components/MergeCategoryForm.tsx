@@ -7,7 +7,7 @@ import FormField from "@/components/ui/FormField";
 import type { Category } from "@/features/finance/types";
 
 const inputClassName =
-  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-violet-500";
+  "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
 
 interface Props {
   sourceCategory: Category;
@@ -83,7 +83,7 @@ export default function MergeCategoryForm({ sourceCategory, categories, onDone }
       <button
         type="submit"
         disabled={submitting || !targetName}
-        className="w-full rounded-xl bg-violet-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? "กำลังรวม..." : "รวมหมวดหมู่"}
       </button>

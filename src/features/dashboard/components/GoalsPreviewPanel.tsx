@@ -24,7 +24,7 @@ export default function GoalsPreviewPanel() {
 
         <Link
           to="/goals"
-          className="flex items-center gap-1 text-sm text-violet-500 hover:underline"
+          className="flex items-center gap-1 text-sm text-brand-500 hover:underline"
         >
           <Target size={16} />
           {t("common.viewAll")}
@@ -54,7 +54,7 @@ export default function GoalsPreviewPanel() {
 
                 <ProgressBar
                   percentage={percentage}
-                  colorClass={isComplete ? "bg-green-500" : "bg-violet-600"}
+                  colorClass={isComplete ? "bg-green-500" : "bg-brand-600"}
                 />
               </div>
             );

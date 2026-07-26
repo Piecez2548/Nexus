@@ -106,7 +106,7 @@ export default function QuickAddGrid() {
             return (
               <div
                 key={template.id}
-                className="flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 py-2 pl-3 pr-2 transition hover:border-violet-500"
+                className="flex items-center gap-2 rounded-full border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 py-2 pl-3 pr-2 transition hover:border-brand-500"
               >
                 <button
                   type="button"
@@ -127,7 +127,7 @@ export default function QuickAddGrid() {
                     type="button"
                     onClick={() => handleEdit(template)}
                     aria-label={`Edit quick add ${template.name}`}
-                    className="rounded-full p-1 text-zinc-500 transition hover:bg-violet-600/20 hover:text-violet-400"
+                    className="rounded-full p-1 text-zinc-500 transition hover:bg-brand-600/20 hover:text-brand-400"
                   >
                     <Pencil size={12} />
                   </button>

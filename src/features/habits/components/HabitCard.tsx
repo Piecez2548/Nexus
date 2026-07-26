@@ -55,7 +55,7 @@ export default function HabitCard({ habit, onEdit }: Props) {
           <button
             onClick={onEdit}
             aria-label={t("habits.editHabit", { name: habit.name })}
-            className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+            className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
           >
             <Pencil size={16} />
           </button>
@@ -83,7 +83,7 @@ export default function HabitCard({ habit, onEdit }: Props) {
             key={date}
             title={date}
             className={`h-2.5 w-2.5 flex-1 rounded-full ${
-              habit.completedDates.includes(date) ? "bg-violet-500" : "bg-zinc-200 dark:bg-zinc-700"
+              habit.completedDates.includes(date) ? "bg-brand-500" : "bg-zinc-200 dark:bg-zinc-700"
             }`}
           />
         ))}
@@ -97,7 +97,7 @@ export default function HabitCard({ habit, onEdit }: Props) {
         className={`flex w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-semibold transition ${
           doneToday
             ? "cursor-default bg-green-500/15 text-green-500"
-            : "bg-violet-600 text-white hover:bg-violet-700"
+            : "bg-brand-600 text-white hover:bg-brand-700"
         }`}
       >
         <Check size={16} />

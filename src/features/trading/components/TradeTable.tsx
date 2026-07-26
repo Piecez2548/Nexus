@@ -91,7 +91,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                       trade.status === "open"
-                        ? "bg-violet-500/15 text-violet-400"
+                        ? "bg-brand-500/15 text-brand-400"
                         : "bg-zinc-200/60 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-300"
                     }`}
                   >
@@ -107,7 +107,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                   <button
                     onClick={() => openTradeDrawer(trade)}
                     aria-label={t("common.editName", { name: trade.symbol })}
-                    className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+                    className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
                   >
                     <Pencil size={16} />
                   </button>
@@ -188,7 +188,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${
                         trade.status === "open"
-                          ? "bg-violet-500/15 text-violet-400"
+                          ? "bg-brand-500/15 text-brand-400"
                           : "bg-zinc-200/60 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-300"
                       }`}
                     >
@@ -201,7 +201,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                       <button
                         onClick={() => openTradeDrawer(trade)}
                         aria-label={t("common.editName", { name: trade.symbol })}
-                        className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+                        className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
                       >
                         <Pencil size={18} />
                       </button>

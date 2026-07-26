@@ -25,7 +25,7 @@ export default function LanguageSettings() {
               aria-pressed={isActive}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                 isActive
-                  ? "bg-white dark:bg-zinc-900 text-violet-600 dark:text-violet-400 shadow"
+                  ? "bg-white dark:bg-zinc-900 text-brand-600 dark:text-brand-400 shadow"
                   : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
               }`}
             >

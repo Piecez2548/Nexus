@@ -17,7 +17,7 @@ interface Props {
 const TYPE_META: Record<TransactionType, { label: string; textClass: string; badgeClass: string }> = {
   income: { label: "Income", textClass: "text-green-400", badgeClass: "bg-green-500/15 text-green-400" },
   expense: { label: "Expense", textClass: "text-red-400", badgeClass: "bg-red-500/15 text-red-400" },
-  transfer: { label: "Transfer", textClass: "text-violet-400", badgeClass: "bg-violet-500/15 text-violet-400" },
+  transfer: { label: "Transfer", textClass: "text-brand-400", badgeClass: "bg-brand-500/15 text-brand-400" },
   refund: { label: "Refund", textClass: "text-teal-400", badgeClass: "bg-teal-500/15 text-teal-400" },
   adjustment: { label: "Adjustment", textClass: "text-amber-400", badgeClass: "bg-amber-500/15 text-amber-400" },
 };
@@ -96,7 +96,7 @@ export default function TransactionTable({
         <button
           type="button"
           onClick={() => toggleSort(sortKeyName)}
-          className={`flex w-full items-center gap-1 ${alignClass} transition hover:text-violet-500`}
+          className={`flex w-full items-center gap-1 ${alignClass} transition hover:text-brand-500`}
         >
           {label}
           <Icon size={13} />
@@ -209,7 +209,7 @@ export default function TransactionTable({
                   <button
                     onClick={() => openTransactionDrawer(item)}
                     aria-label={`Edit ${item.title}`}
-                    className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+                    className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
                   >
                     <Pencil size={16} />
                   </button>
@@ -326,7 +326,7 @@ export default function TransactionTable({
                       <button
                         onClick={() => openTransactionDrawer(item)}
                         aria-label={`Edit ${item.title}`}
-                        className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+                        className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
                       >
                         <Pencil size={18} />
                       </button>

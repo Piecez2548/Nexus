@@ -40,7 +40,7 @@ export default function GlobalSearch() {
         }}
         onFocus={() => setOpen(true)}
         placeholder={t("topbar.searchPlaceholder")}
-        className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-violet-500"
+        className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-brand-500"
       />
 
       <DropdownPanel

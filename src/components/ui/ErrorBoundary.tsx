@@ -46,7 +46,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 font-medium text-white transition hover:bg-violet-700"
+          className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 font-medium text-white transition hover:bg-brand-700"
         >
           <RotateCcw size={16} />
           {t.reload}

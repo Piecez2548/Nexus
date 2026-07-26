@@ -67,7 +67,7 @@ export default function MonthlyOverviewPanel({ monthly, changes }: Props) {
                 </div>
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                   <div
-                    className="h-full rounded-full bg-violet-600"
+                    className="h-full rounded-full bg-brand-600"
                     style={{ width: `${(Math.abs(current) / max) * 100}%` }}
                   />
                 </div>

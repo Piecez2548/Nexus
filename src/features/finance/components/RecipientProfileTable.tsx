@@ -57,7 +57,7 @@ export default function RecipientProfileTable({ profiles }: Props) {
             }
             meta={
               <>
-                <span className="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-semibold text-violet-400">
+                <span className="rounded-full bg-brand-500/15 px-2.5 py-0.5 text-xs font-semibold text-brand-400">
                   {profile.confidenceScore}%
                 </span>
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">{profile.transactionCount} รายการ</span>
@@ -113,7 +113,7 @@ export default function RecipientProfileTable({ profiles }: Props) {
                   {new Date(profile.lastUsedDate).toLocaleDateString("th-TH")}
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <span className="rounded-full bg-violet-500/15 px-3 py-1 text-xs font-semibold text-violet-400">
+                  <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-400">
                     {profile.confidenceScore}%
                   </span>
                 </td>

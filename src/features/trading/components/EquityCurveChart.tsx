@@ -27,8 +27,8 @@ export default function EquityCurveChart() {
           <AreaChart data={equityCurve}>
             <defs>
               <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                <stop offset="5%" stopColor="var(--color-brand-500)" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="var(--color-brand-500)" stopOpacity={0} />
               </linearGradient>
             </defs>
 
@@ -41,7 +41,7 @@ export default function EquityCurveChart() {
               type="monotone"
               dataKey="equity"
               name="Equity"
-              stroke="#8b5cf6"
+              stroke="var(--color-brand-500)"
               fill="url(#equityGradient)"
               strokeWidth={2}
             />

@@ -25,7 +25,7 @@ function NavItem({ icon: Icon, labelKey, path }: MenuItem) {
       className={({ isActive }) =>
         `flex items-center gap-3 rounded-xl px-4 py-3 transition-all ${
           isActive
-            ? "bg-violet-600 text-white shadow-lg"
+            ? "bg-brand-600 text-white shadow-lg"
             : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-white"
         }`
       }
@@ -59,7 +59,7 @@ function NavGroup({ icon: Icon, labelKey, items, isActive }: GroupProps) {
         aria-expanded={open}
         className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition-all ${
           isActive && !open
-            ? "bg-violet-600/10 text-violet-600 dark:text-violet-400"
+            ? "bg-brand-600/10 text-brand-600 dark:text-brand-400"
             : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-white"
         }`}
       >
@@ -102,7 +102,7 @@ export default function Sidebar() {
 
         <div className="flex items-center gap-3">
           <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center bg-gradient-to-br from-violet-500 to-fuchsia-600"
+            className="flex h-10 w-10 shrink-0 items-center justify-center bg-gradient-to-br from-brand-500 to-brand-glow"
             style={{ clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)" }}
           >
             <Zap size={18} className="text-white" fill="currentColor" />

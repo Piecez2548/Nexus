@@ -18,7 +18,7 @@ export default function ComingSoonCard({ icon: Icon, title, description }: Props
           <Icon size={20} />
         </div>
 
-        <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-500">
+        <span className="rounded-full bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-500">
           {t("common.comingSoon")}
         </span>
       </div>

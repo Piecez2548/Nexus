@@ -30,7 +30,7 @@ export default function TagsInput({ id, value, onChange, placeholder }: Props) {
       onChange={(e) => setText(e.target.value)}
       onBlur={() => commit(text)}
       placeholder={placeholder}
-      className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-violet-500"
+      className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500"
     />
   );
 }

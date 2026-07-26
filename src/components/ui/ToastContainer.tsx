@@ -8,7 +8,7 @@ const TOAST_STYLES: Record<ToastType, { icon: typeof Info; className: string }> 
   success: { icon: CheckCircle2, className: "border-green-500/30 bg-green-500/10 text-green-500" },
   error: { icon: XCircle, className: "border-red-500/30 bg-red-500/10 text-red-500" },
   warning: { icon: TriangleAlert, className: "border-amber-500/30 bg-amber-500/10 text-amber-500" },
-  info: { icon: Info, className: "border-violet-500/30 bg-violet-500/10 text-violet-500" },
+  info: { icon: Info, className: "border-brand-500/30 bg-brand-500/10 text-brand-500" },
 };
 
 export default function ToastContainer() {

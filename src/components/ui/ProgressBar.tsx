@@ -3,7 +3,7 @@ interface Props {
   colorClass?: string;
 }
 
-export default function ProgressBar({ percentage, colorClass = "bg-violet-600" }: Props) {
+export default function ProgressBar({ percentage, colorClass = "bg-brand-600" }: Props) {
   const clamped = Math.max(0, Math.min(100, percentage));
 
   return (

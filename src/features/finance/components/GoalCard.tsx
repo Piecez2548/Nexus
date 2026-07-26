@@ -75,7 +75,7 @@ export default function GoalCard({ goal, onEdit }: Props) {
           <button
             onClick={onEdit}
             aria-label={`Edit ${goal.name}`}
-            className="rounded-lg p-2 transition hover:bg-violet-600/20 hover:text-violet-400"
+            className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
           >
             <Pencil size={16} />
           </button>
@@ -90,7 +90,7 @@ export default function GoalCard({ goal, onEdit }: Props) {
         </div>
       </div>
 
-      <ProgressBar percentage={percentage} colorClass={isComplete ? "bg-green-500" : "bg-violet-600"} />
+      <ProgressBar percentage={percentage} colorClass={isComplete ? "bg-green-500" : "bg-brand-600"} />
 
       <div className="mt-2 flex items-center justify-between text-sm">
         <span className="text-zinc-500 dark:text-zinc-400">
@@ -109,7 +109,7 @@ export default function GoalCard({ goal, onEdit }: Props) {
             onChange={(e) => setContributeAmount(e.target.value)}
             placeholder="เพิ่มเงินออม"
             aria-label={`Contribute to ${goal.name}`}
-            className="min-w-0 flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-2 text-sm outline-none focus:border-violet-500"
+            className="min-w-0 flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-2 text-sm outline-none focus:border-brand-500"
           />
           <button
             onClick={handleContribute}

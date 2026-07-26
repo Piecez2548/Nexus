@@ -35,7 +35,7 @@ export default function TodoToolbar({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("todo.searchPlaceholder")}
-          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-violet-500"
+          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-brand-500"
         />
       </div>
 
@@ -43,7 +43,7 @@ export default function TodoToolbar({
         aria-label={t("todo.statusLabel")}
         value={filterStatus}
         onChange={(e) => setFilterStatus(e.target.value)}
-        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-sm outline-none transition focus:border-violet-500"
+        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500"
       >
         <option value="all">{t("common.all")}</option>
         <option value="pending">{t("todo.statusPending")}</option>
@@ -54,7 +54,7 @@ export default function TodoToolbar({
         aria-label={t("todo.priorityLabel")}
         value={filterPriority}
         onChange={(e) => setFilterPriority(e.target.value)}
-        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-sm outline-none transition focus:border-violet-500"
+        className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-2.5 text-sm outline-none transition focus:border-brand-500"
       >
         <option value="all">{t("todo.allPriorities")}</option>
         {Object.entries(priorityLabels).map(([value, label]) => (
