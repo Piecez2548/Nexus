@@ -32,15 +32,27 @@ export default function CalendarEventCard({ event, occurrence, onEdit }: Props) 
     ? t("calendar.allDayLabel")
     : occurrence.toLocaleTimeString(language === "th" ? "th-TH" : "en-US", { hour: "2-digit", minute: "2-digit" });
 
+  const frequencyLabel = event.recurring ? t(`common.${event.recurring.frequency}`) : null;
+
   return (
     <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="truncate font-semibold">{event.title}</h3>
-            {event.recurring && <Repeat size={14} className="shrink-0 text-zinc-400" />}
           </div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{timeLabel}</p>
+          <p className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+            <span>{timeLabel}</span>
+            {frequencyLabel && (
+              <>
+                <span>&middot;</span>
+                <span className="flex items-center gap-1">
+                  <Repeat size={12} />
+                  {frequencyLabel}
+                </span>
+              </>
+            )}
+          </p>
           {event.location && (
             <p className="mt-1 flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400">
               <MapPin size={14} />

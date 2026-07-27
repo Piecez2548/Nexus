@@ -2,7 +2,31 @@ import { Capacitor } from "@capacitor/core";
 import { LocalNotifications, Weekday, type ScheduleOn } from "@capacitor/local-notifications";
 
 import { getNextOccurrence } from "@/features/calendar/utils/recurrence";
+import { translate } from "@/i18n/useTranslation";
 import type { CalendarEvent } from "@/features/calendar/types";
+
+// A dedicated, max-importance channel (separate from the OS default) so a
+// reminder shows as a heads-up banner and reliably vibrates/plays sound
+// instead of quietly landing in the notification shade — the concrete thing
+// that makes a reminder easy to miss on some devices' default settings.
+// Android channel settings are immutable after first creation (the user
+// would have to change them manually in system settings), so this only
+// takes effect for reminders scheduled after this channel first exists —
+// already-scheduled ones keep using whatever channel they were created
+// with. Safe to call on every schedule: creating an already-existing
+// channel id is a no-op.
+const REMINDER_CHANNEL_ID = "calendar-reminders";
+
+async function ensureReminderChannel(): Promise<void> {
+  await LocalNotifications.createChannel({
+    id: REMINDER_CHANNEL_ID,
+    name: translate("calendar.reminderChannelName"),
+    description: translate("calendar.reminderChannelDescription"),
+    importance: 5,
+    visibility: 1,
+    vibration: true,
+  });
+}
 
 // Maps JS's Date.getDay() (0=Sunday..6=Saturday) to the plugin's Weekday
 // enum (1=Sunday..7=Saturday).
@@ -69,12 +93,15 @@ export async function scheduleReminder(
   const granted = await ensurePermission();
   if (!granted) return;
 
+  await ensureReminderChannel();
+
   await LocalNotifications.schedule({
     notifications: [
       {
         id: event.id,
         title,
         body,
+        channelId: REMINDER_CHANNEL_ID,
         schedule: buildSchedule(event, fireAt),
       },
     ],

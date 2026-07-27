@@ -52,6 +52,20 @@ describe("Calendar page", () => {
     expect(screen.queryByText("Old title")).not.toBeInTheDocument();
   });
 
+  it("shows a daily recurring event once in the agenda list, not once per occurrence", async () => {
+    await db.calendarEvents.add({
+      title: "Daily workout",
+      startAt: nearFutureStartAt(1),
+      recurring: { frequency: "daily" },
+      createdAt: "2026-07-01T00:00:00.000Z",
+    } as never);
+
+    render(<Calendar />);
+
+    await waitFor(() => expect(screen.getAllByText("Daily workout")).toHaveLength(1));
+    expect(screen.getByText("Daily")).toBeInTheDocument();
+  });
+
   it("deletes an event", async () => {
     await db.calendarEvents.add({
       title: "One-off event",

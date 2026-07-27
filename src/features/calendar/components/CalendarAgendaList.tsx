@@ -21,10 +21,16 @@ export default function CalendarAgendaList({ events, onEdit }: Props) {
   const rangeEnd = new Date(rangeStart);
   rangeEnd.setDate(rangeEnd.getDate() + AGENDA_DAYS);
 
+  // One row per event, not per occurrence — a daily/weekly recurring event
+  // would otherwise explode into up to 14 near-identical rows. The card
+  // shows the frequency (e.g. "Daily") so recurrence is still clear from a
+  // single row, using whichever occurrence falls soonest in this window.
   const items = events
-    .flatMap((event) =>
-      getOccurrencesInRange(event, rangeStart, rangeEnd).map((occurrence) => ({ event, occurrence }))
-    )
+    .map((event) => {
+      const [soonest] = getOccurrencesInRange(event, rangeStart, rangeEnd);
+      return soonest ? { event, occurrence: soonest } : null;
+    })
+    .filter((item): item is { event: CalendarEvent; occurrence: Date } => item !== null)
     .sort((a, b) => a.occurrence.getTime() - b.occurrence.getTime());
 
   return (

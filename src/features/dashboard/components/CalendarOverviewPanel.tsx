@@ -24,10 +24,14 @@ export default function CalendarOverviewPanel() {
   const rangeEnd = new Date(rangeStart);
   rangeEnd.setDate(rangeEnd.getDate() + UPCOMING_DAYS);
 
+  // One entry per event, not per occurrence — otherwise a single daily
+  // recurring event could fill all 4 slots by itself.
   const upcoming = events
-    .flatMap((event) =>
-      getOccurrencesInRange(event, rangeStart, rangeEnd).map((occurrence) => ({ event, occurrence }))
-    )
+    .map((event) => {
+      const [soonest] = getOccurrencesInRange(event, rangeStart, rangeEnd);
+      return soonest ? { event, occurrence: soonest } : null;
+    })
+    .filter((item): item is { event: (typeof events)[number]; occurrence: Date } => item !== null)
     .sort((a, b) => a.occurrence.getTime() - b.occurrence.getTime())
     .slice(0, 4);
 

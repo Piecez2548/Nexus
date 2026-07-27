@@ -5,6 +5,7 @@ const mockSchedule = vi.fn();
 const mockCancel = vi.fn();
 const mockCheckPermissions = vi.fn();
 const mockRequestPermissions = vi.fn();
+const mockCreateChannel = vi.fn();
 
 vi.mock("@capacitor/core", () => ({
   Capacitor: { isNativePlatform: () => mockIsNativePlatform() },
@@ -16,6 +17,7 @@ vi.mock("@capacitor/local-notifications", () => ({
     cancel: (...args: unknown[]) => mockCancel(...args),
     checkPermissions: (...args: unknown[]) => mockCheckPermissions(...args),
     requestPermissions: (...args: unknown[]) => mockRequestPermissions(...args),
+    createChannel: (...args: unknown[]) => mockCreateChannel(...args),
   },
   Weekday: { Sunday: 1, Monday: 2, Tuesday: 3, Wednesday: 4, Thursday: 5, Friday: 6, Saturday: 7 },
 }));
@@ -69,7 +71,7 @@ describe("reminderService", () => {
       expect(mockSchedule).not.toHaveBeenCalled();
     });
 
-    it("schedules a one-off notification for a non-recurring event", async () => {
+    it("schedules a one-off notification for a non-recurring event on the high-importance reminder channel", async () => {
       mockIsNativePlatform.mockReturnValue(true);
       const farFuture = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
       const startAt = `${farFuture.getFullYear()}-${String(farFuture.getMonth() + 1).padStart(2, "0")}-${String(farFuture.getDate()).padStart(2, "0")}T09:00`;
@@ -82,6 +84,7 @@ describe("reminderService", () => {
             id: 42,
             title: "Meeting",
             body: "Starting soon",
+            channelId: "calendar-reminders",
             schedule: { at: new Date(farFuture.getFullYear(), farFuture.getMonth(), farFuture.getDate(), 8, 45) },
           }),
         ],
@@ -105,6 +108,18 @@ describe("reminderService", () => {
           }),
         ],
       });
+    });
+
+    it("creates a max-importance, vibrating reminder channel before scheduling", async () => {
+      mockIsNativePlatform.mockReturnValue(true);
+      const farFuture = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+      const startAt = `${farFuture.getFullYear()}-${String(farFuture.getMonth() + 1).padStart(2, "0")}-${String(farFuture.getDate()).padStart(2, "0")}T09:00`;
+
+      await scheduleReminder(sample({ startAt, reminderMinutesBefore: 15 }), "Meeting", "Starting soon");
+
+      expect(mockCreateChannel).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "calendar-reminders", importance: 5, vibration: true })
+      );
     });
 
     it("does not schedule when permission is denied", async () => {
