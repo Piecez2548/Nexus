@@ -63,20 +63,19 @@ export default function TransactionForm() {
 
   const {
     accounts,
-    loading: accountsLoading,
     error: accountsError,
     loadAccounts,
   } = useAccountStore();
 
   const {
     categories,
-    loading: categoriesLoading,
     error: categoriesError,
     loadCategories,
   } = useCategoryStore();
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const toast = useToast();
   const { t } = useTranslation();
 
@@ -84,6 +83,20 @@ export default function TransactionForm() {
     loadAccounts();
     loadCategories();
   }, [loadAccounts, loadCategories]);
+
+  // Tracks whether this mounted form has *ever* seen real accounts/categories
+  // data — deliberately based on the data itself, not the `loading` flags,
+  // since `loading` is also `false` before the very first load has even
+  // started (indistinguishable from "already finished"). Once both arrays
+  // have data, this stays true for the life of this mounted form, so a
+  // later background refresh of these shared, app-wide stores (e.g. the
+  // periodic cross-device sync, which reloads every store) never again
+  // replaces the form with a spinner and wipes out what the user is typing.
+  useEffect(() => {
+    if (accounts.length > 0 && categories.length > 0) {
+      setHasLoadedOnce(true);
+    }
+  }, [accounts.length, categories.length]);
 
   const {
     register,
@@ -99,9 +112,17 @@ export default function TransactionForm() {
   });
 
   useEffect(() => {
+    // Waits for accounts/categories to actually have data before applying
+    // account/category values — react-hook-form only reliably pushes a
+    // value onto a <select> that's already registered with a matching
+    // <option>. Resetting while those arrays are still empty would set the
+    // value on a mount that hasn't happened yet, and once the options
+    // arrive later, nothing re-applies it — the field is left blank.
+    if (accounts.length === 0 || categories.length === 0) return;
+
     reset(selectedTransaction ?? { ...blankValues, ...draftTransaction });
     setSubmitError(null);
-  }, [selectedTransaction, draftTransaction, reset]);
+  }, [selectedTransaction, draftTransaction, reset, accounts.length, categories.length]);
 
   const type = watch("type");
   const needsCategory = type === "income" || type === "expense";
@@ -144,7 +165,7 @@ export default function TransactionForm() {
     }
   }
 
-  if (accountsLoading || categoriesLoading) {
+  if (!hasLoadedOnce && (accounts.length === 0 || categories.length === 0)) {
     return <LoadingState label={t("transactions.loadingData")} />;
   }
 

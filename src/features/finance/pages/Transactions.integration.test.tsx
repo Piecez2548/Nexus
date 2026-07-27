@@ -157,6 +157,35 @@ describe("Transactions page (add / edit / delete flow)", () => {
     expect(await db.transactions.toArray()).toHaveLength(0);
   });
 
+  it("does not reset the open form when a background store refresh briefly flips loading, once data is already present", async () => {
+    // Simulates what a periodic cross-device sync pass does: it reloads
+    // every store, including accounts/categories, flipping their `loading`
+    // flag true then false even while this form is open. Since accounts and
+    // categories already have data by this point, the form must not be
+    // replaced with a spinner (which would unmount it and wipe out whatever
+    // the user was mid-typing).
+    const user = userEvent.setup();
+    renderTransactionsPage();
+
+    await user.click(screen.getByRole("button", { name: /add transaction/i }));
+    await user.type(await screen.findByLabelText("ชื่อรายการ"), "Coffee");
+
+    useAccountStore.setState({ loading: true });
+    useCategoryStore.setState({ loading: true });
+
+    // Force React to actually process this intermediate render before
+    // flipping loading back off — otherwise a synchronous true-then-false
+    // flip could get batched away without ever really testing anything.
+    await waitFor(() => {
+      expect(screen.getByLabelText("ชื่อรายการ")).toHaveValue("Coffee");
+    });
+
+    useAccountStore.setState({ loading: false });
+    useCategoryStore.setState({ loading: false });
+
+    expect(screen.getByLabelText("ชื่อรายการ")).toHaveValue("Coffee");
+  });
+
   it("creates a transfer between two accounts without requiring a category", async () => {
     const user = userEvent.setup();
     renderTransactionsPage();

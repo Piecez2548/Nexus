@@ -7,6 +7,8 @@ import TransactionDrawer from "@/features/finance/components/TransactionDrawer";
 import { db } from "@/database/db";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useTransactionTemplateStore } from "@/features/finance/store/transactionTemplateStore";
+import { useAccountStore } from "@/features/finance/store/accountStore";
+import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useUIStore } from "@/features/finance/store/uiStore";
 
 function renderFavoritesPage() {
@@ -33,6 +35,8 @@ describe("Favorites page", () => {
 
     useTransactionStore.setState({ transactions: [], loading: false, error: null });
     useTransactionTemplateStore.setState({ templates: [], loading: false, error: null });
+    useAccountStore.setState({ accounts: [], loading: false, error: null });
+    useCategoryStore.setState({ categories: [], loading: false, error: null });
     useUIStore.setState({ isTransactionDrawerOpen: false, selectedTransaction: null });
   });
 
