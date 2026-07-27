@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useAuthStore } from "@/features/sync/store/authStore";
 
-const PERIODIC_SYNC_INTERVAL_MS = 30_000;
+const PERIODIC_SYNC_INTERVAL_MS = 5_000;
 
 // Side-effect-only: initializes the auth session on load, then keeps data
 // in sync while the user is signed in — on an interval, and immediately
