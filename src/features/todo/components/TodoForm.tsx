@@ -7,8 +7,7 @@ import {
   type TodoFormData,
 } from "@/features/todo/schemas/todoSchema";
 import { useTodoStore } from "@/features/todo/store/todoStore";
-import { getPriorityLabels, getRecurringLabels } from "@/features/todo/constants/labels";
-import { emptyToUndefined } from "@/utils/selectField";
+import { getPriorityLabels } from "@/features/todo/constants/labels";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
@@ -23,7 +22,6 @@ const blankValues: TodoFormData = {
   notes: "",
   dueDate: "",
   priority: "medium",
-  recurring: undefined,
 };
 
 interface Props {
@@ -37,7 +35,6 @@ export default function TodoForm({ todo, onDone }: Props) {
   const toast = useToast();
   const { t } = useTranslation();
   const priorityLabels = getPriorityLabels(t);
-  const recurringLabels = getRecurringLabels(t);
 
   const {
     register,
@@ -112,21 +109,6 @@ export default function TodoForm({ todo, onDone }: Props) {
           </select>
         </FormField>
       </div>
-
-      <FormField label="ทำซ้ำ" htmlFor="todo-recurring">
-        <select
-          id="todo-recurring"
-          {...register("recurring", { setValueAs: emptyToUndefined })}
-          className={inputClassName}
-        >
-          <option value="">ไม่ทำซ้ำ</option>
-          {Object.entries(recurringLabels).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </FormField>
 
       <FormField label="รายละเอียด" htmlFor="todo-notes">
         <textarea

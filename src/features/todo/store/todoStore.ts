@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { todoService } from "@/features/todo/services/todoService";
-import { nextDueDate } from "@/features/todo/utils/recurrence";
 import { useGamificationStore } from "@/store/gamificationStore";
 import { XP_REWARDS } from "@/utils/xpRewards";
 import { initialAsyncState, toErrorMessage } from "@/utils/asyncState";
@@ -72,22 +71,9 @@ export const useTodoStore =
         completedAt: completed ? new Date().toISOString() : undefined,
       });
 
-      // Completing (not un-completing) is the only transition that earns XP
-      // and spawns the next occurrence of a recurring todo.
+      // Completing (not un-completing) is the only transition that earns XP.
       if (completed) {
         useGamificationStore.getState().addXp(XP_REWARDS.todoCompleted[existing.priority]);
-
-        if (existing.recurring) {
-          await todoService.create({
-            title: existing.title,
-            notes: existing.notes,
-            priority: existing.priority,
-            recurring: existing.recurring,
-            dueDate: nextDueDate(existing.recurring, existing.dueDate),
-            completed: false,
-            createdAt: new Date().toISOString(),
-          });
-        }
       }
 
       const todos = await todoService.list();

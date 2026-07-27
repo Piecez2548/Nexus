@@ -286,9 +286,6 @@ export const translations = {
       priorityLow: "Low",
       priorityMedium: "Medium",
       priorityHigh: "High",
-      recurringDaily: "Every day",
-      recurringWeekly: "Every week",
-      recurringMonthly: "Every month",
     },
     habits: {
       pageTitle: "Habits",
@@ -779,9 +776,6 @@ export const translations = {
       priorityLow: "ต่ำ",
       priorityMedium: "ปานกลาง",
       priorityHigh: "สูง",
-      recurringDaily: "ทุกวัน",
-      recurringWeekly: "ทุกสัปดาห์",
-      recurringMonthly: "ทุกเดือน",
     },
     habits: {
       pageTitle: "นิสัย",

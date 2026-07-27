@@ -1,4 +1,4 @@
-import type { TodoPriority, TodoRecurrence } from "@/features/todo/types";
+import type { TodoPriority } from "@/features/todo/types";
 
 type Translate = (key: string) => string;
 
@@ -15,11 +15,3 @@ export const PRIORITY_BADGE_CLASS: Record<TodoPriority, string> = {
   medium: "bg-amber-500/15 text-amber-500",
   high: "bg-red-500/15 text-red-400",
 };
-
-export function getRecurringLabels(t: Translate): Record<TodoRecurrence, string> {
-  return {
-    daily: t("todo.recurringDaily"),
-    weekly: t("todo.recurringWeekly"),
-    monthly: t("todo.recurringMonthly"),
-  };
-}

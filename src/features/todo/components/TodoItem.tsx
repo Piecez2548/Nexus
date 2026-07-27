@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Pencil, Trash2, Repeat } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 import { useTodoStore } from "@/features/todo/store/todoStore";
-import { getPriorityLabels, PRIORITY_BADGE_CLASS, getRecurringLabels } from "@/features/todo/constants/labels";
+import { getPriorityLabels, PRIORITY_BADGE_CLASS } from "@/features/todo/constants/labels";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -24,7 +24,6 @@ export default function TodoItem({ todo, onEdit }: Props) {
   const toast = useToast();
   const { t, language } = useTranslation();
   const priorityLabels = getPriorityLabels(t);
-  const recurringLabels = getRecurringLabels(t);
 
   async function handleToggle() {
     if (todo.id === undefined) return;
@@ -96,13 +95,6 @@ export default function TodoItem({ todo, onEdit }: Props) {
                 {t("todo.dueDatePrefix", {
                   date: new Date(todo.dueDate).toLocaleDateString(language === "th" ? "th-TH" : "en-US"),
                 })}
-              </span>
-            )}
-
-            {todo.recurring && (
-              <span className="flex items-center gap-1 text-xs text-brand-500">
-                <Repeat size={12} />
-                {recurringLabels[todo.recurring]}
               </span>
             )}
           </div>

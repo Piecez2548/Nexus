@@ -49,22 +49,6 @@ test.describe("todo lifecycle", () => {
     await expect(page.getByText("Nothing to do right now")).toBeVisible();
   });
 
-  test("completing a daily recurring todo creates the next occurrence", async ({ page }) => {
-    await page.goto("/todo");
-    await page.getByRole("button", { name: "Add Todo" }).click();
-    await page.getByLabel("ชื่องาน").fill("รดน้ำต้นไม้");
-    await page.getByLabel("กำหนดส่ง (ถ้ามี)").fill("2026-07-22");
-    await page.getByLabel("ทำซ้ำ").selectOption({ label: "Every day" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
-    await expect(page.getByText("รดน้ำต้นไม้")).toBeVisible();
-
-    await page.getByRole("button", { name: "Mark รดน้ำต้นไม้ as done" }).click();
-
-    // The completed original stays, plus a fresh not-done occurrence due the next day.
-    await expect(page.getByText("1 tasks remaining")).toBeVisible();
-    await expect(page.getByText("Due 7/23/2026")).toBeVisible();
-  });
-
   test("toolbar filters todos by search, status, and priority", async ({ page }) => {
     await page.goto("/todo");
 

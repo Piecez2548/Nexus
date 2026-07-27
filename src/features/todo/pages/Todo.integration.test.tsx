@@ -116,36 +116,6 @@ describe("Todo page", () => {
     });
   });
 
-  it("creates the next occurrence when a recurring todo is completed", async () => {
-    await db.todos.add({
-      title: "รดน้ำต้นไม้",
-      priority: "low",
-      recurring: "daily",
-      dueDate: "2026-07-20",
-      completed: false,
-      createdAt: new Date().toISOString(),
-    });
-
-    const user = userEvent.setup();
-    render(<Todo />);
-
-    await user.click(await screen.findByRole("button", { name: "Mark รดน้ำต้นไม้ as done" }));
-
-    await waitFor(async () => {
-      const stored = await db.todos.toArray();
-      expect(stored).toHaveLength(2);
-    });
-
-    const stored = await db.todos.toArray();
-    const original = stored.find((t) => t.completed);
-    const next = stored.find((t) => !t.completed);
-
-    expect(original?.dueDate).toBe("2026-07-20");
-    expect(next?.dueDate).toBe("2026-07-21");
-    expect(next?.recurring).toBe("daily");
-    expect(next?.title).toBe("รดน้ำต้นไม้");
-  });
-
   it("filters todos by search text, status, and priority", async () => {
     await db.todos.bulkAdd([
       { title: "ส่งรายงาน", priority: "high", completed: false, createdAt: new Date().toISOString() },

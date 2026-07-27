@@ -5,7 +5,6 @@ export const todoSchema = z.object({
   notes: z.string().optional(),
   dueDate: z.string().optional(),
   priority: z.enum(["low", "medium", "high"]),
-  recurring: z.enum(["daily", "weekly", "monthly"]).optional(),
 });
 
 export type TodoFormData = z.infer<typeof todoSchema>;
