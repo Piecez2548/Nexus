@@ -123,7 +123,11 @@ async function pushTombstones(userId: string) {
   await db.syncTombstones.bulkDelete(tombstones.map((t) => t.id!));
 }
 
-async function pullTable(userId: string, table: SyncTableName) {
+// Returns whether this table actually received any rows this pass — lets
+// the caller skip refreshing a store whose underlying data never changed,
+// rather than blindly reloading and re-rendering every store on every pass
+// (see runFullSync).
+async function pullTable(userId: string, table: SyncTableName): Promise<boolean> {
   const lastPulledKey = `pull:${table}`;
   const lastPulled = await getSyncState(lastPulledKey);
 
@@ -138,7 +142,7 @@ async function pullTable(userId: string, table: SyncTableName) {
 
   const { data, error } = await query;
   if (error) throw error;
-  if (!data || data.length === 0) return;
+  if (!data || data.length === 0) return false;
 
   const dexieTable = localTable(table);
 
@@ -170,6 +174,7 @@ async function pullTable(userId: string, table: SyncTableName) {
 
   const newest = data[data.length - 1].updated_at as string;
   await setSyncState(lastPulledKey, newest);
+  return true;
 }
 
 // Belt-and-suspenders against concurrent sync passes (e.g. a manual "Sync
@@ -179,8 +184,12 @@ async function pullTable(userId: string, table: SyncTableName) {
 // locally?" can each miss the other's not-yet-committed insert and both add
 // their own copy. Runs every sync pass — cheap (local reads/deletes only,
 // no network) — and folds any duplicates down to the oldest (first
-// inserted) copy of each syncId.
-async function dedupeSyncedTables() {
+// inserted) copy of each syncId. Returns which tables actually had a
+// duplicate removed, for the same reason pullTable reports whether it
+// wrote anything.
+async function dedupeSyncedTables(): Promise<Set<SyncTableName>> {
+  const changed = new Set<SyncTableName>();
+
   for (const table of SYNCED_TABLES) {
     const dexieTable = localTable(table);
     const rows: { id?: number; syncId?: string }[] = await dexieTable.toArray();
@@ -202,25 +211,37 @@ async function dedupeSyncedTables() {
         .map((row) => row.id!);
 
       await dexieTable.bulkDelete(duplicateIds);
+      changed.add(table);
     }
   }
+
+  return changed;
 }
 
-async function refreshAllStores() {
-  await Promise.all([
-    useTransactionStore.getState().loadTransactions(),
-    useAccountStore.getState().loadAccounts(),
-    useCategoryStore.getState().loadCategories(),
-    useBudgetStore.getState().loadBudgets(),
-    useGoalStore.getState().loadGoals(),
-    useRecipientProfileStore.getState().loadProfiles(),
-    useTransactionTemplateStore.getState().loadTemplates(),
-    useTradeStore.getState().loadTrades(),
-    useTodoStore.getState().loadTodos(),
-    useHabitStore.getState().loadHabits(),
-    useHoldingStore.getState().loadHoldings(),
-    useCalendarEventStore.getState().loadEvents(),
-  ]);
+const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
+  transactions: () => useTransactionStore.getState().loadTransactions(),
+  accounts: () => useAccountStore.getState().loadAccounts(),
+  categories: () => useCategoryStore.getState().loadCategories(),
+  recipientProfiles: () => useRecipientProfileStore.getState().loadProfiles(),
+  budgets: () => useBudgetStore.getState().loadBudgets(),
+  goals: () => useGoalStore.getState().loadGoals(),
+  transactionTemplates: () => useTransactionTemplateStore.getState().loadTemplates(),
+  trades: () => useTradeStore.getState().loadTrades(),
+  todos: () => useTodoStore.getState().loadTodos(),
+  habits: () => useHabitStore.getState().loadHabits(),
+  holdings: () => useHoldingStore.getState().loadHoldings(),
+  calendarEvents: () => useCalendarEventStore.getState().loadEvents(),
+};
+
+// Only reloads (and re-renders) stores whose underlying table actually
+// received a change this pass. Local user actions already update their own
+// store directly at the time of the action — this exists purely to pick up
+// remote changes pulled from another device, or dedup cleanup. Reloading
+// (and thus re-rendering every subscribed component for) all 12 stores on
+// every pass regardless of whether anything changed is what made a fast
+// periodic interval feel janky.
+async function refreshChangedStores(changedTables: Set<SyncTableName>) {
+  await Promise.all([...changedTables].map((table) => STORE_REFRESHERS[table]()));
 }
 
 // Each step runs independently — one table's push/pull failing (e.g. a
@@ -233,6 +254,7 @@ export async function runFullSync(userId: string): Promise<void> {
   if (!isSyncConfigured || !supabase) return;
 
   const errors: unknown[] = [];
+  const changedTables = new Set<SyncTableName>();
 
   async function attempt(step: () => Promise<void>) {
     try {
@@ -242,13 +264,24 @@ export async function runFullSync(userId: string): Promise<void> {
     }
   }
 
+  async function attemptReturning<T>(step: () => Promise<T>, fallback: T): Promise<T> {
+    try {
+      return await step();
+    } catch (err) {
+      errors.push(err);
+      return fallback;
+    }
+  }
+
   // Also runs before push, not just after pull — a duplicate syncId left
   // over locally (e.g. from two tabs racing, or any other cause) would
   // otherwise make every future push fail forever with Postgres's "ON
   // CONFLICT DO UPDATE command cannot affect row a second time", since the
   // same still-duplicated row gets re-pushed again on every pass before
   // this cleanup ever runs.
-  await attempt(() => dedupeSyncedTables());
+  (await attemptReturning(() => dedupeSyncedTables(), new Set<SyncTableName>())).forEach((t) =>
+    changedTables.add(t)
+  );
 
   for (const table of SYNCED_TABLES) {
     await attempt(() => pushTable(userId, table));
@@ -257,12 +290,15 @@ export async function runFullSync(userId: string): Promise<void> {
   await attempt(() => pushTombstones(userId));
 
   for (const table of SYNCED_TABLES) {
-    await attempt(() => pullTable(userId, table));
+    const hadChanges = await attemptReturning(() => pullTable(userId, table), false);
+    if (hadChanges) changedTables.add(table);
   }
 
-  await attempt(() => dedupeSyncedTables());
+  (await attemptReturning(() => dedupeSyncedTables(), new Set<SyncTableName>())).forEach((t) =>
+    changedTables.add(t)
+  );
 
-  await refreshAllStores();
+  await refreshChangedStores(changedTables);
 
   if (errors.length > 0) throw errors[0];
 }

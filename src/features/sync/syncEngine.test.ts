@@ -1,5 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { db } from "@/database/db";
+import { useTransactionStore } from "@/features/finance/store/transactionStore";
+import { useHabitStore } from "@/features/habits/store/habitStore";
 
 const mockUpsert = vi.fn();
 const mockFrom = vi.fn();
@@ -585,5 +587,86 @@ describe("syncEngine", () => {
       | undefined;
     expect(pulled?.encryptedContent).toEqual(envelope);
     expect(pulled?.title).toBeUndefined();
+  });
+
+  it("does not reload any store when a pass pulls no data and dedupes nothing", async () => {
+    // A fast periodic sync (e.g. every 5s) means most passes have nothing
+    // new at all — reloading (and re-rendering every subscriber of) all 12
+    // stores regardless is what made the app feel janky.
+    const loadTransactions = vi.spyOn(useTransactionStore.getState(), "loadTransactions");
+    const loadHabits = vi.spyOn(useHabitStore.getState(), "loadHabits");
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({ data: [], error: null }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    expect(loadTransactions).not.toHaveBeenCalled();
+    expect(loadHabits).not.toHaveBeenCalled();
+
+    loadTransactions.mockRestore();
+    loadHabits.mockRestore();
+  });
+
+  it("only reloads the store(s) whose table actually received pulled data", async () => {
+    await db.habits.clear();
+
+    const loadTransactions = vi.spyOn(useTransactionStore.getState(), "loadTransactions");
+    const loadHabits = vi.spyOn(useHabitStore.getState(), "loadHabits");
+
+    mockFrom.mockImplementation(() => {
+      let currentTableName: string | undefined;
+
+      const builder = {
+        select: vi.fn(() => builder),
+        eq: vi.fn((column: string, value: string) => {
+          if (column === "table_name") currentTableName = value;
+          return builder;
+        }),
+        order: vi.fn(() => builder),
+        gte: (...args: unknown[]) => {
+          mockGte(...args);
+          return builder;
+        },
+        upsert: mockUpsert,
+        then: (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (currentTableName !== "habits") {
+            resolve({ data: [], error: null });
+            return;
+          }
+
+          resolve({
+            data: [
+              {
+                id: "remote-habit-1",
+                table_name: "habits",
+                data: {
+                  name: "Exercise",
+                  frequency: "daily",
+                  completedDates: [],
+                  syncId: "remote-habit-1",
+                  updatedAt: "2026-07-21T00:00:00.000Z",
+                },
+                updated_at: "2026-07-21T00:00:00.000Z",
+                deleted_at: null,
+              },
+            ],
+            error: null,
+          });
+        },
+      };
+
+      return builder;
+    });
+
+    await runFullSync(USER_ID);
+
+    expect(loadHabits).toHaveBeenCalled();
+    expect(loadTransactions).not.toHaveBeenCalled();
+
+    loadTransactions.mockRestore();
+    loadHabits.mockRestore();
   });
 });
