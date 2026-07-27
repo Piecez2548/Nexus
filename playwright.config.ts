@@ -27,8 +27,11 @@ export default defineConfig({
     // app. The gate itself (spinner -> login form -> authenticated content)
     // is covered by AuthGate.test.tsx/LoginScreen.test.tsx with a mocked
     // Supabase client instead of a real network round-trip in E2E.
+    // VITE_SENTRY_DSN is unset for the same reason: a local .env.local's
+    // real DSN would otherwise report every E2E run's console noise (and
+    // any genuinely failing test) to the real Sentry project.
     command:
-      "cross-env VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= npm run build && npm run preview -- --port 4173",
+      "cross-env VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= VITE_SENTRY_DSN= npm run build && npm run preview -- --port 4173",
     url: "http://localhost:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

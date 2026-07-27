@@ -6,6 +6,9 @@ import "./styles/index.css";
 
 import { ThemeEffect } from "@/providers/ThemeEffect";
 import { seedDatabase } from "@/database/seed";
+import { initErrorMonitoring } from "@/lib/sentry";
+
+initErrorMonitoring();
 
 async function bootstrap() {
   await seedDatabase();

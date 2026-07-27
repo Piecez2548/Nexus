@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
+import * as Sentry from "@sentry/react";
 
 import { translations } from "@/i18n/translations";
 import { useLanguageStore } from "@/store/languageStore";
@@ -24,6 +25,9 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("Unhandled error caught by ErrorBoundary:", error, info.componentStack);
+    // A no-op if Sentry was never initialized (no DSN configured) — safe
+    // to call unconditionally.
+    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
 
   render() {
