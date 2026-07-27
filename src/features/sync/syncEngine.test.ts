@@ -507,6 +507,34 @@ describe("syncEngine", () => {
     expect(await db.syncTombstones.toArray()).toHaveLength(0);
   });
 
+  it("dedupes tombstones sharing the same (table, syncId) before pushing, keeping the latest", async () => {
+    // recordTombstone() now guards against creating duplicates going
+    // forward, but older duplicates (e.g. from before that guard existed,
+    // or the same item deleted twice across sessions) could still be
+    // sitting locally. Pushing both in one combined upsert batch is exactly
+    // what triggers Postgres's "ON CONFLICT DO UPDATE command cannot affect
+    // row a second time" — this is what broke sync in production.
+    await db.syncTombstones.bulkAdd([
+      { table: "habits", syncId: "dup-tombstone", deletedAt: "2026-07-20T00:00:00.000Z" },
+      { table: "habits", syncId: "dup-tombstone", deletedAt: "2026-07-21T00:00:00.000Z" },
+    ]);
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({ data: [], error: null }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const tombstonePushes = mockUpsert.mock.calls
+      .flatMap((call) => call[0])
+      .filter((p: { id: string; table_name: string }) => p.id === "dup-tombstone" && p.table_name === "habits");
+
+    expect(tombstonePushes).toHaveLength(1);
+    expect(tombstonePushes[0]).toMatchObject({ deleted_at: "2026-07-21T00:00:00.000Z" });
+    expect(await db.syncTombstones.toArray()).toHaveLength(0);
+  });
+
   it("treats an encrypted-shaped row as an opaque blob on both push and pull, never inspecting its content", async () => {
     // Pins the invariant the encryption-at-rest feature depends on: the sync
     // engine only ever reads syncId/updatedAt at the top level and forwards

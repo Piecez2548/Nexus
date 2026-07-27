@@ -94,7 +94,21 @@ async function pushTombstones(userId: string) {
   const tombstones = await db.syncTombstones.toArray();
   if (tombstones.length === 0) return;
 
-  const payload = tombstones.map((t) => ({
+  // Unlike the entity tables, nothing has deduped this one before —
+  // recordTombstone() now guards against creating new duplicates, but
+  // older ones from before that guard existed (e.g. the same item deleted
+  // twice across sessions) could still be sitting here. Keep only the
+  // latest per (table, syncId) so this single combined upsert never
+  // proposes the same (id, table_name) twice, which Postgres rejects
+  // outright.
+  const latestByKey = new Map<string, (typeof tombstones)[number]>();
+  for (const t of tombstones) {
+    const key = `${t.table}:${t.syncId}`;
+    const current = latestByKey.get(key);
+    if (!current || t.deletedAt > current.deletedAt) latestByKey.set(key, t);
+  }
+
+  const payload = [...latestByKey.values()].map((t) => ({
     id: t.syncId,
     table_name: t.table,
     user_id: userId,
