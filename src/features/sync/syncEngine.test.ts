@@ -669,4 +669,80 @@ describe("syncEngine", () => {
     loadTransactions.mockRestore();
     loadHabits.mockRestore();
   });
+
+  it("does not re-push a row it only ever received via pull, even across multiple later passes", async () => {
+    // Simulates the "edit reverts / delete doesn't stick" bug reported when
+    // two devices are open at once: this device (call it Device B) pulls a
+    // row another device edited, but never edits it locally itself. Without
+    // advancing this device's own push cursor to account for the pull, its
+    // next pass would see this row as "due to push" (updatedAt newer than
+    // its stale push cursor) and redundantly re-push its own now-identical
+    // copy — harmless in isolation, except if the OTHER device edits or
+    // deletes that same row again in the gap before this device's next
+    // push, this device's redundant push would silently clobber it, since
+    // the upsert replaces the whole row unconditionally.
+    let currentTableName: string | undefined;
+
+    mockFrom.mockImplementation(() => {
+      const builder = {
+        select: vi.fn(() => builder),
+        eq: vi.fn((column: string, value: string) => {
+          if (column === "table_name") currentTableName = value;
+          return builder;
+        }),
+        order: vi.fn(() => builder),
+        gte: (...args: unknown[]) => {
+          mockGte(...args);
+          return builder;
+        },
+        upsert: mockUpsert,
+        then: (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (currentTableName !== "transactions") {
+            resolve({ data: [], error: null });
+            return;
+          }
+
+          resolve({
+            data: [
+              {
+                id: "other-device-tx",
+                table_name: "transactions",
+                data: {
+                  title: "Coffee",
+                  amount: 100,
+                  type: "expense",
+                  account: "Cash",
+                  date: "2026-07-20",
+                  status: "completed",
+                  syncId: "other-device-tx",
+                  updatedAt: "2026-07-20T00:00:00.000Z",
+                },
+                updated_at: "2026-07-20T00:00:00.000Z",
+                deleted_at: null,
+              },
+            ],
+            error: null,
+          });
+        },
+      };
+
+      return builder;
+    });
+
+    await runFullSync(USER_ID);
+
+    const stored = await db.transactions.toArray();
+    expect(stored.find((t) => t.syncId === "other-device-tx")).toBeDefined();
+
+    // Nothing changed locally or on the "server" since pass 1 — a second
+    // (and third) pass should never propose pushing this row again.
+    mockUpsert.mockClear();
+    await runFullSync(USER_ID);
+    await runFullSync(USER_ID);
+
+    const rePush = mockUpsert.mock.calls
+      .flatMap((call) => call[0])
+      .find((p: { id: string; table_name: string }) => p.id === "other-device-tx" && p.table_name === "transactions");
+    expect(rePush).toBeUndefined();
+  });
 });

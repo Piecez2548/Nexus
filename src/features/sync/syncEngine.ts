@@ -156,6 +156,19 @@ async function pullTable(userId: string, table: SyncTableName): Promise<boolean>
     (await db.syncTombstones.where("table").equals(table).toArray()).map((t) => t.syncId)
   );
 
+  // A row just received via pull — never locally edited on this device —
+  // must not look "due to push" on this device's own next pass. pushTable()
+  // sends anything with updatedAt >= this device's own push cursor, and a
+  // pulled row's updatedAt (the editing device's timestamp) can easily be
+  // newer than that cursor if this device hasn't pushed anything since.
+  // Without this, this device would redundantly re-push its now-identical
+  // copy of a row it never touched — and if another device edits (or
+  // deletes) that same row in the gap before this device's next push, the
+  // redundant push silently overwrites the newer edit/deletion, since the
+  // upsert replaces the whole row unconditionally. Far more likely to
+  // actually collide at a fast sync interval than the original 30s one.
+  let maxAppliedUpdatedAt: string | undefined;
+
   for (const remoteRow of data) {
     const existing = await dexieTable.where("syncId").equals(remoteRow.id).first();
 
@@ -170,10 +183,31 @@ async function pullTable(userId: string, table: SyncTableName): Promise<boolean>
       const { id: _localId, ...rest } = remoteRow.data;
       await dexieTable.add(rest);
     }
+
+    const rowUpdatedAt = remoteRow.data?.updatedAt;
+    if (typeof rowUpdatedAt === "string" && (!maxAppliedUpdatedAt || rowUpdatedAt > maxAppliedUpdatedAt)) {
+      maxAppliedUpdatedAt = rowUpdatedAt;
+    }
   }
 
   const newest = data[data.length - 1].updated_at as string;
   await setSyncState(lastPulledKey, newest);
+
+  if (maxAppliedUpdatedAt) {
+    const lastPushedKey = `push:${table}`;
+    const lastPushed = await getSyncState(lastPushedKey);
+    // Nudged 1ms past the pulled row's own updatedAt, not set to the exact
+    // same value — pushTable's cursor comparison is deliberately inclusive
+    // (>=), so a row sharing the watermark exactly would still match it and
+    // get re-pushed on the very next pass, and again every pass after that
+    // (since re-pushing an unchanged row just re-sets the watermark to the
+    // same value again).
+    const nudged = new Date(new Date(maxAppliedUpdatedAt).getTime() + 1).toISOString();
+    if (!lastPushed || nudged > lastPushed) {
+      await setSyncState(lastPushedKey, nudged);
+    }
+  }
+
   return true;
 }
 
