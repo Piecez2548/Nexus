@@ -83,7 +83,6 @@ export const translations = {
     dashboard: {
       recentTransactions: "Recent Transactions",
       expenseByCategory: "Expense by Category",
-      lifeModules: "Life Modules",
       todo: "Todo",
       trading: "Trading",
       budget: "Budget",
@@ -578,7 +577,6 @@ export const translations = {
     dashboard: {
       recentTransactions: "ธุรกรรมล่าสุด",
       expenseByCategory: "รายจ่ายตามหมวดหมู่",
-      lifeModules: "โมดูลชีวิต",
       todo: "รายการที่ต้องทำ",
       trading: "เทรด",
       budget: "งบประมาณ",

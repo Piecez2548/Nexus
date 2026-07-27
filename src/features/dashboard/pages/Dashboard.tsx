@@ -82,26 +82,33 @@ export default function Dashboard() {
 
           <CashFlowSection granularity={granularity} />
 
-          <InsightsPanel insights={insights} />
+          {/* Capped so a burst of insight rules firing at once (e.g. several
+              categories over budget the same month) can't make this section
+              grow unbounded — kept short and half-width, not a dominant
+              section, per explicit feedback that it was pushing everything
+              below it too far down. */}
+          <div className="lg:w-1/2">
+            <InsightsPanel insights={insights.slice(0, 3)} />
+          </div>
 
-          <LifeModulesSection />
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <BudgetPreviewPanel />
+
+            <TodoPreviewPanel />
+
+            <HabitPreviewPanel />
+
+            <CalendarOverviewPanel />
+
+            <TradingOverviewPanel />
+
+            <PortfolioOverviewPanel />
+          </div>
 
           <div className="grid gap-6 xl:grid-cols-3">
             <RecentTransactionsList transactions={transactions} />
 
-            <div className="space-y-6">
-              <BudgetPreviewPanel />
-
-              <TodoPreviewPanel />
-
-              <HabitPreviewPanel />
-
-              <CalendarOverviewPanel />
-
-              <TradingOverviewPanel />
-
-              <PortfolioOverviewPanel />
-            </div>
+            <LifeModulesSection />
           </div>
         </>
       )}

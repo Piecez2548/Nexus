@@ -13,19 +13,15 @@ export default function LifeModulesSection() {
   const { t } = useTranslation();
 
   return (
-    <div>
-      <h2 className="mb-4 text-xl font-semibold">{t("dashboard.lifeModules")}</h2>
-
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {MODULES.map((module) => (
-          <ComingSoonCard
-            key={module.titleKey}
-            icon={module.icon}
-            title={t(module.titleKey)}
-            description={t(module.descriptionKey)}
-          />
-        ))}
-      </div>
+    <div className="space-y-4">
+      {MODULES.map((module) => (
+        <ComingSoonCard
+          key={module.titleKey}
+          icon={module.icon}
+          title={t(module.titleKey)}
+          description={t(module.descriptionKey)}
+        />
+      ))}
     </div>
   );
 }
