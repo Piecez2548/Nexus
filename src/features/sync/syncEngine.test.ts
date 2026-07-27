@@ -441,6 +441,49 @@ describe("syncEngine", () => {
     expect(stored[0].id).toBe(firstId);
   });
 
+  it("dedupes local duplicates before pushing, so a single upsert batch never proposes the same (id, table_name) twice", async () => {
+    // Deduping only after pull (as it used to) doesn't help here: if a
+    // duplicate syncId is already sitting locally when a pass starts, the
+    // very first push of that pass would still send both copies in one
+    // upsert batch — which Postgres rejects outright with "ON CONFLICT DO
+    // UPDATE command cannot affect row a second time," failing every sync
+    // attempt forever, since dedup never gets a chance to run first.
+    await db.transactions.add({
+      title: "Coffee",
+      amount: 100,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+      syncId: "dup-push",
+      updatedAt: "2026-07-21T00:00:00.000Z",
+    });
+
+    await db.transactions.add({
+      title: "Coffee",
+      amount: 100,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+      syncId: "dup-push",
+      updatedAt: "2026-07-21T00:00:00.000Z",
+    });
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({ data: [], error: null }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const transactionPushes = mockUpsert.mock.calls
+      .flatMap((call) => call[0])
+      .filter((p: { table_name: string; id: string }) => p.table_name === "transactions" && p.id === "dup-push");
+
+    expect(transactionPushes).toHaveLength(1);
+  });
+
   it("pushes and clears local tombstones after a successful sync", async () => {
     await db.syncTombstones.add({
       table: "transactions",

@@ -11,4 +11,14 @@ describe("toErrorMessage", () => {
     expect(toErrorMessage(undefined)).toBe("Something went wrong.");
     expect(toErrorMessage({ code: 500 })).toBe("Something went wrong.");
   });
+
+  it("extracts the message from a plain object that has one, like Supabase's PostgrestError", () => {
+    expect(
+      toErrorMessage({ message: "new row violates row-level security policy", details: "", hint: "", code: "42501" })
+    ).toBe("new row violates row-level security policy");
+  });
+
+  it("uses a custom fallback when given one", () => {
+    expect(toErrorMessage({ code: 500 }, "Sync failed")).toBe("Sync failed");
+  });
 });

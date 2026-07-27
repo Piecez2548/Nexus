@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { User } from "@supabase/supabase-js";
 import { supabase, isSyncConfigured } from "@/lib/supabaseClient";
 import { runFullSync } from "@/features/sync/syncEngine";
+import { toErrorMessage } from "@/utils/asyncState";
 
 interface AuthState {
   user: User | null;
@@ -108,7 +109,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       await runFullSync(user.id);
       set({ syncing: false, lastSyncedAt: new Date().toISOString() });
     } catch (err) {
-      set({ syncing: false, error: err instanceof Error ? err.message : "Sync failed" });
+      set({ syncing: false, error: toErrorMessage(err, "Sync failed") });
     }
   },
 }));

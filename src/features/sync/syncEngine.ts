@@ -228,6 +228,14 @@ export async function runFullSync(userId: string): Promise<void> {
     }
   }
 
+  // Also runs before push, not just after pull — a duplicate syncId left
+  // over locally (e.g. from two tabs racing, or any other cause) would
+  // otherwise make every future push fail forever with Postgres's "ON
+  // CONFLICT DO UPDATE command cannot affect row a second time", since the
+  // same still-duplicated row gets re-pushed again on every pass before
+  // this cleanup ever runs.
+  await attempt(() => dedupeSyncedTables());
+
   for (const table of SYNCED_TABLES) {
     await attempt(() => pushTable(userId, table));
   }
