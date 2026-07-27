@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, Upload, TriangleAlert, Merge, Copy } from "lucide-react";
+import { Download, Upload, Merge, Copy } from "lucide-react";
 
-import { exportBackup, importBackup, resetAllData } from "@/database/backupService";
+import { exportBackup, importBackup } from "@/database/backupService";
 import { dedupeAccountsAndCategories } from "@/features/finance/utils/dedupeAccountsAndCategories";
 import {
   findTransactionDuplicates,
@@ -23,25 +23,18 @@ interface TileProps {
   description: string;
   onClick: () => void;
   disabled?: boolean;
-  tone?: "default" | "danger";
 }
 
-function DataTile({ icon, label, description, onClick, disabled, tone = "default" }: TileProps) {
+function DataTile({ icon, label, description, onClick, disabled }: TileProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition disabled:opacity-50 ${
-        tone === "danger"
-          ? "border-red-500/30 bg-red-500/10 hover:bg-red-500/20"
-          : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700"
-      }`}
+      className="flex flex-col items-start gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-4 text-left transition hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-50"
     >
-      <span className={tone === "danger" ? "text-red-500" : "text-brand-500"}>{icon}</span>
-
-      <span className={`font-medium ${tone === "danger" ? "text-red-500" : ""}`}>{label}</span>
-
+      <span className="text-brand-500">{icon}</span>
+      <span className="font-medium">{label}</span>
       <span className="text-xs text-zinc-500 dark:text-zinc-400">{description}</span>
     </button>
   );
@@ -177,30 +170,9 @@ export default function DataSettings() {
     }
   }
 
-  async function handleReset() {
-    const confirmed = window.confirm(t("settings.resetConfirmDialog"));
-    if (!confirmed) return;
-
-    setError(null);
-    setStatus(null);
-    setBusy(true);
-
-    try {
-      await resetAllData();
-      setStatus(t("settings.resetSuccessReloading"));
-      toast.success(t("settings.resetSuccess"));
-      window.location.reload();
-    } catch (err) {
-      const message = toErrorMessage(err);
-      setError(message);
-      toast.error(message);
-      setBusy(false);
-    }
-  }
-
   return (
     <SettingsCard title={t("settings.data")} description={t("settings.dataDescription")}>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <DataTile
           icon={<Download size={20} />}
           label={t("settings.exportBackup")}
@@ -231,15 +203,6 @@ export default function DataSettings() {
           description={t("settings.mergeTransactionDuplicatesDescription")}
           onClick={handleFindTransactionDuplicates}
           disabled={busy}
-        />
-
-        <DataTile
-          icon={<TriangleAlert size={20} />}
-          label={t("settings.resetAllData")}
-          description={t("settings.resetAllDataDescription")}
-          onClick={handleReset}
-          disabled={busy}
-          tone="danger"
         />
 
         <input

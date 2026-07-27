@@ -386,6 +386,11 @@ export const translations = {
     },
     settings: {
       pageTitle: "Settings",
+      groupGeneral: "General",
+      groupSecuritySync: "Security & Sync",
+      groupDataManagement: "Data Management",
+      groupDangerZone: "Danger Zone",
+      dangerZoneDescription: "Irreversible actions — proceed with caution.",
       data: "Data",
       dataDescription: "Backup, restore, or reset your local data.",
       exportBackup: "Export Backup",
@@ -876,6 +881,11 @@ export const translations = {
     },
     settings: {
       pageTitle: "ตั้งค่า",
+      groupGeneral: "ทั่วไป",
+      groupSecuritySync: "ความปลอดภัยและการซิงค์",
+      groupDataManagement: "การจัดการข้อมูล",
+      groupDangerZone: "โซนอันตราย",
+      dangerZoneDescription: "การกระทำที่ไม่สามารถย้อนกลับได้ — โปรดระมัดระวัง",
       data: "ข้อมูล",
       dataDescription: "สำรอง กู้คืน หรือรีเซ็ตข้อมูลในเครื่อง",
       exportBackup: "สำรองข้อมูล",
