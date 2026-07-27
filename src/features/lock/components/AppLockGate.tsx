@@ -6,6 +6,7 @@ import { useEncryptionSessionStore } from "@/features/encryption/store/encryptio
 import { hasUndecryptableLocalData } from "@/features/encryption/catchUp";
 import AppLockScreen from "@/features/lock/components/AppLockScreen";
 import EncryptionRecoveryFlow from "@/features/encryption/components/EncryptionRecoveryFlow";
+import AuthBackdrop from "@/components/ui/AuthBackdrop";
 
 const ACTIVITY_EVENTS = ["mousemove", "keydown", "click", "touchstart"] as const;
 const CHECK_INTERVAL_MS = 30_000;
@@ -76,21 +77,21 @@ export default function AppLockGate({ children }: Props) {
   // check would otherwise let straight through to the (unreadable) data.
   if (catchUpNeeded) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
+      <AuthBackdrop>
         <EncryptionRecoveryFlow
           onDone={() => setCatchUpNeeded(false)}
           title="พบข้อมูลที่เข้ารหัสจากอุปกรณ์อื่น"
           description="อุปกรณ์นี้ยังไม่สามารถอ่านข้อมูลที่เข้ารหัสไว้ได้ ยืนยันตัวตนด้วยบัญชี Sync เพื่อปลดล็อกข้อมูลบนอุปกรณ์นี้"
         />
-      </div>
+      </AuthBackdrop>
     );
   }
 
   if (needsUnlockScreen) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
+      <AuthBackdrop>
         <AppLockScreen mode="unlock" />
-      </div>
+      </AuthBackdrop>
     );
   }
 

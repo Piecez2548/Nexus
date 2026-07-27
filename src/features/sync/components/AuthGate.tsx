@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import { useAuthStore } from "@/features/sync/store/authStore";
 import { isSyncConfigured } from "@/lib/supabaseClient";
 import LoginScreen from "@/features/sync/components/LoginScreen";
+import AuthBackdrop from "@/components/ui/AuthBackdrop";
 
 interface Props {
   children: ReactNode;
@@ -26,17 +27,17 @@ export default function AuthGate({ children }: Props) {
 
   if (!sessionChecked) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+      <AuthBackdrop>
         <span className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 dark:border-zinc-700 border-t-brand-500" />
-      </div>
+      </AuthBackdrop>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
+      <AuthBackdrop>
         <LoginScreen />
-      </div>
+      </AuthBackdrop>
     );
   }
 
