@@ -225,6 +225,74 @@ describe("syncEngine", () => {
     expect(stored).toHaveLength(0);
   });
 
+  it("does not resurrect a row deleted locally mid-pass, before its tombstone has reached the server", async () => {
+    // Simulates the user deleting a habit while a sync pass is already
+    // mid-flight: after this same pass's own pushTombstones() step already
+    // ran (so the deletion hasn't reached the server yet), but before this
+    // same pass's own pull step for "habits" runs. The tombstone is recorded
+    // as a side effect of the "habits" pull query resolving — the earliest
+    // point this deletion could realistically land mid-pass — rather than
+    // before runFullSync starts, since pushTombstones() would otherwise
+    // already have pushed and cleared it before any pull ever sees it.
+    await db.habits.clear();
+
+    mockFrom.mockImplementation(() => {
+      let currentTableName: string | undefined;
+
+      const builder = {
+        select: vi.fn(() => builder),
+        eq: vi.fn((column: string, value: string) => {
+          if (column === "table_name") currentTableName = value;
+          return builder;
+        }),
+        order: vi.fn(() => builder),
+        gte: (...args: unknown[]) => {
+          mockGte(...args);
+          return builder;
+        },
+        upsert: mockUpsert,
+        then: async (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (currentTableName !== "habits") {
+            resolve({ data: [], error: null });
+            return;
+          }
+
+          await db.syncTombstones.add({
+            table: "habits",
+            syncId: "deleted-mid-pass",
+            deletedAt: "2026-07-21T00:00:05.000Z",
+          });
+
+          resolve({
+            data: [
+              {
+                id: "deleted-mid-pass",
+                table_name: "habits",
+                data: {
+                  name: "Exercise",
+                  frequency: "daily",
+                  completedDates: [],
+                  syncId: "deleted-mid-pass",
+                  updatedAt: "2026-07-21T00:00:00.000Z",
+                },
+                updated_at: "2026-07-21T00:00:00.000Z",
+                deleted_at: null,
+              },
+            ],
+            error: null,
+          });
+        },
+      };
+
+      return builder;
+    });
+
+    await runFullSync(USER_ID);
+
+    const stored = await db.habits.toArray();
+    expect(stored.find((h) => h.syncId === "deleted-mid-pass")).toBeUndefined();
+  });
+
   it("uses an inclusive (>=) pull cursor so a row sharing the last-seen updatedAt isn't silently skipped forever", async () => {
     // Two local rows stamped in the same backfill pass can end up with the
     // exact same updatedAt (millisecond resolution). A strict `>` cursor on

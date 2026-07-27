@@ -128,10 +128,20 @@ async function pullTable(userId: string, table: SyncTableName) {
 
   const dexieTable = localTable(table);
 
+  // A row can be deleted locally *during* this same sync pass — after this
+  // pass's own pushTombstones() already ran (so the deletion hasn't reached
+  // the server yet) but before this pass reaches this table's pull step.
+  // Without this check, the still-undeleted copy just read from the server
+  // would look like a legitimate remote row and get re-added here, silently
+  // resurrecting something the user just deleted moments ago.
+  const pendingTombstoneSyncIds = new Set(
+    (await db.syncTombstones.where("table").equals(table).toArray()).map((t) => t.syncId)
+  );
+
   for (const remoteRow of data) {
     const existing = await dexieTable.where("syncId").equals(remoteRow.id).first();
 
-    if (remoteRow.deleted_at) {
+    if (remoteRow.deleted_at || pendingTombstoneSyncIds.has(remoteRow.id)) {
       if (existing) await dexieTable.delete(existing.id);
       continue;
     }
