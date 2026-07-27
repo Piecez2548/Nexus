@@ -83,7 +83,7 @@ export default function TradingSummaryGrid({
       <SummaryCard
         title={t("trading.profitFactor")}
         value={formatProfitFactor(profitFactor)}
-        color="#7c3aed"
+        color="var(--color-brand-600)"
         icon={<Scale size={22} />}
       />
 

@@ -48,7 +48,7 @@ export default function PortfolioSummaryGrid(stats: Stats) {
       <SummaryCard
         title={t("portfolio.totalCostBasis")}
         value={stats.totalCostBasis.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-        color="#7c3aed"
+        color="var(--color-brand-600)"
         icon={<Wallet size={22} />}
       />
 
