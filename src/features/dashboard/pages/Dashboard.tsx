@@ -10,6 +10,7 @@ import TradingOverviewPanel from "@/features/dashboard/components/TradingOvervie
 import PortfolioOverviewPanel from "@/features/dashboard/components/PortfolioOverviewPanel";
 import TodoPreviewPanel from "@/features/dashboard/components/TodoPreviewPanel";
 import HabitPreviewPanel from "@/features/dashboard/components/HabitPreviewPanel";
+import CalendarOverviewPanel from "@/features/dashboard/components/CalendarOverviewPanel";
 import LifeModulesSection from "@/features/dashboard/components/LifeModulesSection";
 import InsightsPanel from "@/features/finance/components/InsightsPanel";
 import LoadingState from "@/components/ui/LoadingState";
@@ -94,6 +95,8 @@ export default function Dashboard() {
               <TodoPreviewPanel />
 
               <HabitPreviewPanel />
+
+              <CalendarOverviewPanel />
 
               <TradingOverviewPanel />
 

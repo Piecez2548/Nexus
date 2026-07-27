@@ -17,6 +17,7 @@ const SYNCED_TABLES: SyncTableName[] = [
   "todos",
   "habits",
   "holdings",
+  "calendarEvents",
 ];
 
 // True when at least one locally-stored row is already encrypted (e.g.

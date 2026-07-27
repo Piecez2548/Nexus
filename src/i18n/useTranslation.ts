@@ -26,3 +26,14 @@ export function useTranslation() {
 
   return { t, language };
 }
+
+// Usable outside React (e.g. a Zustand store, which can't call hooks) — a
+// one-off lookup for something like a native notification's title/body.
+// Reads the current language directly from the store's state rather than
+// subscribing to it, so it never triggers a re-render.
+export function translate(key: string, params?: Record<string, string | number>): string {
+  const language = useLanguageStore.getState().language;
+  const value = getNested(translations[language], key);
+  if (typeof value !== "string") return key;
+  return interpolate(value, params);
+}

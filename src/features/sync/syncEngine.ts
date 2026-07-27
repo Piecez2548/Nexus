@@ -14,6 +14,7 @@ import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
+import { useCalendarEventStore } from "@/features/calendar/store/calendarEventStore";
 
 const SYNCED_TABLES: SyncTableName[] = [
   "transactions",
@@ -27,6 +28,7 @@ const SYNCED_TABLES: SyncTableName[] = [
   "todos",
   "habits",
   "holdings",
+  "calendarEvents",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -193,6 +195,7 @@ async function refreshAllStores() {
     useTodoStore.getState().loadTodos(),
     useHabitStore.getState().loadHabits(),
     useHoldingStore.getState().loadHoldings(),
+    useCalendarEventStore.getState().loadEvents(),
   ]);
 }
 

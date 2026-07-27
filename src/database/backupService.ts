@@ -26,6 +26,7 @@ interface NexusBackup {
     todos?: unknown[];
     habits?: unknown[];
     holdings?: unknown[];
+    calendarEvents?: unknown[];
   };
 }
 
@@ -86,6 +87,7 @@ export async function exportBackup(): Promise<string> {
     todos,
     habits,
     holdings,
+    calendarEvents,
   ] = await Promise.all([
     db.transactions.toArray(),
     db.accounts.toArray(),
@@ -99,6 +101,7 @@ export async function exportBackup(): Promise<string> {
     db.todos.toArray(),
     db.habits.toArray(),
     db.holdings.toArray(),
+    db.calendarEvents.toArray(),
   ]);
 
   const backup: NexusBackup = {
@@ -117,6 +120,7 @@ export async function exportBackup(): Promise<string> {
       todos: await decryptForExport(dek, todos),
       habits: await decryptForExport(dek, habits),
       holdings: await decryptForExport(dek, holdings),
+      calendarEvents: await decryptForExport(dek, calendarEvents),
     },
   };
 
@@ -145,7 +149,7 @@ function isNexusBackup(value: unknown): value is NexusBackup {
   if (!requiredKeys.every((key) => Array.isArray(data[key]))) return false;
 
   // Optional — missing entirely (older backup files) just means no rows.
-  const optionalKeys = ["transactionTemplates", "todos", "habits", "holdings"];
+  const optionalKeys = ["transactionTemplates", "todos", "habits", "holdings", "calendarEvents"];
   return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
 }
 
@@ -177,6 +181,7 @@ export async function importBackup(jsonText: string): Promise<void> {
     todos,
     habits,
     holdings,
+    calendarEvents,
   ] = await Promise.all([
     encryptForImport(dek, "transactions", data.transactions),
     encryptForImport(dek, "accounts", data.accounts),
@@ -189,6 +194,7 @@ export async function importBackup(jsonText: string): Promise<void> {
     encryptForImport(dek, "todos", data.todos ?? []),
     encryptForImport(dek, "habits", data.habits ?? []),
     encryptForImport(dek, "holdings", data.holdings ?? []),
+    encryptForImport(dek, "calendarEvents", data.calendarEvents ?? []),
   ]);
 
   await db.transaction(
@@ -206,6 +212,7 @@ export async function importBackup(jsonText: string): Promise<void> {
       db.todos,
       db.habits,
       db.holdings,
+      db.calendarEvents,
     ],
     async () => {
       await Promise.all([
@@ -221,6 +228,7 @@ export async function importBackup(jsonText: string): Promise<void> {
         db.todos.clear(),
         db.habits.clear(),
         db.holdings.clear(),
+        db.calendarEvents.clear(),
       ]);
 
       await Promise.all([
@@ -236,6 +244,7 @@ export async function importBackup(jsonText: string): Promise<void> {
         db.todos.bulkAdd(todos as never[]),
         db.habits.bulkAdd(habits as never[]),
         db.holdings.bulkAdd(holdings as never[]),
+        db.calendarEvents.bulkAdd(calendarEvents as never[]),
       ]);
     }
   );
@@ -257,6 +266,7 @@ export async function resetAllData(): Promise<void> {
       db.todos,
       db.habits,
       db.holdings,
+      db.calendarEvents,
     ],
     async () => {
       await Promise.all([
@@ -272,6 +282,7 @@ export async function resetAllData(): Promise<void> {
         db.todos.clear(),
         db.habits.clear(),
         db.holdings.clear(),
+        db.calendarEvents.clear(),
       ]);
     }
   );

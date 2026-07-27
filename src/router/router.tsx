@@ -16,6 +16,7 @@ import {
   Todo,
   Habits,
   Portfolio,
+  Calendar,
   Settings,
   NotFound,
 } from "./lazyPages";
@@ -84,6 +85,10 @@ export const router = createBrowserRouter([
       {
         path: "habits",
         element: <Habits />,
+      },
+      {
+        path: "calendar",
+        element: <Calendar />,
       },
       {
         path: "settings",

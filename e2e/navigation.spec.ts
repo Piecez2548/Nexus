@@ -46,6 +46,9 @@ test.describe("sidebar navigation", () => {
     await page.getByRole("link", { name: "Habit Tracker", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Habits" })).toBeVisible();
 
+    await page.getByRole("link", { name: "Calendar", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Calendar" })).toBeVisible();
+
     await page.getByRole("link", { name: "Settings", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
 

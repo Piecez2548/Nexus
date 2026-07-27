@@ -12,6 +12,7 @@ import {
   Briefcase,
   ListChecks,
   Flame,
+  CalendarDays,
   type LucideIcon,
 } from "lucide-react";
 
@@ -41,4 +42,5 @@ export const tradingMenus: MenuItem[] = [
 export const personalMenus: MenuItem[] = [
   { icon: ListChecks, labelKey: "nav.todo", path: "/todo" },
   { icon: Flame, labelKey: "nav.habits", path: "/habits" },
+  { icon: CalendarDays, labelKey: "nav.calendar", path: "/calendar" },
 ];

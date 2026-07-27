@@ -11,6 +11,7 @@ import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { toLocalDateString } from "@/features/habits/utils/streak";
 import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
+import { useCalendarEventStore } from "@/features/calendar/store/calendarEventStore";
 
 describe("Dashboard (real data flow)", () => {
   beforeEach(async () => {
@@ -24,6 +25,8 @@ describe("Dashboard (real data flow)", () => {
     useHabitStore.setState({ habits: [], loading: false, error: null });
     await db.holdings.clear();
     useHoldingStore.setState({ holdings: [], loading: false, error: null });
+    await db.calendarEvents.clear();
+    useCalendarEventStore.setState({ events: [], loading: false, error: null });
   });
 
   it("shows an empty state with no transactions", async () => {
@@ -84,11 +87,10 @@ describe("Dashboard (real data flow)", () => {
 
     render(<Dashboard />, { wrapper: MemoryRouter });
 
-    // Two "coming soon" placeholder modules (Todo, Habit Tracker, and
-    // Portfolio are real, working features now, so they're not among these).
-    expect(await screen.findByText("Calendar")).toBeInTheDocument();
-    expect(screen.getByText("AI Daily Summary")).toBeInTheDocument();
-    expect(screen.getAllByText("Coming Soon")).toHaveLength(2);
+    // One "coming soon" placeholder module left (Todo, Habit Tracker,
+    // Portfolio, and Calendar are all real, working features now).
+    expect(await screen.findByText("AI Daily Summary")).toBeInTheDocument();
+    expect(screen.getAllByText("Coming Soon")).toHaveLength(1);
 
     // Trading overview reflects the real trade data: the AAPL trade closed
     // today falls within both "today" and the default "month" period window,
@@ -188,5 +190,27 @@ describe("Dashboard (real data flow)", () => {
     expect(await screen.findByText("51,000")).toBeInTheDocument(); // total cost basis
     expect(screen.getByText("+200 (+20%)")).toBeInTheDocument();
     expect(screen.getByText(/1 of 2 priced/i)).toBeInTheDocument();
+  });
+
+  it("reflects upcoming events in the Calendar overview panel, regardless of the period selector", async () => {
+    const soon = new Date();
+    soon.setDate(soon.getDate() + 2);
+    const startAt = `${soon.getFullYear()}-${String(soon.getMonth() + 1).padStart(2, "0")}-${String(soon.getDate()).padStart(2, "0")}T09:00`;
+
+    await db.calendarEvents.add({
+      title: "Team meeting",
+      startAt,
+      createdAt: "2026-07-20T00:00:00.000Z",
+    } as never);
+
+    render(<Dashboard />, { wrapper: MemoryRouter });
+
+    expect(await screen.findByText("Team meeting")).toBeInTheDocument();
+
+    // Exempt from the period selector, same as Portfolio — switching it
+    // must not hide an event that's genuinely upcoming.
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Day" }));
+    expect(screen.getByText("Team meeting")).toBeInTheDocument();
   });
 });

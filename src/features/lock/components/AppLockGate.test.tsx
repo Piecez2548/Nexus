@@ -27,6 +27,7 @@ const SYNCED_TABLES = [
   "todos",
   "habits",
   "holdings",
+  "calendarEvents",
 ] as const;
 
 async function resetStore() {

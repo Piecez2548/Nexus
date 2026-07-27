@@ -16,7 +16,10 @@ test.describe("mobile layout", () => {
 
     await page.getByRole("button", { name: "Add Transaction" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeVisible();
-    await page.mouse.click(10, 10);
+    // On a narrow mobile viewport the drawer panel spans the full screen
+    // width (see Drawer.tsx), leaving no backdrop gap to click outside of —
+    // must use its dedicated close button instead of a corner click.
+    await page.getByRole("button", { name: "Back" }).click();
 
     await page.getByRole("link", { name: /transactions/i }).click();
     await expect(page.getByRole("heading", { name: "Transactions" })).toBeVisible();
