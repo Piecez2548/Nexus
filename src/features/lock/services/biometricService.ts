@@ -17,8 +17,18 @@ export async function isBiometricAvailable(): Promise<boolean> {
     // since the Settings UI explicitly says "fingerprint". Passing
     // useFallback:true would also count a bare device PIN/pattern as
     // "available" on Android, which would be misleading here.
+    //
+    // `isAvailable` alone is NOT enough: Android reports it true even for
+    // weak-only biometry (e.g. some face unlock), which is fine for a
+    // plain verifyIdentity() gate but crashes the crypto-bound
+    // BiometricPrompt that storeBiometricCredential/retrieveBiometricPin
+    // actually use (androidx.biometric throws IllegalArgumentException:
+    // "Crypto-based authentication is not supported for Class 2 (Weak)
+    // biometrics" — an uncaught native exception that takes the whole app
+    // down, confirmed on-device). strongBiometryIsAvailable is the field
+    // that actually reflects what our crypto-bound flow needs.
     const result = await NativeBiometric.isAvailable();
-    return result.isAvailable;
+    return result.isAvailable && result.strongBiometryIsAvailable;
   } catch {
     return false;
   }

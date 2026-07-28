@@ -39,16 +39,25 @@ describe("biometricService", () => {
       expect(mockIsAvailable).not.toHaveBeenCalled();
     });
 
-    it("returns true when the native check reports available hardware", async () => {
+    it("returns true when strong biometry is available", async () => {
       mockIsNativePlatform.mockReturnValue(true);
-      mockIsAvailable.mockResolvedValue({ isAvailable: true });
+      mockIsAvailable.mockResolvedValue({ isAvailable: true, strongBiometryIsAvailable: true });
       expect(await isBiometricAvailable()).toBe(true);
       expect(mockIsAvailable).toHaveBeenCalledWith();
     });
 
     it("returns false when the native check reports unavailable", async () => {
       mockIsNativePlatform.mockReturnValue(true);
-      mockIsAvailable.mockResolvedValue({ isAvailable: false });
+      mockIsAvailable.mockResolvedValue({ isAvailable: false, strongBiometryIsAvailable: false });
+      expect(await isBiometricAvailable()).toBe(false);
+    });
+
+    it("returns false when only weak biometry is enrolled, even though isAvailable is true", async () => {
+      // Regression test: weak-only biometry (e.g. some face unlock) makes
+      // isAvailable true but crashes our crypto-bound BiometricPrompt flow
+      // with a native IllegalArgumentException — confirmed on-device.
+      mockIsNativePlatform.mockReturnValue(true);
+      mockIsAvailable.mockResolvedValue({ isAvailable: true, strongBiometryIsAvailable: false });
       expect(await isBiometricAvailable()).toBe(false);
     });
 
