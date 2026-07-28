@@ -1,8 +1,10 @@
-import { useState, type FormEvent } from "react";
-import { Lock, Zap } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Lock, Zap, FingerprintPattern } from "lucide-react";
 
 import { useAppLockStore, EncryptionStateCorruptedError } from "@/store/appLockStore";
 import { isSyncConfigured } from "@/lib/supabaseClient";
+import { retrieveBiometricPin } from "@/features/lock/services/biometricService";
+import { useTranslation } from "@/i18n/useTranslation";
 import EncryptionRecoveryFlow from "@/features/encryption/components/EncryptionRecoveryFlow";
 
 const inputClassName =
@@ -14,7 +16,8 @@ interface Props {
 }
 
 export default function AppLockScreen({ mode, onDone }: Props) {
-  const { setupPin, unlock, encryptionEnabled } = useAppLockStore();
+  const { setupPin, unlock, encryptionEnabled, biometricEnabled } = useAppLockStore();
+  const { t } = useTranslation();
 
   const [showRecovery, setShowRecovery] = useState(false);
   const [pin, setPin] = useState("");
@@ -24,6 +27,46 @@ export default function AppLockScreen({ mode, onDone }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   const canRecover = mode === "unlock" && isSyncConfigured && encryptionEnabled;
+
+  // Runs the recovered PIN through the exact same unlock() path as manual
+  // entry — no parallel KEK/DEK code. Any cancel/failed-scan/unavailable
+  // case resolves to null and is silently ignored: the always-visible PIN
+  // field is the fallback, never an error banner. Only a genuine
+  // post-success failure (corrupted encryption state) surfaces an error.
+  async function attemptBiometricUnlock() {
+    const recoveredPin = await retrieveBiometricPin();
+    if (recoveredPin === null) return;
+
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const success = await unlock(recoveredPin, remember);
+      setSubmitting(false);
+      if (success) onDone?.();
+    } catch (err) {
+      setSubmitting(false);
+
+      if (err instanceof EncryptionStateCorruptedError) {
+        setError("PIN ถูกต้อง แต่ไม่สามารถปลดล็อกข้อมูลที่เข้ารหัสไว้ได้ ลองกู้คืนผ่านบัญชี Sync ของคุณ");
+        return;
+      }
+
+      throw err;
+    }
+  }
+
+  const hasAutoTriggered = useRef(false);
+
+  useEffect(() => {
+    if (mode !== "unlock" || !biometricEnabled || hasAutoTriggered.current) return;
+    hasAutoTriggered.current = true;
+    void attemptBiometricUnlock();
+    // Only ever auto-triggers once per mount — deliberately excludes
+    // attemptBiometricUnlock (and its `remember` dependency) so toggling
+    // "remember me" mid-screen can't re-fire the OS prompt.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, biometricEnabled]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -156,6 +199,18 @@ export default function AppLockScreen({ mode, onDone }: Props) {
       >
         {submitting ? "กำลังดำเนินการ..." : mode === "setup" ? "ตั้งค่า PIN" : "ปลดล็อก"}
       </button>
+
+      {mode === "unlock" && biometricEnabled && (
+        <button
+          type="button"
+          disabled={submitting}
+          onClick={() => void attemptBiometricUnlock()}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 py-3 font-medium transition hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <FingerprintPattern size={18} className="text-brand-500" />
+          {t("lock.useBiometric")}
+        </button>
+      )}
 
       {canRecover && (
         <button

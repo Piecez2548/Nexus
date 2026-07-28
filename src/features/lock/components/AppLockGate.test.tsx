@@ -8,6 +8,14 @@ vi.mock("@/features/encryption/recovery/recoverDekFromEscrow", () => ({
   RecoveryNotAvailableError: class RecoveryNotAvailableError extends Error {},
 }));
 
+const mockRetrieveBiometricPin = vi.fn();
+vi.mock("@/features/lock/services/biometricService", () => ({
+  retrieveBiometricPin: (...args: unknown[]) => mockRetrieveBiometricPin(...args),
+  storeBiometricCredential: vi.fn(),
+  deleteBiometricCredential: vi.fn(),
+  isBiometricAvailable: vi.fn().mockResolvedValue(false),
+}));
+
 import AppLockGate from "./AppLockGate";
 import { useAppLockStore } from "@/store/appLockStore";
 import { useAuthStore } from "@/features/sync/store/authStore";
@@ -44,6 +52,7 @@ async function resetStore() {
     wrappedDek: null,
     kekSalt: null,
     kekIterations: null,
+    biometricEnabled: false,
   });
   useEncryptionSessionStore.getState().clearDek();
   useAuthStore.setState({ user: null, lastSyncedAt: null });
@@ -56,6 +65,8 @@ describe("AppLockGate", () => {
   beforeEach(async () => {
     await resetStore();
     mockRecoverDekFromEscrow.mockReset();
+    mockRetrieveBiometricPin.mockReset();
+    mockRetrieveBiometricPin.mockResolvedValue(null);
   });
 
   it("renders children directly when app lock was never set up", () => {
@@ -286,6 +297,82 @@ describe("AppLockGate", () => {
       await user.type(await screen.findByLabelText("PIN ใหม่"), "1234");
       await user.type(screen.getByLabelText("ยืนยัน PIN ใหม่"), "1234");
       await user.click(screen.getByRole("button", { name: "ตั้ง PIN ใหม่" }));
+
+      expect(await screen.findByText("Protected content")).toBeInTheDocument();
+    });
+  });
+
+  describe("biometric auto-unlock", () => {
+    it("does not show a fingerprint button when biometric unlock isn't enabled", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      useAppLockStore.getState().lock();
+
+      render(
+        <AppLockGate>
+          <p>Protected content</p>
+        </AppLockGate>
+      );
+
+      expect(await screen.findByRole("heading", { name: "ปลดล็อก Nexus" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Unlock with fingerprint" })).not.toBeInTheDocument();
+      expect(mockRetrieveBiometricPin).not.toHaveBeenCalled();
+    });
+
+    it("auto-triggers and reveals children when biometric unlock succeeds", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      useAppLockStore.getState().lock();
+      useAppLockStore.setState({ biometricEnabled: true });
+      mockRetrieveBiometricPin.mockResolvedValue("1234");
+
+      render(
+        <AppLockGate>
+          <p>Protected content</p>
+        </AppLockGate>
+      );
+
+      expect(await screen.findByText("Protected content")).toBeInTheDocument();
+      expect(mockRetrieveBiometricPin).toHaveBeenCalledTimes(1);
+    });
+
+    it("silently falls back to the PIN form when the biometric prompt is cancelled", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      useAppLockStore.getState().lock();
+      useAppLockStore.setState({ biometricEnabled: true });
+      mockRetrieveBiometricPin.mockResolvedValue(null);
+
+      const user = userEvent.setup();
+      render(
+        <AppLockGate>
+          <p>Protected content</p>
+        </AppLockGate>
+      );
+
+      expect(await screen.findByRole("heading", { name: "ปลดล็อก Nexus" })).toBeInTheDocument();
+      expect(screen.queryByText(/ไม่ถูกต้อง/)).not.toBeInTheDocument();
+
+      // Manual PIN entry still works after a cancelled/failed biometric attempt.
+      await user.type(screen.getByLabelText("PIN"), "1234");
+      await user.click(screen.getByRole("button", { name: "ปลดล็อก" }));
+
+      expect(await screen.findByText("Protected content")).toBeInTheDocument();
+    });
+
+    it("unlocks via the manual fingerprint button", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      useAppLockStore.getState().lock();
+      useAppLockStore.setState({ biometricEnabled: true });
+      mockRetrieveBiometricPin.mockResolvedValue(null);
+
+      const user = userEvent.setup();
+      render(
+        <AppLockGate>
+          <p>Protected content</p>
+        </AppLockGate>
+      );
+
+      await screen.findByRole("heading", { name: "ปลดล็อก Nexus" });
+      mockRetrieveBiometricPin.mockResolvedValue("1234");
+      await user.click(screen.getByRole("button", { name: "Unlock with fingerprint" }));
 
       expect(await screen.findByText("Protected content")).toBeInTheDocument();
     });

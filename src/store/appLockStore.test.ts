@@ -1,7 +1,16 @@
-import { describe, expect, it, beforeEach } from "vitest";
-import { useAppLockStore, EncryptionStateCorruptedError } from "./appLockStore";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
 import { generateDek, encryptField, decryptField } from "@/features/encryption/crypto/encryption";
+
+const mockStoreBiometricCredential = vi.fn();
+const mockDeleteBiometricCredential = vi.fn();
+
+vi.mock("@/features/lock/services/biometricService", () => ({
+  storeBiometricCredential: (...args: unknown[]) => mockStoreBiometricCredential(...args),
+  deleteBiometricCredential: (...args: unknown[]) => mockDeleteBiometricCredential(...args),
+}));
+
+const { useAppLockStore, EncryptionStateCorruptedError } = await import("./appLockStore");
 
 function resetStore() {
   sessionStorage.clear();
@@ -17,12 +26,16 @@ function resetStore() {
     wrappedDek: null,
     kekSalt: null,
     kekIterations: null,
+    biometricEnabled: false,
   });
   useEncryptionSessionStore.getState().clearDek();
 }
 
 describe("appLockStore", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
+    mockStoreBiometricCredential.mockResolvedValue(undefined);
+    mockDeleteBiometricCredential.mockResolvedValue(undefined);
     resetStore();
   });
 
@@ -271,6 +284,92 @@ describe("appLockStore", () => {
       useAppLockStore.getState().lock();
       expect(await useAppLockStore.getState().unlock("1234", false)).toBe(false);
       expect(await useAppLockStore.getState().unlock("4321", false)).toBe(true);
+    });
+  });
+
+  describe("biometric unlock", () => {
+    it("enableBiometric requires the correct PIN before storing a credential", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+
+      const failed = await useAppLockStore.getState().enableBiometric("0000");
+      expect(failed).toBe(false);
+      expect(mockStoreBiometricCredential).not.toHaveBeenCalled();
+      expect(useAppLockStore.getState().biometricEnabled).toBe(false);
+
+      const succeeded = await useAppLockStore.getState().enableBiometric("1234");
+      expect(succeeded).toBe(true);
+      expect(mockStoreBiometricCredential).toHaveBeenCalledWith("1234");
+      expect(useAppLockStore.getState().biometricEnabled).toBe(true);
+    });
+
+    it("disableBiometric deletes the stored credential and clears the flag", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      await useAppLockStore.getState().enableBiometric("1234");
+
+      await useAppLockStore.getState().disableBiometric();
+
+      expect(mockDeleteBiometricCredential).toHaveBeenCalled();
+      expect(useAppLockStore.getState().biometricEnabled).toBe(false);
+    });
+
+    it("changePin re-stores the biometric credential under the new PIN when enabled", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      await useAppLockStore.getState().enableBiometric("1234");
+      mockStoreBiometricCredential.mockClear();
+
+      await useAppLockStore.getState().changePin("1234", "5678");
+
+      expect(mockStoreBiometricCredential).toHaveBeenCalledWith("5678");
+      expect(useAppLockStore.getState().biometricEnabled).toBe(true);
+    });
+
+    it("changePin does not touch biometric storage when it was never enabled", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+
+      await useAppLockStore.getState().changePin("1234", "5678");
+
+      expect(mockStoreBiometricCredential).not.toHaveBeenCalled();
+    });
+
+    it("changePin fails closed: disables biometric and cleans up if the native re-store fails", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      await useAppLockStore.getState().enableBiometric("1234");
+      mockStoreBiometricCredential.mockClear();
+      mockStoreBiometricCredential.mockRejectedValueOnce(new Error("keystore error"));
+
+      const changed = await useAppLockStore.getState().changePin("1234", "5678");
+
+      // The PIN change itself must still succeed even though the biometric
+      // resync failed.
+      expect(changed).toBe(true);
+      expect(useAppLockStore.getState().biometricEnabled).toBe(false);
+      expect(mockDeleteBiometricCredential).toHaveBeenCalled();
+
+      useAppLockStore.getState().lock();
+      expect(await useAppLockStore.getState().unlock("5678", false)).toBe(true);
+    });
+
+    it("disableLock deletes any stored biometric credential and clears the flag", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      await useAppLockStore.getState().enableBiometric("1234");
+      mockDeleteBiometricCredential.mockClear();
+
+      await useAppLockStore.getState().disableLock("1234");
+
+      expect(mockDeleteBiometricCredential).toHaveBeenCalled();
+      expect(useAppLockStore.getState().biometricEnabled).toBe(false);
+    });
+
+    it("completeRecovery unconditionally clears any prior biometric credential", async () => {
+      await useAppLockStore.getState().setupPin("1234", false);
+      await useAppLockStore.getState().enableBiometric("1234");
+      mockDeleteBiometricCredential.mockClear();
+      const dek = await generateDek();
+
+      await useAppLockStore.getState().completeRecovery("9999", dek);
+
+      expect(mockDeleteBiometricCredential).toHaveBeenCalled();
+      expect(useAppLockStore.getState().biometricEnabled).toBe(false);
     });
   });
 });

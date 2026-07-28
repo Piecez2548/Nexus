@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create, type StoreApi } from "zustand";
 import { persist } from "zustand/middleware";
 import { hashPin, generateSalt } from "@/features/lock/utils/pinHash";
 import {
@@ -12,6 +12,7 @@ import {
   type WrappedKey,
 } from "@/features/encryption/crypto/encryption";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
+import { storeBiometricCredential, deleteBiometricCredential } from "@/features/lock/services/biometricService";
 
 const SESSION_KEY = "nexus-session-unlocked";
 const REMEMBER_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -63,6 +64,11 @@ interface AppLockState {
   kekSalt: string | null; // base64
   kekIterations: number | null;
 
+  // Whether the App Lock PIN is also stored behind a hardware-backed,
+  // biometric-gated Keystore credential — a faster alternative to typing
+  // the PIN, never a replacement for it (the PIN itself is unaffected).
+  biometricEnabled: boolean;
+
   isEnabled: () => boolean;
   isLocked: () => boolean;
 
@@ -75,6 +81,13 @@ interface AppLockState {
   recordActivity: () => void;
   checkAutoLock: () => void;
 
+  // Re-verifies the PIN, then stores it behind biometric-gated Keystore
+  // storage. Only flips biometricEnabled on success.
+  enableBiometric: (pin: string) => Promise<boolean>;
+  // Deletes the stored credential and clears the flag. Safe to call even
+  // if nothing was ever stored.
+  disableBiometric: () => Promise<void>;
+
   // Called only by the encryption migration flow once a DEK has been
   // generated and escrowed — wraps the given DEK with a PIN-derived KEK
   // and starts requiring it on unlock. Never generates a new DEK itself.
@@ -86,6 +99,27 @@ interface AppLockState {
   // the PIN outright and re-wraps the *same* recovered DEK, so every row
   // already encrypted with it stays readable.
   completeRecovery: (newPin: string, dek: CryptoKey) => Promise<void>;
+}
+
+// Re-stores the biometric credential under a just-changed PIN. Fails
+// closed: if the native re-store throws, disables biometric and
+// best-effort deletes any stale credential rather than leave one that
+// would silently unlock with the *old* PIN. Never blocks the PIN change
+// itself — the caller has already committed the new PIN by the time this
+// runs.
+async function resyncBiometricCredential(
+  get: StoreApi<AppLockState>["getState"],
+  set: StoreApi<AppLockState>["setState"],
+  newPin: string
+): Promise<void> {
+  if (!get().biometricEnabled) return;
+
+  try {
+    await storeBiometricCredential(newPin);
+  } catch {
+    set({ biometricEnabled: false });
+    await deleteBiometricCredential();
+  }
 }
 
 export const useAppLockStore = create<AppLockState>()(
@@ -102,6 +136,8 @@ export const useAppLockStore = create<AppLockState>()(
       wrappedDek: null,
       kekSalt: null,
       kekIterations: null,
+
+      biometricEnabled: false,
 
       isEnabled: () => get().pinHash !== null,
 
@@ -189,12 +225,14 @@ export const useAppLockStore = create<AppLockState>()(
             kekSalt: bytesToBase64(newKekSalt),
             kekIterations: PBKDF2_ITERATIONS,
           });
+          await resyncBiometricCredential(get, set, newPin);
           return true;
         }
 
         const newSalt = generateSalt();
         const newHash = await hashPin(newPin, newSalt);
         set({ pinHash: newHash, salt: newSalt });
+        await resyncBiometricCredential(get, set, newPin);
         return true;
       },
 
@@ -211,9 +249,10 @@ export const useAppLockStore = create<AppLockState>()(
         const candidate = await hashPin(currentPin, salt);
         if (candidate !== pinHash) return false;
 
+        await deleteBiometricCredential();
         writeSessionUnlocked(false);
         useEncryptionSessionStore.getState().clearDek();
-        set({ pinHash: null, salt: null, rememberUntil: null, sessionUnlocked: false });
+        set({ pinHash: null, salt: null, rememberUntil: null, sessionUnlocked: false, biometricEnabled: false });
         return true;
       },
 
@@ -267,6 +306,12 @@ export const useAppLockStore = create<AppLockState>()(
         const kek = await deriveKek(newPin, kekSalt, PBKDF2_ITERATIONS);
         const wrappedDek = await wrapDek(dek, kek);
 
+        // There's no old PIN in scope to re-verify (that's the entire point
+        // of recovery), so any biometric credential from before this is now
+        // permanently stale — drop it unconditionally. The user re-enables
+        // biometric in one tap afterward if they want it.
+        await deleteBiometricCredential();
+
         writeSessionUnlocked(true);
         useEncryptionSessionStore.getState().setDek(dek);
         set({
@@ -278,7 +323,25 @@ export const useAppLockStore = create<AppLockState>()(
           kekIterations: PBKDF2_ITERATIONS,
           sessionUnlocked: true,
           rememberUntil: null,
+          biometricEnabled: false,
         });
+      },
+
+      async enableBiometric(pin) {
+        const { pinHash, salt } = get();
+        if (pinHash === null || salt === null) return false;
+
+        const candidate = await hashPin(pin, salt);
+        if (candidate !== pinHash) return false;
+
+        await storeBiometricCredential(pin);
+        set({ biometricEnabled: true });
+        return true;
+      },
+
+      async disableBiometric() {
+        await deleteBiometricCredential();
+        set({ biometricEnabled: false });
       },
     }),
     {
@@ -292,6 +355,7 @@ export const useAppLockStore = create<AppLockState>()(
         wrappedDek: state.wrappedDek,
         kekSalt: state.kekSalt,
         kekIterations: state.kekIterations,
+        biometricEnabled: state.biometricEnabled,
       }),
     }
   )

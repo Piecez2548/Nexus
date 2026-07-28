@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useAppLockStore } from "@/store/appLockStore";
 import { useToast } from "@/hooks/useToast";
+import { useTranslation } from "@/i18n/useTranslation";
 import FormField from "@/components/ui/FormField";
 
 const inputClassName =
@@ -13,6 +14,7 @@ interface Props {
 export default function ChangePinForm({ onDone }: Props) {
   const { changePin } = useAppLockStore();
   const toast = useToast();
+  const { t } = useTranslation();
 
   const [currentPin, setCurrentPin] = useState("");
   const [newPin, setNewPin] = useState("");
@@ -34,6 +36,8 @@ export default function ChangePinForm({ onDone }: Props) {
       return;
     }
 
+    const hadBiometricBefore = useAppLockStore.getState().biometricEnabled;
+
     setSubmitting(true);
     const success = await changePin(currentPin, newPin);
     setSubmitting(false);
@@ -43,7 +47,15 @@ export default function ChangePinForm({ onDone }: Props) {
       return;
     }
 
-    toast.success("เปลี่ยน PIN เรียบร้อย");
+    // changePin() fails closed: if re-storing the biometric credential under
+    // the new PIN failed, it silently disables biometricEnabled rather than
+    // block the PIN change itself. Surface that here so the user isn't left
+    // wondering why fingerprint unlock quietly stopped working.
+    if (hadBiometricBefore && !useAppLockStore.getState().biometricEnabled) {
+      toast.warning(t("settings.biometricResyncFailedWarning"));
+    } else {
+      toast.success("เปลี่ยน PIN เรียบร้อย");
+    }
     onDone();
   }
 
