@@ -1,0 +1,23 @@
+diff --git a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java b/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java
+index d0f7703..78af60e 100644
+--- a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java
++++ b/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java
+@@ -95,7 +95,17 @@ public final class BiometricAuthenticatorConfig {
+     }
+ 
+     private static BiometricAuthenticatorConfig defaultBiometric() {
+-        return new BiometricAuthenticatorConfig(PROMPT_BIOMETRIC_ANY, keyAuthAny(), true, true);
++        // PATCHED (see /patches): the unpatched default mixes BIOMETRIC_STRONG with
++        // BIOMETRIC_WEAK, but AndroidX BiometricPrompt.authenticate(PromptInfo, CryptoObject)
++        // unconditionally throws IllegalArgumentException ("Crypto-based authentication is
++        // not supported for Class 2 (Weak) biometrics") the instant WEAK is included in the
++        // allowed authenticators alongside a CryptoObject — regardless of what's actually
++        // enrolled on the device. setCredentials()/getSecureCredentials() always hit this
++        // default (their JS options don't expose allowedBiometryTypes to override it), so
++        // every crypto-bound call crashed unconditionally. STRONG-only is exactly what this
++        // file's own explicit fingerprint-only case already narrows to below — it's a valid,
++        // non-crashing combination with a CryptoObject on every Android version.
++        return new BiometricAuthenticatorConfig(BiometricManager.Authenticators.BIOMETRIC_STRONG, keyAuthStrong(), true, true);
+     }
+ 
+     private static int keyAuthStrong() {

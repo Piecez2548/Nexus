@@ -19,7 +19,8 @@
     "electron:build": "vite build && electron-builder",
     "cap:sync": "vite build && cap sync android",
     "cap:open": "cap open android",
-    "cap:build": "vite build && cap sync android && cd android && gradlew.bat assembleDebug"
+    "cap:build": "vite build && cap sync android && cd android && gradlew.bat assembleDebug",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",
@@ -64,6 +65,7 @@
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^29.1.1",
     "oxlint": "^1.71.0",
+    "patch-package": "^8.0.1",
     "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^4.3.2",
     "typescript": "~6.0.2",
