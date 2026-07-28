@@ -14,6 +14,13 @@ export default defineConfig({
     Boolean(process.env.ANALYZE) && visualizer({ filename: "dist/stats.html", gzipSize: true, brotliSize: true }),
     VitePWA({
       registerType: "autoUpdate",
+      // Registered manually in main.tsx, gated on !Capacitor.isNativePlatform().
+      // The wrapped Android app already gets fresh code on every APK
+      // install — a caching service worker inside that WebView adds no
+      // value and is a real liability: its Cache Storage survives `adb
+      // install -r` (and a normal user's app update), so it can silently
+      // keep serving a stale, already-fixed JS bundle indefinitely.
+      injectRegister: false,
       includeAssets: ["favicon.svg", "icons/apple-touch-icon.png"],
       manifest: {
         name: "Nexus - Life Operating System",
