@@ -1,8 +1,16 @@
 import { z } from "zod";
 
-export const habitSchema = z.object({
-  name: z.string().min(1, "กรุณากรอกชื่อนิสัย"),
-  frequency: z.enum(["daily", "weekly"], { error: "กรุณาเลือกความถี่" }),
-});
+import { repeatRuleSchema } from "@/features/reminders/schemas/repeatRuleSchema";
+import type { TranslateFn } from "@/i18n/useTranslation";
 
-export type HabitFormData = z.infer<typeof habitSchema>;
+export function habitSchema(t: TranslateFn) {
+  return z.object({
+    name: z.string().min(1, t("validation.habit.nameRequired")),
+    frequency: z.enum(["daily", "weekly"], { error: t("validation.habit.frequencyRequired") }),
+    reminderEnabled: z.boolean().optional(),
+    reminderTime: z.string().optional(),
+    reminderRepeat: repeatRuleSchema(t).nullable().optional(),
+  });
+}
+
+export type HabitFormData = z.infer<ReturnType<typeof habitSchema>>;

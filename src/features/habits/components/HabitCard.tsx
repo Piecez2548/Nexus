@@ -1,4 +1,4 @@
-import { Pencil, Trash2, Flame, Check } from "lucide-react";
+import { Pencil, Trash2, Flame, Check, Bell } from "lucide-react";
 
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { computeStreak, getRecentDates, isCompletedToday } from "@/features/habits/utils/streak";
@@ -45,7 +45,12 @@ export default function HabitCard({ habit, onEdit }: Props) {
     <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
       <div className="mb-3 flex items-start justify-between">
         <div>
-          <h3 className="font-semibold">{habit.name}</h3>
+          <h3 className="flex items-center gap-1.5 font-semibold">
+            {habit.name}
+            {habit.reminderEnabled && (
+              <Bell size={13} className="text-zinc-400 dark:text-zinc-500" aria-label={t("habits.reminderLabel")} />
+            )}
+          </h3>
           <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${FREQUENCY_BADGE_CLASS[habit.frequency]}`}>
             {frequencyLabels[habit.frequency]}
           </span>

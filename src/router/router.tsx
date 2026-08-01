@@ -4,6 +4,7 @@ import MainLayout from "@/layouts/MainLayout";
 import {
   Dashboard,
   FinanceDashboard,
+  AiAnalytics,
   Transactions,
   Favorites,
   Accounts,
@@ -16,7 +17,7 @@ import {
   Todo,
   Habits,
   Portfolio,
-  Calendar,
+  LifeSchedule,
   Settings,
   NotFound,
 } from "./lazyPages";
@@ -37,6 +38,10 @@ export const router = createBrowserRouter([
       {
         path: "finance",
         element: <FinanceDashboard />,
+      },
+      {
+        path: "ai-analytics",
+        element: <AiAnalytics />,
       },
       {
         path: "transactions",
@@ -87,8 +92,8 @@ export const router = createBrowserRouter([
         element: <Habits />,
       },
       {
-        path: "calendar",
-        element: <Calendar />,
+        path: "schedule",
+        element: <LifeSchedule />,
       },
       {
         path: "settings",

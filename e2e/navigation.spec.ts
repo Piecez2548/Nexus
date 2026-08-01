@@ -10,6 +10,7 @@ test.describe("sidebar navigation", () => {
 
     const financeLinks: Array<[label: string, heading: string | RegExp]> = [
       ["Finance Dashboard", "Finance Dashboard"],
+      ["AI Analytics", "AI Analytics"],
       ["Transactions", "Transactions"],
       ["Favorites", "Favorites"],
       ["Budget", "Budget"],
@@ -46,8 +47,8 @@ test.describe("sidebar navigation", () => {
     await page.getByRole("link", { name: "Habit Tracker", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Habits" })).toBeVisible();
 
-    await page.getByRole("link", { name: "Calendar", exact: true }).click();
-    await expect(page.getByRole("heading", { name: "Calendar" })).toBeVisible();
+    await page.getByRole("link", { name: "Life Schedule", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Life Schedule" })).toBeVisible();
 
     await page.getByRole("link", { name: "Settings", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();

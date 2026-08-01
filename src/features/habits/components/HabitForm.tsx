@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { habitSchema, type HabitFormData } from "@/features/habits/schemas/habitSchema";
 import { useHabitStore } from "@/features/habits/store/habitStore";
+import HabitReminderField from "@/features/habits/components/HabitReminderField";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
@@ -16,6 +17,9 @@ const inputClassName =
 const blankValues: HabitFormData = {
   name: "",
   frequency: "daily",
+  reminderEnabled: false,
+  reminderTime: "",
+  reminderRepeat: { frequency: "daily" },
 };
 
 interface Props {
@@ -28,19 +32,25 @@ export default function HabitForm({ habit, onDone }: Props) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
   const { t } = useTranslation();
+  const schema = useMemo(() => habitSchema(t), [t]);
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
     reset,
   } = useForm<HabitFormData>({
-    resolver: zodResolver(habitSchema),
+    resolver: zodResolver(schema),
     defaultValues: blankValues,
   });
 
   useEffect(() => {
-    reset(habit ?? blankValues);
+    // Merge over blankValues rather than replacing it outright — a habit
+    // saved before this feature existed has no reminderRepeat at all, and
+    // the form needs a concrete default the moment reminders are enabled,
+    // not just a display fallback that never gets written back.
+    reset(habit ? { ...blankValues, ...habit } : blankValues);
     setSubmitError(null);
   }, [habit, reset]);
 
@@ -86,6 +96,8 @@ export default function HabitForm({ habit, onDone }: Props) {
           <option value="weekly">{t("habits.frequencyWeekly")}</option>
         </select>
       </FormField>
+
+      <HabitReminderField control={control} />
 
       {submitError && <p className="text-sm text-red-500">{submitError}</p>}
 

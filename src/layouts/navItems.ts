@@ -12,7 +12,8 @@ import {
   Briefcase,
   ListChecks,
   Flame,
-  CalendarDays,
+  Clock,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ export interface MenuItem {
 
 export const financeMenus: MenuItem[] = [
   { icon: ChartColumn, labelKey: "nav.financeDashboard", path: "/finance" },
+  { icon: Sparkles, labelKey: "nav.aiAnalytics", path: "/ai-analytics" },
   { icon: Wallet, labelKey: "nav.transactions", path: "/transactions" },
   { icon: Star, labelKey: "nav.favorites", path: "/favorites" },
   { icon: PiggyBank, labelKey: "nav.budget", path: "/budget" },
@@ -42,5 +44,5 @@ export const tradingMenus: MenuItem[] = [
 export const personalMenus: MenuItem[] = [
   { icon: ListChecks, labelKey: "nav.todo", path: "/todo" },
   { icon: Flame, labelKey: "nav.habits", path: "/habits" },
-  { icon: CalendarDays, labelKey: "nav.calendar", path: "/calendar" },
+  { icon: Clock, labelKey: "nav.schedule", path: "/schedule" },
 ];

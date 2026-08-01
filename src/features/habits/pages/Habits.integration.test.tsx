@@ -50,4 +50,23 @@ describe("Habits page", () => {
       expect(screen.getByText("No habits yet")).toBeInTheDocument();
     });
   });
+
+  it("enables a per-habit reminder and round-trips it", async () => {
+    const user = userEvent.setup();
+    render(<Habits />);
+
+    await user.click(screen.getByRole("button", { name: /add habit/i }));
+    await user.type(await screen.findByLabelText("Habit name"), "Exercise");
+    await user.click(screen.getByRole("checkbox", { name: "Reminder" }));
+    await user.type(screen.getByLabelText("Reminder time"), "06:30");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Exercise")).toBeInTheDocument();
+
+    const habits = await db.habits.toArray();
+    const habit = habits.find((h) => h.name === "Exercise");
+    expect(habit?.reminderEnabled).toBe(true);
+    expect(habit?.reminderTime).toBe("06:30");
+    expect(habit?.reminderRepeat).toEqual({ frequency: "daily" });
+  });
 });

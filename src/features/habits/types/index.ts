@@ -1,4 +1,5 @@
 import type { SyncMeta } from "@/utils/syncMeta";
+import type { RepeatRule } from "@/features/reminders/types";
 
 export type HabitFrequency = "daily" | "weekly";
 
@@ -11,5 +12,10 @@ export interface Habit extends SyncMeta {
   // just the real day it was checked in; computeStreak (see utils/streak.ts)
   // is what buckets these into weeks.
   completedDates: string[];
+  // Deliberately independent of `frequency` — a daily habit can still want
+  // a reminder only on specific days (e.g. gym Mon/Wed/Fri).
+  reminderEnabled?: boolean;
+  reminderTime?: string; // "HH:mm", local
+  reminderRepeat?: RepeatRule | null;
   createdAt: string;
 }

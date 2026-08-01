@@ -3,6 +3,9 @@ import { habitService } from "@/features/habits/services/habitService";
 import { useGamificationStore } from "@/store/gamificationStore";
 import { XP_REWARDS } from "@/utils/xpRewards";
 import { toLocalDateString } from "@/features/habits/utils/streak";
+import { scheduleReminder, cancelReminder } from "@/features/reminders/services/nativeReminderService";
+import { REMINDER_NAMESPACE } from "@/features/reminders/types";
+import { translate } from "@/i18n/useTranslation";
 import { initialAsyncState, toErrorMessage } from "@/utils/asyncState";
 import type { Habit } from "@/features/habits/types";
 
@@ -16,6 +19,19 @@ interface HabitState {
   updateHabit: (id: number, habit: Habit) => Promise<void>;
   deleteHabit: (id: number) => Promise<void>;
   checkIn: (id: number) => Promise<void>;
+}
+
+async function reminderFor(habit: Habit) {
+  if (!habit.reminderEnabled || !habit.reminderTime || !habit.reminderRepeat) return;
+
+  await scheduleReminder({
+    namespace: REMINDER_NAMESPACE.habit,
+    entityId: habit.id!,
+    title: habit.name,
+    body: translate("habits.reminderNotificationBody", { name: habit.name }),
+    time: habit.reminderTime,
+    repeat: habit.reminderRepeat,
+  });
 }
 
 export const useHabitStore =
@@ -35,18 +51,26 @@ export const useHabitStore =
     },
 
     async addHabit(habit) {
-      await habitService.create(habit);
+      const id = await habitService.create(habit);
+      await reminderFor({ ...habit, id });
+
       const habits = await habitService.list();
       set({ habits });
     },
 
     async updateHabit(id, habit) {
+      // Always cancel first, then reschedule if still enabled — simpler
+      // and safer than diffing old vs. new reminder settings.
+      await cancelReminder(REMINDER_NAMESPACE.habit, id);
       await habitService.update(id, habit);
+      await reminderFor({ ...habit, id });
+
       const habits = await habitService.list();
       set({ habits });
     },
 
     async deleteHabit(id) {
+      await cancelReminder(REMINDER_NAMESPACE.habit, id);
       await habitService.remove(id);
       const habits = await habitService.list();
       set({ habits });
