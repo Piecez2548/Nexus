@@ -124,3 +124,18 @@ export interface Goal extends SyncMeta {
   icon?: string;
   color?: string;
 }
+
+export type GoalMilestoneTier = 25 | 50 | 75 | 100;
+
+// Logs the moment a Goal's progress crosses a 25/50/75/100% tier. Written
+// once by goalMilestoneService.checkAndLogCrossings, never updated — read
+// by the AI Analytics Financial Timeline. Logging starts from whenever this
+// feature ships (no historical backfill, since only the current
+// Goal.currentAmount snapshot exists — there's no record of past crossings).
+export interface GoalMilestoneEvent extends SyncMeta {
+  id?: number;
+  goalSyncId: string; // Goal's own syncId — stable across devices, unlike local id
+  goalName: string; // denormalized for display even if the Goal is later deleted
+  tier: GoalMilestoneTier;
+  reachedAt: string; // ISO timestamp, set once, never updated
+}

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { goalService } from "@/features/finance/services/goalService";
+import { checkAndLogCrossings } from "@/features/finance/services/goalMilestoneService";
 import { useGamificationStore } from "@/store/gamificationStore";
 import { XP_REWARDS } from "@/utils/xpRewards";
 import { initialAsyncState, toErrorMessage } from "@/utils/asyncState";
@@ -40,9 +41,14 @@ export const useGoalStore =
     },
 
     async updateGoal(id, goal) {
+      const previousAmount = get().goals.find((g) => g.id === id)?.currentAmount ?? goal.currentAmount;
+
       await goalService.update(id, goal);
       const goals = await goalService.list();
       set({ goals });
+
+      const updated = goals.find((g) => g.id === id);
+      if (updated) await checkAndLogCrossings(updated, previousAmount);
     },
 
     async deleteGoal(id) {
@@ -69,5 +75,8 @@ export const useGoalStore =
 
       const goals = await goalService.list();
       set({ goals });
+
+      const updated = goals.find((g) => g.id === id);
+      if (updated) await checkAndLogCrossings(updated, goal.currentAmount);
     },
   }));

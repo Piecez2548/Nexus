@@ -11,24 +11,24 @@ test.describe("Dashboard period selector", () => {
 
     // A transaction dated today counts under every granularity.
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("ชื่อรายการ").fill("Today's pay");
-    await page.getByLabel("จำนวนเงิน").fill("30000");
-    await page.getByLabel("ประเภท").selectOption({ label: "Income" });
-    await page.getByLabel("หมวดหมู่").selectOption({ label: "Salary" });
-    await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Item name").fill("Today's pay");
+    await page.getByLabel("Amount").fill("30000");
+    await page.getByLabel("Type").selectOption({ label: "Income" });
+    await page.getByLabel("Category").selectOption({ label: "Salary" });
+    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
 
     // A transaction dated in 2020 is old enough to be excluded from any
     // realistic Day/Month/Year window, regardless of when this test runs.
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("ชื่อรายการ").fill("Old pay");
-    await page.getByLabel("จำนวนเงิน").fill("999999");
-    await page.getByLabel("ประเภท").selectOption({ label: "Income" });
-    await page.getByLabel("หมวดหมู่").selectOption({ label: "Salary" });
-    await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-    await page.getByLabel("วันที่").fill("2020-01-01");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Item name").fill("Old pay");
+    await page.getByLabel("Amount").fill("999999");
+    await page.getByLabel("Type").selectOption({ label: "Income" });
+    await page.getByLabel("Category").selectOption({ label: "Salary" });
+    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Date").fill("2020-01-01");
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
 
     // Default granularity ("Month"): only today's ฿30,000 income counts —

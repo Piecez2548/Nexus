@@ -11,7 +11,10 @@ import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { toLocalDateString } from "@/features/habits/utils/streak";
 import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
-import { useCalendarEventStore } from "@/features/calendar/store/calendarEventStore";
+import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
+
+const now = new Date();
+const thisMonth = (day: number) => toLocalDateString(new Date(now.getFullYear(), now.getMonth(), day));
 
 describe("Dashboard (real data flow)", () => {
   beforeEach(async () => {
@@ -25,8 +28,8 @@ describe("Dashboard (real data flow)", () => {
     useHabitStore.setState({ habits: [], loading: false, error: null });
     await db.holdings.clear();
     useHoldingStore.setState({ holdings: [], loading: false, error: null });
-    await db.calendarEvents.clear();
-    useCalendarEventStore.setState({ events: [], loading: false, error: null });
+    await db.scheduleItems.clear();
+    useScheduleItemStore.setState({ items: [], loading: false, error: null });
   });
 
   it("shows an empty state with no transactions", async () => {
@@ -38,8 +41,8 @@ describe("Dashboard (real data flow)", () => {
 
   it("reflects real transaction data in summary cards, recent list, and charts", async () => {
     await db.transactions.bulkAdd([
-      { title: "Salary", amount: 30000, type: "income", category: "Paycheck", account: "Bank", date: "2026-07-01", status: "completed" },
-      { title: "Groceries", amount: 2000, type: "expense", category: "Food", account: "Cash", date: "2026-07-02", status: "completed" },
+      { title: "Salary", amount: 30000, type: "income", category: "Paycheck", account: "Bank", date: thisMonth(1), status: "completed" },
+      { title: "Groceries", amount: 2000, type: "expense", category: "Food", account: "Cash", date: thisMonth(2), status: "completed" },
     ]);
 
     render(<Dashboard />, { wrapper: MemoryRouter });
@@ -59,8 +62,8 @@ describe("Dashboard (real data flow)", () => {
     expect(screen.queryByText("No expense data yet")).not.toBeInTheDocument();
   });
 
-  it("shows the Life Modules placeholders and a real-data trading overview", async () => {
-    const today = new Date().toISOString().slice(0, 10);
+  it("shows the AI Daily Summary panel with real data and a real-data trading overview", async () => {
+    const today = toLocalDateString(new Date());
 
     await db.trades.bulkAdd([
       {
@@ -87,10 +90,9 @@ describe("Dashboard (real data flow)", () => {
 
     render(<Dashboard />, { wrapper: MemoryRouter });
 
-    // One "coming soon" placeholder module left (Todo, Habit Tracker,
-    // Portfolio, and Calendar are all real, working features now).
+    // The AI Daily Summary panel is a real feature now, not a placeholder.
     expect(await screen.findByText("AI Daily Summary")).toBeInTheDocument();
-    expect(screen.getAllByText("Coming Soon")).toHaveLength(1);
+    expect(screen.queryByText("Coming Soon")).not.toBeInTheDocument();
 
     // Trading overview reflects the real trade data: the AAPL trade closed
     // today falls within both "today" and the default "month" period window,
@@ -98,6 +100,43 @@ describe("Dashboard (real data flow)", () => {
     expect(await screen.findAllByText("+200")).toHaveLength(2);
     expect(screen.getByText("100.0%")).toBeInTheDocument(); // win rate
     expect(screen.getByText("1")).toBeInTheDocument(); // open positions
+  });
+
+  it("shows the AI Daily Summary panel's empty state with no activity today", async () => {
+    render(<Dashboard />, { wrapper: MemoryRouter });
+
+    expect(await screen.findByText("AI Daily Summary")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Nothing logged yet today — add a transaction, check off a habit, or start a task to see it here."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("reflects today's activity in the AI Daily Summary panel's highlights", async () => {
+    const today = toLocalDateString(new Date());
+
+    await db.transactions.add({
+      title: "Coffee",
+      amount: 80,
+      type: "expense",
+      account: "Cash",
+      date: today,
+      status: "completed",
+    });
+
+    await db.todos.add({
+      title: "Finish report",
+      priority: "medium",
+      completed: true,
+      completedAt: new Date().toISOString(),
+      createdAt: "2026-07-20T00:00:00.000Z",
+    });
+
+    render(<Dashboard />, { wrapper: MemoryRouter });
+
+    expect(await screen.findByText("You've spent ฿80 today")).toBeInTheDocument();
+    expect(screen.getByText("1 tasks completed today")).toBeInTheDocument();
   });
 
   it("shows pending todos in the Todo preview panel and lets you mark one done", async () => {
@@ -192,25 +231,28 @@ describe("Dashboard (real data flow)", () => {
     expect(screen.getByText(/1 of 2 priced/i)).toBeInTheDocument();
   });
 
-  it("reflects upcoming events in the Calendar overview panel, regardless of the period selector", async () => {
-    const soon = new Date();
-    soon.setDate(soon.getDate() + 2);
-    const startAt = `${soon.getFullYear()}-${String(soon.getMonth() + 1).padStart(2, "0")}-${String(soon.getDate()).padStart(2, "0")}T09:00`;
-
-    await db.calendarEvents.add({
-      title: "Team meeting",
-      startAt,
+  it("shows the current activity in the Life Schedule preview panel, regardless of the period selector", async () => {
+    // Spans virtually the entire day so it's "current" no matter what time
+    // this test actually runs at, without needing to fake the system clock.
+    await db.scheduleItems.add({
+      title: "Deep work block",
+      icon: "briefcase",
+      color: "#3b82f6",
+      startTime: "00:00",
+      endTime: "23:59",
+      repeat: { frequency: "daily" },
+      enabled: true,
       createdAt: "2026-07-20T00:00:00.000Z",
     } as never);
 
     render(<Dashboard />, { wrapper: MemoryRouter });
 
-    expect(await screen.findByText("Team meeting")).toBeInTheDocument();
+    expect(await screen.findByText("Deep work block")).toBeInTheDocument();
 
     // Exempt from the period selector, same as Portfolio — switching it
-    // must not hide an event that's genuinely upcoming.
+    // must not hide an activity that's genuinely happening right now.
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Day" }));
-    expect(screen.getByText("Team meeting")).toBeInTheDocument();
+    expect(screen.getByText("Deep work block")).toBeInTheDocument();
   });
 });

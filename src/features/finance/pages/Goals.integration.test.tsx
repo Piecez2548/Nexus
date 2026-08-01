@@ -17,9 +17,9 @@ describe("Goals page", () => {
     render(<Goals />);
 
     await user.click(screen.getByRole("button", { name: /add goal/i }));
-    await user.type(await screen.findByLabelText("ชื่อเป้าหมาย"), "MacBook");
-    await user.type(screen.getByLabelText("เป้าหมาย (บาท)"), "60000");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.type(await screen.findByLabelText("Goal name"), "MacBook");
+    await user.type(screen.getByLabelText("Target (THB)"), "60000");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("MacBook")).toBeInTheDocument();
     expect(screen.getByText("฿0 / ฿60,000")).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe("Goals page", () => {
 
     render(<Goals />);
 
-    expect(await screen.findByText("สำเร็จแล้ว 🎉")).toBeInTheDocument();
+    expect(await screen.findByText("Complete 🎉")).toBeInTheDocument();
   });
 
   it("deletes a goal", async () => {

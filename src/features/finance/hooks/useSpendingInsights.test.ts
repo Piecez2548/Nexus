@@ -13,7 +13,7 @@ describe("useSpendingInsights", () => {
   beforeEach(() => {
     useTransactionStore.setState({ transactions: [] });
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-07-21T00:00:00Z"));
+    vi.setSystemTime(new Date(2026, 6, 21));
   });
 
   afterEach(() => {

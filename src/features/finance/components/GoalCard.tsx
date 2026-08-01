@@ -5,6 +5,7 @@ import { useGoalStore } from "@/features/finance/store/goalStore";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import ProgressBar from "@/components/ui/ProgressBar";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { Goal } from "@/features/finance/types";
 
 interface Props {
@@ -17,6 +18,7 @@ export default function GoalCard({ goal, onEdit }: Props) {
   const [contributeAmount, setContributeAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
+  const { t, language } = useTranslation();
 
   const percentage = goal.targetAmount > 0
     ? Math.min(100, (goal.currentAmount / goal.targetAmount) * 100)
@@ -29,7 +31,7 @@ export default function GoalCard({ goal, onEdit }: Props) {
     try {
       setError(null);
       await deleteGoal(goal.id);
-      toast.success("ลบเป้าหมายเรียบร้อย");
+      toast.success(t("goals.deletedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setError(message);
@@ -49,8 +51,8 @@ export default function GoalCard({ goal, onEdit }: Props) {
       const newAmount = goal.currentAmount + amount;
       toast.success(
         newAmount >= goal.targetAmount
-          ? `🎉 บรรลุเป้าหมาย "${goal.name}" แล้ว!`
-          : "เพิ่มเงินออมเรียบร้อย"
+          ? t("goals.goalReached", { name: goal.name })
+          : t("goals.contributionAdded")
       );
     } catch (err) {
       const message = toErrorMessage(err);
@@ -66,7 +68,7 @@ export default function GoalCard({ goal, onEdit }: Props) {
           <h3 className="font-semibold">{goal.name}</h3>
           {goal.deadline && (
             <p className="text-sm text-zinc-600 dark:text-zinc-500">
-              ครบกำหนด {new Date(goal.deadline).toLocaleDateString("th-TH")}
+              {t("goals.deadlineDue", { date: new Date(goal.deadline).toLocaleDateString(language === "th" ? "th-TH" : "en-US") })}
             </p>
           )}
         </div>
@@ -97,7 +99,7 @@ export default function GoalCard({ goal, onEdit }: Props) {
           ฿{goal.currentAmount.toLocaleString()} / ฿{goal.targetAmount.toLocaleString()}
         </span>
         <span className={isComplete ? "text-green-400" : "text-zinc-600 dark:text-zinc-500"}>
-          {isComplete ? "สำเร็จแล้ว 🎉" : `${percentage.toFixed(0)}%`}
+          {isComplete ? t("goals.complete") : `${percentage.toFixed(0)}%`}
         </span>
       </div>
 
@@ -107,7 +109,7 @@ export default function GoalCard({ goal, onEdit }: Props) {
             type="number"
             value={contributeAmount}
             onChange={(e) => setContributeAmount(e.target.value)}
-            placeholder="เพิ่มเงินออม"
+            placeholder={t("goals.contributePlaceholder")}
             aria-label={`Contribute to ${goal.name}`}
             className="min-w-0 flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-2 text-sm outline-none focus:border-brand-500"
           />
@@ -117,7 +119,7 @@ export default function GoalCard({ goal, onEdit }: Props) {
             className="flex items-center gap-1 rounded-xl bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm transition hover:bg-zinc-200 dark:hover:bg-zinc-700"
           >
             <Plus size={14} />
-            เพิ่ม
+            {t("common.add")}
           </button>
         </div>
       )}

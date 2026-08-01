@@ -1,41 +1,7 @@
 import { useMemo } from "react";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { getDashboardPeriodRange, getPreviousDashboardPeriodRange, type DashboardPeriodGranularity } from "@/features/dashboard/utils/dashboardPeriodRange";
-import { isDateWithinRange, type PeriodRange } from "@/features/finance/utils/periodRange";
-import type { Transaction } from "@/features/finance/types";
-
-function monthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function sumByType(transactions: Transaction[], type: "income" | "expense", range?: PeriodRange) {
-  return transactions
-    .filter((t) => t.type === type && (range === undefined || isDateWithinRange(t.date, range)))
-    .reduce((sum, t) => sum + t.amount, 0);
-}
-
-// Running balance using every transaction dated on or before the end of
-// `upToMonth`, so it reflects the same cumulative total the all-time
-// balance would have shown at that point in time. Balance is a true
-// cumulative/net-worth-like figure — it always compares month-over-month,
-// independent of the dashboard's selected day/month/year granularity,
-// which only scopes income/expense/saving.
-function cumulativeBalanceAsOf(transactions: Transaction[], upToMonth: string) {
-  return transactions.reduce((sum, t) => {
-    if (t.date.slice(0, 7) > upToMonth) return sum;
-    if (t.type === "income") return sum + t.amount;
-    if (t.type === "expense") return sum - t.amount;
-    return sum;
-  }, 0);
-}
-
-// Percentage change from `prev` to `cur`. Returns null when there's no
-// prior-period data to compare against (avoids a division by zero reading
-// as a misleading +/-Infinity%).
-function pctChange(cur: number, prev: number): number | null {
-  if (prev === 0) return cur === 0 ? 0 : null;
-  return ((cur - prev) / Math.abs(prev)) * 100;
-}
+import { cumulativeBalanceAsOf, monthKey, pctChange, sumByType } from "@/features/finance/utils/cashFlowMath";
 
 // `granularity` defaults to "month" so any caller that doesn't opt into the
 // Dashboard page's day/month/year selector (e.g. the separate Finance

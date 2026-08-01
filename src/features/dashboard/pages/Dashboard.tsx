@@ -10,8 +10,8 @@ import TradingOverviewPanel from "@/features/dashboard/components/TradingOvervie
 import PortfolioOverviewPanel from "@/features/dashboard/components/PortfolioOverviewPanel";
 import TodoPreviewPanel from "@/features/dashboard/components/TodoPreviewPanel";
 import HabitPreviewPanel from "@/features/dashboard/components/HabitPreviewPanel";
-import CalendarOverviewPanel from "@/features/dashboard/components/CalendarOverviewPanel";
-import LifeModulesSection from "@/features/dashboard/components/LifeModulesSection";
+import SchedulePreviewPanel from "@/features/dashboard/components/SchedulePreviewPanel";
+import AiDailySummaryPanel from "@/features/dashboard/components/AiDailySummaryPanel";
 import InsightsPanel from "@/features/finance/components/InsightsPanel";
 import LoadingState from "@/components/ui/LoadingState";
 import ErrorState from "@/components/ui/ErrorState";
@@ -84,12 +84,11 @@ export default function Dashboard() {
 
           {/* Capped so a burst of insight rules firing at once (e.g. several
               categories over budget the same month) can't make this section
-              grow unbounded — kept short and half-width, not a dominant
-              section, per explicit feedback that it was pushing everything
-              below it too far down. */}
-          <div className="lg:w-1/2">
-            <InsightsPanel insights={insights.slice(0, 3)} />
-          </div>
+              grow unbounded — kept short, not a dominant section, per
+              explicit feedback that it was pushing everything below it too
+              far down. Full-width (not half): a half-width panel left an
+              empty gap beside it that read as a layout bug. */}
+          <InsightsPanel insights={insights.slice(0, 3)} />
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             <BudgetPreviewPanel />
@@ -98,7 +97,7 @@ export default function Dashboard() {
 
             <HabitPreviewPanel />
 
-            <CalendarOverviewPanel />
+            <SchedulePreviewPanel />
 
             <TradingOverviewPanel />
 
@@ -108,7 +107,7 @@ export default function Dashboard() {
           <div className="grid gap-6 xl:grid-cols-3">
             <RecentTransactionsList transactions={transactions} />
 
-            <LifeModulesSection />
+            <AiDailySummaryPanel />
           </div>
         </>
       )}

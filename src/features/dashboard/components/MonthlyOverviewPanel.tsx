@@ -1,4 +1,5 @@
 import ChangeBadge from "@/components/ui/ChangeBadge";
+import { useTranslation } from "@/i18n/useTranslation";
 
 interface MonthFigures {
   income: number;
@@ -19,15 +20,17 @@ interface Props {
 
 const ROWS: {
   key: keyof MonthFigures;
-  label: string;
+  labelKey: string;
   invertChange?: boolean;
 }[] = [
-  { key: "income", label: "รายรับ" },
-  { key: "expense", label: "รายจ่าย", invertChange: true },
-  { key: "saving", label: "เงินออม" },
+  { key: "income", labelKey: "dashboard.income" },
+  { key: "expense", labelKey: "dashboard.expense", invertChange: true },
+  { key: "saving", labelKey: "dashboard.savingLabel" },
 ];
 
 export default function MonthlyOverviewPanel({ monthly, changes }: Props) {
+  const { t } = useTranslation();
+
   const savingsRate =
     monthly.current.income > 0
       ? (monthly.current.saving / monthly.current.income) * 100
@@ -35,13 +38,13 @@ export default function MonthlyOverviewPanel({ monthly, changes }: Props) {
 
   return (
     <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-      <h2 className="text-lg font-semibold">สรุปเดือนนี้ (Monthly Summary)</h2>
+      <h2 className="text-lg font-semibold">{t("dashboard.monthlySummaryTitle")}</h2>
       <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        เทียบกับเดือนก่อนหน้า
+        {t("dashboard.comparedToPreviousMonth")}
       </p>
 
       <div className="mt-5 space-y-4">
-        {ROWS.map(({ key, label, invertChange }) => {
+        {ROWS.map(({ key, labelKey, invertChange }) => {
           const current = monthly.current[key];
           const previous = monthly.previous[key];
           const max = Math.max(Math.abs(current), Math.abs(previous), 1);
@@ -49,7 +52,7 @@ export default function MonthlyOverviewPanel({ monthly, changes }: Props) {
           return (
             <div key={key}>
               <div className="mb-1 flex items-center justify-between text-sm">
-                <span className="font-medium">{label}</span>
+                <span className="font-medium">{t(labelKey)}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-zinc-700 dark:text-zinc-300">
                     ฿{current.toLocaleString()}
@@ -74,8 +77,8 @@ export default function MonthlyOverviewPanel({ monthly, changes }: Props) {
               </div>
 
               <div className="mt-0.5 flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
-                <span>เดือนก่อน ฿{previous.toLocaleString()}</span>
-                <span>เดือนนี้</span>
+                <span>{t("dashboard.previousMonthLabel")} ฿{previous.toLocaleString()}</span>
+                <span>{t("dashboard.thisMonthLabel")}</span>
               </div>
             </div>
           );
@@ -83,7 +86,7 @@ export default function MonthlyOverviewPanel({ monthly, changes }: Props) {
       </div>
 
       <div className="mt-5 flex items-center justify-between rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-4">
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">อัตราการออม (Savings Rate)</span>
+        <span className="text-sm text-zinc-600 dark:text-zinc-400">{t("dashboard.savingsRateLabel")}</span>
         <span className={`text-lg font-bold ${savingsRate >= 0 ? "text-green-500" : "text-red-500"}`}>
           {savingsRate.toFixed(1)}%
         </span>

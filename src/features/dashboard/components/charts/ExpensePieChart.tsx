@@ -76,7 +76,7 @@ export default function ExpensePieChart({ granularity }: Props) {
                 </div>
             </div>
 
-            <div className="mt-4 grid max-h-32 grid-cols-2 gap-x-4 gap-y-2 overflow-y-auto">
+            <div className="mt-4 grid max-h-48 grid-cols-3 gap-x-4 gap-y-2 overflow-y-auto">
                 {sorted.map((item, index) => {
                     const percentage = total > 0 ? (item.value / total) * 100 : 0;
 
