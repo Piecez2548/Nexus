@@ -3,6 +3,7 @@ import { Lock, Mail, KeyRound } from "lucide-react";
 
 import { useAppLockStore } from "@/store/appLockStore";
 import { recoverDekFromEscrow, RecoveryNotAvailableError } from "@/features/encryption/recovery/recoverDekFromEscrow";
+import { useTranslation } from "@/i18n/useTranslation";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 text-center text-lg tracking-[0.5em] outline-none focus:border-brand-500";
@@ -29,6 +30,7 @@ interface Props {
 // already-encrypted data from another device and has never unlocked it).
 export default function EncryptionRecoveryFlow({ onDone, onCancel, title, description }: Props) {
   const completeRecovery = useAppLockStore((s) => s.completeRecovery);
+  const { t } = useTranslation();
 
   const [step, setStep] = useState<"credentials" | "new-pin">("credentials");
   const [email, setEmail] = useState("");
@@ -52,7 +54,7 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
       if (err instanceof RecoveryNotAvailableError) {
         setError(err.message);
       } else {
-        setError("เกิดข้อผิดพลาดระหว่างกู้คืน ลองอีกครั้ง");
+        setError(t("lock.recoveryErrorGeneric"));
       }
     } finally {
       setSubmitting(false);
@@ -64,15 +66,15 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
     setError(null);
 
     if (newPin.length < 4) {
-      setError("PIN ต้องมีอย่างน้อย 4 หลัก");
+      setError(t("lock.pinMinLength"));
       return;
     }
     if (newPin !== newPinConfirm) {
-      setError("PIN ไม่ตรงกัน กรุณายืนยันอีกครั้ง");
+      setError(t("lock.pinConfirmMismatch"));
       return;
     }
     if (!recoveredDek) {
-      setError("ไม่พบกุญแจที่กู้คืนมา กรุณาเริ่มใหม่อีกครั้ง");
+      setError(t("lock.recoveredKeyMissing"));
       setStep("credentials");
       return;
     }
@@ -90,16 +92,16 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
         className="w-full max-w-sm space-y-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8"
       >
         <div className="text-center">
-          <h1 className="text-xl font-bold">ตั้ง PIN ใหม่</h1>
+          <h1 className="text-xl font-bold">{t("lock.recoverySetNewPinTitle")}</h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            กู้คืนกุญแจเข้ารหัสสำเร็จ — ตั้ง PIN ใหม่เพื่อใช้ปลดล็อกอุปกรณ์นี้ต่อไป
+            {t("lock.recoverySuccessSubtitle")}
           </p>
         </div>
 
         <div>
           <label htmlFor="recovery-new-pin" className="mb-1 block text-sm text-zinc-500 dark:text-zinc-400">
             <Lock size={14} className="mr-1 inline" />
-            PIN ใหม่
+            {t("lock.newPinLabel")}
           </label>
           <input
             id="recovery-new-pin"
@@ -114,7 +116,7 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
 
         <div>
           <label htmlFor="recovery-new-pin-confirm" className="mb-1 block text-sm text-zinc-500 dark:text-zinc-400">
-            ยืนยัน PIN ใหม่
+            {t("lock.confirmNewPinLabel")}
           </label>
           <input
             id="recovery-new-pin-confirm"
@@ -133,7 +135,7 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
           disabled={submitting}
           className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {submitting ? "กำลังบันทึก..." : "ตั้ง PIN ใหม่"}
+          {submitting ? t("lock.saving") : t("lock.recoverySetNewPinTitle")}
         </button>
       </form>
     );
@@ -145,16 +147,16 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
       className="w-full max-w-sm space-y-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8"
     >
       <div className="text-center">
-        <h1 className="text-xl font-bold">{title ?? "กู้คืนด้วยบัญชี Sync"}</h1>
+        <h1 className="text-xl font-bold">{title ?? t("lock.recoverTitle")}</h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          {description ?? "ลงชื่อเข้าใช้ด้วยอีเมลและรหัสผ่านบัญชี Sync ของคุณเพื่อกู้คืนกุญแจเข้ารหัส"}
+          {description ?? t("lock.recoverDescription")}
         </p>
       </div>
 
       <div>
         <label htmlFor="recovery-email" className="mb-1 block text-sm text-zinc-500 dark:text-zinc-400">
           <Mail size={14} className="mr-1 inline" />
-          อีเมล
+          {t("lock.emailLabel")}
         </label>
         <input
           id="recovery-email"
@@ -169,7 +171,7 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
       <div>
         <label htmlFor="recovery-password" className="mb-1 block text-sm text-zinc-500 dark:text-zinc-400">
           <KeyRound size={14} className="mr-1 inline" />
-          รหัสผ่านบัญชี Sync
+          {t("lock.syncPasswordLabel")}
         </label>
         <input
           id="recovery-password"
@@ -187,7 +189,7 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
         disabled={submitting}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {submitting ? "กำลังกู้คืน..." : "กู้คืน"}
+        {submitting ? t("lock.recovering") : t("lock.recoverButton")}
       </button>
 
       {onCancel && (
@@ -196,7 +198,7 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
           onClick={onCancel}
           className="w-full text-center text-sm text-zinc-500 hover:underline dark:text-zinc-400"
         >
-          ย้อนกลับ
+          {t("common.back")}
         </button>
       )}
     </form>

@@ -85,7 +85,7 @@ export default function ImportTransactionsPanel() {
           accept=".csv,text/csv"
           onChange={handleFileSelected}
           className="hidden"
-          aria-label="Import transactions CSV file"
+          aria-label={t("settings.importCsvAriaLabel")}
         />
       </div>
 

@@ -50,8 +50,8 @@ describe("SecuritySettings", () => {
 
     await user.click(screen.getByRole("button", { name: "Enable App Lock" }));
     await user.type(await screen.findByLabelText("PIN"), "1234");
-    await user.type(screen.getByLabelText("ยืนยัน PIN"), "1234");
-    await user.click(screen.getByRole("button", { name: "ตั้งค่า PIN" }));
+    await user.type(screen.getByLabelText("Confirm PIN"), "1234");
+    await user.click(screen.getByRole("button", { name: "Set Up PIN" }));
 
     expect(await screen.findByText("App Lock is enabled")).toBeInTheDocument();
     expect(useAppLockStore.getState().isEnabled()).toBe(true);
@@ -64,10 +64,10 @@ describe("SecuritySettings", () => {
     render(<SecuritySettings />);
 
     await user.click(await screen.findByRole("button", { name: "Change PIN" }));
-    await user.type(await screen.findByLabelText("PIN ปัจจุบัน"), "1234");
-    await user.type(screen.getByLabelText("PIN ใหม่"), "5678");
-    await user.type(screen.getByLabelText("ยืนยัน PIN ใหม่"), "5678");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.type(await screen.findByLabelText("Current PIN"), "1234");
+    await user.type(screen.getByLabelText("New PIN"), "5678");
+    await user.type(screen.getByLabelText("Confirm New PIN"), "5678");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(async () => {
       expect(await useAppLockStore.getState().unlock("5678", false)).toBe(true);
@@ -81,8 +81,8 @@ describe("SecuritySettings", () => {
     render(<SecuritySettings />);
 
     await user.click(await screen.findByRole("button", { name: "Disable" }));
-    await user.type(await screen.findByLabelText("กรอก PIN เพื่อยืนยัน"), "1234");
-    await user.click(screen.getByRole("button", { name: "ปิดการใช้งาน App Lock" }));
+    await user.type(await screen.findByLabelText("Enter PIN to confirm"), "1234");
+    await user.click(screen.getByRole("button", { name: "Turn Off App Lock" }));
 
     await waitFor(() => {
       expect(useAppLockStore.getState().isEnabled()).toBe(false);

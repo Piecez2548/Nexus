@@ -7,6 +7,7 @@ import { hasUndecryptableLocalData } from "@/features/encryption/catchUp";
 import AppLockScreen from "@/features/lock/components/AppLockScreen";
 import EncryptionRecoveryFlow from "@/features/encryption/components/EncryptionRecoveryFlow";
 import AuthBackdrop from "@/components/ui/AuthBackdrop";
+import { useTranslation } from "@/i18n/useTranslation";
 
 const ACTIVITY_EVENTS = ["mousemove", "keydown", "click", "touchstart"] as const;
 const CHECK_INTERVAL_MS = 30_000;
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function AppLockGate({ children }: Props) {
+  const { t } = useTranslation();
   const isEnabled = useAppLockStore((s) => s.isEnabled());
   const isLocked = useAppLockStore((s) => s.isLocked());
   const encryptionEnabled = useAppLockStore((s) => s.encryptionEnabled);
@@ -80,8 +82,8 @@ export default function AppLockGate({ children }: Props) {
       <AuthBackdrop>
         <EncryptionRecoveryFlow
           onDone={() => setCatchUpNeeded(false)}
-          title="พบข้อมูลที่เข้ารหัสจากอุปกรณ์อื่น"
-          description="อุปกรณ์นี้ยังไม่สามารถอ่านข้อมูลที่เข้ารหัสไว้ได้ ยืนยันตัวตนด้วยบัญชี Sync เพื่อปลดล็อกข้อมูลบนอุปกรณ์นี้"
+          title={t("lock.foundEncryptedDataTitle")}
+          description={t("lock.foundEncryptedDataDescription")}
         />
       </AuthBackdrop>
     );

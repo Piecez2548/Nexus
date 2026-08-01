@@ -6,27 +6,27 @@ test.describe("Rule Engine / Learning Engine", () => {
 
     // First visit: user manually categorizes.
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("ชื่อรายการ").fill("ก๋วยเตี๋ยว");
-    await page.getByLabel("จำนวนเงิน").fill("58");
-    await page.getByRole("button", { name: "เพิ่มเติม" }).click();
-    await page.getByLabel("ผู้รับ / เบอร์โทร / PromptPay").fill("0812345678");
-    await page.getByLabel("หมวดหมู่").selectOption({ label: "Food" });
-    await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Item name").fill("ก๋วยเตี๋ยว");
+    await page.getByLabel("Amount").fill("58");
+    await page.getByRole("button", { name: "More" }).click();
+    await page.getByLabel("Recipient / Phone / PromptPay").fill("0812345678");
+    await page.getByLabel("Category").selectOption({ label: "Food" });
+    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("ก๋วยเตี๋ยว")).toBeVisible();
 
     // Second visit, same recipient: category auto-fills and is explained.
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("ชื่อรายการ").fill("มื้อเที่ยง");
-    await page.getByLabel("จำนวนเงิน").fill("65");
-    await page.getByRole("button", { name: "เพิ่มเติม" }).click();
-    await page.getByLabel("ผู้รับ / เบอร์โทร / PromptPay").fill("0812345678");
+    await page.getByLabel("Item name").fill("มื้อเที่ยง");
+    await page.getByLabel("Amount").fill("65");
+    await page.getByRole("button", { name: "More" }).click();
+    await page.getByLabel("Recipient / Phone / PromptPay").fill("0812345678");
 
-    await expect(page.getByLabel("หมวดหมู่")).toHaveValue("Food");
-    await expect(page.getByText(/แนะนำหมวดหมู่/)).toBeVisible();
+    await expect(page.getByLabel("Category")).toHaveValue("Food");
+    await expect(page.getByText(/Suggested category/)).toBeVisible();
 
-    await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("มื้อเที่ยง")).toBeVisible();
 
     // The Recipient Profiles page reflects the learned history.

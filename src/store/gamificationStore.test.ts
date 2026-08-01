@@ -1,13 +1,14 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { useGamificationStore } from "./gamificationStore";
 import { useToastStore } from "./toastStore";
+import { toLocalDateString } from "@/utils/localDate";
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return toLocalDateString(new Date());
 }
 
 function daysAgoIso(days: number) {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return toLocalDateString(new Date(Date.now() - days * 24 * 60 * 60 * 1000));
 }
 
 describe("gamificationStore", () => {

@@ -116,12 +116,12 @@ describe("Favorites page", () => {
     const user = userEvent.setup();
     renderFavoritesPage();
 
-    await user.click(await screen.findByRole("button", { name: "เพิ่ม" }));
+    await user.click(await screen.findByRole("button", { name: "Add" }));
 
-    await user.type(await screen.findByLabelText("ชื่อ"), "Starbucks");
-    await user.selectOptions(screen.getByLabelText("หมวดหมู่"), "Food");
-    await user.selectOptions(screen.getByLabelText("บัญชี"), "Cash");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.type(await screen.findByLabelText("Name"), "Starbucks");
+    await user.selectOptions(screen.getByLabelText("Category"), "Food");
+    await user.selectOptions(screen.getByLabelText("Account"), "Cash");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByRole("button", { name: "Starbucks" })).toBeInTheDocument();
 
@@ -144,12 +144,12 @@ describe("Favorites page", () => {
 
     await user.click(await screen.findByRole("button", { name: "Starbucks" }));
 
-    expect(await screen.findByLabelText("ชื่อรายการ")).toHaveValue("Starbucks");
-    expect(screen.getByLabelText("จำนวนเงิน")).toHaveValue(65);
-    expect(screen.getByLabelText("หมวดหมู่")).toHaveValue("Food");
-    expect(screen.getByLabelText("บัญชี")).toHaveValue("Cash");
+    expect(await screen.findByLabelText("Item name")).toHaveValue("Starbucks");
+    expect(screen.getByLabelText("Amount")).toHaveValue(65);
+    expect(screen.getByLabelText("Category")).toHaveValue("Food");
+    expect(screen.getByLabelText("Account")).toHaveValue("Cash");
 
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     const stored = await db.transactions.toArray();
     expect(stored).toHaveLength(1);

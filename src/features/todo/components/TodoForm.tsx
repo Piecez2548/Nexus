@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -35,6 +35,7 @@ export default function TodoForm({ todo, onDone }: Props) {
   const toast = useToast();
   const { t } = useTranslation();
   const priorityLabels = getPriorityLabels(t);
+  const schema = useMemo(() => todoSchema(t), [t]);
 
   const {
     register,
@@ -42,7 +43,7 @@ export default function TodoForm({ todo, onDone }: Props) {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<TodoFormData>({
-    resolver: zodResolver(todoSchema),
+    resolver: zodResolver(schema),
     defaultValues: blankValues,
   });
 
@@ -80,17 +81,17 @@ export default function TodoForm({ todo, onDone }: Props) {
         {todo ? t("todo.editTodo") : t("todo.addTodo")}
       </h2>
 
-      <FormField label="ชื่องาน" htmlFor="todo-title" error={errors.title?.message}>
+      <FormField label={t("todo.titleLabel")} htmlFor="todo-title" error={errors.title?.message}>
         <input
           id="todo-title"
           {...register("title")}
-          placeholder="เช่น ส่งรายงาน, ซื้อของเข้าบ้าน"
+          placeholder={t("todo.titlePlaceholder")}
           className={inputClassName}
         />
       </FormField>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="กำหนดส่ง (ถ้ามี)" htmlFor="todo-due-date">
+        <FormField label={t("todo.dueDateLabel")} htmlFor="todo-due-date">
           <input
             id="todo-due-date"
             type="date"
@@ -99,7 +100,7 @@ export default function TodoForm({ todo, onDone }: Props) {
           />
         </FormField>
 
-        <FormField label="ความสำคัญ" htmlFor="todo-priority">
+        <FormField label={t("todo.priorityFieldLabel")} htmlFor="todo-priority">
           <select id="todo-priority" {...register("priority")} className={inputClassName}>
             {Object.entries(priorityLabels).map(([value, label]) => (
               <option key={value} value={value}>
@@ -110,12 +111,12 @@ export default function TodoForm({ todo, onDone }: Props) {
         </FormField>
       </div>
 
-      <FormField label="รายละเอียด" htmlFor="todo-notes">
+      <FormField label={t("todo.notesLabel")} htmlFor="todo-notes">
         <textarea
           id="todo-notes"
           {...register("notes")}
           rows={3}
-          placeholder="รายละเอียดเพิ่มเติม"
+          placeholder={t("transactions.notePlaceholder")}
           className={inputClassName}
         />
       </FormField>
@@ -129,7 +130,7 @@ export default function TodoForm({ todo, onDone }: Props) {
         disabled={isSubmitting}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
+        {isSubmitting ? t("todo.saving") : t("common.save")}
       </button>
     </form>
   );

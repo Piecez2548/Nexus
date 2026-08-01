@@ -12,7 +12,9 @@ export type SyncTableName =
   | "todos"
   | "habits"
   | "holdings"
-  | "calendarEvents";
+  | "calendarEvents"
+  | "scheduleItems"
+  | "goalMilestoneEvents";
 
 export interface Tombstone {
   id?: number;

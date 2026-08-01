@@ -6,11 +6,11 @@ test.describe("Merge Duplicate Transactions", () => {
 
     for (let i = 0; i < 2; i++) {
       await page.getByRole("button", { name: "Add Transaction" }).click();
-      await page.getByLabel("ชื่อรายการ").fill("Lunch");
-      await page.getByLabel("จำนวนเงิน").fill("100");
-      await page.getByLabel("หมวดหมู่").selectOption({ label: "Food" });
-      await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-      await page.getByRole("button", { name: "บันทึก" }).click();
+      await page.getByLabel("Item name").fill("Lunch");
+      await page.getByLabel("Amount").fill("100");
+      await page.getByLabel("Category").selectOption({ label: "Food" });
+      await page.getByLabel("Account").selectOption({ label: "Cash" });
+      await page.getByRole("button", { name: "Save" }).click();
       await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
     }
 
@@ -34,19 +34,19 @@ test.describe("Merge Duplicate Transactions", () => {
     await page.goto("/transactions");
 
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("ชื่อรายการ").fill("Lunch");
-    await page.getByLabel("จำนวนเงิน").fill("100");
-    await page.getByLabel("หมวดหมู่").selectOption({ label: "Food" });
-    await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Item name").fill("Lunch");
+    await page.getByLabel("Amount").fill("100");
+    await page.getByLabel("Category").selectOption({ label: "Food" });
+    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
 
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("ชื่อรายการ").fill("Dinner");
-    await page.getByLabel("จำนวนเงิน").fill("200");
-    await page.getByLabel("หมวดหมู่").selectOption({ label: "Food" });
-    await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Item name").fill("Dinner");
+    await page.getByLabel("Amount").fill("200");
+    await page.getByLabel("Category").selectOption({ label: "Food" });
+    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
 
     await page.goto("/settings");

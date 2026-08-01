@@ -32,7 +32,7 @@ describe("TradeRiskCalculator", () => {
     render(<Harness defaultValues={{}} />);
 
     expect(screen.getAllByText("-")).toHaveLength(3);
-    expect(screen.getByRole("button", { name: "นำไปใช้กับ Lot Size" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Apply to Lot Size" })).toBeDisabled();
   });
 
   it("computes position size and max loss from account balance, risk %, entry, and stop loss", async () => {
@@ -72,7 +72,7 @@ describe("TradeRiskCalculator", () => {
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("Account Balance"), "10000");
 
-    await user.click(await screen.findByRole("button", { name: "นำไปใช้กับ Lot Size" }));
+    await user.click(await screen.findByRole("button", { name: "Apply to Lot Size" }));
 
     expect(setValueSpy).toHaveBeenCalledWith("quantity", 10);
     expect(setValueSpy).toHaveBeenCalledWith("positionSize", 10);

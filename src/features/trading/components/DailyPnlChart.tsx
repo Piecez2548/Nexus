@@ -31,7 +31,7 @@ export default function DailyPnlChart() {
             <YAxis />
             <Tooltip />
 
-            <Bar dataKey="pnl" name="P/L" radius={[4, 4, 0, 0]}>
+            <Bar dataKey="pnl" name={t("trading.pnl")} radius={[4, 4, 0, 0]}>
               {dailyPnl.map((entry, index) => (
                 <Cell key={index} fill={entry.pnl >= 0 ? "#22c55e" : "#ef4444"} />
               ))}

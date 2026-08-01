@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -10,12 +10,14 @@ import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTradingUIStore } from "@/features/trading/store/tradingUIStore";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
+import { toLocalDateString } from "@/utils/localDate";
 
 import TradeCoreFields from "@/features/trading/components/TradeCoreFields";
 import TradeRiskFields from "@/features/trading/components/TradeRiskFields";
 import TradeRiskCalculator from "@/features/trading/components/TradeRiskCalculator";
 import TradePsychologyFields from "@/features/trading/components/TradePsychologyFields";
 import TradeMetaFields from "@/features/trading/components/TradeMetaFields";
+import { useTranslation } from "@/i18n/useTranslation";
 
 const blankValues: TradeFormData = {
   symbol: "",
@@ -24,7 +26,7 @@ const blankValues: TradeFormData = {
   status: "open",
   entryPrice: 0,
   quantity: 0,
-  entryDate: new Date().toISOString().slice(0, 10),
+  entryDate: toLocalDateString(new Date()),
   tags: [],
   screenshots: [],
 };
@@ -35,6 +37,8 @@ export default function TradeForm() {
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
+  const { t } = useTranslation();
+  const schema = useMemo(() => tradeSchema(t), [t]);
 
   const {
     register,
@@ -45,7 +49,7 @@ export default function TradeForm() {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<TradeFormData>({
-    resolver: zodResolver(tradeSchema),
+    resolver: zodResolver(schema),
     defaultValues: blankValues,
   });
 
@@ -65,7 +69,7 @@ export default function TradeForm() {
     const payload: TradeFormData = {
       ...data,
       status: isClosed ? "closed" : "open",
-      exitDate: isClosed ? (data.exitDate || new Date().toISOString().slice(0, 10)) : data.exitDate,
+      exitDate: isClosed ? (data.exitDate || toLocalDateString(new Date())) : data.exitDate,
     };
 
     try {
@@ -77,7 +81,7 @@ export default function TradeForm() {
 
       reset(blankValues);
       closeTradeDrawer();
-      toast.success(isEditing ? "แก้ไขรายการเทรดเรียบร้อย" : "เพิ่มรายการเทรดเรียบร้อย");
+      toast.success(isEditing ? t("trading.updatedSuccess") : t("trading.savedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setSubmitError(message);
@@ -91,7 +95,7 @@ export default function TradeForm() {
       className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6"
     >
       <h2 className="text-xl font-bold">
-        {selectedTrade ? "แก้ไขรายการเทรด" : "เพิ่มรายการเทรด"}
+        {selectedTrade ? t("trading.editTrade") : t("trading.createTrade")}
       </h2>
 
       <TradeCoreFields register={register} watch={watch} setValue={setValue} errors={errors} />
@@ -109,7 +113,7 @@ export default function TradeForm() {
         disabled={isSubmitting}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
+        {isSubmitting ? t("trading.saving") : t("common.save")}
       </button>
     </form>
   );

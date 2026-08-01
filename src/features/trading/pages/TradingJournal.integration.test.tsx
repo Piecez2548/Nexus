@@ -33,15 +33,15 @@ describe("TradingJournal page (add / edit / delete flow)", () => {
 
     await user.click(screen.getByRole("button", { name: /add trade/i }));
 
-    await user.type(await screen.findByLabelText("สัญลักษณ์"), "AAPL");
-    const entryPriceInput = screen.getByLabelText("ราคาเข้า");
+    await user.type(await screen.findByLabelText("Symbol"), "AAPL");
+    const entryPriceInput = screen.getByLabelText("Entry Price");
     await user.clear(entryPriceInput);
     await user.type(entryPriceInput, "150");
     const quantityInput = screen.getByLabelText("Lot Size");
     await user.clear(quantityInput);
     await user.type(quantityInput, "10");
 
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     const table = await screen.findByRole("table");
     expect(within(table).getByText("AAPL")).toBeInTheDocument();
@@ -68,12 +68,12 @@ describe("TradingJournal page (add / edit / delete flow)", () => {
     await user.click(within(table).getByRole("button", { name: "Edit AAPL" }));
 
     // Status is derived from the exit price — no manual status field anymore.
-    const exitPriceInput = await screen.findByLabelText("ราคาออก");
+    const exitPriceInput = await screen.findByLabelText("Exit Price");
     await user.type(exitPriceInput, "120");
-    const exitDateInput = screen.getByLabelText("วันที่ออก");
+    const exitDateInput = screen.getByLabelText("Exit Date");
     await user.type(exitDateInput, "2026-07-22");
 
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // (120 - 100) * 10 = 200 profit
     expect(await within(table).findByText("200")).toBeInTheDocument();
@@ -113,18 +113,18 @@ describe("TradingJournal page (add / edit / delete flow)", () => {
 
     await user.click(screen.getByRole("button", { name: /add trade/i }));
 
-    await user.type(await screen.findByLabelText("สัญลักษณ์"), "AAPL");
-    const entryPriceInput = screen.getByLabelText("ราคาเข้า");
+    await user.type(await screen.findByLabelText("Symbol"), "AAPL");
+    const entryPriceInput = screen.getByLabelText("Entry Price");
     await user.clear(entryPriceInput);
     await user.type(entryPriceInput, "150");
     const quantityInput = screen.getByLabelText("Lot Size");
     await user.clear(quantityInput);
     await user.type(quantityInput, "10");
 
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Write failed")).toBeInTheDocument();
-    expect(screen.getByLabelText("สัญลักษณ์")).toHaveValue("AAPL");
+    expect(screen.getByLabelText("Symbol")).toHaveValue("AAPL");
     expect(await db.trades.toArray()).toHaveLength(0);
   });
 

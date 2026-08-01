@@ -52,7 +52,7 @@ export default function LoginScreen() {
         </div>
       </div>
 
-      <FormField label="อีเมล" htmlFor="login-email">
+      <FormField label={t("lock.emailLabel")} htmlFor="login-email">
         <input
           id="login-email"
           type="email"
@@ -64,7 +64,7 @@ export default function LoginScreen() {
         />
       </FormField>
 
-      <FormField label="รหัสผ่าน" htmlFor="login-password">
+      <FormField label={t("settings.passwordLabel")} htmlFor="login-password">
         <input
           id="login-password"
           type="password"

@@ -14,11 +14,13 @@ import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
+import { useTranslation } from "@/i18n/useTranslation";
 
 export default function FinanceDashboard() {
   const { loadTransactions, transactions, loading, error } = useTransactionStore();
   const { loadBudgets } = useBudgetStore();
   const { loadCategories } = useCategoryStore();
+  const { t } = useTranslation();
 
   const { balance, income, expense, saving, changes, monthly } = useDashboard();
 
@@ -31,16 +33,16 @@ export default function FinanceDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Finance Dashboard</h1>
+        <h1 className="text-3xl font-bold">{t("financeDashboard.pageTitle")}</h1>
         <p className="mt-1 text-zinc-600 dark:text-zinc-500">
-          ภาพรวมการเงินส่วนตัว — รายรับ รายจ่าย งบประมาณ และเป้าหมายการออม
+          {t("financeDashboard.pageSubtitle")}
         </p>
       </div>
 
       {error ? (
         <ErrorState message={error} onRetry={loadTransactions} />
       ) : loading && transactions.length === 0 ? (
-        <LoadingState label="Loading finance dashboard..." />
+        <LoadingState label={t("financeDashboard.loading")} />
       ) : (
         <>
           <SummaryCardsGrid

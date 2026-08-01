@@ -42,9 +42,9 @@ describe("Settings page", () => {
     const user = userEvent.setup();
     renderSettings();
 
-    await user.selectOptions(screen.getByLabelText("สกุลเงิน (Currency)"), "USD");
-    await user.selectOptions(screen.getByLabelText("รูปแบบวันที่ (Date Format)"), "YYYY-MM-DD");
-    await user.selectOptions(screen.getByLabelText("รูปแบบตัวเลข (Number Format)"), "1.234,56");
+    await user.selectOptions(screen.getByLabelText("Currency"), "USD");
+    await user.selectOptions(screen.getByLabelText("Date Format"), "YYYY-MM-DD");
+    await user.selectOptions(screen.getByLabelText("Number Format"), "1.234,56");
 
     const state = useAppSettingsStore.getState();
     expect(state.currency).toBe("USD");

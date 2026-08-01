@@ -36,6 +36,7 @@ const SYNCED_TABLES = [
   "habits",
   "holdings",
   "calendarEvents",
+  "scheduleItems",
 ] as const;
 
 async function resetStore() {
@@ -89,7 +90,7 @@ describe("AppLockGate", () => {
       </AppLockGate>
     );
 
-    expect(screen.getByRole("heading", { name: "ปลดล็อก Nexus" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Unlock Nexus" })).toBeInTheDocument();
     expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
   });
 
@@ -105,7 +106,7 @@ describe("AppLockGate", () => {
     );
 
     await user.type(screen.getByLabelText("PIN"), "1234");
-    await user.click(screen.getByRole("button", { name: "ปลดล็อก" }));
+    await user.click(screen.getByRole("button", { name: "Unlock" }));
 
     expect(await screen.findByText("Protected content")).toBeInTheDocument();
   });
@@ -122,9 +123,9 @@ describe("AppLockGate", () => {
     );
 
     await user.type(screen.getByLabelText("PIN"), "0000");
-    await user.click(screen.getByRole("button", { name: "ปลดล็อก" }));
+    await user.click(screen.getByRole("button", { name: "Unlock" }));
 
-    expect(await screen.findByText("PIN ไม่ถูกต้อง")).toBeInTheDocument();
+    expect(await screen.findByText("Incorrect PIN")).toBeInTheDocument();
     expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
   });
 
@@ -159,7 +160,7 @@ describe("AppLockGate", () => {
       </AppLockGate>
     );
 
-    expect(screen.getByRole("heading", { name: "ปลดล็อก Nexus" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Unlock Nexus" })).toBeInTheDocument();
     expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
   });
 
@@ -181,9 +182,9 @@ describe("AppLockGate", () => {
     );
 
     await user.type(screen.getByLabelText("PIN"), "1234");
-    await user.click(screen.getByRole("button", { name: "ปลดล็อก" }));
+    await user.click(screen.getByRole("button", { name: "Unlock" }));
 
-    expect(await screen.findByText(/ไม่สามารถปลดล็อกข้อมูลที่เข้ารหัสไว้ได้/)).toBeInTheDocument();
+    expect(await screen.findByText(/couldn't unlock your encrypted data/)).toBeInTheDocument();
     expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
   });
 
@@ -220,7 +221,7 @@ describe("AppLockGate", () => {
         </AppLockGate>
       );
 
-      expect(await screen.findByText("พบข้อมูลที่เข้ารหัสจากอุปกรณ์อื่น")).toBeInTheDocument();
+      expect(await screen.findByText("Found encrypted data from another device")).toBeInTheDocument();
       expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
     });
 
@@ -234,7 +235,7 @@ describe("AppLockGate", () => {
       );
 
       expect(screen.getByText("Protected content")).toBeInTheDocument();
-      expect(screen.queryByText("พบข้อมูลที่เข้ารหัสจากอุปกรณ์อื่น")).not.toBeInTheDocument();
+      expect(screen.queryByText("Found encrypted data from another device")).not.toBeInTheDocument();
     });
 
     it("shows the NORMAL PIN unlock screen, not the catch-up screen, on the device that originally enabled encryption itself", async () => {
@@ -258,8 +259,8 @@ describe("AppLockGate", () => {
         </AppLockGate>
       );
 
-      expect(await screen.findByRole("heading", { name: "ปลดล็อก Nexus" })).toBeInTheDocument();
-      expect(screen.queryByText("พบข้อมูลที่เข้ารหัสจากอุปกรณ์อื่น")).not.toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: "Unlock Nexus" })).toBeInTheDocument();
+      expect(screen.queryByText("Found encrypted data from another device")).not.toBeInTheDocument();
     });
 
     it("does not show the catch-up screen once the session DEK is already resident", async () => {
@@ -289,14 +290,14 @@ describe("AppLockGate", () => {
         </AppLockGate>
       );
 
-      await screen.findByText("พบข้อมูลที่เข้ารหัสจากอุปกรณ์อื่น");
-      await user.type(screen.getByLabelText("อีเมล"), "me@nexus.app");
-      await user.type(screen.getByLabelText("รหัสผ่านบัญชี Sync"), "correct-password");
-      await user.click(screen.getByRole("button", { name: "กู้คืน" }));
+      await screen.findByText("Found encrypted data from another device");
+      await user.type(screen.getByLabelText("Email"), "me@nexus.app");
+      await user.type(screen.getByLabelText("Sync Account Password"), "correct-password");
+      await user.click(screen.getByRole("button", { name: "Recover" }));
 
-      await user.type(await screen.findByLabelText("PIN ใหม่"), "1234");
-      await user.type(screen.getByLabelText("ยืนยัน PIN ใหม่"), "1234");
-      await user.click(screen.getByRole("button", { name: "ตั้ง PIN ใหม่" }));
+      await user.type(await screen.findByLabelText("New PIN"), "1234");
+      await user.type(screen.getByLabelText("Confirm New PIN"), "1234");
+      await user.click(screen.getByRole("button", { name: "Set New PIN" }));
 
       expect(await screen.findByText("Protected content")).toBeInTheDocument();
     });
@@ -313,7 +314,7 @@ describe("AppLockGate", () => {
         </AppLockGate>
       );
 
-      expect(await screen.findByRole("heading", { name: "ปลดล็อก Nexus" })).toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: "Unlock Nexus" })).toBeInTheDocument();
       expect(screen.queryByRole("button", { name: "Unlock with fingerprint" })).not.toBeInTheDocument();
       expect(mockRetrieveBiometricPin).not.toHaveBeenCalled();
     });
@@ -347,12 +348,12 @@ describe("AppLockGate", () => {
         </AppLockGate>
       );
 
-      expect(await screen.findByRole("heading", { name: "ปลดล็อก Nexus" })).toBeInTheDocument();
-      expect(screen.queryByText(/ไม่ถูกต้อง/)).not.toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: "Unlock Nexus" })).toBeInTheDocument();
+      expect(screen.queryByText(/Incorrect/)).not.toBeInTheDocument();
 
       // Manual PIN entry still works after a cancelled/failed biometric attempt.
       await user.type(screen.getByLabelText("PIN"), "1234");
-      await user.click(screen.getByRole("button", { name: "ปลดล็อก" }));
+      await user.click(screen.getByRole("button", { name: "Unlock" }));
 
       expect(await screen.findByText("Protected content")).toBeInTheDocument();
     });
@@ -370,7 +371,7 @@ describe("AppLockGate", () => {
         </AppLockGate>
       );
 
-      await screen.findByRole("heading", { name: "ปลดล็อก Nexus" });
+      await screen.findByRole("heading", { name: "Unlock Nexus" });
       mockRetrieveBiometricPin.mockResolvedValue("1234");
       await user.click(screen.getByRole("button", { name: "Unlock with fingerprint" }));
 

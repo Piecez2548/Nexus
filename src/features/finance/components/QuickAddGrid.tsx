@@ -8,6 +8,8 @@ import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import Drawer from "@/components/ui/Drawer";
 import TransactionTemplateForm from "@/features/finance/components/TransactionTemplateForm";
+import { useTranslation } from "@/i18n/useTranslation";
+import { toLocalDateString } from "@/utils/localDate";
 import type { Transaction, TransactionTemplate } from "@/features/finance/types";
 
 function templateToTransaction(template: TransactionTemplate): Transaction {
@@ -19,7 +21,7 @@ function templateToTransaction(template: TransactionTemplate): Transaction {
     account: template.account,
     toAccount: template.toAccount,
     recipient: template.recipient,
-    date: new Date().toISOString().slice(0, 10),
+    date: toLocalDateString(new Date()),
     status: "completed",
   };
 }
@@ -28,6 +30,7 @@ export default function QuickAddGrid() {
   const { templates, loading, loadTemplates, deleteTemplate } = useTransactionTemplateStore();
   const { openTransactionDrawer } = useUIStore();
   const toast = useToast();
+  const { t } = useTranslation();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TransactionTemplate | null>(null);
@@ -62,7 +65,7 @@ export default function QuickAddGrid() {
     try {
       setDeleteError(null);
       await deleteTemplate(template.id);
-      toast.success("ลบ Quick Add เรียบร้อย");
+      toast.success(t("quickAdd.deletedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setDeleteError(message);
@@ -74,9 +77,9 @@ export default function QuickAddGrid() {
     <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Quick Add</h2>
+          <h2 className="text-lg font-semibold">{t("quickAdd.title")}</h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            กดครั้งเดียวเพื่อเพิ่มรายการที่ใช้บ่อย
+            {t("quickAdd.description")}
           </p>
         </div>
 
@@ -86,17 +89,17 @@ export default function QuickAddGrid() {
           className="flex items-center gap-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 px-3 py-2 text-sm transition hover:bg-zinc-200 dark:hover:bg-zinc-700"
         >
           <Plus size={16} />
-          เพิ่ม
+          {t("common.add")}
         </button>
       </div>
 
       {deleteError && <p className="mb-3 text-sm text-red-500">{deleteError}</p>}
 
       {loading && templates.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">กำลังโหลด...</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{t("common.loading")}</p>
       ) : templates.length === 0 ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          ยังไม่มี Quick Add — กด "เพิ่ม" เพื่อสร้างรายการที่ใช้บ่อย เช่น กาแฟ, ค่าเช่า, เงินเดือน
+          {t("quickAdd.emptyState")}
         </p>
       ) : (
         <div className="flex flex-wrap gap-3">

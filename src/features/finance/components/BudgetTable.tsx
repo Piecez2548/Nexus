@@ -9,19 +9,9 @@ import { useToast } from "@/hooks/useToast";
 import ProgressBar from "@/components/ui/ProgressBar";
 import IconBadge from "@/components/ui/IconBadge";
 import MobileRowCard from "@/components/ui/MobileRowCard";
+import { STATUS_COLOR } from "@/features/finance/constants/budgetStatus";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { BudgetProgress } from "@/features/finance/hooks/useBudgetProgress";
-
-const PERIOD_LABELS: Record<string, string> = {
-  monthly: "รายเดือน",
-  weekly: "รายสัปดาห์",
-  yearly: "รายปี",
-};
-
-const STATUS_COLOR: Record<BudgetProgress["status"], string> = {
-  ok: "bg-green-500",
-  near: "bg-amber-500",
-  over: "bg-red-500",
-};
 
 interface Props {
   progressList: BudgetProgress[];
@@ -33,6 +23,7 @@ export default function BudgetTable({ progressList, onEdit }: Props) {
   const { categories } = useCategoryStore();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const toast = useToast();
+  const { t } = useTranslation();
 
   async function handleDelete(progress: BudgetProgress) {
     if (progress.budget.id === undefined) return;
@@ -40,7 +31,7 @@ export default function BudgetTable({ progressList, onEdit }: Props) {
     try {
       setDeleteError(null);
       await deleteBudget(progress.budget.id);
-      toast.success("ลบงบประมาณเรียบร้อย");
+      toast.success(t("budget.deletedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setDeleteError(message);
@@ -77,7 +68,7 @@ export default function BudgetTable({ progressList, onEdit }: Props) {
               title={budget.category}
               subtitle={
                 <>
-                  <div>{PERIOD_LABELS[budget.period]}</div>
+                  <div>{t(`common.${budget.period}`)}</div>
                   <div className="mt-2">
                     <ProgressBar percentage={percentage} colorClass={STATUS_COLOR[status]} />
                   </div>
@@ -87,8 +78,8 @@ export default function BudgetTable({ progressList, onEdit }: Props) {
                     </span>
                     <span className={remaining < 0 ? "text-red-400" : "text-zinc-600 dark:text-zinc-500"}>
                       {remaining < 0
-                        ? `เกินงบ ฿${Math.abs(remaining).toLocaleString()}`
-                        : `เหลือ ฿${remaining.toLocaleString()}`}
+                        ? t("budget.over", { amount: Math.abs(remaining).toLocaleString() })
+                        : t("budget.remainingAmount", { amount: remaining.toLocaleString() })}
                     </span>
                   </div>
                 </>
@@ -124,12 +115,12 @@ export default function BudgetTable({ progressList, onEdit }: Props) {
 
           <thead className="sticky top-0 bg-zinc-50 dark:bg-zinc-950">
             <tr className="border-b border-zinc-200 dark:border-zinc-800 text-sm uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
-              <th className="px-6 py-4 text-left">Category</th>
-              <th className="px-6 py-4 text-left">Period</th>
-              <th className="px-6 py-4 text-left">Progress</th>
-              <th className="px-6 py-4 text-right">Spent / Budget</th>
-              <th className="px-6 py-4 text-right">Remaining</th>
-              <th className="px-6 py-4 text-center">Action</th>
+              <th className="px-6 py-4 text-left">{t("common.category")}</th>
+              <th className="px-6 py-4 text-left">{t("budget.period")}</th>
+              <th className="px-6 py-4 text-left">{t("budget.progress")}</th>
+              <th className="px-6 py-4 text-right">{t("budget.spentOfBudget")}</th>
+              <th className="px-6 py-4 text-right">{t("budget.remaining")}</th>
+              <th className="px-6 py-4 text-center">{t("common.action")}</th>
             </tr>
           </thead>
 
@@ -151,7 +142,7 @@ export default function BudgetTable({ progressList, onEdit }: Props) {
                   </td>
 
                   <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400">
-                    {PERIOD_LABELS[budget.period]}
+                    {t(`common.${budget.period}`)}
                   </td>
 
                   <td className="px-6 py-4">
@@ -167,8 +158,8 @@ export default function BudgetTable({ progressList, onEdit }: Props) {
                   <td className="px-6 py-4 text-right">
                     <span className={remaining < 0 ? "text-red-400" : "text-zinc-600 dark:text-zinc-500"}>
                       {remaining < 0
-                        ? `เกินงบ ฿${Math.abs(remaining).toLocaleString()}`
-                        : `เหลือ ฿${remaining.toLocaleString()}`}
+                        ? t("budget.over", { amount: Math.abs(remaining).toLocaleString() })
+                        : t("budget.remainingAmount", { amount: remaining.toLocaleString() })}
                     </span>
                   </td>
 

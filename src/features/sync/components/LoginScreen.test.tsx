@@ -38,7 +38,7 @@ describe("LoginScreen", () => {
     render(<LoginScreen />);
 
     expect(screen.getByText("Welcome back")).toBeInTheDocument();
-    expect(screen.getByLabelText("อีเมล")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign In" })).toBeInTheDocument();
   });
 
@@ -48,8 +48,8 @@ describe("LoginScreen", () => {
     const user = userEvent.setup();
     render(<LoginScreen />);
 
-    await user.type(screen.getByLabelText("อีเมล"), "a@b.com");
-    await user.type(screen.getByLabelText("รหัสผ่าน"), "password123");
+    await user.type(screen.getByLabelText("Email"), "a@b.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
     await user.click(screen.getByRole("button", { name: "Sign In" }));
 
     expect(mockSignInWithPassword).toHaveBeenCalledWith({ email: "a@b.com", password: "password123" });
@@ -67,8 +67,8 @@ describe("LoginScreen", () => {
     await user.click(screen.getByText("Don't have an account? Sign up"));
     expect(screen.getByText("Create your account")).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText("อีเมล"), "new@user.com");
-    await user.type(screen.getByLabelText("รหัสผ่าน"), "password123");
+    await user.type(screen.getByLabelText("Email"), "new@user.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
     await user.click(screen.getByRole("button", { name: "Sign Up" }));
 
     expect(mockSignUp).toHaveBeenCalledWith({ email: "new@user.com", password: "password123" });
@@ -80,8 +80,8 @@ describe("LoginScreen", () => {
     const user = userEvent.setup();
     render(<LoginScreen />);
 
-    await user.type(screen.getByLabelText("อีเมล"), "a@b.com");
-    await user.type(screen.getByLabelText("รหัสผ่าน"), "wrong-password");
+    await user.type(screen.getByLabelText("Email"), "a@b.com");
+    await user.type(screen.getByLabelText("Password"), "wrong-password");
     await user.click(screen.getByRole("button", { name: "Sign In" }));
 
     expect(await screen.findByText("Invalid credentials")).toBeInTheDocument();

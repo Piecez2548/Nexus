@@ -59,13 +59,13 @@ describe("Transactions page (add / edit / delete flow)", () => {
 
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
 
-    await user.type(await screen.findByLabelText("ชื่อรายการ"), "Coffee");
-    await user.clear(screen.getByLabelText("จำนวนเงิน"));
-    await user.type(screen.getByLabelText("จำนวนเงิน"), "120");
-    await user.selectOptions(screen.getByLabelText("หมวดหมู่"), "Food");
-    await user.selectOptions(screen.getByLabelText("บัญชี"), "Cash");
+    await user.type(await screen.findByLabelText("Item name"), "Coffee");
+    await user.clear(screen.getByLabelText("Amount"));
+    await user.type(screen.getByLabelText("Amount"), "120");
+    await user.selectOptions(screen.getByLabelText("Category"), "Food");
+    await user.selectOptions(screen.getByLabelText("Account"), "Cash");
 
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     const table = await screen.findByRole("table");
     expect(within(table).getByText("Coffee")).toBeInTheDocument();
@@ -95,12 +95,12 @@ describe("Transactions page (add / edit / delete flow)", () => {
     const editButton = within(row).getByRole("button", { name: /edit/i });
     await user.click(editButton);
 
-    const amountInput = await screen.findByLabelText("จำนวนเงิน");
+    const amountInput = await screen.findByLabelText("Amount");
     expect(amountInput).toHaveValue(120);
 
     await user.clear(amountInput);
     await user.type(amountInput, "200");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await within(table).findByText("฿200")).toBeInTheDocument();
 
@@ -142,18 +142,18 @@ describe("Transactions page (add / edit / delete flow)", () => {
 
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
 
-    await user.type(await screen.findByLabelText("ชื่อรายการ"), "Coffee");
-    await user.clear(screen.getByLabelText("จำนวนเงิน"));
-    await user.type(screen.getByLabelText("จำนวนเงิน"), "120");
-    await user.selectOptions(screen.getByLabelText("หมวดหมู่"), "Food");
-    await user.selectOptions(screen.getByLabelText("บัญชี"), "Cash");
+    await user.type(await screen.findByLabelText("Item name"), "Coffee");
+    await user.clear(screen.getByLabelText("Amount"));
+    await user.type(screen.getByLabelText("Amount"), "120");
+    await user.selectOptions(screen.getByLabelText("Category"), "Food");
+    await user.selectOptions(screen.getByLabelText("Account"), "Cash");
 
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Write failed")).toBeInTheDocument();
 
     // The drawer stays open with the entered data intact, not silently discarded.
-    expect(screen.getByLabelText("ชื่อรายการ")).toHaveValue("Coffee");
+    expect(screen.getByLabelText("Item name")).toHaveValue("Coffee");
     expect(await db.transactions.toArray()).toHaveLength(0);
   });
 
@@ -168,7 +168,7 @@ describe("Transactions page (add / edit / delete flow)", () => {
     renderTransactionsPage();
 
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
-    await user.type(await screen.findByLabelText("ชื่อรายการ"), "Coffee");
+    await user.type(await screen.findByLabelText("Item name"), "Coffee");
 
     useAccountStore.setState({ loading: true });
     useCategoryStore.setState({ loading: true });
@@ -177,13 +177,13 @@ describe("Transactions page (add / edit / delete flow)", () => {
     // flipping loading back off — otherwise a synchronous true-then-false
     // flip could get batched away without ever really testing anything.
     await waitFor(() => {
-      expect(screen.getByLabelText("ชื่อรายการ")).toHaveValue("Coffee");
+      expect(screen.getByLabelText("Item name")).toHaveValue("Coffee");
     });
 
     useAccountStore.setState({ loading: false });
     useCategoryStore.setState({ loading: false });
 
-    expect(screen.getByLabelText("ชื่อรายการ")).toHaveValue("Coffee");
+    expect(screen.getByLabelText("Item name")).toHaveValue("Coffee");
   });
 
   it("creates a transfer between two accounts without requiring a category", async () => {
@@ -192,14 +192,14 @@ describe("Transactions page (add / edit / delete flow)", () => {
 
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
 
-    await user.selectOptions(await screen.findByLabelText("ประเภท"), "transfer");
-    await user.type(screen.getByLabelText("ชื่อรายการ"), "Move to bank");
-    await user.clear(screen.getByLabelText("จำนวนเงิน"));
-    await user.type(screen.getByLabelText("จำนวนเงิน"), "500");
-    await user.selectOptions(screen.getByLabelText("บัญชีต้นทาง"), "Cash");
-    await user.selectOptions(screen.getByLabelText("บัญชีปลายทาง"), "Bank");
+    await user.selectOptions(await screen.findByLabelText("Type"), "transfer");
+    await user.type(screen.getByLabelText("Item name"), "Move to bank");
+    await user.clear(screen.getByLabelText("Amount"));
+    await user.type(screen.getByLabelText("Amount"), "500");
+    await user.selectOptions(screen.getByLabelText("From Account"), "Cash");
+    await user.selectOptions(screen.getByLabelText("To Account"), "Bank");
 
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     const table = await screen.findByRole("table");
     expect(within(table).getByText("Move to bank")).toBeInTheDocument();
@@ -342,8 +342,8 @@ describe("Transactions page (add / edit / delete flow)", () => {
 
     await user.click(screen.getByRole("button", { name: "Scan Slip" }));
 
-    expect(screen.getByLabelText(/ถ่ายรูป/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/เลือกจากคลังภาพ/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Take Photo/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Choose from Gallery/)).toBeInTheDocument();
   });
 
   it("scans a slip and opens the transaction drawer pre-filled for review", async () => {
@@ -356,14 +356,14 @@ describe("Transactions page (add / edit / delete flow)", () => {
     renderTransactionsPage();
 
     await user.click(screen.getByRole("button", { name: "Scan Slip" }));
-    const fileInput = screen.getByLabelText(/เลือกจากคลังภาพ/);
+    const fileInput = screen.getByLabelText(/Choose from Gallery/);
     const file = new File(["dummy"], "slip.png", { type: "image/png" });
     await user.upload(fileInput, file);
 
-    const amountInput = await screen.findByLabelText("จำนวนเงิน");
+    const amountInput = await screen.findByLabelText("Amount");
     expect(amountInput).toHaveValue(150);
-    expect(screen.getByLabelText("ชื่อรายการ")).toHaveValue("โอนเงินให้ ร้านกาแฟ");
-    expect(screen.getByLabelText("วันที่")).toHaveValue("2026-07-22");
+    expect(screen.getByLabelText("Item name")).toHaveValue("โอนเงินให้ ร้านกาแฟ");
+    expect(screen.getByLabelText("Date")).toHaveValue("2026-07-22");
 
     vi.unstubAllGlobals();
   });
@@ -376,12 +376,12 @@ describe("Transactions page (add / edit / delete flow)", () => {
     renderTransactionsPage();
 
     await user.click(screen.getByRole("button", { name: "Scan Slip" }));
-    const fileInput = screen.getByLabelText(/เลือกจากคลังภาพ/);
+    const fileInput = screen.getByLabelText(/Choose from Gallery/);
     const file = new File(["dummy"], "slip.png", { type: "image/png" });
     await user.upload(fileInput, file);
 
-    expect(await screen.findByText(/อ่านสลิปไม่สำเร็จ/)).toBeInTheDocument();
-    expect(screen.queryByLabelText("จำนวนเงิน")).not.toBeInTheDocument();
+    expect(await screen.findByText(/Couldn't read the slip/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Amount")).not.toBeInTheDocument();
 
     vi.unstubAllGlobals();
   });
@@ -397,20 +397,20 @@ describe("Transactions page (add / edit / delete flow)", () => {
     renderTransactionsPage();
 
     await user.click(screen.getByRole("button", { name: "Scan Slip" }));
-    const fileInput = screen.getByLabelText(/เลือกจากคลังภาพ/);
+    const fileInput = screen.getByLabelText(/Choose from Gallery/);
     const files = [
       new File(["dummy1"], "slip1.png", { type: "image/png" }),
       new File(["dummy2"], "slip2.png", { type: "image/png" }),
     ];
     await user.upload(fileInput, files);
 
-    expect(await screen.findByText("พบ 2 รายการ ตรวจสอบก่อนบันทึก")).toBeInTheDocument();
+    expect(await screen.findByText("Found 2 items — review before saving")).toBeInTheDocument();
     expect(screen.getByDisplayValue("โอนเงินให้ ร้านกาแฟ")).toBeInTheDocument();
     expect(screen.getByDisplayValue("โอนเงินให้ ร้านอาหาร")).toBeInTheDocument();
     expect(screen.getByDisplayValue("150")).toBeInTheDocument();
     expect(screen.getByDisplayValue("80")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /บันทึกทั้งหมด/ }));
+    await user.click(screen.getByRole("button", { name: /Save All/ }));
 
     await waitFor(async () => {
       expect(await db.transactions.count()).toBe(2);
@@ -434,18 +434,18 @@ describe("Transactions page (add / edit / delete flow)", () => {
     renderTransactionsPage();
 
     await user.click(screen.getByRole("button", { name: "Scan Slip" }));
-    const fileInput = screen.getByLabelText(/เลือกจากคลังภาพ/);
+    const fileInput = screen.getByLabelText(/Choose from Gallery/);
     const files = [
       new File(["dummy1"], "slip1.png", { type: "image/png" }),
       new File(["dummy2"], "slip2.png", { type: "image/png" }),
     ];
     await user.upload(fileInput, files);
 
-    expect(await screen.findByText("พบ 2 รายการ ตรวจสอบก่อนบันทึก")).toBeInTheDocument();
-    expect(screen.getByText("อ่านไม่สำเร็จ กรุณากรอกเอง")).toBeInTheDocument();
+    expect(await screen.findByText("Found 2 items — review before saving")).toBeInTheDocument();
+    expect(screen.getByText("Couldn't read this one — please enter it manually")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Remove slip2.png" }));
-    await user.click(screen.getByRole("button", { name: /บันทึกทั้งหมด/ }));
+    await user.click(screen.getByRole("button", { name: /Save All/ }));
 
     await waitFor(async () => {
       expect(await db.transactions.count()).toBe(1);

@@ -45,13 +45,13 @@ describe("Rule Engine / Learning Engine (end to end through the real UI)", () =>
 
     // --- First transaction: user manually picks the category, providing a recipient. ---
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
-    await user.type(await screen.findByLabelText("ชื่อรายการ"), "ก๋วยเตี๋ยว");
-    await user.type(screen.getByLabelText("จำนวนเงิน"), "58");
-    await user.click(screen.getByRole("button", { name: "เพิ่มเติม" }));
-    await user.type(screen.getByLabelText("ผู้รับ / เบอร์โทร / PromptPay"), "0812345678");
-    await user.selectOptions(screen.getByLabelText("หมวดหมู่"), "Food");
-    await user.selectOptions(screen.getByLabelText("บัญชี"), "Cash");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.type(await screen.findByLabelText("Item name"), "ก๋วยเตี๋ยว");
+    await user.type(screen.getByLabelText("Amount"), "58");
+    await user.click(screen.getByRole("button", { name: "More" }));
+    await user.type(screen.getByLabelText("Recipient / Phone / PromptPay"), "0812345678");
+    await user.selectOptions(screen.getByLabelText("Category"), "Food");
+    await user.selectOptions(screen.getByLabelText("Account"), "Cash");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(async () => {
       expect(await db.recipientProfiles.toArray()).toHaveLength(1);
@@ -69,17 +69,17 @@ describe("Rule Engine / Learning Engine (end to end through the real UI)", () =>
     // real browser, where the drawer fully unmounts and resets it (covered
     // by e2e/recipient-learning.spec.ts instead). No second click needed.
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
-    await user.type(await screen.findByLabelText("ชื่อรายการ"), "เที่ยงวันนี้");
-    await user.type(screen.getByLabelText("จำนวนเงิน"), "65");
-    await user.type(screen.getByLabelText("ผู้รับ / เบอร์โทร / PromptPay"), "0812345678");
+    await user.type(await screen.findByLabelText("Item name"), "เที่ยงวันนี้");
+    await user.type(screen.getByLabelText("Amount"), "65");
+    await user.type(screen.getByLabelText("Recipient / Phone / PromptPay"), "0812345678");
 
     await waitFor(() => {
-      expect(screen.getByLabelText("หมวดหมู่")).toHaveValue("Food");
+      expect(screen.getByLabelText("Category")).toHaveValue("Food");
     });
-    expect(await screen.findByText(/แนะนำหมวดหมู่/)).toBeInTheDocument();
+    expect(await screen.findByText(/Suggested category/)).toBeInTheDocument();
 
-    await user.selectOptions(screen.getByLabelText("บัญชี"), "Cash");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.selectOptions(screen.getByLabelText("Account"), "Cash");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(async () => {
       expect(await db.transactions.toArray()).toHaveLength(2);
@@ -97,12 +97,12 @@ describe("Rule Engine / Learning Engine (end to end through the real UI)", () =>
     renderTransactionsPage();
 
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
-    await user.type(await screen.findByLabelText("ชื่อรายการ"), "Starbucks Siam");
-    await user.type(screen.getByLabelText("จำนวนเงิน"), "150");
+    await user.type(await screen.findByLabelText("Item name"), "Starbucks Siam");
+    await user.type(screen.getByLabelText("Amount"), "150");
 
     await waitFor(() => {
-      expect(screen.getByLabelText("หมวดหมู่")).toHaveValue("Food");
+      expect(screen.getByLabelText("Category")).toHaveValue("Food");
     });
-    expect(await screen.findByText(/ฐานข้อมูลร้านค้า/)).toBeInTheDocument();
+    expect(await screen.findByText(/merchant database/)).toBeInTheDocument();
   });
 });

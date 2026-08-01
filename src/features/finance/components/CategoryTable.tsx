@@ -6,6 +6,7 @@ import { getIcon } from "@/features/finance/constants/icons";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import IconBadge from "@/components/ui/IconBadge";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { Category } from "@/features/finance/types";
 
 interface Props {
@@ -18,6 +19,7 @@ export default function CategoryTable({ categories, onEdit, onMerge }: Props) {
   const { deleteCategory } = useCategoryStore();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const toast = useToast();
+  const { t } = useTranslation();
 
   async function handleDelete(category: Category) {
     if (category.id === undefined) return;
@@ -25,7 +27,7 @@ export default function CategoryTable({ categories, onEdit, onMerge }: Props) {
     try {
       setDeleteError(null);
       await deleteCategory(category.id, category.name);
-      toast.success("ลบหมวดหมู่เรียบร้อย");
+      toast.success(t("categories.deletedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setDeleteError(message);
@@ -60,7 +62,7 @@ export default function CategoryTable({ categories, onEdit, onMerge }: Props) {
                 <div>
                   <div className="font-medium">{category.name}</div>
                   <div className="text-sm text-zinc-600 dark:text-zinc-500">
-                    {category.type === "income" ? "รายรับ" : "รายจ่าย"}
+                    {category.type === "income" ? t("transactions.income") : t("transactions.expense")}
                   </div>
                 </div>
               </div>

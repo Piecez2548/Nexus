@@ -65,7 +65,7 @@ describe("EncryptionSettings", () => {
 
     await user.click(screen.getByRole("button", { name: /enable encryption/i }));
 
-    expect(await screen.findByText("เปิดใช้งานการเข้ารหัสข้อมูล")).toBeInTheDocument();
+    expect(await screen.findByText("Enable Data Encryption")).toBeInTheDocument();
   });
 
   it("shows the enabled status and an update-recovery-key option once encryption has been turned on", () => {
@@ -89,6 +89,6 @@ describe("EncryptionSettings", () => {
 
     await user.click(screen.getByRole("button", { name: /update recovery key/i }));
 
-    expect(await screen.findByText("อัปเดตกุญแจสำรอง", { selector: "h2" })).toBeInTheDocument();
+    expect(await screen.findByText("Update recovery key", { selector: "h2" })).toBeInTheDocument();
   });
 });

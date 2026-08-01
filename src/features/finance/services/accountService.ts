@@ -1,5 +1,6 @@
 import { accountRepository } from "@/features/finance/repositories/accountRepository";
 import { transactionRepository } from "@/features/finance/repositories/transactionRepository";
+import { translate } from "@/i18n/useTranslation";
 import type { Account } from "../types";
 
 export const accountService = {
@@ -18,7 +19,7 @@ export const accountService = {
     );
 
     if (inUse) {
-      throw new Error("ไม่สามารถลบบัญชีที่มีรายการอยู่ได้");
+      throw new Error(translate("accounts.deleteInUseError"));
     }
 
     await accountRepository.remove(id);

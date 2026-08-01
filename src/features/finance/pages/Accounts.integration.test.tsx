@@ -19,8 +19,8 @@ describe("Accounts page (add / edit / delete flow)", () => {
 
     await user.click(screen.getByRole("button", { name: /add account/i }));
 
-    await user.type(await screen.findByLabelText("ชื่อบัญชี"), "Savings");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.type(await screen.findByLabelText("Account name"), "Savings");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Savings")).toBeInTheDocument();
     expect((await db.accounts.toArray())[0].name).toBe("Savings");
@@ -34,15 +34,15 @@ describe("Accounts page (add / edit / delete flow)", () => {
 
     await user.click(await screen.findByRole("button", { name: "Edit Cash" }));
 
-    const nameInput = await screen.findByLabelText("ชื่อบัญชี");
+    const nameInput = await screen.findByLabelText("Account name");
     expect(nameInput).toHaveValue("Cash");
 
     await user.clear(nameInput);
     await user.type(nameInput, "Wallet");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Wallet")).toBeInTheDocument();
-    expect(screen.queryByText("Cash")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit Cash" })).not.toBeInTheDocument();
   });
 
   it("deletes an account with no transactions", async () => {
@@ -75,8 +75,8 @@ describe("Accounts page (add / edit / delete flow)", () => {
 
     await user.click(await screen.findByRole("button", { name: "Delete Cash" }));
 
-    expect(await screen.findByText("ไม่สามารถลบบัญชีที่มีรายการอยู่ได้")).toBeInTheDocument();
-    expect(screen.getByText("Cash")).toBeInTheDocument();
+    expect(await screen.findByText("Can't delete an account with existing transactions")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete Cash" })).toBeInTheDocument();
   });
 
   it("merges an account into another, reassigning its transactions", async () => {
@@ -100,9 +100,9 @@ describe("Accounts page (add / edit / delete flow)", () => {
 
     await user.click(await screen.findByRole("button", { name: "Merge Cash (dup)" }));
 
-    const targetSelect = await screen.findByLabelText("รวมเข้ากับ");
+    const targetSelect = await screen.findByLabelText("Merge into");
     await user.selectOptions(targetSelect, "Cash");
-    await user.click(screen.getByRole("button", { name: "รวมบัญชี" }));
+    await user.click(screen.getByRole("button", { name: "Merge Account" }));
 
     await waitFor(() => {
       expect(screen.queryByText("Cash (dup)")).not.toBeInTheDocument();

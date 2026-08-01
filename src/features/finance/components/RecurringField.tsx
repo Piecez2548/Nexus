@@ -1,14 +1,15 @@
 import { Controller, type Control } from "react-hook-form";
 import type { TransactionFormData } from "@/features/finance/schemas/transactionSchema";
+import { useTranslation } from "@/i18n/useTranslation";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
 
-const FREQUENCY_LABELS: Record<string, string> = {
-  daily: "รายวัน",
-  weekly: "รายสัปดาห์",
-  monthly: "รายเดือน",
-  yearly: "รายปี",
+const FREQUENCY_LABEL_KEYS: Record<string, string> = {
+  daily: "common.daily",
+  weekly: "common.weekly",
+  monthly: "common.monthly",
+  yearly: "common.yearly",
 };
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
 }
 
 export default function RecurringField({ control }: Props) {
+  const { t } = useTranslation();
+
   return (
     <Controller
       name="recurring"
@@ -30,7 +33,7 @@ export default function RecurringField({ control }: Props) {
                 field.onChange(e.target.checked ? { frequency: "monthly" } : null)
               }
             />
-            รายการที่เกิดซ้ำ
+            {t("transactions.recurring")}
           </label>
 
           {field.value != null && (
@@ -39,9 +42,9 @@ export default function RecurringField({ control }: Props) {
               onChange={(e) => field.onChange({ frequency: e.target.value })}
               className={inputClassName}
             >
-              {Object.entries(FREQUENCY_LABELS).map(([value, label]) => (
+              {Object.entries(FREQUENCY_LABEL_KEYS).map(([value, labelKey]) => (
                 <option key={value} value={value}>
-                  {label}
+                  {t(labelKey)}
                 </option>
               ))}
             </select>

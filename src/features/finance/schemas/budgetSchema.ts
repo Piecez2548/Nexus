@@ -1,13 +1,17 @@
 import { z } from "zod";
 
+import type { TranslateFn } from "@/i18n/useTranslation";
+
 export const budgetPeriodEnum = z.enum(["monthly", "weekly", "yearly"]);
 
-export const budgetSchema = z.object({
-  category: z.string().min(1, "กรุณาเลือกหมวดหมู่"),
-  amount: z
-    .number({ error: "กรุณากรอกจำนวนเงิน" })
-    .positive("จำนวนเงินต้องมากกว่า 0"),
-  period: budgetPeriodEnum,
-});
+export function budgetSchema(t: TranslateFn) {
+  return z.object({
+    category: z.string().min(1, t("validation.common.categoryRequired")),
+    amount: z
+      .number({ error: t("validation.common.amountRequired") })
+      .positive(t("validation.common.amountPositive")),
+    period: budgetPeriodEnum,
+  });
+}
 
-export type BudgetFormData = z.infer<typeof budgetSchema>;
+export type BudgetFormData = z.infer<ReturnType<typeof budgetSchema>>;

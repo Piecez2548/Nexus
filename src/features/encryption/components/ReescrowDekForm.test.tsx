@@ -22,9 +22,9 @@ describe("ReescrowDekForm", () => {
     const onDone = vi.fn();
     render(<ReescrowDekForm onDone={onDone} />);
 
-    await user.click(screen.getByRole("button", { name: "อัปเดตกุญแจสำรอง" }));
+    await user.click(screen.getByRole("button", { name: "Update recovery key" }));
 
-    expect(screen.getByText("กรอกรหัสผ่านบัญชี Sync ของคุณ")).toBeInTheDocument();
+    expect(screen.getByText("Enter your Sync account password")).toBeInTheDocument();
     expect(mockReescrowDek).not.toHaveBeenCalled();
   });
 
@@ -35,8 +35,8 @@ describe("ReescrowDekForm", () => {
     const onDone = vi.fn();
     render(<ReescrowDekForm onDone={onDone} />);
 
-    await user.type(screen.getByLabelText("รหัสผ่านบัญชี Sync ปัจจุบัน"), "correct-password");
-    await user.click(screen.getByRole("button", { name: "อัปเดตกุญแจสำรอง" }));
+    await user.type(screen.getByLabelText("Current Sync Account Password"), "correct-password");
+    await user.click(screen.getByRole("button", { name: "Update recovery key" }));
 
     expect(mockReescrowDek).toHaveBeenCalledWith("correct-password");
     await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
@@ -49,8 +49,8 @@ describe("ReescrowDekForm", () => {
     const onDone = vi.fn();
     render(<ReescrowDekForm onDone={onDone} />);
 
-    await user.type(screen.getByLabelText("รหัสผ่านบัญชี Sync ปัจจุบัน"), "wrong-password");
-    await user.click(screen.getByRole("button", { name: "อัปเดตกุญแจสำรอง" }));
+    await user.type(screen.getByLabelText("Current Sync Account Password"), "wrong-password");
+    await user.click(screen.getByRole("button", { name: "Update recovery key" }));
 
     expect(await screen.findByText("รหัสผ่านบัญชี Sync ไม่ถูกต้อง")).toBeInTheDocument();
     expect(onDone).not.toHaveBeenCalled();

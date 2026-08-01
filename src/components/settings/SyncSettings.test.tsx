@@ -49,7 +49,7 @@ describe("SyncSettings", () => {
   it("shows a sign-in form when signed out", () => {
     render(<SyncSettings />);
 
-    expect(screen.getByLabelText("อีเมล")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign In" })).toBeInTheDocument();
   });
 
@@ -63,8 +63,8 @@ describe("SyncSettings", () => {
     render(<SyncSettings />);
 
     await user.click(screen.getByText("Don't have an account? Sign up"));
-    await user.type(screen.getByLabelText("อีเมล"), "new@user.com");
-    await user.type(screen.getByLabelText("รหัสผ่าน"), "password123");
+    await user.type(screen.getByLabelText("Email"), "new@user.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
     await user.click(screen.getByRole("button", { name: "Sign Up" }));
 
     expect(mockSignUp).toHaveBeenCalledWith({ email: "new@user.com", password: "password123" });
@@ -80,8 +80,8 @@ describe("SyncSettings", () => {
     render(<SyncSettings />);
 
     await user.click(screen.getByText("Don't have an account? Sign up"));
-    await user.type(screen.getByLabelText("อีเมล"), "new@user.com");
-    await user.type(screen.getByLabelText("รหัสผ่าน"), "password123");
+    await user.type(screen.getByLabelText("Email"), "new@user.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
     await user.click(screen.getByRole("button", { name: "Sign Up" }));
 
     expect(await screen.findByText(/confirm your email/i)).toBeInTheDocument();

@@ -4,6 +4,7 @@ import { useAccountStore } from "@/features/finance/store/accountStore";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { Account } from "@/features/finance/types";
 
 const inputClassName =
@@ -21,6 +22,7 @@ export default function MergeAccountForm({ sourceAccount, accounts, onDone }: Pr
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
+  const { t } = useTranslation();
 
   const candidates = accounts.filter((a) => a.id !== sourceAccount.id);
 
@@ -34,7 +36,7 @@ export default function MergeAccountForm({ sourceAccount, accounts, onDone }: Pr
     try {
       await mergeAccount(sourceAccount.id, sourceAccount.name, targetName);
       onDone();
-      toast.success("รวมบัญชีเรียบร้อย");
+      toast.success(t("accounts.mergedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setError(message);
@@ -50,21 +52,21 @@ export default function MergeAccountForm({ sourceAccount, accounts, onDone }: Pr
       className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6"
     >
       <h2 className="text-xl font-bold">
-        รวมบัญชี "{sourceAccount.name}"
+        {t("accounts.mergeTitle", { name: sourceAccount.name })}
       </h2>
 
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        รายการทั้งหมดในบัญชีนี้จะถูกย้ายไปยังบัญชีที่เลือก แล้วบัญชีนี้จะถูกลบ
+        {t("accounts.mergeDescription")}
       </p>
 
-      <FormField label="รวมเข้ากับ" htmlFor="merge-account-target">
+      <FormField label={t("accounts.mergeInto")} htmlFor="merge-account-target">
         <select
           id="merge-account-target"
           value={targetName}
           onChange={(e) => setTargetName(e.target.value)}
           className={inputClassName}
         >
-          <option value="">เลือกบัญชีปลายทาง</option>
+          <option value="">{t("accounts.selectTargetAccount")}</option>
 
           {candidates.map((a) => (
             <option key={a.id} value={a.name}>
@@ -83,7 +85,7 @@ export default function MergeAccountForm({ sourceAccount, accounts, onDone }: Pr
         disabled={submitting || !targetName}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {submitting ? "กำลังรวม..." : "รวมบัญชี"}
+        {submitting ? t("accounts.merging") : t("accounts.mergeButton")}
       </button>
     </form>
   );

@@ -38,14 +38,14 @@ describe("Budget page", () => {
     render(<Budget />);
 
     await user.click(screen.getByRole("button", { name: /add budget/i }));
-    await user.selectOptions(await screen.findByLabelText("หมวดหมู่"), "Food");
-    await user.type(screen.getByLabelText("จำนวนเงิน"), "1000");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.selectOptions(await screen.findByLabelText("Category"), "Food");
+    await user.type(screen.getByLabelText("Amount"), "1000");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     const table = await screen.findByRole("table");
     expect(within(table).getByText("Food")).toBeInTheDocument();
     expect(within(table).getByText("฿400 / ฿1,000")).toBeInTheDocument();
-    expect(within(table).getByText("เหลือ ฿600")).toBeInTheDocument();
+    expect(within(table).getByText("฿600 left")).toBeInTheDocument();
   });
 
   it("deletes a budget", async () => {

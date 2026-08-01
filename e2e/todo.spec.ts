@@ -5,17 +5,17 @@ test.describe("todo lifecycle", () => {
     await page.goto("/todo");
 
     await page.getByRole("button", { name: "Add Todo" }).click();
-    await page.getByLabel("ชื่องาน").fill("ส่งรายงาน");
-    await page.getByLabel("ความสำคัญ").selectOption({ label: "High" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Task name").fill("ส่งรายงาน");
+    await page.getByLabel("Priority Level").selectOption({ label: "High" });
+    await page.getByRole("button", { name: "Save" }).click();
 
     await expect(page.getByText("ส่งรายงาน")).toBeVisible();
     await expect(page.getByText("1 tasks remaining")).toBeVisible();
 
     await page.getByRole("button", { name: "Edit ส่งรายงาน" }).click();
-    const titleInput = page.getByLabel("ชื่องาน");
+    const titleInput = page.getByLabel("Task name");
     await titleInput.fill("ส่งรายงานประจำเดือน");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("ส่งรายงานประจำเดือน")).toBeVisible();
 
     await page.getByRole("button", { name: "Mark ส่งรายงานประจำเดือน as done" }).click();
@@ -29,16 +29,16 @@ test.describe("todo lifecycle", () => {
     await page.goto("/todo");
 
     await page.getByRole("button", { name: "Add Todo" }).click();
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByRole("button", { name: "Save" }).click();
 
-    await expect(page.getByText("กรุณากรอกชื่องาน")).toBeVisible();
+    await expect(page.getByText("Task name is required")).toBeVisible();
   });
 
   test("a pending todo shows in the Dashboard preview and can be completed from there", async ({ page }) => {
     await page.goto("/todo");
     await page.getByRole("button", { name: "Add Todo" }).click();
-    await page.getByLabel("ชื่องาน").fill("ซื้อของเข้าบ้าน");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Task name").fill("ซื้อของเข้าบ้าน");
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("ซื้อของเข้าบ้าน")).toBeVisible();
 
     await page.goto("/");
@@ -53,15 +53,15 @@ test.describe("todo lifecycle", () => {
     await page.goto("/todo");
 
     await page.getByRole("button", { name: "Add Todo" }).click();
-    await page.getByLabel("ชื่องาน").fill("งานด่วน");
-    await page.getByLabel("ความสำคัญ").selectOption({ label: "High" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Task name").fill("งานด่วน");
+    await page.getByLabel("Priority Level").selectOption({ label: "High" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("งานด่วน")).toBeVisible();
 
     await page.getByRole("button", { name: "Add Todo" }).click();
-    await page.getByLabel("ชื่องาน").fill("งานทั่วไป");
-    await page.getByLabel("ความสำคัญ").selectOption({ label: "Low" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Task name").fill("งานทั่วไป");
+    await page.getByLabel("Priority Level").selectOption({ label: "Low" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("งานทั่วไป")).toBeVisible();
 
     await page.getByPlaceholder("Search todos...").fill("ด่วน");
@@ -69,7 +69,7 @@ test.describe("todo lifecycle", () => {
     await expect(page.getByText("งานทั่วไป")).not.toBeVisible();
 
     await page.getByPlaceholder("Search todos...").fill("");
-    await page.getByLabel("Priority").selectOption({ label: "High" });
+    await page.getByLabel("Priority", { exact: true }).selectOption({ label: "High" });
     await expect(page.getByText("งานด่วน")).toBeVisible();
     await expect(page.getByText("งานทั่วไป")).not.toBeVisible();
   });
@@ -77,15 +77,15 @@ test.describe("todo lifecycle", () => {
   test("completing an action increases the level badge's XP and streak", async ({ page }) => {
     await page.goto("/todo");
     await page.getByRole("button", { name: "Add Todo" }).click();
-    await page.getByLabel("ชื่องาน").fill("งานทดสอบ");
-    await page.getByLabel("ความสำคัญ").selectOption({ label: "High" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Task name").fill("งานทดสอบ");
+    await page.getByLabel("Priority Level").selectOption({ label: "High" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("งานทดสอบ")).toBeVisible();
 
     await page.getByRole("button", { name: "Mark งานทดสอบ as done" }).click();
 
     await page.getByRole("button", { name: "Level and streak" }).click();
     await expect(page.getByText("20 / 100 XP")).toBeVisible();
-    await expect(page.getByText("ต่อเนื่อง 1 วัน")).toBeVisible();
+    await expect(page.getByText("1 day streak")).toBeVisible();
   });
 });

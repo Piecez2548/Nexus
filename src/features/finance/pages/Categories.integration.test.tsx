@@ -19,8 +19,8 @@ describe("Categories page (add / edit / delete / merge flow)", () => {
 
     await user.click(screen.getByRole("button", { name: /add category/i }));
 
-    await user.type(await screen.findByLabelText("ชื่อหมวดหมู่"), "Groceries");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.type(await screen.findByLabelText("Category name"), "Groceries");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Groceries")).toBeInTheDocument();
   });
@@ -56,7 +56,7 @@ describe("Categories page (add / edit / delete / merge flow)", () => {
     await user.click(await screen.findByRole("button", { name: "Delete Food" }));
 
     expect(
-      await screen.findByText("ไม่สามารถลบหมวดหมู่ที่มีรายการอยู่ได้ ลองรวมหมวดหมู่แทน")
+      await screen.findByText("Can't delete a category with existing transactions — try merging it instead")
     ).toBeInTheDocument();
   });
 
@@ -81,9 +81,9 @@ describe("Categories page (add / edit / delete / merge flow)", () => {
 
     await user.click(await screen.findByRole("button", { name: "Merge Lunch" }));
 
-    const targetSelect = await screen.findByLabelText("รวมเข้ากับ");
+    const targetSelect = await screen.findByLabelText("Merge into");
     await user.selectOptions(targetSelect, "Food");
-    await user.click(screen.getByRole("button", { name: "รวมหมวดหมู่" }));
+    await user.click(screen.getByRole("button", { name: "Merge Category" }));
 
     await waitFor(() => {
       expect(screen.queryByText("Lunch")).not.toBeInTheDocument();

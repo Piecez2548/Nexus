@@ -40,7 +40,7 @@ export default function EquityCurveChart() {
             <Area
               type="monotone"
               dataKey="equity"
-              name="Equity"
+              name={t("trading.equity")}
               stroke="var(--color-brand-500)"
               fill="url(#equityGradient)"
               strokeWidth={2}

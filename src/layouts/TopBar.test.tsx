@@ -150,6 +150,6 @@ describe("TopBar", () => {
 
     await user.click(screen.getByRole("button", { name: "Level and streak" }));
     expect(screen.getByText("50 / 100 XP")).toBeInTheDocument();
-    expect(screen.getByText("ต่อเนื่อง 3 วัน")).toBeInTheDocument();
+    expect(screen.getByText("3 day streak")).toBeInTheDocument();
   });
 });

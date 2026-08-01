@@ -27,12 +27,12 @@ export default function ChangePinForm({ onDone }: Props) {
     setError(null);
 
     if (newPin.length < 4) {
-      setError("PIN ใหม่ต้องมีอย่างน้อย 4 หลัก");
+      setError(t("lock.newPinMinLength"));
       return;
     }
 
     if (newPin !== confirmPin) {
-      setError("PIN ใหม่ไม่ตรงกัน");
+      setError(t("lock.pinMismatch"));
       return;
     }
 
@@ -43,7 +43,7 @@ export default function ChangePinForm({ onDone }: Props) {
     setSubmitting(false);
 
     if (!success) {
-      setError("PIN ปัจจุบันไม่ถูกต้อง");
+      setError(t("lock.currentPinIncorrect"));
       return;
     }
 
@@ -54,7 +54,7 @@ export default function ChangePinForm({ onDone }: Props) {
     if (hadBiometricBefore && !useAppLockStore.getState().biometricEnabled) {
       toast.warning(t("settings.biometricResyncFailedWarning"));
     } else {
-      toast.success("เปลี่ยน PIN เรียบร้อย");
+      toast.success(t("lock.pinChanged"));
     }
     onDone();
   }
@@ -64,9 +64,9 @@ export default function ChangePinForm({ onDone }: Props) {
       onSubmit={handleSubmit}
       className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6"
     >
-      <h2 className="text-xl font-bold">เปลี่ยน PIN</h2>
+      <h2 className="text-xl font-bold">{t("lock.changePinTitle")}</h2>
 
-      <FormField label="PIN ปัจจุบัน" htmlFor="change-pin-current">
+      <FormField label={t("lock.currentPinLabel")} htmlFor="change-pin-current">
         <input
           id="change-pin-current"
           type="password"
@@ -77,7 +77,7 @@ export default function ChangePinForm({ onDone }: Props) {
         />
       </FormField>
 
-      <FormField label="PIN ใหม่" htmlFor="change-pin-new">
+      <FormField label={t("lock.newPinLabel")} htmlFor="change-pin-new">
         <input
           id="change-pin-new"
           type="password"
@@ -88,7 +88,7 @@ export default function ChangePinForm({ onDone }: Props) {
         />
       </FormField>
 
-      <FormField label="ยืนยัน PIN ใหม่" htmlFor="change-pin-confirm">
+      <FormField label={t("lock.confirmNewPinLabel")} htmlFor="change-pin-confirm">
         <input
           id="change-pin-confirm"
           type="password"
@@ -106,7 +106,7 @@ export default function ChangePinForm({ onDone }: Props) {
         disabled={submitting}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {submitting ? "กำลังบันทึก..." : "บันทึก"}
+        {submitting ? t("lock.saving") : t("common.save")}
       </button>
     </form>
   );

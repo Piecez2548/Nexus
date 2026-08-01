@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -14,17 +14,18 @@ import { numberOrUndefined } from "@/utils/numberField";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { TransactionTemplate } from "@/features/finance/types";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
 
-const TYPE_LABELS: Record<TransactionTemplateFormData["type"], string> = {
-  expense: "รายจ่าย",
-  income: "รายรับ",
-  transfer: "โอนเงิน",
-  refund: "เงินคืน",
-  adjustment: "ปรับปรุงยอด",
+const TYPE_LABEL_KEYS: Record<TransactionTemplateFormData["type"], string> = {
+  expense: "transactions.expense",
+  income: "transactions.income",
+  transfer: "transactions.transfer",
+  refund: "transactions.refund",
+  adjustment: "transactions.adjustment",
 };
 
 const blankValues: TransactionTemplateFormData = {
@@ -50,6 +51,8 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
   const { categories, loadCategories } = useCategoryStore();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
+  const { t } = useTranslation();
+  const schema = useMemo(() => transactionTemplateSchema(t), [t]);
 
   useEffect(() => {
     loadAccounts();
@@ -63,7 +66,7 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<TransactionTemplateFormData>({
-    resolver: zodResolver(transactionTemplateSchema),
+    resolver: zodResolver(schema),
     defaultValues: blankValues,
   });
 
@@ -89,7 +92,7 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
       }
 
       onDone();
-      toast.success(isEditing ? "แก้ไข Quick Add เรียบร้อย" : "เพิ่ม Quick Add เรียบร้อย");
+      toast.success(isEditing ? t("quickAdd.updatedSuccess") : t("quickAdd.savedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setSubmitError(message);
@@ -103,19 +106,19 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
       className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6"
     >
       <h2 className="text-xl font-bold">
-        {template ? "แก้ไข Quick Add" : "เพิ่ม Quick Add"}
+        {template ? t("quickAdd.editTemplate") : t("quickAdd.createTemplate")}
       </h2>
 
-      <FormField label="ชื่อ" htmlFor="template-name" error={errors.name?.message}>
+      <FormField label={t("quickAdd.nameLabel")} htmlFor="template-name" error={errors.name?.message}>
         <input
           id="template-name"
           {...register("name")}
-          placeholder="เช่น Starbucks, Netflix, เงินเดือน"
+          placeholder={t("quickAdd.namePlaceholder")}
           className={inputClassName}
         />
       </FormField>
 
-      <FormField label="ไอคอน" htmlFor="template-icon">
+      <FormField label={t("categories.iconLabel")} htmlFor="template-icon">
         <div className="flex items-center gap-3">
           <div
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg"
@@ -134,7 +137,7 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
         </div>
       </FormField>
 
-      <FormField label="สี" htmlFor="template-color">
+      <FormField label={t("categories.colorLabel")} htmlFor="template-color">
         <input
           id="template-color"
           type="color"
@@ -143,20 +146,20 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
         />
       </FormField>
 
-      <FormField label="ประเภท" htmlFor="template-type">
+      <FormField label={t("common.type")} htmlFor="template-type">
         <select id="template-type" {...register("type")} className={inputClassName}>
-          {Object.entries(TYPE_LABELS).map(([value, label]) => (
+          {Object.entries(TYPE_LABEL_KEYS).map(([value, labelKey]) => (
             <option key={value} value={value}>
-              {label}
+              {t(labelKey)}
             </option>
           ))}
         </select>
       </FormField>
 
       {needsCategory && (
-        <FormField label="หมวดหมู่" htmlFor="template-category" error={errors.category?.message}>
+        <FormField label={t("common.category")} htmlFor="template-category" error={errors.category?.message}>
           <select id="template-category" {...register("category")} className={inputClassName}>
-            <option value="">เลือกหมวดหมู่</option>
+            <option value="">{t("transactions.selectCategory")}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.name}>
                 {category.name}
@@ -166,9 +169,9 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
         </FormField>
       )}
 
-      <FormField label={isTransfer ? "บัญชีต้นทาง" : "บัญชี"} htmlFor="template-account">
+      <FormField label={isTransfer ? t("transactions.fromAccount") : t("common.account")} htmlFor="template-account">
         <select id="template-account" {...register("account")} className={inputClassName}>
-          <option value="">เลือกบัญชี</option>
+          <option value="">{t("transactions.selectAccount")}</option>
           {accounts.map((account) => (
             <option key={account.id} value={account.name}>
               {account.name}
@@ -178,9 +181,9 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
       </FormField>
 
       {isTransfer && (
-        <FormField label="บัญชีปลายทาง" htmlFor="template-to-account" error={errors.toAccount?.message}>
+        <FormField label={t("transactions.toAccount")} htmlFor="template-to-account" error={errors.toAccount?.message}>
           <select id="template-to-account" {...register("toAccount")} className={inputClassName}>
-            <option value="">เลือกบัญชีปลายทาง</option>
+            <option value="">{t("transactions.selectToAccount")}</option>
             {accounts.map((account) => (
               <option key={account.id} value={account.name}>
                 {account.name}
@@ -190,18 +193,18 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
         </FormField>
       )}
 
-      <FormField label="จำนวนเงินเริ่มต้น (ไม่บังคับ)" htmlFor="template-amount" error={errors.amount?.message}>
+      <FormField label={t("quickAdd.amountLabel")} htmlFor="template-amount" error={errors.amount?.message}>
         <input
           id="template-amount"
           type="number"
           step="any"
           {...register("amount", { setValueAs: numberOrUndefined })}
-          placeholder="เว้นว่างไว้เพื่อกรอกเองทุกครั้ง"
+          placeholder={t("quickAdd.amountPlaceholder")}
           className={inputClassName}
         />
       </FormField>
 
-      <FormField label="ผู้รับ / เบอร์โทร / PromptPay (ไม่บังคับ)" htmlFor="template-recipient">
+      <FormField label={t("quickAdd.recipientLabel")} htmlFor="template-recipient">
         <input
           id="template-recipient"
           {...register("recipient")}
@@ -216,7 +219,7 @@ export default function TransactionTemplateForm({ template, onDone }: Props) {
         disabled={isSubmitting}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
+        {isSubmitting ? t("quickAdd.saving") : t("common.save")}
       </button>
     </form>
   );

@@ -211,7 +211,7 @@ export default function DataSettings() {
           accept="application/json"
           onChange={handleFileSelected}
           className="hidden"
-          aria-label="Import backup file"
+          aria-label={t("settings.importBackupAriaLabel")}
         />
       </div>
 

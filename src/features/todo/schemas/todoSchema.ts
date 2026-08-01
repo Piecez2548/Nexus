@@ -1,10 +1,14 @@
 import { z } from "zod";
 
-export const todoSchema = z.object({
-  title: z.string().min(1, "กรุณากรอกชื่องาน"),
-  notes: z.string().optional(),
-  dueDate: z.string().optional(),
-  priority: z.enum(["low", "medium", "high"]),
-});
+import type { TranslateFn } from "@/i18n/useTranslation";
 
-export type TodoFormData = z.infer<typeof todoSchema>;
+export function todoSchema(t: TranslateFn) {
+  return z.object({
+    title: z.string().min(1, t("validation.todo.titleRequired")),
+    notes: z.string().optional(),
+    dueDate: z.string().optional(),
+    priority: z.enum(["low", "medium", "high"]),
+  });
+}
+
+export type TodoFormData = z.infer<ReturnType<typeof todoSchema>>;

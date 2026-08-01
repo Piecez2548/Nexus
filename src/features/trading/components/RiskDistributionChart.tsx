@@ -32,7 +32,7 @@ export default function RiskDistributionChart() {
             <YAxis allowDecimals={false} />
             <Tooltip />
 
-            <Bar dataKey="count" name="Trades" radius={[4, 4, 0, 0]}>
+            <Bar dataKey="count" name={t("trading.trades")} radius={[4, 4, 0, 0]}>
               {riskDistribution.map((entry, index) => (
                 <Cell key={index} fill={entry.isPositive ? "#22c55e" : "#ef4444"} />
               ))}

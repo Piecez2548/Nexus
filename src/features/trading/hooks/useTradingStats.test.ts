@@ -3,6 +3,7 @@ import { renderHook } from "@testing-library/react";
 
 import { useTradingStats } from "./useTradingStats";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
+import { toLocalDateString } from "@/utils/localDate";
 import type { Trade } from "@/features/trading/types";
 
 function seed(trades: Trade[]) {
@@ -10,7 +11,7 @@ function seed(trades: Trade[]) {
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return toLocalDateString(new Date());
 }
 
 describe("useTradingStats", () => {

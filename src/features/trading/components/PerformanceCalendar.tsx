@@ -2,7 +2,15 @@ import { useMemo } from "react";
 import { useTradingAnalytics } from "@/features/trading/hooks/useTradingAnalytics";
 import { useTranslation } from "@/i18n/useTranslation";
 
-const WEEKDAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const WEEKDAY_KEYS = [
+  "aiAnalytics.weekdays.sun",
+  "aiAnalytics.weekdays.mon",
+  "aiAnalytics.weekdays.tue",
+  "aiAnalytics.weekdays.wed",
+  "aiAnalytics.weekdays.thu",
+  "aiAnalytics.weekdays.fri",
+  "aiAnalytics.weekdays.sat",
+];
 
 function intensityClass(pnl: number, maxAbs: number): string {
   const ratio = Math.min(1, Math.abs(pnl) / (maxAbs || 1));
@@ -55,8 +63,8 @@ export default function PerformanceCalendar() {
       <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">{monthLabel}</p>
 
       <div className="grid grid-cols-7 gap-1.5 text-center text-xs text-zinc-500 dark:text-zinc-400">
-        {WEEKDAY_LABELS.map((label) => (
-          <div key={label}>{label}</div>
+        {WEEKDAY_KEYS.map((key) => (
+          <div key={key}>{t(key)}</div>
         ))}
       </div>
 

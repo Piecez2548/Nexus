@@ -40,7 +40,7 @@ export default function DrawdownChart() {
             <Area
               type="monotone"
               dataKey="drawdownPercent"
-              name="Drawdown"
+              name={t("trading.drawdown")}
               stroke="#ef4444"
               fill="url(#drawdownGradient)"
               strokeWidth={2}

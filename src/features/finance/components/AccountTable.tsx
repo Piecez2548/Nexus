@@ -6,17 +6,18 @@ import { getIcon } from "@/features/finance/constants/icons";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import IconBadge from "@/components/ui/IconBadge";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { Account } from "@/features/finance/types";
 
-const ACCOUNT_TYPE_LABELS: Record<Account["type"], string> = {
-  cash: "เงินสด",
-  bank: "ธนาคาร",
-  credit_card: "บัตรเครดิต",
-  investment: "การลงทุน",
-  crypto: "คริปโต",
-  loan: "เงินกู้",
-  digital_wallet: "กระเป๋าเงินดิจิทัล",
-  other: "อื่นๆ",
+const ACCOUNT_TYPE_LABEL_KEYS: Record<Account["type"], string> = {
+  cash: "accounts.types.cash",
+  bank: "accounts.types.bank",
+  credit_card: "accounts.types.credit_card",
+  investment: "accounts.types.investment",
+  crypto: "accounts.types.crypto",
+  loan: "accounts.types.loan",
+  digital_wallet: "accounts.types.digital_wallet",
+  other: "accounts.types.other",
 };
 
 interface Props {
@@ -29,6 +30,7 @@ export default function AccountTable({ accounts, onEdit, onMerge }: Props) {
   const { deleteAccount } = useAccountStore();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const toast = useToast();
+  const { t } = useTranslation();
 
   async function handleDelete(account: Account) {
     if (account.id === undefined) return;
@@ -36,7 +38,7 @@ export default function AccountTable({ accounts, onEdit, onMerge }: Props) {
     try {
       setDeleteError(null);
       await deleteAccount(account.id, account.name);
-      toast.success("ลบบัญชีเรียบร้อย");
+      toast.success(t("accounts.deletedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setDeleteError(message);
@@ -70,7 +72,7 @@ export default function AccountTable({ accounts, onEdit, onMerge }: Props) {
                 <div>
                   <div className="font-medium">{account.name}</div>
                   <div className="text-sm text-zinc-600 dark:text-zinc-500">
-                    {ACCOUNT_TYPE_LABELS[account.type]}
+                    {t(ACCOUNT_TYPE_LABEL_KEYS[account.type])}
                   </div>
                 </div>
               </div>

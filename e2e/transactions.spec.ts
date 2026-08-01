@@ -7,11 +7,11 @@ test.describe("transaction lifecycle", () => {
     // --- Add ---
     await page.getByRole("button", { name: "Add Transaction" }).click();
 
-    await page.getByLabel("ชื่อรายการ").fill("Coffee");
-    await page.getByLabel("จำนวนเงิน").fill("120");
-    await page.getByLabel("หมวดหมู่").selectOption({ label: "Food" });
-    await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Item name").fill("Coffee");
+    await page.getByLabel("Amount").fill("120");
+    await page.getByLabel("Category").selectOption({ label: "Food" });
+    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByRole("button", { name: "Save" }).click();
 
     const row = page.getByRole("row").filter({ hasText: "Coffee" });
     await expect(row).toBeVisible();
@@ -26,10 +26,10 @@ test.describe("transaction lifecycle", () => {
     await page.getByRole("link", { name: "Transactions" }).click();
     await page.getByRole("button", { name: "Edit Coffee" }).click();
 
-    const amountInput = page.getByLabel("จำนวนเงิน");
+    const amountInput = page.getByLabel("Amount");
     await expect(amountInput).toHaveValue("120");
     await amountInput.fill("200");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByRole("button", { name: "Save" }).click();
 
     const updatedRow = page.getByRole("row").filter({ hasText: "Coffee" });
     await expect(updatedRow.getByText("฿200")).toBeVisible();
@@ -44,12 +44,12 @@ test.describe("transaction lifecycle", () => {
     await page.goto("/transactions");
 
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("ประเภท").selectOption({ label: "Transfer" });
-    await page.getByLabel("ชื่อรายการ").fill("Move to bank");
-    await page.getByLabel("จำนวนเงิน").fill("500");
-    await page.getByLabel("บัญชีต้นทาง").selectOption({ label: "Cash" });
-    await page.getByLabel("บัญชีปลายทาง").selectOption({ label: "Bank" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Type").selectOption({ label: "Transfer" });
+    await page.getByLabel("Item name").fill("Move to bank");
+    await page.getByLabel("Amount").fill("500");
+    await page.getByLabel("From Account").selectOption({ label: "Cash" });
+    await page.getByLabel("To Account").selectOption({ label: "Bank" });
+    await page.getByRole("button", { name: "Save" }).click();
 
     const row = page.getByRole("row").filter({ hasText: "Move to bank" });
     await expect(row).toBeVisible();
@@ -61,10 +61,10 @@ test.describe("transaction lifecycle", () => {
     await page.goto("/transactions");
 
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("จำนวนเงิน").fill("120");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Amount").fill("120");
+    await page.getByRole("button", { name: "Save" }).click();
 
-    await expect(page.getByText("กรุณากรอกชื่อรายการ")).toBeVisible();
+    await expect(page.getByText("Item name is required")).toBeVisible();
   });
 
   test("the dashboard's header button opens the transaction drawer", async ({ page }) => {
@@ -82,7 +82,7 @@ test.describe("transaction lifecycle", () => {
     await page.goto("/transactions");
 
     await page.getByRole("button", { name: "Scan Slip" }).click();
-    await expect(page.getByText("ประมวลผลในเครื่องทั้งหมด")).toBeVisible();
+    await expect(page.getByText("Everything is processed on-device")).toBeVisible();
 
     // A minimal 1x1 PNG — real OCR accuracy isn't what this test is checking;
     // it's confirming the on-device Tesseract pipeline actually starts inside
@@ -92,13 +92,13 @@ test.describe("transaction lifecycle", () => {
       "base64"
     );
 
-    await page.getByLabel(/เลือกจากคลังภาพ/).setInputFiles({
+    await page.getByLabel(/Choose from Gallery/).setInputFiles({
       name: "slip.png",
       mimeType: "image/png",
       buffer: pngBuffer,
     });
 
-    await expect(page.getByText("กำลังอ่านสลิป...")).toBeVisible();
+    await expect(page.getByText("Reading slip...")).toBeVisible();
   });
 
   test("selecting multiple slips from the gallery starts a batch scan and shows a review list", async ({ page }) => {
@@ -111,13 +111,13 @@ test.describe("transaction lifecycle", () => {
       "base64"
     );
 
-    await page.getByLabel(/เลือกจากคลังภาพ/).setInputFiles([
+    await page.getByLabel(/Choose from Gallery/).setInputFiles([
       { name: "slip1.png", mimeType: "image/png", buffer: pngBuffer },
       { name: "slip2.png", mimeType: "image/png", buffer: pngBuffer },
     ]);
 
-    await expect(page.getByText(/กำลังอ่านสลิป \d\/2/)).toBeVisible();
-    await expect(page.getByText("พบ 2 รายการ ตรวจสอบก่อนบันทึก")).toBeVisible({ timeout: 30000 });
-    await expect(page.getByRole("button", { name: /บันทึกทั้งหมด/ })).toBeVisible();
+    await expect(page.getByText(/Reading slip \d\/2/)).toBeVisible();
+    await expect(page.getByText("Found 2 items — review before saving")).toBeVisible({ timeout: 30000 });
+    await expect(page.getByRole("button", { name: /Save All/ })).toBeVisible();
   });
 });

@@ -5,6 +5,7 @@ import { useRecipientProfileStore } from "@/features/finance/store/recipientProf
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import MobileRowCard from "@/components/ui/MobileRowCard";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { RecipientProfile } from "@/features/finance/types";
 
 interface Props {
@@ -15,6 +16,7 @@ export default function RecipientProfileTable({ profiles }: Props) {
   const { deleteProfile } = useRecipientProfileStore();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const toast = useToast();
+  const { t, language } = useTranslation();
 
   async function handleDelete(profile: RecipientProfile) {
     if (profile.id === undefined) return;
@@ -22,7 +24,7 @@ export default function RecipientProfileTable({ profiles }: Props) {
     try {
       setDeleteError(null);
       await deleteProfile(profile.id);
-      toast.success("ลบข้อมูลผู้รับเรียบร้อย");
+      toast.success(t("recipients.deletedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setDeleteError(message);
@@ -60,9 +62,9 @@ export default function RecipientProfileTable({ profiles }: Props) {
                 <span className="rounded-full bg-brand-500/15 px-2.5 py-0.5 text-xs font-semibold text-brand-400">
                   {profile.confidenceScore}%
                 </span>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">{profile.transactionCount} รายการ</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">{t("transactions.transactionsCount", { count: profile.transactionCount })}</span>
                 <span className="text-xs text-zinc-500 dark:text-zinc-400">
-                  {new Date(profile.lastUsedDate).toLocaleDateString("th-TH")}
+                  {new Date(profile.lastUsedDate).toLocaleDateString(language === "th" ? "th-TH" : "en-US")}
                 </span>
               </>
             }
@@ -85,14 +87,14 @@ export default function RecipientProfileTable({ profiles }: Props) {
         <table className="min-w-full">
           <thead className="sticky top-0 bg-zinc-50 dark:bg-zinc-950">
             <tr className="border-b border-zinc-200 dark:border-zinc-800 text-sm uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
-              <th className="px-6 py-4 text-left">Recipient</th>
-              <th className="px-6 py-4 text-left">Alias</th>
-              <th className="px-6 py-4 text-left">Category</th>
-              <th className="px-6 py-4 text-right">Average</th>
-              <th className="px-6 py-4 text-right">Count</th>
-              <th className="px-6 py-4 text-left">Last Used</th>
-              <th className="px-6 py-4 text-right">Confidence</th>
-              <th className="px-6 py-4 text-center">Action</th>
+              <th className="px-6 py-4 text-left">{t("recipients.recipient")}</th>
+              <th className="px-6 py-4 text-left">{t("recipients.alias")}</th>
+              <th className="px-6 py-4 text-left">{t("common.category")}</th>
+              <th className="px-6 py-4 text-right">{t("recipients.average")}</th>
+              <th className="px-6 py-4 text-right">{t("recipients.count")}</th>
+              <th className="px-6 py-4 text-left">{t("recipients.lastUsed")}</th>
+              <th className="px-6 py-4 text-right">{t("recipients.confidence")}</th>
+              <th className="px-6 py-4 text-center">{t("common.action")}</th>
             </tr>
           </thead>
 
@@ -110,7 +112,7 @@ export default function RecipientProfileTable({ profiles }: Props) {
                 </td>
                 <td className="px-6 py-4 text-right text-zinc-700 dark:text-zinc-300">{profile.transactionCount}</td>
                 <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400">
-                  {new Date(profile.lastUsedDate).toLocaleDateString("th-TH")}
+                  {new Date(profile.lastUsedDate).toLocaleDateString(language === "th" ? "th-TH" : "en-US")}
                 </td>
                 <td className="px-6 py-4 text-right">
                   <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs font-semibold text-brand-400">

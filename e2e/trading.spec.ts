@@ -7,10 +7,10 @@ test.describe("trade lifecycle", () => {
     // --- Add (open position) ---
     await page.getByRole("button", { name: "Add Trade" }).click();
 
-    await page.getByLabel("สัญลักษณ์").fill("AAPL");
-    await page.getByLabel("ราคาเข้า").fill("100");
+    await page.getByLabel("Symbol").fill("AAPL");
+    await page.getByLabel("Entry Price").fill("100");
     await page.getByLabel("Lot Size").fill("10");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByRole("button", { name: "Save" }).click();
 
     const row = page.getByRole("row").filter({ hasText: "AAPL" });
     await expect(row).toBeVisible();
@@ -18,9 +18,9 @@ test.describe("trade lifecycle", () => {
 
     // --- Edit: close the position by filling in an exit price (status is derived) ---
     await page.getByRole("button", { name: "Edit AAPL" }).click();
-    await page.getByLabel("ราคาออก").fill("130");
-    await page.getByLabel("วันที่ออก").fill("2026-07-21");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Exit Price").fill("130");
+    await page.getByLabel("Exit Date").fill("2026-07-21");
+    await page.getByRole("button", { name: "Save" }).click();
 
     const closedRow = page.getByRole("row").filter({ hasText: "AAPL" });
     await expect(closedRow.getByText("Win")).toBeVisible();
@@ -35,22 +35,22 @@ test.describe("trade lifecycle", () => {
     await page.goto("/trading/journal");
 
     await page.getByRole("button", { name: "Add Trade" }).click();
-    await page.getByLabel("ราคาเข้า").fill("100");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Entry Price").fill("100");
+    await page.getByRole("button", { name: "Save" }).click();
 
-    await expect(page.getByText("กรุณากรอกสัญลักษณ์")).toBeVisible();
+    await expect(page.getByText("Symbol is required")).toBeVisible();
   });
 
   test("closed trades are reflected in the Trading Dashboard stats", async ({ page }) => {
     await page.goto("/trading/journal");
 
     await page.getByRole("button", { name: "Add Trade" }).click();
-    await page.getByLabel("สัญลักษณ์").fill("MSFT");
-    await page.getByLabel("ราคาเข้า").fill("300");
+    await page.getByLabel("Symbol").fill("MSFT");
+    await page.getByLabel("Entry Price").fill("300");
     await page.getByLabel("Lot Size").fill("5");
-    await page.getByLabel("ราคาออก").fill("330");
-    await page.getByLabel("วันที่ออก").fill("2026-07-21");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Exit Price").fill("330");
+    await page.getByLabel("Exit Date").fill("2026-07-21");
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("MSFT")).toBeVisible();
 
     await page.goto("/trading");
@@ -63,22 +63,22 @@ test.describe("trade lifecycle", () => {
     await page.goto("/trading/journal");
 
     await page.getByRole("button", { name: "Add Trade" }).click();
-    await page.getByLabel("สัญลักษณ์").fill("XAUUSD");
+    await page.getByLabel("Symbol").fill("XAUUSD");
 
-    await expect(page.getByLabel("ตลาด (AI ตรวจจับอัตโนมัติ)")).toHaveValue("cfd");
+    await expect(page.getByLabel("Market (AI auto-detected)")).toHaveValue("cfd");
   });
 
   test("risk calculator computes and applies a suggested lot size", async ({ page }) => {
     await page.goto("/trading/journal");
 
     await page.getByRole("button", { name: "Add Trade" }).click();
-    await page.getByLabel("สัญลักษณ์").fill("EURUSD");
-    await page.getByLabel("ราคาเข้า").fill("100");
+    await page.getByLabel("Symbol").fill("EURUSD");
+    await page.getByLabel("Entry Price").fill("100");
     await page.getByLabel("Stop Loss").fill("90");
     await page.getByLabel("Risk %").fill("1");
     await page.getByLabel("Account Balance").fill("10000");
 
-    await page.getByRole("button", { name: "นำไปใช้กับ Lot Size" }).click();
+    await page.getByRole("button", { name: "Apply to Lot Size" }).click();
 
     await expect(page.getByLabel("Lot Size")).toHaveValue("10");
   });
@@ -87,18 +87,18 @@ test.describe("trade lifecycle", () => {
     await page.goto("/trading/journal");
 
     await page.getByRole("button", { name: "Add Trade" }).click();
-    await page.getByLabel("สัญลักษณ์").fill("AAPL");
-    await page.getByLabel("ราคาเข้า").fill("100");
+    await page.getByLabel("Symbol").fill("AAPL");
+    await page.getByLabel("Entry Price").fill("100");
     await page.getByLabel("Lot Size").fill("10");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByRole("button", { name: "Save" }).click();
     const table = page.getByRole("table");
     await expect(table.getByText("AAPL")).toBeVisible();
 
     await page.getByRole("button", { name: "Add Trade" }).click();
-    await page.getByLabel("สัญลักษณ์").fill("MSFT");
-    await page.getByLabel("ราคาเข้า").fill("300");
+    await page.getByLabel("Symbol").fill("MSFT");
+    await page.getByLabel("Entry Price").fill("300");
     await page.getByLabel("Lot Size").fill("5");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(table.getByText("MSFT")).toBeVisible();
 
     await page.getByPlaceholder("Search symbol or strategy...").fill("AAPL");

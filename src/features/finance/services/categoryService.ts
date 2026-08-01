@@ -1,5 +1,6 @@
 import { categoryRepository } from "@/features/finance/repositories/categoryRepository";
 import { transactionRepository } from "@/features/finance/repositories/transactionRepository";
+import { translate } from "@/i18n/useTranslation";
 import type { Category } from "../types";
 
 export const categoryService = {
@@ -15,7 +16,7 @@ export const categoryService = {
     const inUse = transactions.some((t) => t.category === categoryName);
 
     if (inUse) {
-      throw new Error("ไม่สามารถลบหมวดหมู่ที่มีรายการอยู่ได้ ลองรวมหมวดหมู่แทน");
+      throw new Error(translate("categories.deleteInUseError"));
     }
 
     await categoryRepository.remove(id);

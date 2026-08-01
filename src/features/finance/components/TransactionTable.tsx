@@ -8,18 +8,19 @@ import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import IconBadge from "@/components/ui/IconBadge";
 import MobileRowCard from "@/components/ui/MobileRowCard";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { Transaction, TransactionType } from "@/features/finance/types";
 
 interface Props {
   transactions?: Transaction[];
 }
 
-const TYPE_META: Record<TransactionType, { label: string; textClass: string; badgeClass: string }> = {
-  income: { label: "Income", textClass: "text-green-400", badgeClass: "bg-green-500/15 text-green-400" },
-  expense: { label: "Expense", textClass: "text-red-400", badgeClass: "bg-red-500/15 text-red-400" },
-  transfer: { label: "Transfer", textClass: "text-brand-400", badgeClass: "bg-brand-500/15 text-brand-400" },
-  refund: { label: "Refund", textClass: "text-teal-400", badgeClass: "bg-teal-500/15 text-teal-400" },
-  adjustment: { label: "Adjustment", textClass: "text-amber-400", badgeClass: "bg-amber-500/15 text-amber-400" },
+const TYPE_META: Record<TransactionType, { labelKey: string; textClass: string; badgeClass: string }> = {
+  income: { labelKey: "transactions.income", textClass: "text-green-400", badgeClass: "bg-green-500/15 text-green-400" },
+  expense: { labelKey: "transactions.expense", textClass: "text-red-400", badgeClass: "bg-red-500/15 text-red-400" },
+  transfer: { labelKey: "transactions.transfer", textClass: "text-brand-400", badgeClass: "bg-brand-500/15 text-brand-400" },
+  refund: { labelKey: "transactions.refund", textClass: "text-teal-400", badgeClass: "bg-teal-500/15 text-teal-400" },
+  adjustment: { labelKey: "transactions.adjustment", textClass: "text-amber-400", badgeClass: "bg-amber-500/15 text-amber-400" },
 };
 
 type SortKey = "date" | "title" | "category" | "account" | "amount" | "type";
@@ -57,6 +58,7 @@ export default function TransactionTable({
 
   const { openTransactionDrawer } = useUIStore();
   const { categories } = useCategoryStore();
+  const { t } = useTranslation();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   // `null` = no column selected yet, the default view: sorted by insertion
   // order (most-recently-added first), using the existing Dexie
@@ -119,7 +121,7 @@ export default function TransactionTable({
     try {
       setDeleteError(null);
       await deleteTransaction(item.id);
-      toast.success("ลบรายการเรียบร้อย");
+      toast.success(t("transactions.deletedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setDeleteError(message);
@@ -143,11 +145,11 @@ export default function TransactionTable({
       <div className="flex h-72 items-center justify-center rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
         <div className="text-center">
           <h2 className="text-xl font-semibold">
-            ยังไม่มีรายการ
+            {t("transactions.emptyTitle")}
           </h2>
 
           <p className="mt-2 text-zinc-600 dark:text-zinc-500">
-            กดปุ่ม Add Transaction เพื่อเริ่มต้น
+            {t("transactions.emptySubtitle", { buttonLabel: t("transactions.addTransaction") })}
           </p>
         </div>
       </div>
@@ -186,7 +188,7 @@ export default function TransactionTable({
               meta={
                 <>
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.badgeClass}`}>
-                    {meta.label}
+                    {t(meta.labelKey)}
                   </span>
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">
                     {new Date(item.date).toLocaleDateString("th-TH")}
@@ -238,13 +240,13 @@ export default function TransactionTable({
 
             <tr className="border-b border-zinc-200 dark:border-zinc-800 text-sm uppercase tracking-wide text-zinc-600 dark:text-zinc-500">
 
-              <SortHeader label="Date" sortKeyName="date" />
-              <SortHeader label="Title" sortKeyName="title" />
-              <SortHeader label="Category" sortKeyName="category" />
-              <SortHeader label="Account" sortKeyName="account" />
-              <SortHeader label="Amount" sortKeyName="amount" align="right" />
-              <SortHeader label="Type" sortKeyName="type" align="center" />
-              <th className="px-6 py-4 text-center">Action</th>
+              <SortHeader label={t("common.date")} sortKeyName="date" />
+              <SortHeader label={t("common.title")} sortKeyName="title" />
+              <SortHeader label={t("common.category")} sortKeyName="category" />
+              <SortHeader label={t("common.account")} sortKeyName="account" />
+              <SortHeader label={t("common.amount")} sortKeyName="amount" align="right" />
+              <SortHeader label={t("common.type")} sortKeyName="type" align="center" />
+              <th className="px-6 py-4 text-center">{t("common.action")}</th>
 
             </tr>
 
@@ -304,7 +306,7 @@ export default function TransactionTable({
 
                   <td className="px-6 py-4 text-center">
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${meta.badgeClass}`}>
-                      {meta.label}
+                      {t(meta.labelKey)}
                     </span>
                   </td>
 

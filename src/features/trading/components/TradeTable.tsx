@@ -4,7 +4,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTradingUIStore } from "@/features/trading/store/tradingUIStore";
 import { calculatePnl, calculateRR } from "@/features/trading/utils/pnl";
-import { MARKET_LABELS, DIRECTION_LABELS } from "@/features/trading/constants/labels";
+import { MARKET_LABELS, DIRECTION_LABELS, STATUS_LABELS } from "@/features/trading/constants/labels";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import MobileRowCard from "@/components/ui/MobileRowCard";
@@ -95,7 +95,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                         : "bg-zinc-200/60 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-300"
                     }`}
                   >
-                    {trade.status === "open" ? "Open" : "Closed"}
+                    {STATUS_LABELS[trade.status]}
                   </span>
                   {rr !== null && (
                     <span className="text-xs text-zinc-500 dark:text-zinc-400">{rr.toFixed(2)}R</span>
@@ -138,7 +138,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
               <th className="px-6 py-4 text-right">{t("trading.entryPrice")}</th>
               <th className="px-6 py-4 text-right">{t("trading.exitPrice")}</th>
               <th className="px-6 py-4 text-right">{t("trading.pnl")}</th>
-              <th className="px-6 py-4 text-right">RR</th>
+              <th className="px-6 py-4 text-right">{t("trading.rr")}</th>
               <th className="px-6 py-4 text-center">{t("common.status")}</th>
               <th className="px-6 py-4 text-center">{t("common.action")}</th>
             </tr>
@@ -192,7 +192,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                           : "bg-zinc-200/60 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-300"
                       }`}
                     >
-                      {trade.status === "open" ? "Open" : "Closed"}
+                      {STATUS_LABELS[trade.status]}
                     </span>
                   </td>
 

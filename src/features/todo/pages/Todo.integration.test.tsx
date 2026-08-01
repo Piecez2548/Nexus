@@ -19,8 +19,8 @@ describe("Todo page", () => {
     render(<Todo />);
 
     await user.click(screen.getByRole("button", { name: /add todo/i }));
-    await user.type(await screen.findByLabelText("ชื่องาน"), "ส่งรายงาน");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.type(await screen.findByLabelText("Task name"), "ส่งรายงาน");
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("ส่งรายงาน")).toBeInTheDocument();
     expect(screen.getByText("1 tasks remaining")).toBeInTheDocument();
@@ -60,10 +60,10 @@ describe("Todo page", () => {
     render(<Todo />);
 
     await user.click(await screen.findByRole("button", { name: "Edit ซื้อของ" }));
-    const titleInput = screen.getByLabelText("ชื่องาน");
+    const titleInput = screen.getByLabelText("Task name");
     await user.clear(titleInput);
     await user.type(titleInput, "ซื้อของเข้าบ้าน");
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("ซื้อของเข้าบ้าน")).toBeInTheDocument();
     expect(screen.queryByText("ซื้อของ", { exact: true })).not.toBeInTheDocument();
@@ -92,9 +92,9 @@ describe("Todo page", () => {
     render(<Todo />);
 
     await user.click(screen.getByRole("button", { name: /add todo/i }));
-    await user.click(screen.getByRole("button", { name: "บันทึก" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(await screen.findByText("กรุณากรอกชื่องาน")).toBeInTheDocument();
+    expect(await screen.findByText("Task name is required")).toBeInTheDocument();
     expect(await db.todos.toArray()).toHaveLength(0);
   });
 

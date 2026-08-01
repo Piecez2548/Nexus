@@ -8,6 +8,8 @@ import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import Drawer from "@/components/ui/Drawer";
+import { useTranslation } from "@/i18n/useTranslation";
+import { toLocalDateString } from "@/utils/localDate";
 
 interface Props {
   open: boolean;
@@ -36,6 +38,7 @@ export default function SlipScanner({ open, onClose }: Props) {
   const [batchItems, setBatchItems] = useState<BatchItem[] | null>(null);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
+  const { t } = useTranslation();
 
   function reset() {
     setPreview(null);
@@ -60,7 +63,7 @@ export default function SlipScanner({ open, onClose }: Props) {
       const parsed = parseSlipText(text);
 
       if (parsed.amount === undefined && parsed.date === undefined && parsed.recipient === undefined) {
-        setError("อ่านสลิปไม่สำเร็จ ลองถ่ายรูปให้ชัดขึ้นหรือกรอกรายการเอง");
+        setError(t("slipScanner.scanFailed"));
         setScanning(false);
         return;
       }
@@ -74,7 +77,7 @@ export default function SlipScanner({ open, onClose }: Props) {
         status: "completed",
       });
 
-      toast.success("อ่านสลิปสำเร็จ กรุณาตรวจสอบข้อมูลก่อนบันทึก");
+      toast.success(t("slipScanner.scanSuccess"));
       reset();
       onClose();
     } catch (err) {
@@ -140,7 +143,7 @@ export default function SlipScanner({ open, onClose }: Props) {
 
     const toSave = batchItems.filter((item) => item.amount !== undefined && item.amount > 0);
     if (toSave.length === 0) {
-      setError("ไม่มีรายการที่กรอกจำนวนเงินไว้ให้บันทึก");
+      setError(t("slipScanner.noAmountToSave"));
       return;
     }
 
@@ -150,16 +153,16 @@ export default function SlipScanner({ open, onClose }: Props) {
     try {
       for (const item of toSave) {
         await addTransaction({
-          title: item.title.trim() || "รายการจากสลิป",
+          title: item.title.trim() || t("slipScanner.defaultTitle"),
           amount: item.amount as number,
           type: "expense",
           account: "Cash",
-          date: item.date ?? new Date().toISOString().slice(0, 10),
+          date: item.date ?? toLocalDateString(new Date()),
           status: "completed",
         });
       }
 
-      toast.success(`บันทึก ${toSave.length} รายการเรียบร้อย กรุณาตรวจสอบหมวดหมู่ในตาราง`);
+      toast.success(t("slipScanner.batchSavedSuccess", { count: toSave.length }));
       reset();
       onClose();
     } catch (err) {
@@ -172,16 +175,16 @@ export default function SlipScanner({ open, onClose }: Props) {
   return (
     <Drawer open={open} onClose={handleClose}>
       <div className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
-        <h2 className="text-xl font-bold">สแกนสลิป</h2>
+        <h2 className="text-xl font-bold">{t("transactions.scanSlip")}</h2>
 
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          ประมวลผลในเครื่องทั้งหมด ไม่มีการส่งรูปภาพออกจากอุปกรณ์ เลือกได้หลายรูปพร้อมกันจากคลังภาพ
+          {t("slipScanner.description")}
         </p>
 
         {preview && !batchItems && (
           <img
             src={preview}
-            alt="ตัวอย่างสลิป"
+            alt={t("slipScanner.previewAlt")}
             className="max-h-64 w-full rounded-xl object-contain"
           />
         )}
@@ -189,7 +192,7 @@ export default function SlipScanner({ open, onClose }: Props) {
         {scanning && (
           <div className="flex items-center justify-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4 text-sm text-zinc-600 dark:text-zinc-400">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 dark:border-zinc-600 border-t-brand-500" />
-            {scanProgress ? `กำลังอ่านสลิป ${scanProgress.done}/${scanProgress.total}...` : "กำลังอ่านสลิป..."}
+            {scanProgress ? t("slipScanner.scanningProgress", { done: scanProgress.done, total: scanProgress.total }) : t("slipScanner.scanning")}
           </div>
         )}
 
@@ -198,7 +201,7 @@ export default function SlipScanner({ open, onClose }: Props) {
         {batchItems && batchItems.length > 0 && (
           <div className="space-y-3">
             <p className="text-sm font-medium">
-              พบ {batchItems.length} รายการ ตรวจสอบก่อนบันทึก
+              {t("slipScanner.batchFound", { count: batchItems.length })}
             </p>
 
             <div className="max-h-96 space-y-2 overflow-y-auto">
@@ -209,7 +212,7 @@ export default function SlipScanner({ open, onClose }: Props) {
                 >
                   <img
                     src={item.previewUrl}
-                    alt="ตัวอย่างสลิป"
+                    alt={t("slipScanner.previewAlt")}
                     className="h-14 w-14 shrink-0 rounded-lg object-cover"
                   />
 
@@ -217,7 +220,7 @@ export default function SlipScanner({ open, onClose }: Props) {
                     <input
                       value={item.title}
                       onChange={(e) => updateBatchItem(item.key, { title: e.target.value })}
-                      placeholder="ชื่อรายการ"
+                      placeholder={t("transactions.itemName")}
                       className={inputClassName}
                     />
 
@@ -230,7 +233,7 @@ export default function SlipScanner({ open, onClose }: Props) {
                             amount: e.target.value === "" ? undefined : Number(e.target.value),
                           })
                         }
-                        placeholder="จำนวนเงิน"
+                        placeholder={t("common.amount")}
                         className={inputClassName}
                       />
 
@@ -243,7 +246,7 @@ export default function SlipScanner({ open, onClose }: Props) {
                     </div>
 
                     {item.failed && (
-                      <p className="text-xs text-amber-500">อ่านไม่สำเร็จ กรุณากรอกเอง</p>
+                      <p className="text-xs text-amber-500">{t("slipScanner.itemFailed")}</p>
                     )}
                   </div>
 
@@ -265,7 +268,7 @@ export default function SlipScanner({ open, onClose }: Props) {
               disabled={saving}
               className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? "กำลังบันทึก..." : `บันทึกทั้งหมด (${batchItems.length})`}
+              {saving ? t("transactions.saving") : t("slipScanner.saveAll", { count: batchItems.length })}
             </button>
           </div>
         )}
@@ -275,7 +278,7 @@ export default function SlipScanner({ open, onClose }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center transition hover:border-brand-500">
                 <Camera size={26} className="text-brand-500" />
-                <span className="text-sm font-medium">ถ่ายรูป</span>
+                <span className="text-sm font-medium">{t("slipScanner.takePhoto")}</span>
 
                 <input
                   type="file"
@@ -289,7 +292,7 @@ export default function SlipScanner({ open, onClose }: Props) {
 
               <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 p-6 text-center transition hover:border-brand-500">
                 <Image size={26} className="text-brand-500" />
-                <span className="text-sm font-medium">เลือกจากคลังภาพ</span>
+                <span className="text-sm font-medium">{t("slipScanner.chooseFromGallery")}</span>
 
                 <input
                   type="file"
@@ -303,7 +306,7 @@ export default function SlipScanner({ open, onClose }: Props) {
             </div>
 
             <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
-              รองรับ JPG, PNG · เลือกหลายรูปเพื่อสแกนพร้อมกัน
+              {t("slipScanner.supportedFormats")}
             </p>
           </>
         )}

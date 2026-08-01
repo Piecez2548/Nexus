@@ -11,6 +11,7 @@ import {
   type CategorySuggestion,
 } from "@/features/finance/services/categorySuggestionService";
 import FormField from "@/components/ui/FormField";
+import { useTranslation } from "@/i18n/useTranslation";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
@@ -30,6 +31,7 @@ interface Props {
 // title matching a known merchant), suggest — and pre-fill — a category
 // learned from past transactions, instead of asking every time.
 export default function RecipientSuggestionField({ register, watch, setValue, showInput }: Props) {
+  const { t } = useTranslation();
   const recipient = watch("recipient");
   const title = watch("title");
   const [suggestion, setSuggestion] = useState<CategorySuggestion | null>(null);
@@ -66,11 +68,11 @@ export default function RecipientSuggestionField({ register, watch, setValue, sh
   return (
     <>
       {showInput && (
-        <FormField label="ผู้รับ / เบอร์โทร / PromptPay" htmlFor="transaction-recipient">
+        <FormField label={t("transactions.recipientLabel")} htmlFor="transaction-recipient">
           <input
             id="transaction-recipient"
             {...register("recipient")}
-            placeholder="เช่น 0812345678 (ไม่บังคับ)"
+            placeholder={t("transactions.recipientPlaceholder")}
             className={inputClassName}
           />
         </FormField>
@@ -78,10 +80,13 @@ export default function RecipientSuggestionField({ register, watch, setValue, sh
 
       {suggestion && (
         <p className="text-xs text-brand-400">
-          🤖 แนะนำหมวดหมู่ "{suggestion.category}" จาก
           {suggestion.source === "recipient"
-            ? ` ประวัติ (${suggestion.label}, ${suggestion.confidence}%)`
-            : ` ฐานข้อมูลร้านค้า (${suggestion.label})`}
+            ? t("transactions.suggestionFromRecipientHistory", {
+                category: suggestion.category,
+                label: suggestion.label,
+                confidence: suggestion.confidence,
+              })
+            : t("transactions.suggestionFromMerchantDb", { category: suggestion.category, label: suggestion.label })}
         </p>
       )}
     </>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -11,15 +11,16 @@ import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { Budget } from "@/features/finance/types";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
 
-const PERIOD_LABELS: Record<BudgetFormData["period"], string> = {
-  monthly: "รายเดือน",
-  weekly: "รายสัปดาห์",
-  yearly: "รายปี",
+const PERIOD_LABEL_KEYS: Record<BudgetFormData["period"], string> = {
+  monthly: "common.monthly",
+  weekly: "common.weekly",
+  yearly: "common.yearly",
 };
 
 const blankValues: BudgetFormData = {
@@ -38,6 +39,8 @@ export default function BudgetForm({ budget, onDone }: Props) {
   const { categories } = useCategoryStore();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
+  const { t } = useTranslation();
+  const schema = useMemo(() => budgetSchema(t), [t]);
 
   const {
     register,
@@ -45,7 +48,7 @@ export default function BudgetForm({ budget, onDone }: Props) {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<BudgetFormData>({
-    resolver: zodResolver(budgetSchema),
+    resolver: zodResolver(schema),
     defaultValues: blankValues,
   });
 
@@ -66,7 +69,7 @@ export default function BudgetForm({ budget, onDone }: Props) {
       }
 
       onDone();
-      toast.success(isEditing ? "แก้ไขงบประมาณเรียบร้อย" : "ตั้งงบประมาณเรียบร้อย");
+      toast.success(isEditing ? t("budget.updatedSuccess") : t("budget.savedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setSubmitError(message);
@@ -82,12 +85,12 @@ export default function BudgetForm({ budget, onDone }: Props) {
       className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6"
     >
       <h2 className="text-xl font-bold">
-        {budget ? "แก้ไขงบประมาณ" : "ตั้งงบประมาณ"}
+        {budget ? t("budget.editBudget") : t("budget.createBudget")}
       </h2>
 
-      <FormField label="หมวดหมู่" htmlFor="budget-category" error={errors.category?.message}>
+      <FormField label={t("common.category")} htmlFor="budget-category" error={errors.category?.message}>
         <select id="budget-category" {...register("category")} className={inputClassName}>
-          <option value="">เลือกหมวดหมู่</option>
+          <option value="">{t("budget.selectCategory")}</option>
           {expenseCategories.map((category) => (
             <option key={category.id} value={category.name}>
               {category.name}
@@ -96,7 +99,7 @@ export default function BudgetForm({ budget, onDone }: Props) {
         </select>
       </FormField>
 
-      <FormField label="จำนวนเงิน" htmlFor="budget-amount" error={errors.amount?.message}>
+      <FormField label={t("common.amount")} htmlFor="budget-amount" error={errors.amount?.message}>
         <input
           id="budget-amount"
           type="number"
@@ -106,11 +109,11 @@ export default function BudgetForm({ budget, onDone }: Props) {
         />
       </FormField>
 
-      <FormField label="รอบงบประมาณ" htmlFor="budget-period">
+      <FormField label={t("budget.periodLabel")} htmlFor="budget-period">
         <select id="budget-period" {...register("period")} className={inputClassName}>
-          {Object.entries(PERIOD_LABELS).map(([value, label]) => (
+          {Object.entries(PERIOD_LABEL_KEYS).map(([value, labelKey]) => (
             <option key={value} value={value}>
-              {label}
+              {t(labelKey)}
             </option>
           ))}
         </select>
@@ -125,7 +128,7 @@ export default function BudgetForm({ budget, onDone }: Props) {
         disabled={isSubmitting}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
+        {isSubmitting ? t("budget.saving") : t("common.save")}
       </button>
     </form>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown } from "lucide-react";
@@ -15,6 +15,7 @@ import { useUIStore } from "@/features/finance/store/uiStore";
 import { recipientProfileService } from "@/features/finance/services/recipientProfileService";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
+import { toLocalDateString } from "@/utils/localDate";
 
 import FormField from "@/components/ui/FormField";
 import LoadingState from "@/components/ui/LoadingState";
@@ -42,7 +43,7 @@ const blankValues: TransactionFormData = {
   category: "",
   account: "Cash",
   toAccount: "",
-  date: new Date().toISOString().slice(0, 10),
+  date: toLocalDateString(new Date()),
   time: "",
   tags: [],
   attachment: undefined,
@@ -78,6 +79,7 @@ export default function TransactionForm() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const toast = useToast();
   const { t } = useTranslation();
+  const schema = useMemo(() => transactionSchema(t), [t]);
 
   useEffect(() => {
     loadAccounts();
@@ -107,7 +109,7 @@ export default function TransactionForm() {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<TransactionFormData>({
-    resolver: zodResolver(transactionSchema),
+    resolver: zodResolver(schema),
     defaultValues: blankValues,
   });
 
@@ -190,7 +192,7 @@ export default function TransactionForm() {
         {selectedTransaction ? t("transactions.editTransaction") : t("transactions.addTransaction")}
       </h2>
 
-      <FormField label="ประเภท" htmlFor="transaction-type">
+      <FormField label={t("common.type")} htmlFor="transaction-type">
         <select id="transaction-type" {...register("type")} className={inputClassName}>
           {Object.entries(TYPE_LABEL_KEYS).map(([value, labelKey]) => (
             <option key={value} value={value}>
@@ -200,16 +202,16 @@ export default function TransactionForm() {
         </select>
       </FormField>
 
-      <FormField label="ชื่อรายการ" htmlFor="transaction-title" error={errors.title?.message}>
+      <FormField label={t("transactions.itemName")} htmlFor="transaction-title" error={errors.title?.message}>
         <input
           id="transaction-title"
           {...register("title")}
-          placeholder="เช่น KFC, เงินเดือน"
+          placeholder={t("transactions.itemNamePlaceholder")}
           className={inputClassName}
         />
       </FormField>
 
-      <FormField label="จำนวนเงิน" htmlFor="transaction-amount" error={errors.amount?.message}>
+      <FormField label={t("common.amount")} htmlFor="transaction-amount" error={errors.amount?.message}>
         <input
           id="transaction-amount"
           type="number"
@@ -229,7 +231,7 @@ export default function TransactionForm() {
             className="flex items-center gap-1 text-sm text-brand-500"
           >
             <ChevronDown size={16} className={`transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
-            เพิ่มเติม
+            {t("transactions.showMore")}
           </button>
 
           <div className={showAdvanced ? "mt-3" : undefined}>
@@ -239,9 +241,9 @@ export default function TransactionForm() {
       )}
 
       {needsCategory && (
-        <FormField label="หมวดหมู่" htmlFor="transaction-category" error={errors.category?.message}>
+        <FormField label={t("common.category")} htmlFor="transaction-category" error={errors.category?.message}>
           <select id="transaction-category" {...register("category")} className={inputClassName}>
-            <option value="">เลือกหมวดหมู่</option>
+            <option value="">{t("transactions.selectCategory")}</option>
 
             {categories.map((category) => (
               <option key={category.id} value={category.name}>
@@ -252,9 +254,9 @@ export default function TransactionForm() {
         </FormField>
       )}
 
-      <FormField label={isTransfer ? "บัญชีต้นทาง" : "บัญชี"} htmlFor="transaction-account">
+      <FormField label={isTransfer ? t("transactions.fromAccount") : t("common.account")} htmlFor="transaction-account">
         <select id="transaction-account" {...register("account")} className={inputClassName}>
-          <option value="">เลือกบัญชี</option>
+          <option value="">{t("transactions.selectAccount")}</option>
 
           {accounts.map((account) => (
             <option key={account.id} value={account.name}>
@@ -265,9 +267,9 @@ export default function TransactionForm() {
       </FormField>
 
       {isTransfer && (
-        <FormField label="บัญชีปลายทาง" htmlFor="transaction-to-account" error={errors.toAccount?.message}>
+        <FormField label={t("transactions.toAccount")} htmlFor="transaction-to-account" error={errors.toAccount?.message}>
           <select id="transaction-to-account" {...register("toAccount")} className={inputClassName}>
-            <option value="">เลือกบัญชีปลายทาง</option>
+            <option value="">{t("transactions.selectToAccount")}</option>
 
             {accounts.map((account) => (
               <option key={account.id} value={account.name}>
@@ -279,7 +281,7 @@ export default function TransactionForm() {
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="วันที่" htmlFor="transaction-date">
+        <FormField label={t("common.date")} htmlFor="transaction-date">
           <input
             id="transaction-date"
             type="date"
@@ -288,7 +290,7 @@ export default function TransactionForm() {
           />
         </FormField>
 
-        <FormField label="เวลา" htmlFor="transaction-time">
+        <FormField label={t("transactions.time")} htmlFor="transaction-time">
           <input
             id="transaction-time"
             type="time"
@@ -311,7 +313,7 @@ export default function TransactionForm() {
         disabled={isSubmitting}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
+        {isSubmitting ? t("transactions.saving") : t("common.save")}
       </button>
     </form>
   );

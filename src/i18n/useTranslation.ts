@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+
 import { useLanguageStore } from "@/store/languageStore";
 import { translations } from "./translations";
 
@@ -15,14 +17,19 @@ function interpolate(template: string, params?: Record<string, string | number>)
   return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => String(params[key] ?? ""));
 }
 
+export type TranslateFn = (key: string, params?: Record<string, string | number>) => string;
+
 export function useTranslation() {
   const language = useLanguageStore((state) => state.language);
 
-  function t(key: string, params?: Record<string, string | number>): string {
-    const value = getNested(translations[language], key);
-    if (typeof value !== "string") return key;
-    return interpolate(value, params);
-  }
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>): string => {
+      const value = getNested(translations[language], key);
+      if (typeof value !== "string") return key;
+      return interpolate(value, params);
+    },
+    [language]
+  );
 
   return { t, language };
 }

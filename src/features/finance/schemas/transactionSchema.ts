@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { TranslateFn } from "@/i18n/useTranslation";
+
 export const transactionTypeEnum = z.enum([
   "expense",
   "income",
@@ -17,75 +19,77 @@ export const recurringFrequencyEnum = z.enum([
   "yearly",
 ]);
 
-export const transactionSchema = z
-  .object({
-    title: z.string().min(1, "กรุณากรอกชื่อรายการ"),
+export function transactionSchema(t: TranslateFn) {
+  return z
+    .object({
+      title: z.string().min(1, t("validation.common.itemNameRequired")),
 
-    amount: z
-      .number({
-        error: "กรุณากรอกจำนวนเงิน",
-      })
-      .positive("จำนวนเงินต้องมากกว่า 0"),
+      amount: z
+        .number({
+          error: t("validation.common.amountRequired"),
+        })
+        .positive(t("validation.common.amountPositive")),
 
-    type: transactionTypeEnum,
+      type: transactionTypeEnum,
 
-    category: z.string().optional(),
+      category: z.string().optional(),
 
-    account: z.string().min(1, "กรุณาเลือกบัญชี"),
+      account: z.string().min(1, t("validation.common.accountRequired")),
 
-    toAccount: z.string().optional(),
+      toAccount: z.string().optional(),
 
-    date: z.string(),
+      date: z.string(),
 
-    time: z.string().optional(),
+      time: z.string().optional(),
 
-    tags: z.array(z.string()).optional(),
+      tags: z.array(z.string()).optional(),
 
-    attachment: z.string().optional(),
+      attachment: z.string().optional(),
 
-    note: z.string().optional(),
+      note: z.string().optional(),
 
-    recipient: z.string().optional(),
+      recipient: z.string().optional(),
 
-    status: transactionStatusEnum.optional(),
+      status: transactionStatusEnum.optional(),
 
-    recurring: z
-      .object({ frequency: recurringFrequencyEnum })
-      .nullable()
-      .optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (
-      (data.type === "income" || data.type === "expense") &&
-      !data.category
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["category"],
-        message: "กรุณาเลือกหมวดหมู่",
-      });
-    }
+      recurring: z
+        .object({ frequency: recurringFrequencyEnum })
+        .nullable()
+        .optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (
+        (data.type === "income" || data.type === "expense") &&
+        !data.category
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["category"],
+          message: t("validation.common.categoryRequired"),
+        });
+      }
 
-    if (data.type === "transfer" && !data.toAccount) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["toAccount"],
-        message: "กรุณาเลือกบัญชีปลายทาง",
-      });
-    }
+      if (data.type === "transfer" && !data.toAccount) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["toAccount"],
+          message: t("validation.common.toAccountRequired"),
+        });
+      }
 
-    if (
-      data.type === "transfer" &&
-      data.toAccount &&
-      data.toAccount === data.account
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["toAccount"],
-        message: "บัญชีต้นทางและปลายทางต้องไม่ซ้ำกัน",
-      });
-    }
-  });
+      if (
+        data.type === "transfer" &&
+        data.toAccount &&
+        data.toAccount === data.account
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["toAccount"],
+          message: t("validation.transaction.toAccountDuplicate"),
+        });
+      }
+    });
+}
 
 export type TransactionFormData =
-  z.infer<typeof transactionSchema>;
+  z.infer<ReturnType<typeof transactionSchema>>;

@@ -1,5 +1,6 @@
 import { transactionSchema } from "@/features/finance/schemas/transactionSchema";
 import { rowsToCsv } from "@/utils/csv";
+import { translate } from "@/i18n/useTranslation";
 import type { Transaction } from "@/features/finance/types";
 
 const HEADERS = [
@@ -121,7 +122,7 @@ export function parseTransactionsCsv(csvText: string): ParsedTransactionsCsv {
     const amount = Number(record.amount);
 
     if (record.amount === "" || Number.isNaN(amount)) {
-      errors.push({ row: rowNumber, message: "จำนวนเงินไม่ถูกต้อง" });
+      errors.push({ row: rowNumber, message: translate("validation.transactionCsv.invalidAmount") });
       return;
     }
 
@@ -141,7 +142,7 @@ export function parseTransactionsCsv(csvText: string): ParsedTransactionsCsv {
       recipient: record.recipient || undefined,
     };
 
-    const result = transactionSchema.safeParse(candidate);
+    const result = transactionSchema(translate).safeParse(candidate);
 
     if (result.success) {
       valid.push(result.data);

@@ -39,15 +39,15 @@ describe("EncryptionRecoveryFlow", () => {
     const user = userEvent.setup();
     render(<EncryptionRecoveryFlow onDone={onDone} />);
 
-    await user.type(screen.getByLabelText("อีเมล"), "me@nexus.app");
-    await user.type(screen.getByLabelText("รหัสผ่านบัญชี Sync"), "correct-password");
-    await user.click(screen.getByRole("button", { name: "กู้คืน" }));
+    await user.type(screen.getByLabelText("Email"), "me@nexus.app");
+    await user.type(screen.getByLabelText("Sync Account Password"), "correct-password");
+    await user.click(screen.getByRole("button", { name: "Recover" }));
 
     expect(mockRecoverDekFromEscrow).toHaveBeenCalledWith("me@nexus.app", "correct-password");
 
-    await user.type(await screen.findByLabelText("PIN ใหม่"), "1234");
-    await user.type(screen.getByLabelText("ยืนยัน PIN ใหม่"), "1234");
-    await user.click(screen.getByRole("button", { name: "ตั้ง PIN ใหม่" }));
+    await user.type(await screen.findByLabelText("New PIN"), "1234");
+    await user.type(screen.getByLabelText("Confirm New PIN"), "1234");
+    await user.click(screen.getByRole("button", { name: "Set New PIN" }));
 
     await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
     expect(useAppLockStore.getState().encryptionEnabled).toBe(true);
@@ -60,13 +60,13 @@ describe("EncryptionRecoveryFlow", () => {
     const user = userEvent.setup();
     render(<EncryptionRecoveryFlow onDone={vi.fn()} />);
 
-    await user.type(screen.getByLabelText("อีเมล"), "me@nexus.app");
-    await user.type(screen.getByLabelText("รหัสผ่านบัญชี Sync"), "wrong-password");
-    await user.click(screen.getByRole("button", { name: "กู้คืน" }));
+    await user.type(screen.getByLabelText("Email"), "me@nexus.app");
+    await user.type(screen.getByLabelText("Sync Account Password"), "wrong-password");
+    await user.click(screen.getByRole("button", { name: "Recover" }));
 
     expect(await screen.findByText("อีเมลหรือรหัสผ่านไม่ถูกต้อง")).toBeInTheDocument();
     // Stays on the credentials step — never reaches the new-PIN screen.
-    expect(screen.queryByLabelText("PIN ใหม่")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("New PIN")).not.toBeInTheDocument();
   });
 
   it("shows a generic error message for an unexpected failure", async () => {
@@ -75,11 +75,11 @@ describe("EncryptionRecoveryFlow", () => {
     const user = userEvent.setup();
     render(<EncryptionRecoveryFlow onDone={vi.fn()} />);
 
-    await user.type(screen.getByLabelText("อีเมล"), "me@nexus.app");
-    await user.type(screen.getByLabelText("รหัสผ่านบัญชี Sync"), "correct-password");
-    await user.click(screen.getByRole("button", { name: "กู้คืน" }));
+    await user.type(screen.getByLabelText("Email"), "me@nexus.app");
+    await user.type(screen.getByLabelText("Sync Account Password"), "correct-password");
+    await user.click(screen.getByRole("button", { name: "Recover" }));
 
-    expect(await screen.findByText("เกิดข้อผิดพลาดระหว่างกู้คืน ลองอีกครั้ง")).toBeInTheDocument();
+    expect(await screen.findByText("Something went wrong during recovery. Try again.")).toBeInTheDocument();
   });
 
   it("validates the new PIN is at least 4 digits and both entries match", async () => {
@@ -88,19 +88,19 @@ describe("EncryptionRecoveryFlow", () => {
     const user = userEvent.setup();
     render(<EncryptionRecoveryFlow onDone={vi.fn()} />);
 
-    await user.type(screen.getByLabelText("อีเมล"), "me@nexus.app");
-    await user.type(screen.getByLabelText("รหัสผ่านบัญชี Sync"), "correct-password");
-    await user.click(screen.getByRole("button", { name: "กู้คืน" }));
+    await user.type(screen.getByLabelText("Email"), "me@nexus.app");
+    await user.type(screen.getByLabelText("Sync Account Password"), "correct-password");
+    await user.click(screen.getByRole("button", { name: "Recover" }));
 
-    await user.type(await screen.findByLabelText("PIN ใหม่"), "12");
-    await user.click(screen.getByRole("button", { name: "ตั้ง PIN ใหม่" }));
-    expect(await screen.findByText("PIN ต้องมีอย่างน้อย 4 หลัก")).toBeInTheDocument();
+    await user.type(await screen.findByLabelText("New PIN"), "12");
+    await user.click(screen.getByRole("button", { name: "Set New PIN" }));
+    expect(await screen.findByText("PIN must be at least 4 digits")).toBeInTheDocument();
 
-    await user.clear(screen.getByLabelText("PIN ใหม่"));
-    await user.type(screen.getByLabelText("PIN ใหม่"), "1234");
-    await user.type(screen.getByLabelText("ยืนยัน PIN ใหม่"), "5678");
-    await user.click(screen.getByRole("button", { name: "ตั้ง PIN ใหม่" }));
-    expect(await screen.findByText("PIN ไม่ตรงกัน กรุณายืนยันอีกครั้ง")).toBeInTheDocument();
+    await user.clear(screen.getByLabelText("New PIN"));
+    await user.type(screen.getByLabelText("New PIN"), "1234");
+    await user.type(screen.getByLabelText("Confirm New PIN"), "5678");
+    await user.click(screen.getByRole("button", { name: "Set New PIN" }));
+    expect(await screen.findByText("PINs don't match — please confirm again")).toBeInTheDocument();
   });
 
   it("shows a back button and calls onCancel when provided", async () => {
@@ -108,13 +108,13 @@ describe("EncryptionRecoveryFlow", () => {
     const user = userEvent.setup();
     render(<EncryptionRecoveryFlow onDone={vi.fn()} onCancel={onCancel} />);
 
-    await user.click(screen.getByRole("button", { name: "ย้อนกลับ" }));
+    await user.click(screen.getByRole("button", { name: "Back" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
   it("hides the back button when onCancel is not provided", () => {
     render(<EncryptionRecoveryFlow onDone={vi.fn()} />);
-    expect(screen.queryByRole("button", { name: "ย้อนกลับ" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Back" })).not.toBeInTheDocument();
   });
 
   it("uses custom title/description when provided", () => {

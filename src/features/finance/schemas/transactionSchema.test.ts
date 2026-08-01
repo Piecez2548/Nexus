@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { transactionSchema } from "./transactionSchema";
 
+const t = (key: string) => key;
+
 const validExpense = {
   title: "Coffee",
   amount: 120,
@@ -13,12 +15,12 @@ const validExpense = {
 
 describe("transactionSchema", () => {
   it("accepts a valid expense", () => {
-    const result = transactionSchema.safeParse(validExpense);
+    const result = transactionSchema(t).safeParse(validExpense);
     expect(result.success).toBe(true);
   });
 
   it("accepts an optional note", () => {
-    const result = transactionSchema.safeParse({
+    const result = transactionSchema(t).safeParse({
       ...validExpense,
       note: "with a friend",
     });
@@ -26,7 +28,7 @@ describe("transactionSchema", () => {
   });
 
   it("rejects an empty title", () => {
-    const result = transactionSchema.safeParse({
+    const result = transactionSchema(t).safeParse({
       ...validExpense,
       title: "",
     });
@@ -34,7 +36,7 @@ describe("transactionSchema", () => {
   });
 
   it("rejects a zero amount", () => {
-    const result = transactionSchema.safeParse({
+    const result = transactionSchema(t).safeParse({
       ...validExpense,
       amount: 0,
     });
@@ -42,7 +44,7 @@ describe("transactionSchema", () => {
   });
 
   it("rejects a negative amount", () => {
-    const result = transactionSchema.safeParse({
+    const result = transactionSchema(t).safeParse({
       ...validExpense,
       amount: -50,
     });
@@ -50,7 +52,7 @@ describe("transactionSchema", () => {
   });
 
   it("rejects a non-numeric amount", () => {
-    const result = transactionSchema.safeParse({
+    const result = transactionSchema(t).safeParse({
       ...validExpense,
       amount: "abc",
     });
@@ -58,7 +60,7 @@ describe("transactionSchema", () => {
   });
 
   it("rejects an unknown type", () => {
-    const result = transactionSchema.safeParse({
+    const result = transactionSchema(t).safeParse({
       ...validExpense,
       type: "not-a-real-type",
     });
@@ -66,7 +68,7 @@ describe("transactionSchema", () => {
   });
 
   it("rejects an unknown status", () => {
-    const result = transactionSchema.safeParse({
+    const result = transactionSchema(t).safeParse({
       ...validExpense,
       status: "archived",
     });
@@ -75,12 +77,12 @@ describe("transactionSchema", () => {
 
   it("accepts a transaction with no status at all (the form no longer collects one)", () => {
     const { status: _status, ...withoutStatus } = validExpense;
-    const result = transactionSchema.safeParse(withoutStatus);
+    const result = transactionSchema(t).safeParse(withoutStatus);
     expect(result.success).toBe(true);
   });
 
   it("rejects an empty account", () => {
-    const result = transactionSchema.safeParse({
+    const result = transactionSchema(t).safeParse({
       ...validExpense,
       account: "",
     });
@@ -89,7 +91,7 @@ describe("transactionSchema", () => {
 
   describe("category requirement", () => {
     it("requires a category for expense", () => {
-      const result = transactionSchema.safeParse({
+      const result = transactionSchema(t).safeParse({
         ...validExpense,
         category: undefined,
       });
@@ -97,7 +99,7 @@ describe("transactionSchema", () => {
     });
 
     it("requires a category for income", () => {
-      const result = transactionSchema.safeParse({
+      const result = transactionSchema(t).safeParse({
         ...validExpense,
         type: "income",
         category: undefined,
@@ -106,7 +108,7 @@ describe("transactionSchema", () => {
     });
 
     it("does not require a category for transfer", () => {
-      const result = transactionSchema.safeParse({
+      const result = transactionSchema(t).safeParse({
         title: "Move money",
         amount: 500,
         type: "transfer",
@@ -119,7 +121,7 @@ describe("transactionSchema", () => {
     });
 
     it("does not require a category for adjustment", () => {
-      const result = transactionSchema.safeParse({
+      const result = transactionSchema(t).safeParse({
         title: "Balance correction",
         amount: 10,
         type: "adjustment",
@@ -143,11 +145,11 @@ describe("transactionSchema", () => {
     };
 
     it("accepts a valid transfer", () => {
-      expect(transactionSchema.safeParse(validTransfer).success).toBe(true);
+      expect(transactionSchema(t).safeParse(validTransfer).success).toBe(true);
     });
 
     it("rejects a transfer with no destination account", () => {
-      const result = transactionSchema.safeParse({
+      const result = transactionSchema(t).safeParse({
         ...validTransfer,
         toAccount: undefined,
       });
@@ -155,7 +157,7 @@ describe("transactionSchema", () => {
     });
 
     it("rejects a transfer where source and destination are the same", () => {
-      const result = transactionSchema.safeParse({
+      const result = transactionSchema(t).safeParse({
         ...validTransfer,
         toAccount: "Cash",
       });
@@ -165,7 +167,7 @@ describe("transactionSchema", () => {
 
   describe("optional metadata fields", () => {
     it("accepts tags, time, and attachment", () => {
-      const result = transactionSchema.safeParse({
+      const result = transactionSchema(t).safeParse({
         ...validExpense,
         time: "14:30",
         tags: ["essential", "work"],
@@ -175,7 +177,7 @@ describe("transactionSchema", () => {
     });
 
     it("accepts a recurring frequency", () => {
-      const result = transactionSchema.safeParse({
+      const result = transactionSchema(t).safeParse({
         ...validExpense,
         recurring: { frequency: "monthly" },
       });
@@ -183,7 +185,7 @@ describe("transactionSchema", () => {
     });
 
     it("rejects an invalid recurring frequency", () => {
-      const result = transactionSchema.safeParse({
+      const result = transactionSchema(t).safeParse({
         ...validExpense,
         recurring: { frequency: "hourly" },
       });

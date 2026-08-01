@@ -1,16 +1,20 @@
 import { z } from "zod";
 
-export const goalSchema = z.object({
-  name: z.string().min(1, "กรุณากรอกชื่อเป้าหมาย"),
-  targetAmount: z
-    .number({ error: "กรุณากรอกจำนวนเงินเป้าหมาย" })
-    .positive("จำนวนเงินต้องมากกว่า 0"),
-  currentAmount: z
-    .number({ error: "กรุณากรอกจำนวนเงินปัจจุบัน" })
-    .min(0, "จำนวนเงินต้องไม่ติดลบ"),
-  deadline: z.string().optional(),
-  icon: z.string().optional(),
-  color: z.string().optional(),
-});
+import type { TranslateFn } from "@/i18n/useTranslation";
 
-export type GoalFormData = z.infer<typeof goalSchema>;
+export function goalSchema(t: TranslateFn) {
+  return z.object({
+    name: z.string().min(1, t("validation.goal.nameRequired")),
+    targetAmount: z
+      .number({ error: t("validation.goal.targetAmountRequired") })
+      .positive(t("validation.common.amountPositive")),
+    currentAmount: z
+      .number({ error: t("validation.goal.currentAmountRequired") })
+      .min(0, t("validation.goal.amountNotNegative")),
+    deadline: z.string().optional(),
+    icon: z.string().optional(),
+    color: z.string().optional(),
+  });
+}
+
+export type GoalFormData = z.infer<ReturnType<typeof goalSchema>>;

@@ -4,6 +4,7 @@ import type {
   TradingSession,
   TradeEmotion,
   TradeResult,
+  TradeStatus,
 } from "@/features/trading/types";
 
 export const MARKET_LABELS: Record<MarketType, string> = {
@@ -48,4 +49,9 @@ export const RESULT_LABELS: Record<TradeResult, string> = {
   win: "Win",
   loss: "Loss",
   unknown: "-",
+};
+
+export const STATUS_LABELS: Record<TradeStatus, string> = {
+  open: "Open",
+  closed: "Closed",
 };

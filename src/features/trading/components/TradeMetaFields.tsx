@@ -5,6 +5,7 @@ import { emptyToUndefined } from "@/utils/selectField";
 import FormField from "@/components/ui/FormField";
 import TagsInput from "@/components/ui/TagsInput";
 import MultiFileField from "@/components/ui/MultiFileField";
+import { useTranslation } from "@/i18n/useTranslation";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
@@ -15,19 +16,21 @@ interface Props {
 }
 
 export default function TradeMetaFields({ control, register }: Props) {
+  const { t } = useTranslation();
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Strategy" htmlFor="trade-strategy">
+        <FormField label={t("trading.strategyLabel")} htmlFor="trade-strategy">
           <input
             id="trade-strategy"
             {...register("strategy")}
-            placeholder="เช่น Breakout, Pullback"
+            placeholder={t("trading.strategyPlaceholder")}
             className={inputClassName}
           />
         </FormField>
 
-        <FormField label="Setup" htmlFor="trade-setup">
+        <FormField label={t("trading.setupLabel")} htmlFor="trade-setup">
           <input
             id="trade-setup"
             {...register("setup")}
@@ -36,7 +39,7 @@ export default function TradeMetaFields({ control, register }: Props) {
         </FormField>
       </div>
 
-      <FormField label="Session" htmlFor="trade-session">
+      <FormField label={t("trading.sessionLabel")} htmlFor="trade-session">
         <select
           id="trade-session"
           {...register("session", { setValueAs: emptyToUndefined })}
@@ -51,7 +54,7 @@ export default function TradeMetaFields({ control, register }: Props) {
         </select>
       </FormField>
 
-      <FormField label="แท็ก" htmlFor="trade-tags">
+      <FormField label={t("trading.tagsLabel")} htmlFor="trade-tags">
         <Controller
           name="tags"
           control={control}
@@ -60,13 +63,13 @@ export default function TradeMetaFields({ control, register }: Props) {
               id="trade-tags"
               value={field.value ?? []}
               onChange={field.onChange}
-              placeholder="เช่น breakout, high-conviction"
+              placeholder={t("trading.tagsPlaceholder")}
             />
           )}
         />
       </FormField>
 
-      <FormField label="Screenshots" htmlFor="trade-screenshots">
+      <FormField label={t("trading.screenshotsLabel")} htmlFor="trade-screenshots">
         <Controller
           name="screenshots"
           control={control}
@@ -80,12 +83,12 @@ export default function TradeMetaFields({ control, register }: Props) {
         />
       </FormField>
 
-      <FormField label="Notes" htmlFor="trade-notes">
+      <FormField label={t("trading.notesLabel")} htmlFor="trade-notes">
         <textarea
           id="trade-notes"
           {...register("notes")}
           rows={3}
-          placeholder="รายละเอียดเพิ่มเติม"
+          placeholder={t("transactions.notePlaceholder")}
           className={inputClassName}
         />
       </FormField>

@@ -5,15 +5,15 @@ test.describe("account lifecycle", () => {
     await page.goto("/accounts");
 
     await page.getByRole("button", { name: "Add Account" }).click();
-    await page.getByLabel("ชื่อบัญชี").fill("Travel Fund");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Account name").fill("Travel Fund");
+    await page.getByRole("button", { name: "Save" }).click();
 
     await expect(page.getByText("Travel Fund")).toBeVisible();
 
     await page.getByRole("button", { name: "Edit Travel Fund" }).click();
-    const nameInput = page.getByLabel("ชื่อบัญชี");
+    const nameInput = page.getByLabel("Account name");
     await nameInput.fill("Vacation Fund");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByRole("button", { name: "Save" }).click();
 
     await expect(page.getByText("Vacation Fund")).toBeVisible();
     await expect(page.getByText("Travel Fund")).toHaveCount(0);
@@ -29,11 +29,11 @@ test.describe("account lifecycle", () => {
     // create one via the Transactions page first.
     await page.goto("/transactions");
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("ชื่อรายการ").fill("Coffee");
-    await page.getByLabel("จำนวนเงิน").fill("100");
-    await page.getByLabel("หมวดหมู่").selectOption({ label: "Food" });
-    await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Item name").fill("Coffee");
+    await page.getByLabel("Amount").fill("100");
+    await page.getByLabel("Category").selectOption({ label: "Food" });
+    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("Coffee")).toBeVisible();
 
     await page.goto("/accounts");
@@ -42,8 +42,8 @@ test.describe("account lifecycle", () => {
     // The error surfaces twice by design: a persistent inline banner and an
     // ambient toast notification. Scope to the inline banner specifically.
     await expect(
-      page.getByRole("main").getByText("ไม่สามารถลบบัญชีที่มีรายการอยู่ได้")
+      page.getByRole("main").getByText("Can't delete an account with existing transactions")
     ).toBeVisible();
-    await expect(page.getByText("Cash", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Edit Cash" })).toBeVisible();
   });
 });

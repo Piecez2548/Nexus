@@ -5,7 +5,7 @@ export interface PeriodRange {
   end: Date;
 }
 
-function startOfWeek(date: Date): Date {
+export function startOfWeek(date: Date): Date {
   const result = new Date(date);
   const day = result.getDay();
   const diff = (day + 6) % 7; // days since Monday

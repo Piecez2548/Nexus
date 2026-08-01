@@ -22,6 +22,7 @@ describe("backupService", () => {
       db.habits.clear(),
       db.holdings.clear(),
       db.calendarEvents.clear(),
+      db.goalMilestoneEvents.clear(),
     ]);
     useAppLockStore.setState({ encryptionEnabled: false, wrappedDek: null, kekSalt: null, kekIterations: null });
     useEncryptionSessionStore.getState().clearDek();
@@ -184,6 +185,34 @@ describe("backupService", () => {
     expect(await db.calendarEvents.count()).toBe(0);
   });
 
+  it("imports a legacy backup file that predates goalMilestoneEvents", async () => {
+    const legacyBackup = {
+      version: 1,
+      exportedAt: "2026-07-30T00:00:00.000Z",
+      data: {
+        transactions: [],
+        accounts: [{ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" }],
+        categories: [],
+        trades: [],
+        recipientProfiles: [],
+        merchants: [],
+        budgets: [],
+        goals: [],
+        transactionTemplates: [],
+        todos: [],
+        habits: [],
+        holdings: [],
+        calendarEvents: [],
+        scheduleItems: [],
+        // goalMilestoneEvents deliberately absent
+      },
+    };
+
+    await expect(importBackup(JSON.stringify(legacyBackup))).resolves.not.toThrow();
+    expect(await db.accounts.count()).toBe(1);
+    expect(await db.goalMilestoneEvents.count()).toBe(0);
+  });
+
   it("rejects a malformed backup without touching existing data", async () => {
     await db.accounts.add({ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" });
 
@@ -208,6 +237,7 @@ describe("backupService", () => {
     await db.habits.add({ name: "Leftover habit", frequency: "daily", completedDates: [] } as never);
     await db.holdings.add({ symbol: "AAPL", market: "stocks", quantity: 10, avgCostPrice: 100 } as never);
     await db.calendarEvents.add({ title: "Leftover event", startAt: "2026-07-21T09:00" } as never);
+    await db.goalMilestoneEvents.add({ goalSyncId: "abc", goalName: "MacBook", tier: 50, reachedAt: "2026-07-21T00:00:00.000Z" });
 
     await resetAllData();
 
@@ -218,12 +248,14 @@ describe("backupService", () => {
     const habits = await db.habits.toArray();
     const holdings = await db.holdings.toArray();
     const calendarEvents = await db.calendarEvents.toArray();
+    const goalMilestoneEvents = await db.goalMilestoneEvents.toArray();
 
     expect(transactions).toHaveLength(0);
     expect(todos).toHaveLength(0);
     expect(habits).toHaveLength(0);
     expect(holdings).toHaveLength(0);
     expect(calendarEvents).toHaveLength(0);
+    expect(goalMilestoneEvents).toHaveLength(0);
     expect(accounts.length).toBeGreaterThan(0);
     expect(categories.length).toBeGreaterThan(0);
   });

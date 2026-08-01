@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { TranslateFn } from "@/i18n/useTranslation";
+
 export const accountTypeEnum = z.enum([
   "cash",
   "bank",
@@ -11,11 +13,13 @@ export const accountTypeEnum = z.enum([
   "other",
 ]);
 
-export const accountSchema = z.object({
-  name: z.string().min(1, "กรุณากรอกชื่อบัญชี"),
-  type: accountTypeEnum,
-  icon: z.string().min(1, "กรุณาเลือกไอคอน"),
-  color: z.string().min(1, "กรุณาเลือกสี"),
-});
+export function accountSchema(t: TranslateFn) {
+  return z.object({
+    name: z.string().min(1, t("validation.account.nameRequired")),
+    type: accountTypeEnum,
+    icon: z.string().min(1, t("validation.common.iconRequired")),
+    color: z.string().min(1, t("validation.common.colorRequired")),
+  });
+}
 
-export type AccountFormData = z.infer<typeof accountSchema>;
+export type AccountFormData = z.infer<ReturnType<typeof accountSchema>>;

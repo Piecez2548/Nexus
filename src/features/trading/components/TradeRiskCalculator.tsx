@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { UseFormWatch, UseFormSetValue } from "react-hook-form";
 import type { TradeFormData } from "@/features/trading/schemas/tradeSchema";
 import FormField from "@/components/ui/FormField";
+import { useTranslation } from "@/i18n/useTranslation";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function TradeRiskCalculator({ watch, setValue }: Props) {
+  const { t } = useTranslation();
   const [accountBalance, setAccountBalance] = useState<number>(() => {
     const saved = localStorage.getItem(ACCOUNT_BALANCE_KEY);
     return saved ? Number(saved) : 0;
@@ -42,34 +44,34 @@ export default function TradeRiskCalculator({ watch, setValue }: Props) {
   return (
     <div className="space-y-4 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
       <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-        Risk Calculator (AI คำนวณอัตโนมัติ)
+        {t("trading.riskCalculatorTitle")}
       </h3>
 
-      <FormField label="Account Balance" htmlFor="calc-account-balance">
+      <FormField label={t("trading.accountBalanceLabel")} htmlFor="calc-account-balance">
         <input
           id="calc-account-balance"
           type="number"
           step="any"
           value={accountBalance || ""}
           onChange={(e) => setAccountBalance(Number(e.target.value) || 0)}
-          placeholder="เช่น 10000"
+          placeholder={t("trading.accountBalancePlaceholder")}
           className={inputClassName}
         />
       </FormField>
 
       <div className="grid grid-cols-3 gap-4 text-sm">
         <div>
-          <p className="text-zinc-500 dark:text-zinc-400">Lot Size</p>
+          <p className="text-zinc-500 dark:text-zinc-400">{t("trading.lotSizeLabel")}</p>
           <p className="font-semibold">{canCalculate ? positionSize.toFixed(4) : "-"}</p>
         </div>
 
         <div>
-          <p className="text-zinc-500 dark:text-zinc-400">Position Size</p>
+          <p className="text-zinc-500 dark:text-zinc-400">{t("trading.positionSizeLabel")}</p>
           <p className="font-semibold">{canCalculate ? positionSize.toFixed(4) : "-"}</p>
         </div>
 
         <div>
-          <p className="text-zinc-500 dark:text-zinc-400">Maximum Loss</p>
+          <p className="text-zinc-500 dark:text-zinc-400">{t("trading.maximumLossLabel")}</p>
           <p className="font-semibold text-red-400">
             {riskAmount > 0 ? riskAmount.toLocaleString(undefined, { maximumFractionDigits: 2 }) : "-"}
           </p>
@@ -77,7 +79,7 @@ export default function TradeRiskCalculator({ watch, setValue }: Props) {
       </div>
 
       <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        คำนวณจาก Account Balance, Risk % (ในหมวด Risk Management ด้านล่าง), ราคาเข้า และ Stop Loss
+        {t("trading.calculatedFromNote")}
       </p>
 
       <button
@@ -86,7 +88,7 @@ export default function TradeRiskCalculator({ watch, setValue }: Props) {
         disabled={!canCalculate}
         className="w-full rounded-xl bg-zinc-100 dark:bg-zinc-800 py-2 text-sm font-medium transition hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        นำไปใช้กับ Lot Size
+        {t("trading.applyToLotSize")}
       </button>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -11,6 +11,7 @@ import { CATEGORY_ICON_OPTIONS, getIcon } from "@/features/finance/constants/ico
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { Category } from "@/features/finance/types";
 
 const inputClassName =
@@ -32,6 +33,8 @@ export default function CategoryForm({ category, onDone }: Props) {
   const { addCategory, updateCategory } = useCategoryStore();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
+  const { t } = useTranslation();
+  const schema = useMemo(() => categorySchema(t), [t]);
 
   const {
     register,
@@ -40,7 +43,7 @@ export default function CategoryForm({ category, onDone }: Props) {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<CategoryFormData>({
-    resolver: zodResolver(categorySchema),
+    resolver: zodResolver(schema),
     defaultValues: blankValues,
   });
 
@@ -63,7 +66,7 @@ export default function CategoryForm({ category, onDone }: Props) {
       }
 
       onDone();
-      toast.success(isEditing ? "แก้ไขหมวดหมู่เรียบร้อย" : "เพิ่มหมวดหมู่เรียบร้อย");
+      toast.success(isEditing ? t("categories.updatedSuccess") : t("categories.savedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setSubmitError(message);
@@ -77,26 +80,26 @@ export default function CategoryForm({ category, onDone }: Props) {
       className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6"
     >
       <h2 className="text-xl font-bold">
-        {category ? "แก้ไขหมวดหมู่" : "เพิ่มหมวดหมู่"}
+        {category ? t("categories.editCategory") : t("categories.addCategory")}
       </h2>
 
-      <FormField label="ชื่อหมวดหมู่" htmlFor="category-name" error={errors.name?.message}>
+      <FormField label={t("categories.nameLabel")} htmlFor="category-name" error={errors.name?.message}>
         <input
           id="category-name"
           {...register("name")}
-          placeholder="เช่น อาหาร, เดินทาง"
+          placeholder={t("categories.namePlaceholder")}
           className={inputClassName}
         />
       </FormField>
 
-      <FormField label="ประเภท" htmlFor="category-type">
+      <FormField label={t("common.type")} htmlFor="category-type">
         <select id="category-type" {...register("type")} className={inputClassName}>
-          <option value="expense">รายจ่าย</option>
-          <option value="income">รายรับ</option>
+          <option value="expense">{t("transactions.expense")}</option>
+          <option value="income">{t("transactions.income")}</option>
         </select>
       </FormField>
 
-      <FormField label="ไอคอน" htmlFor="category-icon">
+      <FormField label={t("categories.iconLabel")} htmlFor="category-icon">
         <div className="flex items-center gap-3">
           <div
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg"
@@ -115,7 +118,7 @@ export default function CategoryForm({ category, onDone }: Props) {
         </div>
       </FormField>
 
-      <FormField label="สี" htmlFor="category-color">
+      <FormField label={t("categories.colorLabel")} htmlFor="category-color">
         <input
           id="category-color"
           type="color"
@@ -133,7 +136,7 @@ export default function CategoryForm({ category, onDone }: Props) {
         disabled={isSubmitting}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "กำลังบันทึก..." : "บันทึก"}
+        {isSubmitting ? t("categories.saving") : t("common.save")}
       </button>
     </form>
   );

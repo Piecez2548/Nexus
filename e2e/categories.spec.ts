@@ -5,14 +5,14 @@ test.describe("category lifecycle", () => {
     await page.goto("/categories");
 
     await page.getByRole("button", { name: "Add Category" }).click();
-    await page.getByLabel("ชื่อหมวดหมู่").fill("Groceries");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Category name").fill("Groceries");
+    await page.getByRole("button", { name: "Save" }).click();
 
     await expect(page.getByText("Groceries")).toBeVisible();
 
     await page.getByRole("button", { name: "Edit Groceries" }).click();
-    await page.getByLabel("ชื่อหมวดหมู่").fill("Supermarket");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Category name").fill("Supermarket");
+    await page.getByRole("button", { name: "Save" }).click();
 
     await expect(page.getByText("Supermarket")).toBeVisible();
     await expect(page.getByText("Groceries")).toHaveCount(0);
@@ -25,23 +25,23 @@ test.describe("category lifecycle", () => {
     // "Food" is seeded by default. Create a second expense category to merge from.
     await page.goto("/categories");
     await page.getByRole("button", { name: "Add Category" }).click();
-    await page.getByLabel("ชื่อหมวดหมู่").fill("Snacks");
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Category name").fill("Snacks");
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Snacks")).toBeVisible();
 
     await page.goto("/transactions");
     await page.getByRole("button", { name: "Add Transaction" }).click();
-    await page.getByLabel("ชื่อรายการ").fill("Chips");
-    await page.getByLabel("จำนวนเงิน").fill("50");
-    await page.getByLabel("หมวดหมู่").selectOption({ label: "Snacks" });
-    await page.getByLabel("บัญชี").selectOption({ label: "Cash" });
-    await page.getByRole("button", { name: "บันทึก" }).click();
+    await page.getByLabel("Item name").fill("Chips");
+    await page.getByLabel("Amount").fill("50");
+    await page.getByLabel("Category").selectOption({ label: "Snacks" });
+    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("Chips")).toBeVisible();
 
     await page.goto("/categories");
     await page.getByRole("button", { name: "Merge Snacks" }).click();
-    await page.getByLabel("รวมเข้ากับ").selectOption({ label: "Food" });
-    await page.getByRole("button", { name: "รวมหมวดหมู่" }).click();
+    await page.getByLabel("Merge into").selectOption({ label: "Food" });
+    await page.getByRole("button", { name: "Merge Category" }).click();
 
     await expect(page.getByText("Snacks")).toHaveCount(0);
 

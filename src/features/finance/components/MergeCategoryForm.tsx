@@ -4,6 +4,7 @@ import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
+import { useTranslation } from "@/i18n/useTranslation";
 import type { Category } from "@/features/finance/types";
 
 const inputClassName =
@@ -21,6 +22,7 @@ export default function MergeCategoryForm({ sourceCategory, categories, onDone }
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const toast = useToast();
+  const { t } = useTranslation();
 
   const candidates = categories.filter(
     (c) => c.id !== sourceCategory.id && c.type === sourceCategory.type
@@ -36,7 +38,7 @@ export default function MergeCategoryForm({ sourceCategory, categories, onDone }
     try {
       await mergeCategory(sourceCategory.id, sourceCategory.name, targetName);
       onDone();
-      toast.success("รวมหมวดหมู่เรียบร้อย");
+      toast.success(t("categories.mergedSuccess"));
     } catch (err) {
       const message = toErrorMessage(err);
       setError(message);
@@ -52,21 +54,21 @@ export default function MergeCategoryForm({ sourceCategory, categories, onDone }
       className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6"
     >
       <h2 className="text-xl font-bold">
-        รวมหมวดหมู่ "{sourceCategory.name}"
+        {t("categories.mergeTitle", { name: sourceCategory.name })}
       </h2>
 
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        รายการทั้งหมดในหมวดหมู่นี้จะถูกย้ายไปยังหมวดหมู่ที่เลือก แล้วหมวดหมู่นี้จะถูกลบ
+        {t("categories.mergeDescription")}
       </p>
 
-      <FormField label="รวมเข้ากับ" htmlFor="merge-target">
+      <FormField label={t("categories.mergeInto")} htmlFor="merge-target">
         <select
           id="merge-target"
           value={targetName}
           onChange={(e) => setTargetName(e.target.value)}
           className={inputClassName}
         >
-          <option value="">เลือกหมวดหมู่ปลายทาง</option>
+          <option value="">{t("categories.selectTargetCategory")}</option>
 
           {candidates.map((c) => (
             <option key={c.id} value={c.name}>
@@ -85,7 +87,7 @@ export default function MergeCategoryForm({ sourceCategory, categories, onDone }
         disabled={submitting || !targetName}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {submitting ? "กำลังรวม..." : "รวมหมวดหมู่"}
+        {submitting ? t("categories.merging") : t("categories.mergeButton")}
       </button>
     </form>
   );

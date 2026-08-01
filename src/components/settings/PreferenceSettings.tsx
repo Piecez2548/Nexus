@@ -22,7 +22,7 @@ export default function PreferenceSettings() {
 
   return (
     <SettingsCard title={t("settings.preferences")} description={t("settings.preferencesDescription")}>
-      <FormField label="สกุลเงิน (Currency)" htmlFor="settings-currency">
+      <FormField label={t("settings.currencyLabel")} htmlFor="settings-currency">
         <select
           id="settings-currency"
           value={currency}
@@ -37,7 +37,7 @@ export default function PreferenceSettings() {
         </select>
       </FormField>
 
-      <FormField label="รูปแบบวันที่ (Date Format)" htmlFor="settings-date-format">
+      <FormField label={t("settings.dateFormatLabel")} htmlFor="settings-date-format">
         <select
           id="settings-date-format"
           value={dateFormat}
@@ -52,7 +52,7 @@ export default function PreferenceSettings() {
         </select>
       </FormField>
 
-      <FormField label="รูปแบบตัวเลข (Number Format)" htmlFor="settings-number-format">
+      <FormField label={t("settings.numberFormatLabel")} htmlFor="settings-number-format">
         <select
           id="settings-number-format"
           value={numberFormat}

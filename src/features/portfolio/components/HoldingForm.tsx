@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -32,6 +32,7 @@ export default function HoldingForm({ holding, onDone }: Props) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
   const { t } = useTranslation();
+  const schema = useMemo(() => holdingSchema(t), [t]);
 
   const {
     register,
@@ -39,7 +40,7 @@ export default function HoldingForm({ holding, onDone }: Props) {
     formState: { errors, isSubmitting },
     reset,
   } = useForm<HoldingFormData>({
-    resolver: zodResolver(holdingSchema),
+    resolver: zodResolver(schema),
     defaultValues: blankValues,
   });
 

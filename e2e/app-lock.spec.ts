@@ -6,10 +6,10 @@ test.describe("App Lock", () => {
 
     await page.getByRole("button", { name: "Enable App Lock" }).click();
     await page.getByLabel("PIN", { exact: true }).fill("1234");
-    await page.getByLabel("ยืนยัน PIN").fill("1234");
+    await page.getByLabel("Confirm PIN").fill("1234");
     // Uncheck "remember me" so a reload requires the PIN again.
-    await page.getByLabel(/จดจำฉันไว้ในอุปกรณ์นี้/).uncheck();
-    await page.getByRole("button", { name: "ตั้งค่า PIN" }).click();
+    await page.getByLabel(/Remember me on this device/).uncheck();
+    await page.getByRole("button", { name: "Set Up PIN" }).click();
 
     await expect(page.getByText("App Lock is enabled")).toBeVisible();
 
@@ -19,16 +19,16 @@ test.describe("App Lock", () => {
     // happens in a genuinely new tab/session when "remember me" is off.
     await page.evaluate(() => sessionStorage.clear());
     await page.reload();
-    await expect(page.getByRole("heading", { name: "ปลดล็อก Nexus" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Unlock Nexus" })).toBeVisible();
 
     // Wrong PIN shows an error and stays locked.
     await page.getByLabel("PIN", { exact: true }).fill("0000");
-    await page.getByRole("button", { name: "ปลดล็อก" }).click();
-    await expect(page.getByText("PIN ไม่ถูกต้อง")).toBeVisible();
+    await page.getByRole("button", { name: "Unlock" }).click();
+    await expect(page.getByText("Incorrect PIN")).toBeVisible();
 
     // Correct PIN unlocks the app, returning to the page it reloaded on.
     await page.getByLabel("PIN", { exact: true }).fill("1234");
-    await page.getByRole("button", { name: "ปลดล็อก" }).click();
+    await page.getByRole("button", { name: "Unlock" }).click();
     await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   });
 
@@ -37,11 +37,11 @@ test.describe("App Lock", () => {
 
     await page.getByRole("button", { name: "Enable App Lock" }).click();
     await page.getByLabel("PIN", { exact: true }).fill("1234");
-    await page.getByLabel("ยืนยัน PIN").fill("1234");
-    await page.getByRole("button", { name: "ตั้งค่า PIN" }).click();
+    await page.getByLabel("Confirm PIN").fill("1234");
+    await page.getByRole("button", { name: "Set Up PIN" }).click();
 
     await page.getByRole("button", { name: "Lock Now" }).click();
-    await expect(page.getByRole("heading", { name: "ปลดล็อก Nexus" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Unlock Nexus" })).toBeVisible();
   });
 
   test("disables App Lock so the app no longer prompts", async ({ page }) => {
@@ -49,13 +49,13 @@ test.describe("App Lock", () => {
 
     await page.getByRole("button", { name: "Enable App Lock" }).click();
     await page.getByLabel("PIN", { exact: true }).fill("1234");
-    await page.getByLabel("ยืนยัน PIN").fill("1234");
-    await page.getByLabel(/จดจำฉันไว้ในอุปกรณ์นี้/).uncheck();
-    await page.getByRole("button", { name: "ตั้งค่า PIN" }).click();
+    await page.getByLabel("Confirm PIN").fill("1234");
+    await page.getByLabel(/Remember me on this device/).uncheck();
+    await page.getByRole("button", { name: "Set Up PIN" }).click();
 
     await page.getByRole("button", { name: "Disable" }).click();
-    await page.getByLabel("กรอก PIN เพื่อยืนยัน").fill("1234");
-    await page.getByRole("button", { name: "ปิดการใช้งาน App Lock" }).click();
+    await page.getByLabel("Enter PIN to confirm").fill("1234");
+    await page.getByRole("button", { name: "Turn Off App Lock" }).click();
 
     await expect(page.getByRole("button", { name: "Enable App Lock" })).toBeVisible();
 

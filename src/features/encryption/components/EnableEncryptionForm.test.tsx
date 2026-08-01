@@ -20,9 +20,9 @@ describe("EnableEncryptionForm", () => {
     const onDone = vi.fn();
     render(<EnableEncryptionForm onDone={onDone} />);
 
-    await user.click(screen.getByRole("button", { name: "เริ่มเข้ารหัสข้อมูล" }));
+    await user.click(screen.getByRole("button", { name: "Start Encrypting Data" }));
 
-    expect(screen.getByText("กรอก PIN ของคุณ")).toBeInTheDocument();
+    expect(screen.getByText("Enter your PIN")).toBeInTheDocument();
     expect(mockEnableEncryption).not.toHaveBeenCalled();
   });
 
@@ -33,9 +33,9 @@ describe("EnableEncryptionForm", () => {
     const onDone = vi.fn();
     render(<EnableEncryptionForm onDone={onDone} />);
 
-    await user.type(screen.getByLabelText("PIN ปัจจุบันของคุณ"), "1234");
-    await user.type(screen.getByLabelText("ยืนยันรหัสผ่านบัญชี Sync"), "my-account-password");
-    await user.click(screen.getByRole("button", { name: "เริ่มเข้ารหัสข้อมูล" }));
+    await user.type(screen.getByLabelText("Your Current PIN"), "1234");
+    await user.type(screen.getByLabelText("Confirm Sync Account Password"), "my-account-password");
+    await user.click(screen.getByRole("button", { name: "Start Encrypting Data" }));
 
     expect(mockEnableEncryption).toHaveBeenCalledWith(
       expect.objectContaining({ pin: "1234", accountPassword: "my-account-password" })
@@ -52,9 +52,9 @@ describe("EnableEncryptionForm", () => {
     const user = userEvent.setup();
     render(<EnableEncryptionForm onDone={vi.fn()} />);
 
-    await user.type(screen.getByLabelText("PIN ปัจจุบันของคุณ"), "1234");
-    await user.type(screen.getByLabelText("ยืนยันรหัสผ่านบัญชี Sync"), "my-account-password");
-    await user.click(screen.getByRole("button", { name: "เริ่มเข้ารหัสข้อมูล" }));
+    await user.type(screen.getByLabelText("Your Current PIN"), "1234");
+    await user.type(screen.getByLabelText("Confirm Sync Account Password"), "my-account-password");
+    await user.click(screen.getByRole("button", { name: "Start Encrypting Data" }));
 
     expect(await screen.findByText(/3\/9/)).toBeInTheDocument();
   });
@@ -66,9 +66,9 @@ describe("EnableEncryptionForm", () => {
     const onDone = vi.fn();
     render(<EnableEncryptionForm onDone={onDone} />);
 
-    await user.type(screen.getByLabelText("PIN ปัจจุบันของคุณ"), "0000");
-    await user.type(screen.getByLabelText("ยืนยันรหัสผ่านบัญชี Sync"), "my-account-password");
-    await user.click(screen.getByRole("button", { name: "เริ่มเข้ารหัสข้อมูล" }));
+    await user.type(screen.getByLabelText("Your Current PIN"), "0000");
+    await user.type(screen.getByLabelText("Confirm Sync Account Password"), "my-account-password");
+    await user.click(screen.getByRole("button", { name: "Start Encrypting Data" }));
 
     expect(await screen.findByText("Incorrect PIN")).toBeInTheDocument();
     expect(onDone).not.toHaveBeenCalled();

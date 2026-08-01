@@ -4,6 +4,7 @@ import { EMOTION_LABELS } from "@/features/trading/constants/labels";
 import { numberOrUndefined } from "@/utils/numberField";
 import { emptyToUndefined } from "@/utils/selectField";
 import FormField from "@/components/ui/FormField";
+import { useTranslation } from "@/i18n/useTranslation";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
@@ -13,14 +14,16 @@ interface Props {
 }
 
 export default function TradePsychologyFields({ register }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-4 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-      <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Trading Psychology</h3>
+      <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">{t("trading.psychologyTitle")}</h3>
 
-      <p className="text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-500">Before Trade</p>
+      <p className="text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-500">{t("trading.beforeTrade")}</p>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Emotion" htmlFor="trade-emotion-before">
+        <FormField label={t("trading.emotionLabel")} htmlFor="trade-emotion-before">
           <select
             id="trade-emotion-before"
             {...register("emotionBefore", { setValueAs: emptyToUndefined })}
@@ -35,7 +38,7 @@ export default function TradePsychologyFields({ register }: Props) {
           </select>
         </FormField>
 
-        <FormField label="Confidence (1-5)" htmlFor="trade-confidence-before">
+        <FormField label={t("trading.confidenceLabel")} htmlFor="trade-confidence-before">
           <input
             id="trade-confidence-before"
             type="number"
@@ -47,10 +50,10 @@ export default function TradePsychologyFields({ register }: Props) {
         </FormField>
       </div>
 
-      <p className="text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-500">After Trade</p>
+      <p className="text-xs uppercase tracking-wide text-zinc-600 dark:text-zinc-500">{t("trading.afterTrade")}</p>
 
       <div className="grid grid-cols-2 gap-4">
-        <FormField label="Emotion" htmlFor="trade-emotion-after">
+        <FormField label={t("trading.emotionLabel")} htmlFor="trade-emotion-after">
           <select
             id="trade-emotion-after"
             {...register("emotionAfter", { setValueAs: emptyToUndefined })}
@@ -65,7 +68,7 @@ export default function TradePsychologyFields({ register }: Props) {
           </select>
         </FormField>
 
-        <FormField label="Confidence (1-5)" htmlFor="trade-confidence-after">
+        <FormField label={t("trading.confidenceLabel")} htmlFor="trade-confidence-after">
           <input
             id="trade-confidence-after"
             type="number"
@@ -77,22 +80,22 @@ export default function TradePsychologyFields({ register }: Props) {
         </FormField>
       </div>
 
-      <FormField label="Mistakes" htmlFor="trade-mistakes">
+      <FormField label={t("trading.mistakesLabel")} htmlFor="trade-mistakes">
         <textarea
           id="trade-mistakes"
           {...register("mistakes")}
           rows={2}
-          placeholder="สิ่งที่ผิดพลาด"
+          placeholder={t("trading.mistakesPlaceholder")}
           className={inputClassName}
         />
       </FormField>
 
-      <FormField label="Lessons Learned" htmlFor="trade-lessons">
+      <FormField label={t("trading.lessonsLabel")} htmlFor="trade-lessons">
         <textarea
           id="trade-lessons"
           {...register("lessonsLearned")}
           rows={2}
-          placeholder="บทเรียนที่ได้"
+          placeholder={t("trading.lessonsPlaceholder")}
           className={inputClassName}
         />
       </FormField>

@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { calculatePnl, calculateRR } from "@/features/trading/utils/pnl";
 import { isDateWithinRange, type PeriodRange } from "@/features/finance/utils/periodRange";
+import { toLocalDateString } from "@/utils/localDate";
 
 function daysAgo(days: number): Date {
   const date = new Date();
@@ -23,7 +24,7 @@ export function useTradingStats(periodRange?: PeriodRange) {
       pnl: calculatePnl(trade) ?? 0,
     }));
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toLocalDateString(new Date());
     const weekStart = daysAgo(7);
     const monthStart = daysAgo(30);
 

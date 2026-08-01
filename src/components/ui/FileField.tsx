@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react";
+import { useTranslation } from "@/i18n/useTranslation";
 
 interface Props {
   id?: string;
@@ -7,6 +8,8 @@ interface Props {
 }
 
 export default function FileField({ id, value, onChange }: Props) {
+  const { t } = useTranslation();
+
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
@@ -35,7 +38,7 @@ export default function FileField({ id, value, onChange }: Props) {
           download
           className="inline-block text-xs text-brand-400 hover:underline"
         >
-          ดูไฟล์แนบ
+          {t("common.viewAttachment")}
         </a>
       )}
     </div>

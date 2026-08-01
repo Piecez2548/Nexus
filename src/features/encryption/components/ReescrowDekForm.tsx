@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
 import { reescrowDek, ReescrowFailedError } from "@/features/encryption/migration/reescrowDek";
+import { useTranslation } from "@/i18n/useTranslation";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 outline-none focus:border-brand-500";
@@ -13,6 +14,7 @@ interface Props {
 
 export default function ReescrowDekForm({ onDone }: Props) {
   const toast = useToast();
+  const { t } = useTranslation();
 
   const [accountPassword, setAccountPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -23,17 +25,17 @@ export default function ReescrowDekForm({ onDone }: Props) {
     setError(null);
 
     if (accountPassword.length === 0) {
-      setError("กรอกรหัสผ่านบัญชี Sync ของคุณ");
+      setError(t("settings.enterSyncPassword"));
       return;
     }
 
     setSubmitting(true);
     try {
       await reescrowDek(accountPassword);
-      toast.success("อัปเดตกุญแจสำรองเรียบร้อย");
+      toast.success(t("settings.reescrowSuccess"));
       onDone();
     } catch (err) {
-      setError(err instanceof ReescrowFailedError ? err.message : "เกิดข้อผิดพลาด ลองอีกครั้ง");
+      setError(err instanceof ReescrowFailedError ? err.message : t("settings.genericError"));
     } finally {
       setSubmitting(false);
     }
@@ -44,14 +46,13 @@ export default function ReescrowDekForm({ onDone }: Props) {
       onSubmit={handleSubmit}
       className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6"
     >
-      <h2 className="text-xl font-bold">อัปเดตกุญแจสำรอง</h2>
+      <h2 className="text-xl font-bold">{t("settings.encryptionReescrowButton")}</h2>
 
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        ใช้เมื่ออุปกรณ์อื่นกู้คืนกุญแจเข้ารหัสด้วยรหัสผ่านบัญชี Sync ไม่สำเร็จ — อุปกรณ์นี้ปลดล็อกอยู่และมีกุญแจที่ถูกต้องอยู่แล้ว
-        ยืนยันรหัสผ่านบัญชี Sync ปัจจุบันเพื่อฝากกุญแจสำรองชุดใหม่แทนของเดิม
+        {t("settings.reescrowDescription")}
       </p>
 
-      <FormField label="รหัสผ่านบัญชี Sync ปัจจุบัน" htmlFor="reescrow-password">
+      <FormField label={t("settings.currentSyncPasswordLabel")} htmlFor="reescrow-password">
         <input
           id="reescrow-password"
           type="password"
@@ -69,7 +70,7 @@ export default function ReescrowDekForm({ onDone }: Props) {
         disabled={submitting}
         className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {submitting ? "กำลังอัปเดต..." : "อัปเดตกุญแจสำรอง"}
+        {submitting ? t("settings.updating") : t("settings.encryptionReescrowButton")}
       </button>
     </form>
   );

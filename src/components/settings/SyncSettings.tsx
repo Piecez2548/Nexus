@@ -115,7 +115,7 @@ export default function SyncSettings() {
       description={t("settings.syncOptionalDescription")}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <FormField label="อีเมล" htmlFor="sync-email">
+        <FormField label={t("lock.emailLabel")} htmlFor="sync-email">
           <input
             id="sync-email"
             type="email"
@@ -126,7 +126,7 @@ export default function SyncSettings() {
           />
         </FormField>
 
-        <FormField label="รหัสผ่าน" htmlFor="sync-password">
+        <FormField label={t("settings.passwordLabel")} htmlFor="sync-password">
           <input
             id="sync-password"
             type="password"

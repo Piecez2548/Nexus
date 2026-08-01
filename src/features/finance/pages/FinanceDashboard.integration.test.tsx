@@ -51,7 +51,7 @@ describe("FinanceDashboard page", () => {
 
     renderPage();
 
-    expect(await screen.findByText("สรุปเดือนนี้ (Monthly Summary)")).toBeInTheDocument();
+    expect(await screen.findByText("Monthly Summary")).toBeInTheDocument();
     // "Netflix" appears in both the Recent Transactions row and the
     // Subscriptions panel; "Entertainment" additionally in the pie chart
     // legend and the category breakdown table.

@@ -34,6 +34,8 @@ const TABLES_TO_MIGRATE: SyncTableName[] = [
   "habits",
   "holdings",
   "calendarEvents",
+  "scheduleItems",
+  "goalMilestoneEvents",
 ];
 
 // Must stay in sync with each repository's plaintextKeys option (see the

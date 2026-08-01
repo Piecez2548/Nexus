@@ -238,12 +238,12 @@ export default function TradeHistoryTable({ trades }: Props) {
               <SortHeader label={t("common.date")} sortKeyName="entryDate" />
               <SortHeader label={t("trading.symbol")} sortKeyName="symbol" />
               <th className="px-4 py-4 text-center">{t("trading.direction")}</th>
-              <SortHeader label="Lot" sortKeyName="quantity" align="right" />
+              <SortHeader label={t("trading.lot")} sortKeyName="quantity" align="right" />
               <SortHeader label={t("trading.entryPrice")} sortKeyName="entryPrice" align="right" />
               <SortHeader label={t("trading.exitPrice")} sortKeyName="exitPrice" align="right" />
               <SortHeader label={t("trading.pnl")} sortKeyName="pnl" align="right" />
               <th className="px-4 py-4 text-right">{t("trading.riskPercent")}</th>
-              <SortHeader label="RR" sortKeyName="rr" align="right" />
+              <SortHeader label={t("trading.rr")} sortKeyName="rr" align="right" />
               <SortHeader label={t("trading.strategyLabel")} sortKeyName="strategy" />
               <th className="px-4 py-4 text-center">{t("trading.emotion")}</th>
               <th className="px-4 py-4 text-center">{t("trading.screenshotLabel")}</th>

@@ -48,7 +48,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
       setSubmitting(false);
 
       if (err instanceof EncryptionStateCorruptedError) {
-        setError("PIN ถูกต้อง แต่ไม่สามารถปลดล็อกข้อมูลที่เข้ารหัสไว้ได้ ลองกู้คืนผ่านบัญชี Sync ของคุณ");
+        setError(t("lock.encryptionUnlockFailed"));
         return;
       }
 
@@ -73,13 +73,13 @@ export default function AppLockScreen({ mode, onDone }: Props) {
     setError(null);
 
     if (pin.length < 4) {
-      setError("PIN ต้องมีอย่างน้อย 4 หลัก");
+      setError(t("lock.pinMinLength"));
       return;
     }
 
     if (mode === "setup") {
       if (pin !== confirmPin) {
-        setError("PIN ไม่ตรงกัน กรุณายืนยันอีกครั้ง");
+        setError(t("lock.pinConfirmMismatch"));
         return;
       }
 
@@ -97,7 +97,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
       setSubmitting(false);
 
       if (!success) {
-        setError("PIN ไม่ถูกต้อง");
+        setError(t("lock.pinIncorrect"));
         setPin("");
         return;
       }
@@ -108,7 +108,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
       setPin("");
 
       if (err instanceof EncryptionStateCorruptedError) {
-        setError("PIN ถูกต้อง แต่ไม่สามารถปลดล็อกข้อมูลที่เข้ารหัสไว้ได้ ลองกู้คืนผ่านบัญชี Sync ของคุณ");
+        setError(t("lock.encryptionUnlockFailed"));
         return;
       }
 
@@ -138,12 +138,12 @@ export default function AppLockScreen({ mode, onDone }: Props) {
 
         <div>
           <h1 className="text-balance text-2xl font-bold">
-            {mode === "setup" ? "ตั้งค่า App Lock" : "ปลดล็อก Nexus"}
+            {mode === "setup" ? t("lock.setupTitle") : t("lock.unlockTitle")}
           </h1>
           <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
             {mode === "setup"
-              ? "ตั้ง PIN เพื่อป้องกันข้อมูลส่วนตัวของคุณ"
-              : "กรอก PIN เพื่อเข้าใช้งาน"}
+              ? t("lock.setupSubtitle")
+              : t("lock.unlockSubtitle")}
           </p>
         </div>
       </div>
@@ -167,7 +167,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
       {mode === "setup" && (
         <div>
           <label htmlFor="lock-pin-confirm" className="mb-1.5 block text-center text-sm text-zinc-500 dark:text-zinc-400">
-            ยืนยัน PIN
+            {t("lock.confirmPinLabel")}
           </label>
           <input
             id="lock-pin-confirm"
@@ -187,7 +187,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
           onChange={(e) => setRemember(e.target.checked)}
           className="h-4 w-4 rounded accent-brand-600"
         />
-        จดจำฉันไว้ในอุปกรณ์นี้ (7 วัน)
+        {t("lock.rememberMe")}
       </label>
 
       {error && <p className="text-sm text-red-500">{error}</p>}
@@ -197,7 +197,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
         disabled={submitting}
         className="w-full rounded-2xl bg-brand-600 py-3 font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-600/30 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
       >
-        {submitting ? "กำลังดำเนินการ..." : mode === "setup" ? "ตั้งค่า PIN" : "ปลดล็อก"}
+        {submitting ? t("lock.processing") : mode === "setup" ? t("lock.setupPinButton") : t("lock.unlockButton")}
       </button>
 
       {mode === "unlock" && biometricEnabled && (
@@ -221,7 +221,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
           }}
           className="w-full text-center text-sm text-brand-600 hover:underline dark:text-brand-400"
         >
-          ลืม PIN? กู้คืนผ่านบัญชี Sync
+          {t("lock.forgotPin")}
         </button>
       )}
     </form>

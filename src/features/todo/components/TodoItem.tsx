@@ -6,6 +6,7 @@ import { getPriorityLabels, PRIORITY_BADGE_CLASS } from "@/features/todo/constan
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "@/i18n/useTranslation";
+import { toLocalDateString, parseLocalDate } from "@/utils/localDate";
 import type { Todo } from "@/features/todo/types";
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 
 function isOverdue(todo: Todo): boolean {
   if (todo.completed || !todo.dueDate) return false;
-  return todo.dueDate < new Date().toISOString().slice(0, 10);
+  return todo.dueDate < toLocalDateString(new Date());
 }
 
 export default function TodoItem({ todo, onEdit }: Props) {
@@ -93,7 +94,7 @@ export default function TodoItem({ todo, onEdit }: Props) {
                 }`}
               >
                 {t("todo.dueDatePrefix", {
-                  date: new Date(todo.dueDate).toLocaleDateString(language === "th" ? "th-TH" : "en-US"),
+                  date: parseLocalDate(todo.dueDate).toLocaleDateString(language === "th" ? "th-TH" : "en-US"),
                 })}
               </span>
             )}

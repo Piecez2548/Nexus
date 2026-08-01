@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useToastStore } from "@/store/toastStore";
 import { getLevel } from "@/utils/leveling";
+import { toLocalDateString } from "@/utils/localDate";
+import { translate } from "@/i18n/useTranslation";
 
 interface GamificationState {
   xp: number;
@@ -13,11 +15,11 @@ interface GamificationState {
 }
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return toLocalDateString(new Date());
 }
 
 function yesterdayIso(): string {
-  return new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return toLocalDateString(new Date(Date.now() - 24 * 60 * 60 * 1000));
 }
 
 export const useGamificationStore = create<GamificationState>()(
@@ -37,7 +39,7 @@ export const useGamificationStore = create<GamificationState>()(
         get().recordActivity();
 
         if (newLevel > previousLevel) {
-          useToastStore.getState().show("success", `🎉 เลเวลอัพ! ตอนนี้คุณอยู่ Lv.${newLevel}`);
+          useToastStore.getState().show("success", translate("common.levelUpToast", { level: newLevel }));
         }
       },
 

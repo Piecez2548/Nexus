@@ -27,6 +27,8 @@ interface NexusBackup {
     habits?: unknown[];
     holdings?: unknown[];
     calendarEvents?: unknown[];
+    scheduleItems?: unknown[];
+    goalMilestoneEvents?: unknown[];
   };
 }
 
@@ -88,6 +90,8 @@ export async function exportBackup(): Promise<string> {
     habits,
     holdings,
     calendarEvents,
+    scheduleItems,
+    goalMilestoneEvents,
   ] = await Promise.all([
     db.transactions.toArray(),
     db.accounts.toArray(),
@@ -102,6 +106,8 @@ export async function exportBackup(): Promise<string> {
     db.habits.toArray(),
     db.holdings.toArray(),
     db.calendarEvents.toArray(),
+    db.scheduleItems.toArray(),
+    db.goalMilestoneEvents.toArray(),
   ]);
 
   const backup: NexusBackup = {
@@ -121,6 +127,8 @@ export async function exportBackup(): Promise<string> {
       habits: await decryptForExport(dek, habits),
       holdings: await decryptForExport(dek, holdings),
       calendarEvents: await decryptForExport(dek, calendarEvents),
+      scheduleItems: await decryptForExport(dek, scheduleItems),
+      goalMilestoneEvents: await decryptForExport(dek, goalMilestoneEvents),
     },
   };
 
@@ -149,7 +157,15 @@ function isNexusBackup(value: unknown): value is NexusBackup {
   if (!requiredKeys.every((key) => Array.isArray(data[key]))) return false;
 
   // Optional — missing entirely (older backup files) just means no rows.
-  const optionalKeys = ["transactionTemplates", "todos", "habits", "holdings", "calendarEvents"];
+  const optionalKeys = [
+    "transactionTemplates",
+    "todos",
+    "habits",
+    "holdings",
+    "calendarEvents",
+    "scheduleItems",
+    "goalMilestoneEvents",
+  ];
   return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
 }
 
@@ -182,6 +198,8 @@ export async function importBackup(jsonText: string): Promise<void> {
     habits,
     holdings,
     calendarEvents,
+    scheduleItems,
+    goalMilestoneEvents,
   ] = await Promise.all([
     encryptForImport(dek, "transactions", data.transactions),
     encryptForImport(dek, "accounts", data.accounts),
@@ -195,6 +213,8 @@ export async function importBackup(jsonText: string): Promise<void> {
     encryptForImport(dek, "habits", data.habits ?? []),
     encryptForImport(dek, "holdings", data.holdings ?? []),
     encryptForImport(dek, "calendarEvents", data.calendarEvents ?? []),
+    encryptForImport(dek, "scheduleItems", data.scheduleItems ?? []),
+    encryptForImport(dek, "goalMilestoneEvents", data.goalMilestoneEvents ?? []),
   ]);
 
   await db.transaction(
@@ -213,6 +233,8 @@ export async function importBackup(jsonText: string): Promise<void> {
       db.habits,
       db.holdings,
       db.calendarEvents,
+      db.scheduleItems,
+      db.goalMilestoneEvents,
     ],
     async () => {
       await Promise.all([
@@ -229,6 +251,8 @@ export async function importBackup(jsonText: string): Promise<void> {
         db.habits.clear(),
         db.holdings.clear(),
         db.calendarEvents.clear(),
+        db.scheduleItems.clear(),
+        db.goalMilestoneEvents.clear(),
       ]);
 
       await Promise.all([
@@ -245,6 +269,8 @@ export async function importBackup(jsonText: string): Promise<void> {
         db.habits.bulkAdd(habits as never[]),
         db.holdings.bulkAdd(holdings as never[]),
         db.calendarEvents.bulkAdd(calendarEvents as never[]),
+        db.scheduleItems.bulkAdd(scheduleItems as never[]),
+        db.goalMilestoneEvents.bulkAdd(goalMilestoneEvents as never[]),
       ]);
     }
   );
@@ -267,6 +293,8 @@ export async function resetAllData(): Promise<void> {
       db.habits,
       db.holdings,
       db.calendarEvents,
+      db.scheduleItems,
+      db.goalMilestoneEvents,
     ],
     async () => {
       await Promise.all([
@@ -283,6 +311,8 @@ export async function resetAllData(): Promise<void> {
         db.habits.clear(),
         db.holdings.clear(),
         db.calendarEvents.clear(),
+        db.scheduleItems.clear(),
+        db.goalMilestoneEvents.clear(),
       ]);
     }
   );

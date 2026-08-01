@@ -85,7 +85,7 @@ describe("parseTransactionsCsv", () => {
     const { valid, errors } = parseTransactionsCsv(csv);
 
     expect(valid).toHaveLength(0);
-    expect(errors).toEqual([{ row: 2, message: "จำนวนเงินไม่ถูกต้อง" }]);
+    expect(errors).toEqual([{ row: 2, message: "Invalid amount" }]);
   });
 
   it("collects a row error for a missing required field", () => {

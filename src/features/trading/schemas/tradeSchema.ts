@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { TranslateFn } from "@/i18n/useTranslation";
+
 export const marketTypeEnum = z.enum([
   "stocks",
   "etf",
@@ -41,22 +43,22 @@ const confidenceScore = z
   .max(5, "1-5")
   .optional();
 
-export const tradeSchema = z
-  .object({
-    symbol: z.string().min(1, "กรุณากรอกสัญลักษณ์"),
+export function tradeSchema(t: TranslateFn) {
+  return z.object({
+    symbol: z.string().min(1, t("validation.common.symbolRequired")),
     market: marketTypeEnum,
     direction: tradeDirectionEnum,
     status: tradeStatusEnum,
 
     entryPrice: z
-      .number({ error: "กรุณากรอกราคาเข้า" })
-      .positive("ราคาเข้าต้องมากกว่า 0"),
+      .number({ error: t("validation.trade.entryPriceRequired") })
+      .positive(t("validation.trade.entryPricePositive")),
     exitPrice: z.number().positive().optional(),
     stopLoss: z.number().positive().optional(),
     takeProfit: z.number().positive().optional(),
     quantity: z
-      .number({ error: "กรุณากรอกจำนวน" })
-      .positive("จำนวนต้องมากกว่า 0"),
+      .number({ error: t("validation.common.quantityRequired") })
+      .positive(t("validation.common.quantityPositive")),
 
     riskPercent: z.number().optional(),
     positionSize: z.number().optional(),
@@ -68,7 +70,7 @@ export const tradeSchema = z
     setup: z.string().optional(),
     session: tradingSessionEnum.optional(),
 
-    entryDate: z.string().min(1, "กรุณาเลือกวันที่เข้า"),
+    entryDate: z.string().min(1, t("validation.trade.entryDateRequired")),
     entryTime: z.string().optional(),
     exitDate: z.string().optional(),
     exitTime: z.string().optional(),
@@ -84,5 +86,6 @@ export const tradeSchema = z
     screenshots: z.array(z.string()).optional(),
     tags: z.array(z.string()).optional(),
   });
+}
 
-export type TradeFormData = z.infer<typeof tradeSchema>;
+export type TradeFormData = z.infer<ReturnType<typeof tradeSchema>>;
