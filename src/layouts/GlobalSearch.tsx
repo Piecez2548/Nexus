@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 
@@ -7,7 +7,7 @@ import { useClickOutside } from "@/hooks/useClickOutside";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 import { useTranslation } from "@/i18n/useTranslation";
 
-export default function GlobalSearch() {
+function GlobalSearch() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -70,3 +70,5 @@ export default function GlobalSearch() {
     </div>
   );
 }
+
+export default memo(GlobalSearch);

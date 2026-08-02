@@ -70,7 +70,7 @@ describe("TopBar", () => {
     renderTopBar();
 
     await user.click(screen.getByRole("button", { name: "Notifications" }));
-    expect(await screen.findByText(/เกินแล้ว/)).toBeInTheDocument();
+    expect(await screen.findByText(/budget is over the limit/)).toBeInTheDocument();
   });
 
   it("shows an empty state in the bell dropdown with no notifications", async () => {

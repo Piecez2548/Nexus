@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { Flame } from "lucide-react";
 
 import { useGamificationStore } from "@/store/gamificationStore";
@@ -6,7 +6,7 @@ import { getXpProgress } from "@/utils/leveling";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useTranslation } from "@/i18n/useTranslation";
 
-export default function LevelBadge() {
+function LevelBadge() {
   const xp = useGamificationStore((s) => s.xp);
   const streak = useGamificationStore((s) => s.streak);
   const { t } = useTranslation();
@@ -58,3 +58,5 @@ export default function LevelBadge() {
     </div>
   );
 }
+
+export default memo(LevelBadge);

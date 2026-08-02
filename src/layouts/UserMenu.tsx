@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserCircle2, ChevronDown, Settings, Lock } from "lucide-react";
 
@@ -7,7 +7,7 @@ import { useClickOutside } from "@/hooks/useClickOutside";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 import { useTranslation } from "@/i18n/useTranslation";
 
-export default function UserMenu() {
+function UserMenu() {
   const navigate = useNavigate();
   const isEnabled = useAppLockStore((s) => s.isEnabled());
   const lock = useAppLockStore((s) => s.lock);
@@ -67,3 +67,5 @@ export default function UserMenu() {
     </div>
   );
 }
+
+export default memo(UserMenu);

@@ -6,6 +6,14 @@ import { useResolvedTheme } from "@/hooks/useResolvedTheme";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
+import { useTodoStore } from "@/features/todo/store/todoStore";
+import { useHabitStore } from "@/features/habits/store/habitStore";
+import { useGoalStore } from "@/features/finance/store/goalStore";
+import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
+import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
+import { useAccountStore } from "@/features/finance/store/accountStore";
+import { useCategoryStore } from "@/features/finance/store/categoryStore";
+import { useRecipientProfileStore } from "@/features/finance/store/recipientProfileStore";
 import { useTranslation } from "@/i18n/useTranslation";
 
 import GlobalSearch from "./GlobalSearch";
@@ -18,9 +26,17 @@ export default function TopBar() {
   const isDark = useResolvedTheme(themeMode);
   const { t } = useTranslation();
 
-  const { loadTransactions } = useTransactionStore();
-  const { loadBudgets } = useBudgetStore();
-  const { loadTrades } = useTradeStore();
+  const loadTransactions = useTransactionStore((s) => s.loadTransactions);
+  const loadBudgets = useBudgetStore((s) => s.loadBudgets);
+  const loadTrades = useTradeStore((s) => s.loadTrades);
+  const loadTodos = useTodoStore((s) => s.loadTodos);
+  const loadHabits = useHabitStore((s) => s.loadHabits);
+  const loadGoals = useGoalStore((s) => s.loadGoals);
+  const loadHoldings = useHoldingStore((s) => s.loadHoldings);
+  const loadScheduleItems = useScheduleItemStore((s) => s.loadItems);
+  const loadAccounts = useAccountStore((s) => s.loadAccounts);
+  const loadCategories = useCategoryStore((s) => s.loadCategories);
+  const loadProfiles = useRecipientProfileStore((s) => s.loadProfiles);
 
   // The header's search and notifications read from these stores
   // regardless of which page is currently mounted, so make sure they're
@@ -30,7 +46,27 @@ export default function TopBar() {
     loadTransactions();
     loadBudgets();
     loadTrades();
-  }, [loadTransactions, loadBudgets, loadTrades]);
+    loadTodos();
+    loadHabits();
+    loadGoals();
+    loadHoldings();
+    loadScheduleItems();
+    loadAccounts();
+    loadCategories();
+    loadProfiles();
+  }, [
+    loadTransactions,
+    loadBudgets,
+    loadTrades,
+    loadTodos,
+    loadHabits,
+    loadGoals,
+    loadHoldings,
+    loadScheduleItems,
+    loadAccounts,
+    loadCategories,
+    loadProfiles,
+  ]);
 
   return (
     <header
