@@ -1,13 +1,5 @@
 import { transactionTemplateRepository } from "@/features/finance/repositories/transactionTemplateRepository";
+import { createCrudService } from "@/database/createCrudService";
 import type { TransactionTemplate } from "../types";
 
-export const transactionTemplateService = {
-  list: () => transactionTemplateRepository.getAll(),
-
-  create: (template: TransactionTemplate) => transactionTemplateRepository.add(template),
-
-  update: (id: number, template: TransactionTemplate) =>
-    transactionTemplateRepository.update(id, template),
-
-  remove: (id: number) => transactionTemplateRepository.remove(id),
-};
+export const transactionTemplateService = createCrudService<TransactionTemplate>(transactionTemplateRepository);

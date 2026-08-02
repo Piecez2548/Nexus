@@ -2,9 +2,9 @@ import { useEffect } from "react";
 
 import SummaryCardsGrid from "@/features/dashboard/components/SummaryCardsGrid";
 import CashFlowSection from "@/features/dashboard/components/CashFlowSection";
-import MonthlyOverviewPanel from "@/features/dashboard/components/MonthlyOverviewPanel";
+import MonthlyOverviewPanel from "@/features/finance/components/MonthlyOverviewPanel";
 import BudgetPreviewPanel from "@/features/dashboard/components/BudgetPreviewPanel";
-import GoalsPreviewPanel from "@/features/dashboard/components/GoalsPreviewPanel";
+import GoalsPreviewPanel from "@/features/finance/components/GoalsPreviewPanel";
 import RecentTransactionsList from "@/features/dashboard/components/RecentTransactionsList";
 import SubscriptionsSummaryPanel from "@/features/finance/components/SubscriptionsSummaryPanel";
 import LoadingState from "@/components/ui/LoadingState";
