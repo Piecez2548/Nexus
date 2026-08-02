@@ -7,7 +7,8 @@
 
 import { recentWindowExpense } from "@/features/finance/aiAnalytics/engine/behavior/detectors/flagBasedDetector";
 import { SHOPPING_CATEGORY_PATTERN } from "@/features/finance/aiAnalytics/engine/behavior/analyzers/shoppingAnalyzer";
-import { clamp, shareScore } from "@/features/finance/aiAnalytics/engine/behavior/calculators/scoreMath";
+import { shareScore } from "@/features/finance/aiAnalytics/engine/behavior/calculators/scoreMath";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import { DEFAULT_SCORE_THRESHOLDS } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
 import type { BehaviorEngineContext, SpendingStyle, SpendingStyleClassification } from "@/features/finance/aiAnalytics/engine/behavior/types";
 

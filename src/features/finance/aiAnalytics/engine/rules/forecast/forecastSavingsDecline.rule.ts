@@ -1,3 +1,4 @@
+import { pctChange } from "@/features/finance/utils/cashFlowMath";
 import type { FinancialRule, RuleContext } from "@/features/finance/aiAnalytics/engine/rules/types";
 import { ruleMessages, type RecommendationDraft } from "@/features/finance/aiAnalytics/engine/rules/shared";
 
@@ -15,7 +16,12 @@ function evaluate(context: RuleContext): RecommendationDraft[] {
   const expectedSavings = context.forecast.expectedSavings;
   if (expectedSavings >= previousSaving) return [];
 
-  const percent = Math.round(((previousSaving - expectedSavings) / previousSaving) * 100);
+  // "Decline" is framed as (previous - expected)/previous, the negation of
+  // pctChange's (cur-prev)/prev — so this calls pctChange with the
+  // arguments swapped and negates the result. previousSaving > 0 is
+  // guaranteed by the guard above, so pctChange's prev===0 null branch can
+  // never trigger here.
+  const percent = Math.round(-pctChange(expectedSavings, previousSaving)!);
   if (percent < DECLINE_THRESHOLD_PERCENT) return [];
 
   return [

@@ -1,6 +1,7 @@
 import { parseLocalDate } from "@/utils/localDate";
 import { getCurrentPeriodRange } from "@/features/finance/utils/periodRange";
 import { lastNMonthRanges, sumByType } from "@/features/finance/utils/cashFlowMath";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { BudgetProgress } from "@/features/finance/utils/budgetStatus";
 import type { Transaction } from "@/features/finance/types";
 
@@ -41,10 +42,6 @@ export interface HealthScoreResult {
   grade: HealthScoreGrade | null;
   insufficientData: boolean;
   subScores: HealthScoreSubScore[];
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }
 
 // Distinct calendar months spanned between the earliest transaction and

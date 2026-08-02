@@ -8,12 +8,10 @@ import { generateInsights } from "@/features/finance/aiAnalytics/engine/analyzer
 import { generateRecommendations } from "@/features/finance/aiAnalytics/engine/analyzers/recommendations";
 import { generateForecast } from "@/features/finance/aiAnalytics/engine/analyzers/forecast";
 import { buildTimeline } from "@/features/finance/aiAnalytics/engine/analyzers/timeline";
-import { generateExecutiveSummary } from "@/features/finance/aiAnalytics/engine/analyzers/executiveSummary";
 import { computeTransactionStatistics } from "@/features/finance/aiAnalytics/engine/analyzers/transactionStatistics";
 import { analyzeGoals } from "@/features/finance/aiAnalytics/engine/analyzers/goalAnalyzer";
 import { buildFinancialSnapshot } from "@/features/finance/aiAnalytics/models/financial-snapshot.model";
 import { buildMerchantAnalysis } from "@/features/finance/aiAnalytics/models/merchant-analysis.model";
-import { buildSummary } from "@/features/finance/aiAnalytics/models/summary.model";
 import { computeFinancialHealthScore } from "@/features/finance/aiAnalytics/engine/scoring/score-engine/computeFinancialHealthScore";
 import { generateActionableRecommendations } from "@/features/finance/aiAnalytics/engine/recommendation/engine/generateActionableRecommendations";
 import { analyzeBehaviorProfile } from "@/features/finance/aiAnalytics/engine/behavior/engine/analyzeBehaviorProfile";
@@ -65,10 +63,8 @@ export function runAnalysis(input: FinancialAnalysisInput): FinancialAnalysisRes
     now
   );
   const timeline = buildTimeline(transactions, budgetAnalysis, behaviorAnalysis, cashFlowAnalysis, spendingAnalysis, goalMilestoneEvents, now);
-  const executiveSummary = generateExecutiveSummary(healthScore, spendingAnalysis, cashFlowAnalysis, recommendations);
   const financialSnapshot = buildFinancialSnapshot(cashFlowAnalysis, budgetAnalysis, spendingAnalysis, behaviorAnalysis, transactionStatistics, transactions, now);
   const merchantAnalysis = buildMerchantAnalysis(behaviorAnalysis, recipientProfiles, transactions, recommendations);
-  const summary = buildSummary(recommendations);
 
   // Reuses the same already-computed analyzer results as everything else
   // above — buildScoreContext.ts (which re-runs these analyzers) is only
@@ -147,12 +143,10 @@ export function runAnalysis(input: FinancialAnalysisInput): FinancialAnalysisRes
     forecast,
     recommendations,
     timeline,
-    executiveSummary,
     transactionStatistics,
     goalProgress,
     financialSnapshot,
     merchantAnalysis,
-    summary,
     financialHealthScore,
     actionableRecommendations,
     behaviorProfile,

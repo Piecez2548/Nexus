@@ -56,7 +56,6 @@ function stubResult(overrides: Partial<FinancialAnalysisResult> = {}): Financial
     forecast: { expectedEndOfMonthBalance: 0, expectedSavings: 0, budgetOverflowRisk: [], futureCashFlowTrend: { basis: "insufficientData", projectedMonthlyNet: null } },
     recommendations: [],
     timeline: [],
-    executiveSummary: [],
     transactionStatistics: {
       averageDailySpending: 0,
       averageWeeklySpending: 0,
@@ -81,7 +80,6 @@ function stubResult(overrides: Partial<FinancialAnalysisResult> = {}): Financial
       currentBalance: 0,
     },
     merchantAnalysis: [],
-    summary: { headline: null, positiveHighlights: [], negativeHighlights: [], opportunities: [], risks: [], nextActions: [] },
     financialHealthScore: {
       overallScore: null,
       grade: null,

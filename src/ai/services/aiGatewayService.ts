@@ -3,8 +3,10 @@
 // Future consumers (Trading, Portfolio, Finance) would import `aiGateway`
 // from here directly — e.g. `import { aiGateway } from "@/ai/services/
 // aiGatewayService"` — rather than constructing their own Gateway/Registry.
-// Nothing imports this yet: per this prompt's locked scope, existing
-// consumers stay on their current direct-engine-call paths.
+// Nothing imports this yet, and that stays true on purpose (see src/ai/
+// index.ts's STATUS note) — existing consumers stay on their current
+// direct-engine-call paths until a real non-local provider gives this
+// Gateway something worth routing to.
 
 import { loadAiGatewayConfig } from "@/ai/config/aiGatewayConfig";
 import { AIGateway } from "@/ai/gateway/AIGateway";

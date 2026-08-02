@@ -4,14 +4,11 @@
 // Unnecessary Spending (behaviorAnalysis.impulsePurchases as a share of
 // expense) — averaged into one 0-100 score.
 
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { CategoryScoreResult, ScoreContext, ScoreMessage } from "@/features/finance/aiAnalytics/engine/scoring/types";
 import type { ScoreThresholds } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
 
 const NS = "aiAnalytics.financialHealthScore.expenseControl";
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export function calculateExpenseControlScore(context: ScoreContext, weight: number, thresholds: ScoreThresholds["expenseControl"]): CategoryScoreResult {
   const { income, expense } = context.cashFlowAnalysis;

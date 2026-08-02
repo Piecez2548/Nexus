@@ -5,11 +5,9 @@
 // engine/executiveSummary/index.ts for the public barrel and
 // engine/computeExecutiveSummaryReport.ts for the main entry point.
 //
-// Engine-only this pass — no UI. Two older, thinner summary-ish things
-// (engine/analyzers/executiveSummary.ts's ExecutiveSummaryPart[] and
-// models/summary.model.ts's Summary) predate Prompts 005-008 and stay
-// untouched — this is a new, richer layer alongside them, not an
-// extension.
+// Rendered by components/executiveSummary/ExecutiveSummarySection.tsx. Two
+// older, thinner summary-ish things this superseded (ExecutiveSummaryPart[]
+// and the Summary model) were removed once no UI code still read them.
 
 import type { FinancialSnapshot } from "@/features/finance/aiAnalytics/models/financial-snapshot.model";
 import type { FinancialHealthGrade, FinancialHealthStatus, FinancialHealthScoreResult, ScoreMessage } from "@/features/finance/aiAnalytics/engine/scoring/types";

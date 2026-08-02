@@ -1,3 +1,4 @@
+import { pctChange } from "@/features/finance/utils/cashFlowMath";
 import type { FinancialRule, RuleContext } from "@/features/finance/aiAnalytics/engine/rules/types";
 import { ruleMessages, type RecommendationDraft } from "@/features/finance/aiAnalytics/engine/rules/shared";
 import type { TopMerchantEntry } from "@/features/finance/aiAnalytics/engine/analyzers/behaviorAnalysis";
@@ -15,7 +16,9 @@ function evaluate(context: RuleContext): RecommendationDraft[] {
     const previous = trend[trend.length - 2].amount;
     if (previous <= 0 || current <= previous) continue;
 
-    const percent = ((current - previous) / previous) * 100;
+    // previous > 0 is guaranteed by the guard above, so pctChange's
+    // prev===0 null branch can never trigger here.
+    const percent = pctChange(current, previous)!;
     if (percent > GROWTH_THRESHOLD_PERCENT && (!best || percent > best.percent)) {
       best = { merchant, percent };
     }

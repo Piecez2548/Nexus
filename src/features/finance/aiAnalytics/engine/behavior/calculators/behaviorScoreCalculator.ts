@@ -11,7 +11,9 @@ import { matchesKeywordFlag, recipientAliasLookup } from "@/features/finance/aiA
 import { recentWindowExpense } from "@/features/finance/aiAnalytics/engine/behavior/detectors/flagBasedDetector";
 import { SHOPPING_CATEGORY_PATTERN } from "@/features/finance/aiAnalytics/engine/behavior/analyzers/shoppingAnalyzer";
 import { SHOPPING_CONCENTRATION_FULL_SCORE_PERCENT } from "@/features/finance/aiAnalytics/engine/behavior/calculators/spendingStyleClassifier";
-import { clamp, shareScore } from "@/features/finance/aiAnalytics/engine/behavior/calculators/scoreMath";
+import { shareScore } from "@/features/finance/aiAnalytics/engine/behavior/calculators/scoreMath";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
+import { coefficientOfVariationScore } from "@/features/finance/aiAnalytics/engine/shared/statsUtils";
 import { BEHAVIOR_KEYWORDS } from "@/features/finance/aiAnalytics/engine/constants/behaviorKeywords";
 import { DEFAULT_SCORE_THRESHOLDS } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
 import type { BehaviorEngineContext, BehaviorScores } from "@/features/finance/aiAnalytics/engine/behavior/types";
@@ -95,17 +97,11 @@ function monthlyDiscretionaryTotals(context: BehaviorEngineContext): number[] {
 
 // Coefficient-of-variation on trailing discretionary spend — mirrors
 // cashFlowScore.ts's (Prompt 005) own stability calculation, applied to a
-// different (behavior-only) series.
+// different (behavior-only) series. Delegates to the shared implementation
+// in engine/shared/statsUtils.ts (verified identical guards/formula).
 function scoreConsistency(context: BehaviorEngineContext): number | null {
   const values = monthlyDiscretionaryTotals(context);
-  const activeMonths = values.filter((v) => v > 0).length;
-  if (activeMonths < 2) return null;
-
-  const mean = values.reduce((sum, v) => sum + v, 0) / values.length;
-  if (mean <= 0) return null;
-  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
-  const coefficientOfVariation = Math.sqrt(variance) / mean;
-  return clamp(100 - (coefficientOfVariation / CONSISTENCY_MAX_COV) * 100, 0, 100);
+  return coefficientOfVariationScore(values, CONSISTENCY_MAX_COV);
 }
 
 export function calculateBehaviorScores(context: BehaviorEngineContext): BehaviorScores {

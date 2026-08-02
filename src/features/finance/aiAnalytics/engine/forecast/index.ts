@@ -4,7 +4,7 @@
 
 export * from "@/features/finance/aiAnalytics/engine/forecast/types";
 export * from "@/features/finance/aiAnalytics/engine/forecast/calculators/mathUtils";
-export * from "@/features/finance/aiAnalytics/engine/forecast/calculators/stabilityMath";
+export * from "@/features/finance/aiAnalytics/engine/shared/statsUtils";
 export * from "@/features/finance/aiAnalytics/engine/forecast/calculators/forecastConfidenceCalculator";
 export * from "@/features/finance/aiAnalytics/engine/forecast/predictors/periodForecastCalculator";
 export * from "@/features/finance/aiAnalytics/engine/forecast/predictors/monthlyForecastPredictor";

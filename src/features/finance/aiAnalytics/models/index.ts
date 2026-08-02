@@ -2,12 +2,12 @@
 // path a future API layer or AI provider integration (Claude/OpenAI/
 // Gemini/Ollama) consumes this engine's types through, e.g.:
 //
-//   import type { FinancialSnapshot, Recommendation, Summary } from "@/features/finance/aiAnalytics/models";
+//   import type { FinancialSnapshot, Recommendation } from "@/features/finance/aiAnalytics/models";
 //
 // Every file re-exported here is either a documented alias of a type an
-// analyzer already owns, or one of the 4 real build*() adapters
-// (financial-snapshot, merchant-analysis, statistics, summary) — see each
-// file's own header comment for what it owns and why.
+// analyzer already owns, or one of the real build*() adapters
+// (financial-snapshot, merchant-analysis, statistics) — see each file's
+// own header comment for what it owns and why.
 
 export * from "@/features/finance/aiAnalytics/models/enums";
 export * from "@/features/finance/aiAnalytics/models/financial-health.model";
@@ -20,6 +20,5 @@ export * from "@/features/finance/aiAnalytics/models/cashflow-analysis.model";
 export * from "@/features/finance/aiAnalytics/models/forecast.model";
 export * from "@/features/finance/aiAnalytics/models/recommendation.model";
 export * from "@/features/finance/aiAnalytics/models/insight.model";
-export * from "@/features/finance/aiAnalytics/models/summary.model";
 export * from "@/features/finance/aiAnalytics/models/statistics.model";
 export * from "@/features/finance/aiAnalytics/models/timeline.model";

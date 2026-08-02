@@ -7,14 +7,11 @@
 // isn't a weakness to penalize, same convention as budgetDiscipline with no
 // budgets.
 
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { CategoryScoreResult, ScoreContext, ScoreMessage } from "@/features/finance/aiAnalytics/engine/scoring/types";
 import type { ScoreThresholds } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
 
 const NS = "aiAnalytics.financialHealthScore.goalProgress";
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export function calculateGoalProgressScore(context: ScoreContext, weight: number, thresholds: ScoreThresholds["goalProgress"]): CategoryScoreResult {
   const { goalProgress } = context;

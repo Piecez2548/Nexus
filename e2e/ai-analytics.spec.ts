@@ -29,7 +29,7 @@ test.describe("AI Analytics", () => {
     await page.goto("/ai-analytics");
 
     await expect(page.getByRole("heading", { name: "AI Analytics" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Financial Health Score", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Financial Health Score (Weighted)" })).toBeVisible();
     await expect(page.getByText("AI Insights")).toBeVisible();
     await expect(page.getByText("Spending Analysis")).toBeVisible();
     await expect(page.getByText("Behavior Profile")).toBeVisible();

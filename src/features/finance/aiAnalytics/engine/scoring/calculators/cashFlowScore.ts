@@ -6,14 +6,11 @@
 // second monthly series.
 
 import { trailingConsecutiveCount } from "@/features/finance/aiAnalytics/engine/analyzers/multiMonthTrends";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { CategoryScoreResult, ScoreContext, ScoreMessage } from "@/features/finance/aiAnalytics/engine/scoring/types";
 import type { ScoreThresholds } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
 
 const NS = "aiAnalytics.financialHealthScore.cashFlow";
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export function calculateCashFlowScore(context: ScoreContext, weight: number, thresholds: ScoreThresholds["cashFlow"]): CategoryScoreResult {
   const { netCashFlow, expense, monthlyTrend } = context.cashFlowAnalysis;

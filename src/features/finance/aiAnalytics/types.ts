@@ -8,12 +8,10 @@ import type { CashFlowAnalysisResult } from "@/features/finance/aiAnalytics/engi
 import type { ForecastResult } from "@/features/finance/aiAnalytics/engine/analyzers/forecast";
 import type { Recommendation } from "@/features/finance/aiAnalytics/engine/analyzers/recommendations";
 import type { TimelineEvent } from "@/features/finance/aiAnalytics/engine/analyzers/timeline";
-import type { ExecutiveSummaryPart } from "@/features/finance/aiAnalytics/engine/analyzers/executiveSummary";
 import type { TransactionStatistics } from "@/features/finance/aiAnalytics/engine/analyzers/transactionStatistics";
 import type { GoalProgressEntry } from "@/features/finance/aiAnalytics/engine/analyzers/goalAnalyzer";
 import type { FinancialSnapshot } from "@/features/finance/aiAnalytics/models/financial-snapshot.model";
 import type { MerchantAnalysis } from "@/features/finance/aiAnalytics/models/merchant-analysis.model";
-import type { Summary } from "@/features/finance/aiAnalytics/models/summary.model";
 import type { FinancialHealthScoreResult } from "@/features/finance/aiAnalytics/engine/scoring/types";
 import type { ActionableRecommendation } from "@/features/finance/aiAnalytics/engine/recommendation/types";
 import type { BehaviorAnalysisEngineResult } from "@/features/finance/aiAnalytics/engine/behavior/types";
@@ -40,7 +38,6 @@ export interface FinancialAnalysisResult {
   forecast: ForecastResult;
   recommendations: Recommendation[];
   timeline: TimelineEvent[];
-  executiveSummary: ExecutiveSummaryPart[];
   transactionStatistics: TransactionStatistics;
   goalProgress: GoalProgressEntry[];
   // Prompt 004's centralized domain models (src/features/finance/
@@ -48,10 +45,10 @@ export interface FinancialAnalysisResult {
   // results above via build*() adapters, not new statistics.
   financialSnapshot: FinancialSnapshot;
   merchantAnalysis: MerchantAnalysis[];
-  summary: Summary;
   // Prompt 005's independent, weighted, explainable scoring system — a new
-  // parallel result alongside `healthScore` above (untouched, still the
-  // old 4-tier system 4 rules and HealthScoreCard.tsx depend on).
+  // parallel result alongside `healthScore` above (still computed and still
+  // relied on internally by 4 rules, but its own old UI card was removed
+  // once this superseded it as the page's single health-score display).
   financialHealthScore: FinancialHealthScoreResult;
   // Prompt 006's enrichment + prioritization layer over `recommendations`
   // above (untouched) — the same rule findings, packaged with Summary/
@@ -70,9 +67,9 @@ export interface FinancialAnalysisResult {
   forecastProfile: ForecastEngineResult;
   // Prompt 009's synthesis layer over financialSnapshot/financialHealthScore/
   // actionableRecommendations/behaviorProfile/forecastProfile above — a
-  // headline, guarded highlights, and a top-5 action plan, deliberately
-  // separate from the two older, thinner `executiveSummary`/`summary`
-  // fields above (both untouched, both predate Prompts 005-008).
+  // headline, guarded highlights, and a top-5 action plan. Two older,
+  // thinner fields that predated this (`executiveSummary`/`summary`) were
+  // removed once this superseded them and no UI code still read them.
   executiveSummaryReport: ExecutiveSummaryReport;
   meta: {
     generatedAt: string;

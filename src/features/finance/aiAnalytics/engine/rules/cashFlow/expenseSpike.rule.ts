@@ -1,3 +1,4 @@
+import { pctChange } from "@/features/finance/utils/cashFlowMath";
 import type { FinancialRule, RuleContext } from "@/features/finance/aiAnalytics/engine/rules/types";
 import { ruleMessages, type RecommendationDraft } from "@/features/finance/aiAnalytics/engine/rules/shared";
 
@@ -12,7 +13,9 @@ function evaluate(context: RuleContext): RecommendationDraft[] {
   const priorAverage = priorMonths.reduce((sum, v) => sum + v, 0) / priorMonths.length;
   if (priorAverage <= 0 || currentMonth <= priorAverage) return [];
 
-  const percent = Math.round(((currentMonth - priorAverage) / priorAverage) * 100);
+  // priorAverage > 0 is guaranteed by the guard above, so pctChange's
+  // prev===0 null branch can never trigger here.
+  const percent = Math.round(pctChange(currentMonth, priorAverage)!);
   if (percent < SPIKE_THRESHOLD_PERCENT) return [];
 
   return [

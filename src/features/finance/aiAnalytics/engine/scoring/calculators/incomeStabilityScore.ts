@@ -6,14 +6,11 @@
 
 import { monthlyValuesFor } from "@/features/finance/aiAnalytics/engine/analyzers/multiMonthTrends";
 import { pctChange } from "@/features/finance/utils/cashFlowMath";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { CategoryScoreResult, ScoreContext, ScoreMessage } from "@/features/finance/aiAnalytics/engine/scoring/types";
 import type { ScoreThresholds } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
 
 const NS = "aiAnalytics.financialHealthScore.incomeStability";
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export function calculateIncomeStabilityScore(context: ScoreContext, weight: number, thresholds: ScoreThresholds["incomeStability"]): CategoryScoreResult {
   const monthlyIncomes = monthlyValuesFor(context.transactions, null, "income", thresholds.windowMonths, context.now);

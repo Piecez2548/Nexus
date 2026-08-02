@@ -1,3 +1,4 @@
+import { pctChange } from "@/features/finance/utils/cashFlowMath";
 import type { FinancialRule, RuleContext } from "@/features/finance/aiAnalytics/engine/rules/types";
 import { ruleMessages, type RecommendationDraft } from "@/features/finance/aiAnalytics/engine/rules/shared";
 
@@ -14,7 +15,9 @@ function evaluate(context: RuleContext): RecommendationDraft[] {
   for (const sub of context.behaviorAnalysis.subscriptions) {
     if (sub.previousAmount <= 0 || sub.lastAmount <= sub.previousAmount) continue;
 
-    const percent = Math.round(((sub.lastAmount - sub.previousAmount) / sub.previousAmount) * 100);
+    // sub.previousAmount > 0 is guaranteed by the guard above, so
+    // pctChange's prev===0 null branch can never trigger here.
+    const percent = Math.round(pctChange(sub.lastAmount, sub.previousAmount)!);
     if (percent < PRICE_INCREASE_THRESHOLD_PERCENT) continue;
 
     recommendations.push({

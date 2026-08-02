@@ -1,4 +1,4 @@
-import { lastNMonthRanges } from "@/features/finance/utils/cashFlowMath";
+import { lastNMonthRanges, pctChange } from "@/features/finance/utils/cashFlowMath";
 import { isDateWithinRange } from "@/features/finance/utils/periodRange";
 import type { FinancialRule, RuleContext } from "@/features/finance/aiAnalytics/engine/rules/types";
 import { ruleMessages, type RecommendationDraft } from "@/features/finance/aiAnalytics/engine/rules/shared";
@@ -26,7 +26,9 @@ function evaluate(context: RuleContext): RecommendationDraft[] {
   const currentAverage = averageAmount(context.transactions, currentRange);
   if (previousAverage <= 0 || currentAverage <= previousAverage) return [];
 
-  const percent = Math.round(((currentAverage - previousAverage) / previousAverage) * 100);
+  // previousAverage > 0 is guaranteed by the guard above, so pctChange's
+  // prev===0 null branch can never trigger here.
+  const percent = Math.round(pctChange(currentAverage, previousAverage)!);
   if (percent < RISE_THRESHOLD_PERCENT) return [];
 
   return [

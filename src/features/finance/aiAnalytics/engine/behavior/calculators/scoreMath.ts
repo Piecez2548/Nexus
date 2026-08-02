@@ -3,9 +3,7 @@
 // (neither depends on the other), so this is their common home rather than
 // one importing from the other.
 
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 
 // 0-100, reaching 100 once `amount` is `fullScoreSharePercent`% (or more)
 // of `total`.

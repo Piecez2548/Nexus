@@ -6,7 +6,8 @@
 // this never fabricates one.
 
 import { daysBetween } from "@/features/finance/aiAnalytics/engine/forecast/predictors/periodForecastCalculator";
-import { AVERAGE_DAYS_PER_MONTH, addDays, clamp } from "@/features/finance/aiAnalytics/engine/forecast/calculators/mathUtils";
+import { AVERAGE_DAYS_PER_MONTH, addDays } from "@/features/finance/aiAnalytics/engine/forecast/calculators/mathUtils";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import { toLocalDateString } from "@/utils/localDate";
 import type { Goal, GoalMilestoneEvent } from "@/features/finance/types";
 import type { GoalForecastEntry } from "@/features/finance/aiAnalytics/engine/forecast/types";

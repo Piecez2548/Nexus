@@ -44,7 +44,7 @@ export interface PeriodForecast {
   // equivalent, so "weekly" is null rather than a fabricated mismatched
   // figure.
   expectedEndOfPeriodBalance: number | null;
-  // 0-100, coefficient-of-variation-based (see calculators/stabilityMath.ts).
+  // 0-100, coefficient-of-variation-based (see engine/shared/statsUtils.ts).
   // Null if fewer than 2 active trailing months exist to measure variation.
   cashFlowStabilityScore: number | null;
   confidence: number; // 0-100, via forecastConfidenceCalculator

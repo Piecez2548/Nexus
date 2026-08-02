@@ -7,16 +7,13 @@
 // verbatim (all already scoped to the same trailing 3-month window) instead
 // of recomputing anything.
 
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { CategoryScoreResult, ScoreContext, ScoreMessage } from "@/features/finance/aiAnalytics/engine/scoring/types";
 import type { ScoreThresholds } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
 import type { BehaviorFlag } from "@/features/finance/aiAnalytics/engine/analyzers/behaviorAnalysis";
 
 const NS = "aiAnalytics.financialHealthScore.behavior";
 const RECENT_WINDOW_MONTHS = 3;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 // share = amount as a percentage of `total` — the higher the share, the
 // lower the score, bottoming out at 0 once share reaches

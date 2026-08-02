@@ -3,6 +3,8 @@
 // coachConfidenceCalculator.ts. Mirrors the "named constants, clamp
 // 0-100" shape every other calculator in this app uses.
 
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
+
 const DEFAULT_ANSWER_CONFIDENCE = 90;
 // Reserved for genuine no-data cases (e.g. 0 transactions in a domain) —
 // never used just because an answer is narrower than what was asked; that
@@ -12,10 +14,6 @@ const NO_DATA_CONFIDENCE = 0;
 const INSUFFICIENT_DATA_PENALTY = 25;
 const THIN_SAMPLE_PENALTY = 15;
 const THIN_SAMPLE_THRESHOLD = 3;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export interface AnswerConfidenceInput {
   hasData: boolean; // false when the specific denominator is empty (0 transactions/goals/budgets)

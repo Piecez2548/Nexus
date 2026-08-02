@@ -5,6 +5,7 @@
 // transaction fields against BEHAVIOR_KEYWORDS.
 
 import { COACH_INTENT_KEYWORDS, INTENT_PRIORITY_ORDER } from "@/features/finance/aiAnalytics/engine/coach/constants/coachIntentKeywords";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { CoachIntent, IntentMatch } from "@/features/finance/aiAnalytics/engine/coach/types";
 
 const CLASSIFIER_BASE_CONFIDENCE = 50;
@@ -15,10 +16,6 @@ const CLASSIFIER_MARGIN_CAP = 40;
 const CLASSIFIER_TIE_BREAK_PENALTY = 20;
 // Keyword matching is never claimed as full certainty, even at its best.
 const CLASSIFIER_MAX_CONFIDENCE = 95;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 interface IntentScore {
   intent: CoachIntent;

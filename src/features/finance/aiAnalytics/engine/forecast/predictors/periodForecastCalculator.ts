@@ -10,7 +10,7 @@
 import { getCurrentPeriodRange } from "@/features/finance/utils/periodRange";
 import { cumulativeBalanceAsOf, lastNMonthRanges, monthKey, sumByType } from "@/features/finance/utils/cashFlowMath";
 import { toLocalDateString } from "@/utils/localDate";
-import { signedCoefficientOfVariationScore } from "@/features/finance/aiAnalytics/engine/forecast/calculators/stabilityMath";
+import { signedCoefficientOfVariationScore } from "@/features/finance/aiAnalytics/engine/shared/statsUtils";
 import { calculateForecastConfidence } from "@/features/finance/aiAnalytics/engine/forecast/calculators/forecastConfidenceCalculator";
 import type { BudgetPeriod, Transaction } from "@/features/finance/types";
 import type { PeriodForecast } from "@/features/finance/aiAnalytics/engine/forecast/types";

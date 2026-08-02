@@ -34,7 +34,6 @@ describe("runAnalysis", () => {
     expect(result.meta).toMatchObject({ transactionCount: 0, monthsOfHistory: 0 });
     expect(result.financialSnapshot).toMatchObject({ income: 0, expense: 0, transactionCount: 0, budgetUsagePercent: null });
     expect(result.merchantAnalysis).toEqual([]);
-    expect(result.summary).toEqual({ headline: null, positiveHighlights: [], negativeHighlights: [], opportunities: [], risks: [], nextActions: [] });
     expect(result.financialHealthScore.insufficientData).toBe(true);
     expect(result.financialHealthScore.overallScore).toBeNull();
     expect(result.financialHealthScore.categoryScores).toHaveLength(7);
@@ -52,7 +51,7 @@ describe("runAnalysis", () => {
     expect(result.executiveSummaryReport.confidence).toBe(0);
   });
 
-  it("wires financialSnapshot, merchantAnalysis, and summary from the same analyzer results as everything else", () => {
+  it("wires financialSnapshot and merchantAnalysis from the same analyzer results as everything else", () => {
     const transactions: Transaction[] = [
       { title: "Salary", amount: 30000, type: "income", category: "Salary", account: "Bank", date: "2026-07-01", status: "completed" },
       { title: "7-Eleven", amount: 100, type: "expense", category: "Food", account: "Cash", date: "2026-07-10", status: "completed", recipient: "recipient-1" },
@@ -69,7 +68,6 @@ describe("runAnalysis", () => {
     expect(result.financialSnapshot.currentBalance).toBe(30000 - 250);
     expect(result.merchantAnalysis).toHaveLength(1);
     expect(result.merchantAnalysis[0]).toMatchObject({ alias: "7-Eleven", totalSpending: 250, largestPurchase: { amount: 150 } });
-    expect(result.summary.headline).toEqual(result.recommendations[0]?.title ?? null);
     expect(result.financialHealthScore.insufficientData).toBe(false);
     expect(result.financialHealthScore.overallScore).not.toBeNull();
 

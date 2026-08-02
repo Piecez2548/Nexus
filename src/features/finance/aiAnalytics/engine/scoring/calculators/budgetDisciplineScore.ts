@@ -8,16 +8,13 @@
 // independent sub-metric.
 
 import { monthlyValuesFor, trailingConsecutiveCount } from "@/features/finance/aiAnalytics/engine/analyzers/multiMonthTrends";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { CategoryScoreResult, ScoreContext, ScoreMessage } from "@/features/finance/aiAnalytics/engine/scoring/types";
 import type { ScoreThresholds } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
 import type { BudgetAnalysisEntry } from "@/features/finance/aiAnalytics/engine/analyzers/budgetAnalysis";
 
 const NS = "aiAnalytics.financialHealthScore.budgetDiscipline";
 const REPEATED_OVERSPEND_WINDOW_MONTHS = 6;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 function averageOveragePercent(overEntries: BudgetAnalysisEntry[]): number {
   const percentages = overEntries.map((e) => (e.budget.amount > 0 ? (e.spent / e.budget.amount - 1) * 100 : 0));

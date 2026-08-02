@@ -1,4 +1,4 @@
-import { lastNMonthRanges } from "@/features/finance/utils/cashFlowMath";
+import { lastNMonthRanges, pctChange } from "@/features/finance/utils/cashFlowMath";
 import { isDateWithinRange } from "@/features/finance/utils/periodRange";
 import { matchesKeywordFlag, recipientAliasLookup } from "@/features/finance/aiAnalytics/engine/analyzers/behaviorAnalysis";
 import { TRANSPORT_KEYWORDS } from "@/features/finance/aiAnalytics/engine/constants/behaviorKeywords";
@@ -25,7 +25,9 @@ function evaluate(context: RuleContext): RecommendationDraft[] {
   const priorAverage = priorMonths.reduce((sum, v) => sum + v, 0) / priorMonths.length;
   if (priorAverage <= 0 || currentMonth <= priorAverage) return [];
 
-  const percent = Math.round(((currentMonth - priorAverage) / priorAverage) * 100);
+  // priorAverage > 0 is guaranteed by the guard above, so pctChange's
+  // prev===0 null branch can never trigger here.
+  const percent = Math.round(pctChange(currentMonth, priorAverage)!);
   if (percent < RISE_THRESHOLD_PERCENT) return [];
 
   const estimatedMonthlySavings = Math.round(currentMonth - priorAverage);

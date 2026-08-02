@@ -6,12 +6,10 @@
 // short-circuits it to a hardcoded 0 instead, since there's no answer to
 // be confident about.
 
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
+
 const CLASSIFIER_CONFIDENCE_WEIGHT = 0.3;
 const ANSWER_CONFIDENCE_WEIGHT = 0.7; // weights sum to 1.0
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export function calculateCoachConfidence(classifierConfidence: number, answerConfidence: number): number {
   const blended = classifierConfidence * CLASSIFIER_CONFIDENCE_WEIGHT + answerConfidence * ANSWER_CONFIDENCE_WEIGHT;

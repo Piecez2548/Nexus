@@ -1,10 +1,22 @@
-// General-purpose extraction of Prompt 007's behaviorScoreCalculator.ts
-// scoreConsistency() coefficient-of-variation math (itself mirroring
-// Prompt 005's cashFlowScore.ts stability calculation) — kept local to
-// this engine rather than imported cross-engine, so engine/forecast stays
-// self-contained the same way engine/behavior's own scoreMath.ts is.
+// Shared coefficient-of-variation scoring — originally built inside
+// engine/forecast/ (mirroring engine/behavior/calculators/behaviorScoreCalculator.ts's
+// scoreConsistency(), itself mirroring engine/scoring/calculators/cashFlowScore.ts's
+// stability calculation) and deliberately kept local at the time "so
+// engine/forecast stays self-contained". Promoted here once a second real
+// engine (engine/behavior/) needed the exact same formula — moving it to a
+// neutral shared home avoids one sub-engine depending on another's
+// internals, which is what the original self-containment comment was
+// actually protecting against.
+//
+// NOT a drop-in replacement for every coefficient-of-variation calculation
+// in this app: engine/analyzers/healthScore.ts, engine/scoring/calculators/
+// cashFlowScore.ts, and engine/scoring/calculators/incomeStabilityScore.ts
+// each have their own guard-condition differences (e.g. no "at least 2
+// active values" gate, or a different zero-mean fallback) that look
+// deliberate rather than accidental drift — swapping those to call this
+// would be a behavior change, not a refactor, so they were left alone.
 
-import { clamp } from "@/features/finance/aiAnalytics/engine/forecast/calculators/mathUtils";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 
 // 0-100 stability score from a coefficient-of-variation on `values` — low
 // variation relative to the mean scores high. Null (never a fabricated

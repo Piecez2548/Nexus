@@ -6,7 +6,7 @@
 import { getCurrentPeriodRange } from "@/features/finance/utils/periodRange";
 import { daysBetween } from "@/features/finance/aiAnalytics/engine/forecast/predictors/periodForecastCalculator";
 import { calculateForecastConfidence } from "@/features/finance/aiAnalytics/engine/forecast/calculators/forecastConfidenceCalculator";
-import { clamp } from "@/features/finance/aiAnalytics/engine/forecast/calculators/mathUtils";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { BudgetProgress } from "@/features/finance/utils/budgetStatus";
 import type { BudgetForecastEntry, BudgetForecastResult } from "@/features/finance/aiAnalytics/engine/forecast/types";
 

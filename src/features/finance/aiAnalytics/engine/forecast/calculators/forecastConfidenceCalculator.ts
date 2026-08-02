@@ -6,7 +6,7 @@
 // "based on... seasonality" note) is out of scope — no year-over-year data
 // exists yet (same deferral as Category Trend's year-over-year field).
 
-import { clamp } from "@/features/finance/aiAnalytics/engine/forecast/calculators/mathUtils";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 
 const BASE_CONFIDENCE = 50;
 

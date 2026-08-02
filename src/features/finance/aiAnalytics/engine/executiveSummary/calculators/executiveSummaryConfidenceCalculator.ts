@@ -8,11 +8,8 @@
 // of the score's own magnitude, matching every other confidence calculator
 // in this app keeping "how good" separate from "how sure".
 
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { FinancialHealthScoreResult } from "@/features/finance/aiAnalytics/engine/scoring/types";
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 const BEHAVIOR_WEIGHT = 0.3;
 const FORECAST_WEIGHT = 0.3;

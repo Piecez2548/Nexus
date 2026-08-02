@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coefficientOfVariationScore, signedCoefficientOfVariationScore } from "./stabilityMath";
+import { coefficientOfVariationScore, signedCoefficientOfVariationScore } from "./statsUtils";
 
 describe("coefficientOfVariationScore", () => {
   it("is null with fewer than 2 active values", () => {

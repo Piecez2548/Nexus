@@ -14,6 +14,7 @@
 // saved 20% this month"), not predictions, so the usual uncertainty
 // treatment doesn't apply to them.
 
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { Recommendation, RecommendationConfidence, RecommendationPriority } from "@/features/finance/aiAnalytics/engine/analyzers/recommendations";
 
 const BASE_CONFIDENCE: Record<RecommendationConfidence, number> = { high: 85, medium: 60, low: 35 };
@@ -24,10 +25,6 @@ const HISTORY_BASELINE_MONTHS = 3;
 const HISTORY_ADJUSTMENT_PER_MONTH = 2;
 const MAX_HISTORY_ADJUSTMENT = 10;
 const INSUFFICIENT_DATA_PENALTY = 10;
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
 
 export function calculateConfidence(rec: Recommendation, monthsOfHistory: number, insufficientData: boolean): number {
   if (rec.priority === "information") return INFORMATION_CONFIDENCE;
