@@ -68,10 +68,7 @@ describe("AiAnalytics page", () => {
 
     render(<AiAnalytics />);
 
-    // Health Score — some numeric score should render (not the insufficient-data placeholder).
-    expect(await screen.findByText("Financial Health Score")).toBeInTheDocument();
-
-    // Financial Health Score (Weighted) — Prompt 005's independent, parallel scoring system.
+    // Financial Health Score (Weighted) — Prompt 005's scoring system, now the page's sole health-score display.
     expect(await screen.findByText("Financial Health Score (Weighted)")).toBeInTheDocument();
 
     // Executive Summary — a flowing-paragraph digest of the same data.
@@ -109,8 +106,11 @@ describe("AiAnalytics page", () => {
     expect(await screen.findByText("Forecast")).toBeInTheDocument();
 
     // Recommendations — the over-budget Food category should suggest a reduction.
+    // Appears twice: once in the standalone Recommendations section, once in
+    // Executive Summary's Action Plan / Top Recommendations (both surface the
+    // same underlying recommendation message, deliberately — pass-through reuse).
     expect(await screen.findByText("Recommendations")).toBeInTheDocument();
-    expect(screen.getByText("Reduce Food spending")).toBeInTheDocument();
+    expect(screen.getAllByText("Reduce Food spending").length).toBeGreaterThan(0);
 
     // Financial Timeline — a salary-received event should appear.
     expect(await screen.findByText("Financial Timeline")).toBeInTheDocument();
@@ -147,7 +147,12 @@ describe("AiAnalytics page", () => {
     const user = userEvent.setup();
     render(<AiAnalytics />);
 
-    const categoryButton = await screen.findByRole("button", { name: /Food/ });
+    // Anchored to the start: the category button's accessible name is
+    // "Food ฿1,900 (100.0%)" (category name first, then amount) — a bare
+    // /Food/ substring match also catches the What-If panel's unrelated
+    // "Reduce Food Spending" scenario tab once that section exists on the
+    // same page.
+    const categoryButton = await screen.findByRole("button", { name: /^Food/ });
     await user.click(categoryButton);
 
     expect(await screen.findByText("Food Insights")).toBeInTheDocument();

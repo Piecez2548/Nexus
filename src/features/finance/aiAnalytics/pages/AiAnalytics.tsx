@@ -11,9 +11,8 @@ import { useCategoryDetail } from "@/features/finance/aiAnalytics/hooks/useCateg
 import { useFinancialHealthTrend } from "@/features/finance/aiAnalytics/hooks/useFinancialHealthTrend";
 
 import AiCoachSection from "@/features/finance/aiAnalytics/components/aiCoach/AiCoachSection";
-import HealthScoreCard from "@/features/finance/aiAnalytics/components/HealthScoreCard";
 import FinancialHealthScoreSection from "@/features/finance/aiAnalytics/components/financialHealthScore/FinancialHealthScoreSection";
-import AiExecutiveSummary from "@/features/finance/aiAnalytics/components/AiExecutiveSummary";
+import ExecutiveSummarySection from "@/features/finance/aiAnalytics/components/executiveSummary/ExecutiveSummarySection";
 import AiInsightsPanel from "@/features/finance/aiAnalytics/components/AiInsightsPanel";
 import SpendingAnalysisSection from "@/features/finance/aiAnalytics/components/SpendingAnalysisSection";
 import BehaviorAnalysisSection from "@/features/finance/aiAnalytics/components/BehaviorAnalysisSection";
@@ -21,7 +20,7 @@ import BehaviorProfileSection from "@/features/finance/aiAnalytics/components/be
 import MerchantAnalysisSection from "@/features/finance/aiAnalytics/components/merchantAnalysis/MerchantAnalysisSection";
 import BudgetAnalysisSection from "@/features/finance/aiAnalytics/components/BudgetAnalysisSection";
 import CashFlowAnalysisSection from "@/features/finance/aiAnalytics/components/CashFlowAnalysisSection";
-import ForecastSection from "@/features/finance/aiAnalytics/components/ForecastSection";
+import ForecastSection from "@/features/finance/aiAnalytics/components/forecast/ForecastSection";
 import RecommendationsSection from "@/features/finance/aiAnalytics/components/RecommendationsSection";
 import FinancialTimelineSection from "@/features/finance/aiAnalytics/components/FinancialTimelineSection";
 import CategoryInsightsDrawer from "@/features/finance/aiAnalytics/components/categoryDetail/CategoryInsightsDrawer";
@@ -74,9 +73,8 @@ export default function AiAnalytics() {
       ) : (
         <div className="space-y-8">
           <AiCoachSection data={data} />
-          <HealthScoreCard result={data.healthScore} />
           <FinancialHealthScoreSection result={data.financialHealthScore} trendPoints={trendPoints} />
-          <AiExecutiveSummary parts={data.executiveSummary} />
+          <ExecutiveSummarySection result={data.executiveSummaryReport} />
           <AiInsightsPanel insights={data.insights} />
           <SpendingAnalysisSection
             result={data.spendingAnalysis}
@@ -89,8 +87,15 @@ export default function AiAnalytics() {
           <MerchantAnalysisSection merchants={data.behaviorAnalysis.topMerchants} />
           <BudgetAnalysisSection result={data.budgetAnalysis} />
           <CashFlowAnalysisSection result={data.cashFlowAnalysis} />
-          <ForecastSection result={data.forecast} monthlyTrend={data.cashFlowAnalysis.monthlyTrend} />
-          <RecommendationsSection recommendations={data.recommendations} />
+          <ForecastSection
+            result={data.forecastProfile}
+            monthlyTrend={data.cashFlowAnalysis.monthlyTrend}
+            goalProgress={data.goalProgress}
+            spendingAnalysis={data.spendingAnalysis}
+            subscriptions={data.behaviorAnalysis.subscriptions}
+            now={new Date(data.meta.generatedAt)}
+          />
+          <RecommendationsSection recommendations={data.actionableRecommendations} />
           <FinancialTimelineSection events={data.timeline} />
         </div>
       )}
