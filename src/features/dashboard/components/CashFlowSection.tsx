@@ -1,5 +1,6 @@
 import ChartCard from "@/components/ui/ChartCard";
 import ChartLegend from "@/components/ui/ChartLegend";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 import ExpensePieChart from "@/features/dashboard/components/charts/ExpensePieChart";
 import CashFlowLineChart from "@/features/dashboard/components/charts/CashFlowLineChart";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -24,14 +25,22 @@ export default function CashFlowSection({ granularity }: Props) {
 
         <ChartCard
           title={t("dashboard.incomeVsExpense")}
-          headerExtra={<ChartLegend items={cashFlowLegend} />}
+          headerExtra={
+            <div className="flex items-center gap-3">
+              <ChartLegend items={cashFlowLegend} />
+              <InfoTooltip text={t("dashboard.info.incomeVsExpense")} />
+            </div>
+          }
         >
           <CashFlowLineChart granularity={granularity} />
         </ChartCard>
 
       </div>
 
-      <ChartCard title={t("dashboard.expenseByCategoryTitle")}>
+      <ChartCard
+        title={t("dashboard.expenseByCategoryTitle")}
+        headerExtra={<InfoTooltip text={t("dashboard.info.expenseByCategory")} />}
+      >
         <ExpensePieChart granularity={granularity} />
       </ChartCard>
 

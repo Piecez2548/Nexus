@@ -10,6 +10,7 @@ interface SummaryCardProps {
   change?: number | null;
   invertChange?: boolean;
   changeLabel?: string;
+  info?: ReactNode;
 }
 
 export default function SummaryCard({
@@ -20,13 +21,17 @@ export default function SummaryCard({
   change,
   invertChange = false,
   changeLabel,
+  info,
 }: SummaryCardProps) {
   const { t } = useTranslation();
 
   return (
     <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 transition hover:border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-zinc-500 dark:text-zinc-400">{title}</span>
+        <span className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+          {title}
+          {info}
+        </span>
 
         <div
           className="flex h-10 w-10 items-center justify-center rounded-xl"

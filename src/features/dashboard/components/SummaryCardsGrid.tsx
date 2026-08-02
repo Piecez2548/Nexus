@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 
 import SummaryCard from "@/components/ui/SummaryCard";
+import InfoTooltip from "@/components/ui/InfoTooltip";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { DashboardPeriodGranularity } from "@/features/dashboard/utils/dashboardPeriodRange";
 
@@ -55,6 +56,7 @@ export default function SummaryCardsGrid({
         icon={<ArrowUpRight size={22} />}
         change={changes?.income}
         changeLabel={periodChangeLabel}
+        info={<InfoTooltip text={t("dashboard.info.income")} align="left" />}
       />
 
       <SummaryCard
@@ -65,6 +67,7 @@ export default function SummaryCardsGrid({
         change={changes?.expense}
         changeLabel={periodChangeLabel}
         invertChange
+        info={<InfoTooltip text={t("dashboard.info.expense")} align="left" />}
       />
 
       <SummaryCard
@@ -73,6 +76,7 @@ export default function SummaryCardsGrid({
         color="#2563eb"
         icon={<Wallet size={22} />}
         change={changes?.balance}
+        info={<InfoTooltip text={t("dashboard.info.balance")} align="left" />}
       />
 
       <SummaryCard
@@ -82,6 +86,7 @@ export default function SummaryCardsGrid({
         icon={<PiggyBank size={22} />}
         change={changes?.saving}
         changeLabel={periodChangeLabel}
+        info={<InfoTooltip text={t("dashboard.info.savings")} />}
       />
 
     </div>
