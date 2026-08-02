@@ -34,7 +34,8 @@ describe("useNotifications", () => {
     expect(result.current).toHaveLength(1);
     expect(result.current[0].id).toBe("budget-1");
     expect(result.current[0].severity).toBe("warning");
-    expect(result.current[0].message).toContain("เกินแล้ว");
+    expect(result.current[0].key).toBe("topbar.notificationMessages.budgetOver");
+    expect(result.current[0].params).toEqual({ category: "Food", spent: "1,200", budgetAmount: "1,000" });
   });
 
   it("includes a warning when a budget is near its limit but not over", () => {
@@ -48,7 +49,8 @@ describe("useNotifications", () => {
 
     const { result } = renderHook(() => useNotifications());
     expect(result.current).toHaveLength(1);
-    expect(result.current[0].message).toContain("ใกล้เต็มแล้ว");
+    expect(result.current[0].key).toBe("topbar.notificationMessages.budgetNearLimit");
+    expect(result.current[0].params).toEqual({ category: "Transport", percent: 85 });
   });
 
   it("hides a notification once its id has been dismissed", () => {

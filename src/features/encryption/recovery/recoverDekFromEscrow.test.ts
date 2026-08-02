@@ -38,6 +38,8 @@ const {
   encryptField,
 } = await import("@/features/encryption/crypto/encryption");
 
+const t = (key: string) => key;
+
 async function makeEscrowRecord(password: string, dek: CryptoKey) {
   const escrowSalt = generateRandomBytes(16);
   const escrowKek = await deriveKek(password, escrowSalt, PBKDF2_ITERATIONS);
@@ -67,7 +69,7 @@ describe("recoverDekFromEscrow", () => {
     mockSignInWithPassword.mockResolvedValue({ data: { user: { id: "user-123" } }, error: null });
     mockMaybeSingle.mockResolvedValue({ data: record, error: null });
 
-    const recovered = await recoverDekFromEscrow("a@b.com", "correct-password");
+    const recovered = await recoverDekFromEscrow("a@b.com", "correct-password", t);
 
     // Proves it's really the same key, not just any successfully-unwrapped
     // key — content encrypted with the original DEK must decrypt with it.
@@ -85,7 +87,7 @@ describe("recoverDekFromEscrow", () => {
     mockSignInWithPassword.mockResolvedValue({ data: { user: { id: "user-123" } }, error: null });
     mockMaybeSingle.mockResolvedValue({ data: record, error: null });
 
-    await expect(recoverDekFromEscrow("a@b.com", "wrong-password")).rejects.toThrow(RecoveryNotAvailableError);
+    await expect(recoverDekFromEscrow("a@b.com", "wrong-password", t)).rejects.toThrow(RecoveryNotAvailableError);
   });
 
   it("rejects when sign-in itself fails, without ever querying the escrow table", async () => {
@@ -94,7 +96,7 @@ describe("recoverDekFromEscrow", () => {
       error: { message: "Invalid login credentials" },
     });
 
-    await expect(recoverDekFromEscrow("a@b.com", "wrong-password")).rejects.toThrow(RecoveryNotAvailableError);
+    await expect(recoverDekFromEscrow("a@b.com", "wrong-password", t)).rejects.toThrow(RecoveryNotAvailableError);
     expect(mockMaybeSingle).not.toHaveBeenCalled();
   });
 
@@ -102,6 +104,6 @@ describe("recoverDekFromEscrow", () => {
     mockSignInWithPassword.mockResolvedValue({ data: { user: { id: "user-123" } }, error: null });
     mockMaybeSingle.mockResolvedValue({ data: null, error: null });
 
-    await expect(recoverDekFromEscrow("a@b.com", "correct-password")).rejects.toThrow(RecoveryNotAvailableError);
+    await expect(recoverDekFromEscrow("a@b.com", "correct-password", t)).rejects.toThrow(RecoveryNotAvailableError);
   });
 });

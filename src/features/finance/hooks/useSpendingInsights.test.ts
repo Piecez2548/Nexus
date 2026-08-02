@@ -33,7 +33,7 @@ describe("useSpendingInsights", () => {
 
     const { result } = renderHook(() => useSpendingInsights());
     expect(result.current.some((i) => i.id === "category-increase-Food")).toBe(true);
-    expect(result.current.find((i) => i.id === "category-increase-Food")?.message).toContain("20%");
+    expect(result.current.find((i) => i.id === "category-increase-Food")?.params.percent).toBe(20);
   });
 
   it("does not flag a category whose spend changed less than the threshold", () => {

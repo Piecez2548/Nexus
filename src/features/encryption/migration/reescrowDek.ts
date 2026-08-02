@@ -8,6 +8,7 @@ import {
   bytesToBase64,
   PBKDF2_ITERATIONS,
 } from "@/features/encryption/crypto/encryption";
+import type { TranslateFn } from "@/i18n/useTranslation";
 
 export class ReescrowFailedError extends Error {
   constructor(message: string) {
@@ -24,19 +25,19 @@ export class ReescrowFailedError extends Error {
 // password — every other device's "Forgot PIN" / cross-device recovery
 // would otherwise be permanently broken with no way to fix it, since the
 // original (wrong) password that produced it is unknown and unrecoverable.
-export async function reescrowDek(accountPassword: string): Promise<void> {
+export async function reescrowDek(accountPassword: string, translate: TranslateFn): Promise<void> {
   if (!isSyncConfigured || !supabase) {
-    throw new ReescrowFailedError("ต้องเชื่อมต่อ Sync กับบัญชีก่อนจึงจะอัปเดตกุญแจสำรองได้");
+    throw new ReescrowFailedError(translate("settings.reescrowSyncRequired"));
   }
 
   const user = useAuthStore.getState().user;
   if (!user?.email) {
-    throw new ReescrowFailedError("ต้องเข้าสู่ระบบก่อน");
+    throw new ReescrowFailedError(translate("settings.reescrowSignInRequired"));
   }
 
   const dek = useEncryptionSessionStore.getState().dek;
   if (!dek) {
-    throw new ReescrowFailedError("อุปกรณ์นี้ต้องปลดล็อกด้วย PIN ก่อน จึงจะอัปเดตกุญแจสำรองได้");
+    throw new ReescrowFailedError(translate("settings.reescrowDeviceLocked"));
   }
 
   const { error: verifyError } = await supabase.auth.signInWithPassword({
@@ -44,7 +45,7 @@ export async function reescrowDek(accountPassword: string): Promise<void> {
     password: accountPassword,
   });
   if (verifyError) {
-    throw new ReescrowFailedError("รหัสผ่านบัญชี Sync ไม่ถูกต้อง");
+    throw new ReescrowFailedError(translate("settings.reescrowPasswordIncorrect"));
   }
 
   const escrowSalt = generateRandomBytes(16);

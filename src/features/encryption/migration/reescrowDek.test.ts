@@ -20,6 +20,8 @@ const { useAuthStore } = await import("@/features/sync/store/authStore");
 const { useEncryptionSessionStore } = await import("@/features/encryption/store/encryptionSessionStore");
 const { generateDek, deriveKek, unwrapDek, base64ToBytes } = await import("@/features/encryption/crypto/encryption");
 
+const t = (key: string) => key;
+
 describe("reescrowDek", () => {
   beforeEach(() => {
     useAuthStore.setState({ user: { id: "user-123", email: "a@b.com" } as never });
@@ -32,7 +34,7 @@ describe("reescrowDek", () => {
     const dek = await generateDek();
     useEncryptionSessionStore.getState().setDek(dek);
 
-    await reescrowDek("correct-password");
+    await reescrowDek("correct-password", t);
 
     expect(mockSignInWithPassword).toHaveBeenCalledWith({ email: "a@b.com", password: "correct-password" });
     expect(mockUpsert).toHaveBeenCalledTimes(1);
@@ -53,12 +55,12 @@ describe("reescrowDek", () => {
     const dek = await generateDek();
     useEncryptionSessionStore.getState().setDek(dek);
 
-    await expect(reescrowDek("correct-password")).rejects.toThrow(ReescrowFailedError);
+    await expect(reescrowDek("correct-password", t)).rejects.toThrow(ReescrowFailedError);
     expect(mockUpsert).not.toHaveBeenCalled();
   });
 
   it("rejects when this device has no resident session DEK (locked)", async () => {
-    await expect(reescrowDek("correct-password")).rejects.toThrow(ReescrowFailedError);
+    await expect(reescrowDek("correct-password", t)).rejects.toThrow(ReescrowFailedError);
     expect(mockUpsert).not.toHaveBeenCalled();
   });
 
@@ -67,7 +69,7 @@ describe("reescrowDek", () => {
     useEncryptionSessionStore.getState().setDek(dek);
     mockSignInWithPassword.mockResolvedValue({ data: {}, error: { message: "Invalid login credentials" } });
 
-    await expect(reescrowDek("wrong-password")).rejects.toThrow(ReescrowFailedError);
+    await expect(reescrowDek("wrong-password", t)).rejects.toThrow(ReescrowFailedError);
     expect(mockUpsert).not.toHaveBeenCalled();
   });
 
@@ -76,6 +78,6 @@ describe("reescrowDek", () => {
     useEncryptionSessionStore.getState().setDek(dek);
     mockUpsert.mockResolvedValue({ error: { message: "network unreachable" } });
 
-    await expect(reescrowDek("correct-password")).rejects.toBeTruthy();
+    await expect(reescrowDek("correct-password", t)).rejects.toBeTruthy();
   });
 });

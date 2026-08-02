@@ -45,7 +45,7 @@ export default function EnableEncryptionForm({ onDone }: Props) {
 
     setSubmitting(true);
     try {
-      await enableEncryption({ pin, accountPassword, onProgress: setProgress });
+      await enableEncryption({ pin, accountPassword, onProgress: setProgress, translate: t });
       toast.success(t("settings.encryptionEnabledSuccess"));
       onDone();
     } catch (err) {

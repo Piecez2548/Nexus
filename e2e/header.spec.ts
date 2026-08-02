@@ -31,7 +31,7 @@ test.describe("top bar", () => {
     await expect(page.getByRole("table").getByText("Big lunch")).toBeVisible();
 
     await page.getByRole("button", { name: "Notifications" }).click();
-    await expect(page.getByText(/เกินแล้ว/)).toBeVisible();
+    await expect(page.getByText(/budget is over the limit/)).toBeVisible();
   });
 
   test("user menu navigates to Settings and can lock the app", async ({ page }) => {

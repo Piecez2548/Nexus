@@ -5,7 +5,8 @@ import { useNotificationStore } from "@/store/notificationStore";
 
 export interface AppNotification {
   id: string;
-  message: string;
+  key: string;
+  params: Record<string, string | number>;
   severity: "info" | "warning";
 }
 
@@ -17,18 +18,24 @@ export function useNotifications(): AppNotification[] {
   return useMemo(() => {
     const budgetAlerts: AppNotification[] = budgetProgress
       .filter((b) => b.status !== "ok")
-      .map((b) => ({
-        id: `budget-${b.budget.id}`,
-        message:
+      .map((b) => {
+        const params: Record<string, string | number> =
           b.status === "over"
-            ? `งบประมาณ${b.budget.category}เกินแล้ว (฿${b.spent.toLocaleString()} / ฿${b.budget.amount.toLocaleString()})`
-            : `งบประมาณ${b.budget.category}ใกล้เต็มแล้ว (${Math.round(b.percentage)}%)`,
-        severity: "warning" as const,
-      }));
+            ? { category: b.budget.category, spent: b.spent.toLocaleString(), budgetAmount: b.budget.amount.toLocaleString() }
+            : { category: b.budget.category, percent: Math.round(b.percentage) };
+
+        return {
+          id: `budget-${b.budget.id}`,
+          key: b.status === "over" ? "topbar.notificationMessages.budgetOver" : "topbar.notificationMessages.budgetNearLimit",
+          params,
+          severity: "warning" as const,
+        };
+      });
 
     const insightAlerts: AppNotification[] = insights.map((insight) => ({
       id: insight.id,
-      message: insight.message,
+      key: insight.key,
+      params: insight.params,
       severity: insight.severity,
     }));
 

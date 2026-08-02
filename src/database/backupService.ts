@@ -5,6 +5,7 @@ import { useEncryptionSessionStore } from "@/features/encryption/store/encryptio
 import { decryptField } from "@/features/encryption/crypto/encryption";
 import { encryptRow, EncryptionLockedError, type EncryptedRow } from "@/database/encryptedRepository";
 import type { SyncMeta } from "@/utils/syncMeta";
+import type { TranslateFn } from "@/i18n/useTranslation";
 
 const BACKUP_VERSION = 1;
 
@@ -169,17 +170,17 @@ function isNexusBackup(value: unknown): value is NexusBackup {
   return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
 }
 
-export async function importBackup(jsonText: string): Promise<void> {
+export async function importBackup(jsonText: string, translate: TranslateFn): Promise<void> {
   let parsed: unknown;
 
   try {
     parsed = JSON.parse(jsonText);
   } catch {
-    throw new Error("ไฟล์สำรองข้อมูลไม่ถูกต้อง (ไม่ใช่ JSON)");
+    throw new Error(translate("settings.backupInvalidJson"));
   }
 
   if (!isNexusBackup(parsed)) {
-    throw new Error("โครงสร้างไฟล์สำรองข้อมูลไม่ถูกต้อง");
+    throw new Error(translate("settings.backupInvalidStructure"));
   }
 
   const { data } = parsed;

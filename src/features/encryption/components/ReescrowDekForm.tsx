@@ -31,7 +31,7 @@ export default function ReescrowDekForm({ onDone }: Props) {
 
     setSubmitting(true);
     try {
-      await reescrowDek(accountPassword);
+      await reescrowDek(accountPassword, t);
       toast.success(t("settings.reescrowSuccess"));
       onDone();
     } catch (err) {

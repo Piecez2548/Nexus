@@ -3,7 +3,8 @@ import type { Transaction } from "@/features/finance/types";
 
 export interface SpendingInsight {
   id: string;
-  message: string;
+  key: string;
+  params: Record<string, string | number>;
   severity: "info" | "warning";
 }
 
@@ -59,7 +60,8 @@ export function generateSpendingAlerts(allTransactions: Transaction[], now = new
     if (percentChange >= INCREASE_THRESHOLD_PERCENT) {
       insights.push({
         id: `category-increase-${category}`,
-        message: `ค่า${category}เพิ่มขึ้น ${Math.round(percentChange)}%`,
+        key: "dashboard.spendingInsights.categoryIncrease",
+        params: { category, percent: Math.round(percentChange) },
         severity: "warning",
       });
     }
@@ -79,7 +81,8 @@ export function generateSpendingAlerts(allTransactions: Transaction[], now = new
     if (titles.size >= 2) {
       insights.push({
         id: `duplicate-subscription-${category}`,
-        message: `ค่า Subscription ซ้ำ ${titles.size} รายการในหมวด${category}`,
+        key: "dashboard.spendingInsights.duplicateSubscription",
+        params: { category, count: titles.size },
         severity: "warning",
       });
     }
@@ -105,7 +108,8 @@ export function generateSpendingAlerts(allTransactions: Transaction[], now = new
     if (average > 0 && t.amount >= average * UNUSUAL_SPEND_MULTIPLIER) {
       insights.push({
         id: `unusual-spend-${t.id}`,
-        message: `รายจ่าย "${t.title}" (฿${t.amount.toLocaleString()}) สูงผิดปกติเทียบกับค่าเฉลี่ยหมวด${t.category}`,
+        key: "dashboard.spendingInsights.unusualSpend",
+        params: { title: t.title, amount: t.amount.toLocaleString(), category: t.category },
         severity: "warning",
       });
     }
@@ -131,7 +135,8 @@ export function generateSpendingAlerts(allTransactions: Transaction[], now = new
     if (averageDaily > 0 && todayTotal >= averageDaily * UNUSUAL_DAILY_SPEND_MULTIPLIER) {
       insights.push({
         id: `unusual-daily-spend-${today}`,
-        message: `วันนี้ใช้เงินไปแล้ว ฿${todayTotal.toLocaleString()} สูงกว่าค่าเฉลี่ยต่อวัน (฿${Math.round(averageDaily).toLocaleString()}) มาก`,
+        key: "dashboard.spendingInsights.unusualDailySpend",
+        params: { amount: todayTotal.toLocaleString(), average: Math.round(averageDaily).toLocaleString() },
         severity: "warning",
       });
     }

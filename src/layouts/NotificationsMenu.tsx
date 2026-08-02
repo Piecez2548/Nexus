@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { Bell, X } from "lucide-react";
 
 import { useNotifications } from "@/hooks/useNotifications";
@@ -7,7 +7,7 @@ import { useNotificationStore } from "@/store/notificationStore";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 import { useTranslation } from "@/i18n/useTranslation";
 
-export default function NotificationsMenu() {
+function NotificationsMenu() {
   const notifications = useNotifications();
   const dismiss = useNotificationStore((state) => state.dismiss);
   const [open, setOpen] = useState(false);
@@ -40,26 +40,31 @@ export default function NotificationsMenu() {
           </p>
         ) : (
           <div className="mt-1 max-h-80 space-y-2 overflow-y-auto">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className="flex items-start gap-2 rounded-xl border border-amber-900/40 bg-amber-950/20 px-3 py-2 text-sm text-amber-300"
-              >
-                <span className="flex-1">{notification.message}</span>
-
-                <button
-                  type="button"
-                  onClick={() => dismiss(notification.id)}
-                  aria-label={t("topbar.dismissNotification", { message: notification.message })}
-                  className="shrink-0 rounded-lg p-1 text-amber-300/70 transition hover:bg-amber-900/30 hover:text-amber-200"
+            {notifications.map((notification) => {
+              const text = t(notification.key, notification.params);
+              return (
+                <div
+                  key={notification.id}
+                  className="flex items-start gap-2 rounded-xl border border-amber-900/40 bg-amber-950/20 px-3 py-2 text-sm text-amber-300"
                 >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+                  <span className="flex-1">{text}</span>
+
+                  <button
+                    type="button"
+                    onClick={() => dismiss(notification.id)}
+                    aria-label={t("topbar.dismissNotification", { message: text })}
+                    className="shrink-0 rounded-lg p-1 text-amber-300/70 transition hover:bg-amber-900/30 hover:text-amber-200"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </DropdownPanel>
     </div>
   );
 }
+
+export default memo(NotificationsMenu);

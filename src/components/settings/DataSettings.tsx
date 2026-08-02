@@ -98,7 +98,7 @@ export default function DataSettings() {
 
     try {
       const text = await file.text();
-      await importBackup(text);
+      await importBackup(text, t);
       setStatus(t("settings.importSuccessReloading"));
       toast.success(t("settings.importSuccess"));
       window.location.reload();

@@ -6,6 +6,8 @@ import { useEncryptionSessionStore } from "@/features/encryption/store/encryptio
 import { generateDek } from "@/features/encryption/crypto/encryption";
 import { EncryptionLockedError } from "@/database/encryptedRepository";
 
+const t = (key: string) => key;
+
 describe("backupService", () => {
   beforeEach(async () => {
     await Promise.all([
@@ -78,7 +80,7 @@ describe("backupService", () => {
     await db.accounts.clear();
     await db.categories.clear();
 
-    await importBackup(json);
+    await importBackup(json, t);
 
     const accounts = await db.accounts.toArray();
     const categories = await db.categories.toArray();
@@ -105,7 +107,7 @@ describe("backupService", () => {
       },
     };
 
-    await expect(importBackup(JSON.stringify(legacyBackup))).resolves.not.toThrow();
+    await expect(importBackup(JSON.stringify(legacyBackup), t)).resolves.not.toThrow();
     expect(await db.accounts.count()).toBe(1);
     expect(await db.todos.count()).toBe(0);
   });
@@ -129,7 +131,7 @@ describe("backupService", () => {
       },
     };
 
-    await expect(importBackup(JSON.stringify(legacyBackup))).resolves.not.toThrow();
+    await expect(importBackup(JSON.stringify(legacyBackup), t)).resolves.not.toThrow();
     expect(await db.accounts.count()).toBe(1);
     expect(await db.habits.count()).toBe(0);
   });
@@ -154,7 +156,7 @@ describe("backupService", () => {
       },
     };
 
-    await expect(importBackup(JSON.stringify(legacyBackup))).resolves.not.toThrow();
+    await expect(importBackup(JSON.stringify(legacyBackup), t)).resolves.not.toThrow();
     expect(await db.accounts.count()).toBe(1);
     expect(await db.holdings.count()).toBe(0);
   });
@@ -180,7 +182,7 @@ describe("backupService", () => {
       },
     };
 
-    await expect(importBackup(JSON.stringify(legacyBackup))).resolves.not.toThrow();
+    await expect(importBackup(JSON.stringify(legacyBackup), t)).resolves.not.toThrow();
     expect(await db.accounts.count()).toBe(1);
     expect(await db.calendarEvents.count()).toBe(0);
   });
@@ -208,7 +210,7 @@ describe("backupService", () => {
       },
     };
 
-    await expect(importBackup(JSON.stringify(legacyBackup))).resolves.not.toThrow();
+    await expect(importBackup(JSON.stringify(legacyBackup), t)).resolves.not.toThrow();
     expect(await db.accounts.count()).toBe(1);
     expect(await db.goalMilestoneEvents.count()).toBe(0);
   });
@@ -216,8 +218,8 @@ describe("backupService", () => {
   it("rejects a malformed backup without touching existing data", async () => {
     await db.accounts.add({ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" });
 
-    await expect(importBackup("not json")).rejects.toThrow();
-    await expect(importBackup(JSON.stringify({ foo: "bar" }))).rejects.toThrow();
+    await expect(importBackup("not json", t)).rejects.toThrow();
+    await expect(importBackup(JSON.stringify({ foo: "bar" }), t)).rejects.toThrow();
 
     const accounts = await db.accounts.toArray();
     expect(accounts).toHaveLength(1);
@@ -305,7 +307,7 @@ describe("backupService", () => {
       useAppLockStore.setState({ encryptionEnabled: true });
       useEncryptionSessionStore.getState().setDek(dek);
 
-      await importBackup(json);
+      await importBackup(json, t);
 
       const rawRows = await db.accounts.toArray();
       expect(rawRows).toHaveLength(1);
@@ -336,7 +338,7 @@ describe("backupService", () => {
       useAppLockStore.setState({ encryptionEnabled: true });
       useEncryptionSessionStore.getState().setDek(dek);
 
-      await importBackup(json);
+      await importBackup(json, t);
 
       const rawRow = await db.recipientProfiles.where("recipientKey").equals("0812345678").first();
       expect(rawRow).toHaveProperty("encryptedContent");

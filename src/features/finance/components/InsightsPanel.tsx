@@ -23,7 +23,7 @@ export default function InsightsPanel({ insights }: Props) {
             key={insight.id}
             className="rounded-xl border border-amber-900/40 bg-amber-950/20 px-4 py-3 text-sm text-amber-300"
           >
-            {insight.message}
+            {t(insight.key, insight.params)}
           </div>
         ))}
       </div>

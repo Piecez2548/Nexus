@@ -47,7 +47,7 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
     setSubmitting(true);
 
     try {
-      const dek = await recoverDekFromEscrow(email, accountPassword);
+      const dek = await recoverDekFromEscrow(email, accountPassword, t);
       setRecoveredDek(dek);
       setStep("new-pin");
     } catch (err) {

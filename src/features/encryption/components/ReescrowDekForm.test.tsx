@@ -38,7 +38,7 @@ describe("ReescrowDekForm", () => {
     await user.type(screen.getByLabelText("Current Sync Account Password"), "correct-password");
     await user.click(screen.getByRole("button", { name: "Update recovery key" }));
 
-    expect(mockReescrowDek).toHaveBeenCalledWith("correct-password");
+    expect(mockReescrowDek).toHaveBeenCalledWith("correct-password", expect.any(Function));
     await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
   });
 

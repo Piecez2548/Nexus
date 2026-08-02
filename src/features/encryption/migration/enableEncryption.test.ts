@@ -36,6 +36,8 @@ vi.mock("@/features/sync/syncEngine", () => ({
 const { enableEncryption, migrateTable, MigrationAlreadyInProgressError } = await import("./enableEncryption");
 const { generateDek, decryptField } = await import("@/features/encryption/crypto/encryption");
 
+const t = (key: string) => key;
+
 const SYNCED_TABLES = [
   "transactions",
   "accounts",
@@ -208,6 +210,7 @@ describe("enableEncryption (full orchestration)", () => {
       pin: "1234",
       accountPassword: "correct-password",
       onProgress: (p) => phases.push(p.phase),
+      translate: t,
     });
 
     expect(mockDownloadFile).toHaveBeenCalledTimes(1);
@@ -243,8 +246,8 @@ describe("enableEncryption (full orchestration)", () => {
     } as never);
 
     await expect(
-      enableEncryption({ pin: "1234", accountPassword: "wrong-password" })
-    ).rejects.toThrow(/รหัสผ่านบัญชี Sync ไม่ถูกต้อง/);
+      enableEncryption({ pin: "1234", accountPassword: "wrong-password", translate: t })
+    ).rejects.toThrow("settings.encryptionSyncPasswordIncorrect");
 
     expect(mockUpsert).not.toHaveBeenCalled();
     expect(useAppLockStore.getState().encryptionEnabled).toBe(false);
@@ -269,7 +272,7 @@ describe("enableEncryption (full orchestration)", () => {
     } as never);
 
     await expect(
-      enableEncryption({ pin: "1234", accountPassword: "correct-password" })
+      enableEncryption({ pin: "1234", accountPassword: "correct-password", translate: t })
     ).rejects.toThrow();
 
     expect(useAppLockStore.getState().encryptionEnabled).toBe(false);
@@ -288,7 +291,7 @@ describe("enableEncryption (full orchestration)", () => {
     await db.syncState.put({ key: "encryption:migrationLock", value: `lock-id:${Date.now()}` });
 
     await expect(
-      enableEncryption({ pin: "1234", accountPassword: "correct-password" })
+      enableEncryption({ pin: "1234", accountPassword: "correct-password", translate: t })
     ).rejects.toThrow(MigrationAlreadyInProgressError);
   });
 
@@ -297,7 +300,7 @@ describe("enableEncryption (full orchestration)", () => {
     await db.syncState.put({ key: "encryption:migrationLock", value: `lock-id:${staleTimestamp}` });
 
     await expect(
-      enableEncryption({ pin: "1234", accountPassword: "correct-password" })
+      enableEncryption({ pin: "1234", accountPassword: "correct-password", translate: t })
     ).resolves.not.toThrow();
   });
 
@@ -340,7 +343,7 @@ describe("enableEncryption (full orchestration)", () => {
     // encryptionEnabled=true, reuse the resident DEK, and skip straight
     // to migrating whatever tables aren't done yet — without a second
     // escrow call.
-    await enableEncryption({ pin: "1234", accountPassword: "correct-password" });
+    await enableEncryption({ pin: "1234", accountPassword: "correct-password", translate: t });
 
     const [txRow] = await db.transactions.toArray();
     const [accRow] = await db.accounts.toArray();

@@ -15,6 +15,7 @@ import {
 } from "@/features/encryption/crypto/encryption";
 import { encryptRow, type EncryptedRow } from "@/database/encryptedRepository";
 import type { SyncTableName } from "@/features/sync/types";
+import type { TranslateFn } from "@/i18n/useTranslation";
 
 // Mirrors src/features/sync/types.ts's SyncTableName union as an explicit
 // local list, rather than importing syncEngine.ts's private SYNCED_TABLES
@@ -99,16 +100,14 @@ function downloadPlaintextBackup(json: string): void {
 // stored raw) so a forgotten PIN can be recovered by signing back in.
 // Throws — and touches nothing local — on any failure, so a failed escrow
 // can never leave a device with encrypted data and no recovery path.
-async function escrowDek(dek: CryptoKey, accountPassword: string): Promise<void> {
+async function escrowDek(dek: CryptoKey, accountPassword: string, translate: TranslateFn): Promise<void> {
   if (!isSyncConfigured || !supabase) {
-    throw new Error(
-      "Cloud sync must be configured to enable encryption — otherwise a forgotten PIN could never be recovered."
-    );
+    throw new Error(translate("settings.encryptionSyncRequired"));
   }
 
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !sessionData.session?.user) {
-    throw new Error("You must be signed in to enable encryption");
+    throw new Error(translate("settings.encryptionSignInRequired"));
   }
   const userId = sessionData.session.user.id;
   const email = sessionData.session.user.email;
@@ -122,7 +121,7 @@ async function escrowDek(dek: CryptoKey, accountPassword: string): Promise<void>
   if (email) {
     const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: accountPassword });
     if (verifyError) {
-      throw new Error("รหัสผ่านบัญชี Sync ไม่ถูกต้อง — กรุณาลองใหม่อีกครั้ง");
+      throw new Error(translate("settings.encryptionSyncPasswordIncorrect"));
     }
   }
 
@@ -191,6 +190,7 @@ export interface EnableEncryptionParams {
   // needed once, at this moment, to derive the escrow-wrapping key.
   accountPassword: string;
   onProgress?: (progress: MigrationProgress) => void;
+  translate: TranslateFn;
 }
 
 /**
@@ -199,12 +199,12 @@ export interface EnableEncryptionParams {
  * existing row across all 12 synced tables. Safe to call again after any
  * interruption — see migrateTable's idempotency predicate above.
  */
-export async function enableEncryption({ pin, accountPassword, onProgress }: EnableEncryptionParams): Promise<void> {
+export async function enableEncryption({ pin, accountPassword, onProgress, translate }: EnableEncryptionParams): Promise<void> {
   if (!useAuthStore.getState().user) {
-    throw new Error("You must be signed in to enable encryption");
+    throw new Error(translate("settings.encryptionSignInRequired"));
   }
   if (!useAppLockStore.getState().isEnabled()) {
-    throw new Error("Set up a PIN before enabling encryption");
+    throw new Error(translate("settings.encryptionPinRequired"));
   }
 
   await acquireMigrationLock();
@@ -224,15 +224,13 @@ export async function enableEncryption({ pin, accountPassword, onProgress }: Ena
       // which would orphan every row already encrypted with the first.
       const resident = useEncryptionSessionStore.getState().dek;
       if (!resident) {
-        throw new Error(
-          "Encryption was partially enabled on this device but is currently locked — unlock with your PIN first, then try again."
-        );
+        throw new Error(translate("settings.encryptionPartiallyEnabledLocked"));
       }
       dek = resident;
     } else {
       onProgress?.({ phase: "escrow" });
       dek = await generateDek();
-      await escrowDek(dek, accountPassword);
+      await escrowDek(dek, accountPassword, translate);
       await useAppLockStore.getState().attachEncryption(pin, dek);
     }
 
@@ -255,7 +253,7 @@ export async function enableEncryption({ pin, accountPassword, onProgress }: Ena
     for (const table of TABLES_TO_MIGRATE) {
       const ok = await verifyTableMigrated(table);
       if (!ok) {
-        throw new Error(`Migration verification failed for table "${table}" — some rows are still unencrypted.`);
+        throw new Error(translate("settings.encryptionVerificationFailed", { table }));
       }
     }
 

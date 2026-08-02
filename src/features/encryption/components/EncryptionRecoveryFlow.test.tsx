@@ -43,7 +43,7 @@ describe("EncryptionRecoveryFlow", () => {
     await user.type(screen.getByLabelText("Sync Account Password"), "correct-password");
     await user.click(screen.getByRole("button", { name: "Recover" }));
 
-    expect(mockRecoverDekFromEscrow).toHaveBeenCalledWith("me@nexus.app", "correct-password");
+    expect(mockRecoverDekFromEscrow).toHaveBeenCalledWith("me@nexus.app", "correct-password", expect.any(Function));
 
     await user.type(await screen.findByLabelText("New PIN"), "1234");
     await user.type(screen.getByLabelText("Confirm New PIN"), "1234");
