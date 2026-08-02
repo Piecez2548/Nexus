@@ -193,6 +193,78 @@ describe("syncEngine", () => {
     expect(stored[0].amount).toBe(999);
   });
 
+  it("does not let an older remote copy clobber a newer local edit (last-write-wins guard)", async () => {
+    // Simulates this device's own push for this table having failed
+    // earlier in the same pass (or a rare cross-device race) — the local
+    // row is genuinely newer than what's coming back from the pull.
+    const localId = await db.transactions.add({
+      title: "Local edit (newer)",
+      amount: 500,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+      syncId: "stale-remote-id",
+      updatedAt: "2026-07-21T12:00:00.000Z",
+    });
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({
+        data: [
+          {
+            id: "stale-remote-id",
+            table_name: "transactions",
+            data: {
+              title: "Stale remote copy",
+              amount: 999,
+              type: "expense",
+              account: "Cash",
+              date: "2026-07-20",
+              status: "completed",
+              syncId: "stale-remote-id",
+              updatedAt: "2026-07-20T00:00:00.000Z",
+            },
+            updated_at: "2026-07-20T00:00:00.000Z",
+            deleted_at: null,
+          },
+        ],
+        error: null,
+      }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const stored = await db.transactions.toArray();
+    expect(stored).toHaveLength(1);
+    expect(stored[0].id).toBe(localId);
+    expect(stored[0].title).toBe("Local edit (newer)");
+    expect(stored[0].amount).toBe(500);
+  });
+
+  it("skips a malformed remote row (data is not an object) without throwing", async () => {
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({
+        data: [
+          {
+            id: "malformed-1",
+            table_name: "transactions",
+            data: null,
+            updated_at: "2026-07-21T00:00:00.000Z",
+            deleted_at: null,
+          },
+        ],
+        error: null,
+      }),
+    }));
+
+    await expect(runFullSync(USER_ID)).resolves.not.toThrow();
+
+    const stored = await db.transactions.toArray();
+    expect(stored).toHaveLength(0);
+  });
+
   it("deletes the local row when the remote record is soft-deleted", async () => {
     await db.transactions.add({
       title: "To be deleted",

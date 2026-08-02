@@ -180,7 +180,37 @@ async function pullTable(userId: string, table: SyncTableName): Promise<boolean>
       continue;
     }
 
+    // Guards against a corrupted/malformed remote row (a partial write, or
+    // some future incompatible shape) writing garbage into local Dexie —
+    // every other write path (forms, CSV import) already validates before
+    // persisting; this was the one that didn't. Deliberately NOT full
+    // per-table Zod schema validation: this engine is generic across every
+    // SYNCED_TABLES entry with no per-table schema wired in, and a strict
+    // schema check risks silently *dropping* a legitimately-shaped row
+    // from a slightly different app version — worse than today's behavior
+    // for a personal finance app. Only the unambiguous case is rejected:
+    // not an object at all (see the "opaque blob" test above for why this
+    // stays this shallow — the engine must not assume more about row shape
+    // than syncId/updatedAt at the top level).
+    if (remoteRow.data === null || typeof remoteRow.data !== "object" || Array.isArray(remoteRow.data)) {
+      console.warn(`Sync: skipping malformed row for "${table}" (syncId ${remoteRow.id}) — data is not an object`);
+      continue;
+    }
+
     if (existing) {
+      const localUpdatedAt = (existing as { updatedAt?: string }).updatedAt;
+      const remoteUpdatedAt = typeof remoteRow.data.updatedAt === "string" ? remoteRow.data.updatedAt : undefined;
+
+      // Never let an older remote copy silently clobber a newer local
+      // edit — can happen if this device's own push for this table failed
+      // earlier in the same pass (see runFullSync's per-step error
+      // isolation), or a rare cross-device timing race. Skip the write —
+      // the local edit stays as-is, and goes out on this device's next
+      // successful push.
+      if (localUpdatedAt && remoteUpdatedAt && remoteUpdatedAt < localUpdatedAt) {
+        continue;
+      }
+
       await dexieTable.put({ ...remoteRow.data, id: existing.id });
     } else {
       const { id: _localId, ...rest } = remoteRow.data;
