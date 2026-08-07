@@ -47,7 +47,7 @@ This document lists specific, verified issues found while reading the codebase f
 
 ## Current Status
 
-All items above are current findings verified by direct code reading, re-checked during the 2026-08-07 `update` pass. Since the original 2026-08-02 audit, five scoped AI Analytics passes landed — A11Y-001 (chart accessibility), PERF-001 and PERF-002 (analyzer/trend performance), and UX-001/UX-002 (retry without a full-page reload, plus surfacing a synchronous engine throw as an error state and re-fetching data on retry). The remaining follow-up they surfaced, PERF-003 (trend "current"-point dedup), is recorded above.
+All items above are current findings verified by direct code reading, re-checked during the 2026-08-07 `update` pass. Since the original 2026-08-02 audit, six scoped AI Analytics passes landed — A11Y-001 and A11Y-002 (chart accessibility, a global keyboard focus ring, screen-reader data tables), PERF-001 and PERF-002 (analyzer/trend performance), and UX-001/UX-002 (retry without a full-page reload, plus surfacing a synchronous engine throw as an error state and re-fetching data on retry). The remaining follow-up they surfaced, PERF-003 (trend "current"-point dedup), is recorded above.
 
 ## Future Improvements
 

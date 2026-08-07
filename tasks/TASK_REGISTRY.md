@@ -21,10 +21,10 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Security | 4 | 2 | 2 | 0 | 0 |
 | Core | 3 | 3 | 0 | 0 | 0 |
 | Testing | 3 | 3 | 0 | 0 | 0 |
-| Accessibility | 1 | 1 | 0 | 0 | 0 |
+| Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| **Total** | **37** | **26** | **11** | **0** | **0** |
+| **Total** | **38** | **27** | **11** | **0** | **0** |
 
 ---
 
@@ -132,8 +132,9 @@ Cross-cutting accessibility work. A11Y-001 added screen-reader labels (a shared 
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
 | A11Y-001 | Accessibility | AI Analytics Accessibility Pass | Medium | Completed | — |
+| A11Y-002 | Accessibility | Focus Rings, Chart Data Tables & Empty-state Polish | Medium | Completed | A11Y-001 |
 
-> Remaining accessibility follow-ups (focus-visible rings, data-table chart alternatives, sub-section empty-state audit, mobile responsive check) are scoped in A11Y-001's report but not yet registered as their own tasks.
+> A11Y-002 delivered the A11Y-001 follow-ups: a global keyboard `:focus-visible` ring, visually-hidden data tables for the key charts (score radars, health trend, monthly cash flow), a no-flags empty state, and an `overflow-x-auto` wrapper on the desktop merchant table. Remaining: data tables for the secondary charts (their aria-label headline covers them for now).
 
 ---
 

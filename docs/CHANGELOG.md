@@ -4,7 +4,7 @@
 
 ## Overview
 
-This changelog is reconstructed directly from `git log` (66 commits, `26abcb9` → `HEAD`), grouped into milestones rather than listed commit-by-commit. `package.json` still declares `"version": "0.0.0"` — **no semantic versioning scheme is in use yet**; this document uses the term "version" loosely to mean development milestones.
+This changelog is reconstructed directly from `git log` (68 commits, `26abcb9` → `HEAD`), grouped into milestones rather than listed commit-by-commit. `package.json` still declares `"version": "0.0.0"` — **no semantic versioning scheme is in use yet**; this document uses the term "version" loosely to mean development milestones.
 
 ## Current Version
 
@@ -70,6 +70,7 @@ The `/docs` documentation set and a file-based `tasks/` registry (previously unt
 - **PERF-002** — a lean `computeHealthScoreSummary` lets score-trend points skip the explanation aggregation they discard; the full health score is unchanged (`ebc9f85`).
 - **UX-001** — the AI Analytics error retry re-runs the analysis in place via a new `useFinancialAnalysis().retry()` instead of `window.location.reload()`, leaving all state outside the module untouched (`754a98f`).
 - **UX-002** — hardened that retry: a synchronous engine throw now surfaces as an error state (the `analyze()` call is routed through `Promise.resolve().then(...)`) instead of hanging on `loading`, and retry re-fetches the finance stores before re-analysing (`86df606`).
+- **A11Y-002** — a second accessibility pass: a global keyboard `:focus-visible` ring (`index.css`), a shared visually-hidden `ChartDataTable` exposing the key charts' numbers (score radars, health trend, monthly cash flow) to screen readers, a no-behaviour-flags empty state, and an `overflow-x-auto` wrapper on the desktop merchant table (`34acf5b`).
 
 ## Implemented Features
 
