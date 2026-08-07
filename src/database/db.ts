@@ -17,6 +17,7 @@ import type { Holding } from "@/features/portfolio/types";
 import type { CalendarEvent } from "@/features/calendar/types";
 import type { ScheduleItem } from "@/features/schedule/types";
 import type { Tombstone, SyncStateRow } from "@/features/sync/types";
+import type { SlipScanRun, SlipScannedAsset } from "@/features/finance/slipScanner/models/scanTypes";
 
 class NexusDatabase extends Dexie {
 
@@ -37,6 +38,8 @@ class NexusDatabase extends Dexie {
   public goalMilestoneEvents;
   public syncTombstones;
   public syncState;
+  public slipScanRuns;
+  public slipScannedAssets;
 
   constructor() {
     super("NexusDatabase");
@@ -217,6 +220,18 @@ class NexusDatabase extends Dexie {
         "++id,syncId,updatedAt",
     });
 
+    // Gallery Scanner (GS-006) — device-local, NOT synced (no syncId): each
+    // device scans its own gallery. slipScanRuns is the resumable scan
+    // session/checkpoint; slipScannedAssets powers incremental scan (by
+    // assetId) and duplicate prevention (by contentHash). Purely additive.
+    this.version(15).stores({
+      slipScanRuns:
+        "++id,status,startedAt",
+
+      slipScannedAssets:
+        "++id,&assetId,contentHash,runId",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -267,6 +282,12 @@ class NexusDatabase extends Dexie {
 
     this.syncState =
       this.table<SyncStateRow, string>("syncState");
+
+    this.slipScanRuns =
+      this.table<SlipScanRun, number>("slipScanRuns");
+
+    this.slipScannedAssets =
+      this.table<SlipScannedAsset, number>("slipScannedAssets");
   }
 }
 
