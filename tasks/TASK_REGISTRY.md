@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 16 | 34 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 17 | 33 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **43** | **65** | **0** | **0** |
+| **Total** | **108** | **44** | **64** | **0** | **0** |
 
 ---
 
@@ -188,7 +188,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-014 | Gallery Scanner | Bank Selection Popup | Medium | Completed | GS-011 |
 | GS-015 | Gallery Scanner | Import Preview | High | Completed | GS-013 |
 | GS-016 | Gallery Scanner | Smart Import | High | Completed | GS-015 |
-| GS-017 | Gallery Scanner | Security | High | Todo | GS-008 |
+| GS-017 | Gallery Scanner | Security | High | Completed | GS-008 |
 | GS-018 | Gallery Scanner | Performance Optimization | Medium | Todo | GS-007 |
 | GS-019 | Gallery Scanner | AI Validation | Medium | Todo | GS-016 |
 | GS-020 | Gallery Scanner | Scanner Analytics | Low | Todo | GS-016 |
@@ -246,6 +246,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-015 (Import Preview) introduces the unified `SlipCandidate` model (`models/slipCandidate.ts`) — one record per scanned slip carrying thumbnail, bank, amount, currency, date, time, merchant, reference, payload, source (qr/ocr), duplicate status and a confidence score — and `buildSlipCandidate()` that assembles it from the extraction-stage outputs (EMVCo GS-010, bank GS-011, OCR GS-012, dedup GS-013). It trusts EMVCo fields only when the QR checksum is valid, otherwise falls back to OCR entirely (keeping the raw payload for reference); `basicConfidence()` is a transparent completeness/source heuristic (0–100) later refined by the Confidence Engine (GS-046). `preview/importPreview.ts` (pure) does the free-text search (merchant/reference/bank/amount) and duplicate/bank filtering; `hooks/useImportPreview.ts` owns selection state (defaulting to every non-duplicate, resetting on a new scan via React's adjust-state-during-render pattern) with select-all-visible / deselect-all / toggle; `components/ImportPreview.tsx` reuses the shared `Drawer` to list candidates (thumbnail, bank, amount, date/time, merchant, duplicate badge, confidence, source) with search, an all/unique/duplicates filter, and an Import-Selected action, i18n under `slipScanner.importPreview.*` (en+th). The image→candidate pipeline (decode + run engines) is wired in GS-016. Validated build/tsc/lint; slipScanner 115 tests, full suite green.
 >
 > GS-016 (Smart Import) turns selected `SlipCandidate`s into transactions. `import/candidateToTransaction.ts` (pure) maps a slip to a completed expense (bank + reference into the note, date falling back to an injectable today); `import/smartImport.ts` is a persistence-agnostic batch importer behind an injectable `SmartImportDeps` (create returns the new id, delete for rollback): it reports per-item **progress**, is **resilient by design** (a bad amount or a create error is recorded in `failed` and the batch continues — **error recovery** — rather than aborting), supports cooperative **cancellation** and **resume** (skips already-imported candidate ids), and ships `rollbackImport(importedIds)` to **undo** a run. `import/smartImportDeps.ts` wires the real `transactionService` (same CRUD the finance module already uses — no new data path); `hooks/useSmartImport.ts` runs the batch, tracks progress/result, refreshes the transaction store once after the batch (not per row), and exposes `undo`. Persistence is injected in tests, so no Dexie is touched there. Not yet mounted on a route — the scanner→preview→import flow is assembled behind a UI entry point in a later GS task. Validated build/tsc/lint; slipScanner 126 tests, full suite green.
+>
+> GS-017 (Security) adds the scanner's security utilities, reusing existing integrity primitives rather than inventing an encryption layer for data the scanner deliberately doesn't persist in plaintext (the scan cache holds only asset ids / hashes / versions — a structurally "secure cache"). `security/scanAuditLog.ts` is an append-only, bounded (200-event) audit trail for **permission** and **import** events, recording only non-sensitive metadata (statuses, counts, ids) with an injectable sink (best-effort — a throwing sink never breaks scanning) and clock. `security/secureDeletion.ts` handles **secure deletion** of transient artifacts: `wipeBytes` zero-fills a decoded-image buffer once used, and `revokeThumbnails`/`secureDiscardCandidates` release the object-URLs backing thumbnails (which otherwise keep the Blob alive) — `revoke` injectable for tests. `security/tamperDetection.ts` does **tamper detection** grounded in the real EMVCo CRC (`detectPayloadTamper` → `crc-mismatch`) plus a replayed-slip signal (`isReplayedSlip`: a duplicate QR slip) and a non-positive-amount sanity check. All pure/isolated (no shared-file edits). Validated build/tsc/lint; slipScanner 137 tests, full suite green.
 
 ---
 
