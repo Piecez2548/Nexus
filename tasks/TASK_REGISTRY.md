@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 11 | 39 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 12 | 38 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **38** | **70** | **0** | **0** |
+| **Total** | **108** | **39** | **69** | **0** | **0** |
 
 ---
 
@@ -183,7 +183,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-009 | Gallery Scanner | QR Detector | Critical | Completed | GS-007 |
 | GS-010 | Gallery Scanner | EMVCo Payload Parser | Critical | Completed | GS-009 |
 | GS-011 | Gallery Scanner | Bank Identification | High | Completed | GS-010 |
-| GS-012 | Gallery Scanner | OCR Fallback | High | Todo | GS-009 |
+| GS-012 | Gallery Scanner | OCR Fallback | High | Completed | GS-009 |
 | GS-013 | Gallery Scanner | Duplicate Detection | High | Todo | GS-010 |
 | GS-014 | Gallery Scanner | Bank Selection Popup | Medium | Todo | GS-011 |
 | GS-015 | Gallery Scanner | Import Preview | High | Todo | GS-013 |
@@ -236,6 +236,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-010 (EMVCo Payload Parser) turns a raw QR payload string into a structured payment record. `engine/emvco/emvcoTlv.ts` is a pure Tag-Length-Value walker: it parses the flat EMVCo field stream, recurses into template tags (merchant-account 02–51, additional-data 62, language 64), gracefully keeps a template's raw value when its content isn't nested TLV (e.g. a card-scheme GUID), and returns null for non-EMVCo strings (a URL/plain-text QR is cleanly rejected). Integrity is the CRC-16/CCITT-FALSE checksum in tag 63 (`crc16ccitt`, pinned by the canonical `123456789`→`0x29B1` vector); `parseEmvcoPayload` reports it as `crcValid` and still parses a structurally-valid-but-corrupted payload rather than discarding it. `emvcoPayloadParser.ts` extracts the standard fields — PromptPay AID + proxy (mobile/national-id/e-wallet), merchant name/city, MCC, amount, currency (numeric + a small ISO-4217 alpha map), country, and reference IDs from the additional-data template. Two deliberate deferrals (no invention): bank *identity* is left to GS-011 (the raw `merchantAccounts` templates are exposed for it), and timestamp is left to OCR/slip-verify (GS-012) since EMVCo payment QRs carry none. Validated build/tsc/lint; slipScanner 49 tests, full suite green.
 >
 > GS-011 (Bank Identification) is a plugin-based institution identifier over the GS-010 payload. `engine/bank/bankRegistry.ts` seeds a mutable registry with the listed institutions keyed on the real, published Bank of Thailand 3-digit codes (BBL 002, KBank 004, Krungthai 006, TTB 011, SCB 014, UOB 024, Krungsri 025, GSB 030, BAAC 034) plus PromptPay as a rail (code null) — no codes are guessed. `registerBankPlugin` adds or replaces a bank by id, so future banks plug in without editing the identifier; `identifyBankByCode` is the reusable code→bank resolver other stages (OCR/slip-verify) call. `bankIdentifier.ts`'s `identifyBank(payload)` prefers a registered plugin whose custom `match` or `aidGuids` (bank-specific QR rails) fits, then falls back to the PromptPay rail when the payload carries a PromptPay proxy, else null — honest about the fact that a plain PromptPay QR identifies the rail, not the receiving bank (only known later from slip verification/OCR). Validated build/tsc/lint; slipScanner 58 tests, full suite green.
+>
+> GS-012 (OCR Fallback) recovers slip fields when the QR path can't. It reuses the app's existing on-device OCR rather than adding a second engine: `engine/ocr/ocrRecognizer.ts` exposes a byte-oriented `OcrTextRecognizer` seam whose default wraps the existing Tesseract `recognizeSlipText` (dynamic import, so the WASM engine stays out of the path/bundle until a slip needs it), and `slipOcrFields.ts` reuses `parseSlipText` verbatim for amount/date/merchant — adding only the two fields that parser lacks, transaction time (HH:MM[:SS], range-validated) and reference number (Thai/English label-anchored). `ocrFallback.ts`'s `shouldRunOcrFallback(qrOutcome)` enforces the "OCR only when QR missing/damaged/unreadable" rule: it runs OCR when no QR was detected, when a decoded QR isn't valid EMVCo, or when the CRC fails — and skips it for a clean CRC-valid payload. Logic is unit-testable via a fake recognizer (no Tesseract in tests). Not yet wired as the default processor; assembled into the extraction pipeline in a later GS task. Validated build/tsc/lint; slipScanner 70 tests, full suite green.
 
 ---
 
