@@ -2,7 +2,7 @@
 
 Master registry of all planned and completed Nexus tasks, grouped by Epic. See [README.md](README.md) for conventions and lifecycle.
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-07
 
 ## Legend
 
@@ -21,7 +21,10 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Security | 4 | 2 | 2 | 0 | 0 |
 | Core | 3 | 3 | 0 | 0 | 0 |
 | Testing | 3 | 3 | 0 | 0 | 0 |
-| **Total** | **32** | **21** | **11** | **0** | **0** |
+| Accessibility | 1 | 1 | 0 | 0 | 0 |
+| Performance | 2 | 2 | 0 | 0 | 0 |
+| UX | 1 | 1 | 0 | 0 | 0 |
+| **Total** | **36** | **25** | **11** | **0** | **0** |
 
 ---
 
@@ -119,3 +122,40 @@ Infrastructure + baseline coverage established (224 unit, 22 integration, 18 e2e
 | TEST-001 | Testing | Unit Tests | High | Completed | — |
 | TEST-002 | Testing | Integration Tests | High | Completed | — |
 | TEST-003 | Testing | End-to-End Tests | High | Completed | — |
+
+---
+
+## Accessibility
+
+Cross-cutting accessibility work. A11Y-001 added screen-reader labels (a shared `ChartFigure` `role="img"` wrapper) and keyboard semantics across the AI Analytics charts — see [Accessibility/A11Y-001.md](Accessibility/A11Y-001.md) and [../docs/AI_ANALYTICS.md](../docs/AI_ANALYTICS.md).
+
+| Task ID | Epic | Title | Priority | Status | Dependencies |
+|---|---|---|---|---|---|
+| A11Y-001 | Accessibility | AI Analytics Accessibility Pass | Medium | Completed | — |
+
+> Remaining accessibility follow-ups (focus-visible rings, data-table chart alternatives, sub-section empty-state audit, mobile responsive check) are scoped in A11Y-001's report but not yet registered as their own tasks.
+
+---
+
+## Performance
+
+AI Analytics engine performance passes — both are output-preserving optimizations of the analyzer/trend pipeline, see [../docs/TECHNICAL_DEBT.md](../docs/TECHNICAL_DEBT.md).
+
+| Task ID | Epic | Title | Priority | Status | Dependencies |
+|---|---|---|---|---|---|
+| PERF-001 | Performance | Analyzer Cache Optimization | Medium | Completed | — |
+| PERF-002 | Performance | Eliminate Duplicate buildScoreContext Computation | Medium | Completed | — |
+
+> PERF-003 (share `now` across the analysis/trend hooks to dedupe the trend's "current" point; optional Web Worker offload) is scoped but not yet registered — it needs a small UI-level change deliberately excluded from PERF-002.
+
+---
+
+## UX
+
+AI Analytics user-experience fixes.
+
+| Task ID | Epic | Title | Priority | Status | Dependencies |
+|---|---|---|---|---|---|
+| UX-001 | UX | Replace Full Page Reload with Analysis Re-run | Low | Completed | — |
+
+> UX-002 (cover data-load errors in the same retry, make a synchronous engine throw surface as an error state, add a retry pending state) is scoped in UX-001's report but not yet registered.
