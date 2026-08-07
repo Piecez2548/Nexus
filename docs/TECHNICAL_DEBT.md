@@ -1,0 +1,52 @@
+# Technical Debt
+
+**Last Updated:** 2026-08-02
+
+## Overview
+
+This document lists specific, verified issues found while reading the codebase for this documentation sprint — not a generic "things to watch for" list. Every item below was confirmed against actual source, not assumed from naming.
+
+## Known Issues
+
+- **`src/features/calendar/` is orphaned.** Contains exactly one file, `types/index.ts`, whose own header comment explains the Calendar feature was retired in favor of Life Schedule, and the type + `calendarEvents` Dexie table are kept only so existing user data isn't destroyed. Confirmed via grep: zero UI/nav/feature code references `CalendarEvent`; only generic, schema-agnostic infrastructure (sync, backup, encryption migration) touches it, and only because those enumerate every table name mechanically. See [MODULES.md](MODULES.md).
+- **`src/components/ui/FileField.tsx` has zero importers.** Confirmed via repo-wide grep — not referenced by any component, page, or test. `MultiFileField.tsx` (its apparent successor, used by `TradeMetaFields.tsx`) appears to have superseded it. Dead code, safe to remove or worth a comment explaining why it's kept.
+- **No "disable encryption" flow exists.** `appLockStore.ts`'s `disableLock()` explicitly refuses to run while `encryptionEnabled` is true, with a comment stating encryption must be disabled first via "a separate, not-yet-built flow." `EncryptionSettings.tsx` has no UI for it either. A user who enables encryption today has no way to turn it back off through the app.
+- **`PLAINTEXT_KEYS` (which fields stay unencrypted per table) is hand-duplicated in three places** with no single source of truth: each `createRepository()` call's `plaintextKeys` option, `backupService.ts`, and `enableEncryption.ts`. Each file's own comment acknowledges this and says the three must be kept in sync manually. A drift between them would be a subtle, hard-to-detect bug (e.g. a field silently encrypted in one path and not another).
+- **Root `README.md` is still the unmodified Vite template** ("React + TypeScript + Vite... This template provides a minimal setup..."). The real project documentation now lives entirely in `/docs` — worth either replacing the root README with a short pointer to `/docs/README.md`, or leaving it as-is with an explicit note, since right now a first-time visitor to the repo root sees generic scaffolding text instead of what the project actually is.
+- **`package.json` version is still `0.0.0`** (the Vite template default) despite the app being under active, substantial development — see [CHANGELOG.md](CHANGELOG.md).
+
+## Code Smells
+
+- **Two parallel "health score" computations coexist by design, not by accident**, but this is still worth flagging as a comprehension hazard for new contributors: `engine/analyzers/healthScore.ts` (older, unweighted, no UI card anymore) and `engine/scoring/` (newer, weighted, has the page's sole health-score UI). The old one is still computed every run and still feeds exactly 4 rules — a reader skimming the codebase could easily assume it's dead. Both `AI_ANALYTICS.md` and inline code comments now document this explicitly, which mitigates but doesn't eliminate the risk.
+- **`useGlobalSearch.ts` uses whole-store destructuring across all 11 data stores** rather than narrow selectors — a deliberate, accepted exception (see [STATE_MANAGEMENT.md](STATE_MANAGEMENT.md)) because it's isolated behind `GlobalSearch`'s own `memo()` boundary. Still worth watching if `GlobalSearch` is ever refactored to lose that boundary.
+
+## Large Components / Files
+
+- **`src/i18n/translations.ts` is 3,736 lines** — a single flat file holding every translation key for both languages. It works because keys are logically namespaced (`aiAnalytics.*`, `dashboard.*`, `settings.*`, ...), but it's the single largest source file in the app and every feature that adds UI text has to touch it, making it a near-guaranteed merge-conflict point if the project ever has multiple concurrent contributors.
+- **`src/features/finance/aiAnalytics/` is ~250 files** — by far the largest module. Its own internal structure (analyzers → scoring/behavior/forecast/recommendation → executiveSummary → coach, see [AI_ANALYTICS.md](AI_ANALYTICS.md)) is well-layered, but its sheer size means onboarding to this specific module takes meaningfully longer than any other.
+- **`src/layouts/TopBar.tsx` subscribes to 12 different stores** to eagerly load header-widget data on every route. Already tuned once for a real perf regression (narrow selectors + `memo()` on its children — see [STATE_MANAGEMENT.md](STATE_MANAGEMENT.md)); flagged here only as the natural place to look first if a future feature needs to add a 13th store subscription and the pattern starts to strain.
+
+## Future Refactoring
+
+- Consolidate `PLAINTEXT_KEYS` into one exported constant (see "Known Issues" above) — the most concrete, low-risk refactor identified.
+- Decide the fate of `src/features/calendar/` — either commit to keeping `calendarEvents` indefinitely (and document why, e.g. "some users may still have data in it"), or design a one-time migration/export prompt so the table and its orphaned type can eventually be removed.
+- Replace or annotate the root `README.md`.
+
+## Potential Risks
+
+- **Data loss risk if a user enables encryption and later needs to disable it** (e.g. to hand off a device, or if the app's encryption code has a bug) — there is currently no supported path back to plaintext short of a full export/reset/re-import cycle via `backupService.exportBackup()`/`resetAllData()`, which is manual and easy to get wrong under pressure.
+- **`translations.ts`'s size is a scaling risk, not a correctness risk today** — if the app adds many more features at the current pace, this file could become unwieldy enough to warrant splitting per-feature, even though the current flat structure with namespaced keys is entirely functional.
+- **Single-branch, direct-to-`main` git workflow** (confirmed: only `main` exists locally and on `origin`, no `.husky` hooks, no `CONTRIBUTING.md` before this sprint) — fine for a solo contributor, but would need a real branch/PR discipline before a second contributor joins, since CI (`ci.yml`) already supports `pull_request` triggers but nothing in the repo enforces using them.
+
+## Areas Needing Improvement
+
+- **Automated key-parity checking for `translations.ts`** — this audit spot-checked `en` vs `th` block sizes for the `aiAnalytics` namespace (974 vs 960 lines, closely matched) but did not run a full automated key-by-key diff across the whole file. A CI check that fails when a key exists in one language but not the other would close this gap permanently rather than relying on manual spot-checks.
+- **`LoadingState`'s default label is hardcoded English** (`"Loading..."`), not run through `useTranslation()` — every actual call site does pass a translated `label` explicitly, so this isn't user-visible today, but the component's own default silently breaks the app's i18n discipline if a future call site omits the prop.
+
+## Current Status
+
+All items above are current findings as of this documentation sprint (2026-08-02), verified by direct code reading, not carried over from a stale prior list (this is the first time this project has had a `TECHNICAL_DEBT.md`).
+
+## Future Improvements
+
+Re-audit this list periodically as part of the `update` workflow (see `CLAUDE.md`) — technical debt documentation is only useful if it's re-verified against the code each time, not copy-pasted forward.

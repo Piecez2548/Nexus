@@ -1,102 +1,91 @@
-# Nexus Roadmap
+# Roadmap
 
-Derived from `Nexus_Project_Blueprint.pdf` and the current state of this repo. Checkboxes are a backlog, not a commitment — reorder as priorities shift.
+**Last Updated:** 2026-08-02
 
-## Current state (2026-07-21)
+## Overview
 
-- **Stack in use:** Vite + React 19 + TypeScript + Tailwind v4, Zustand, Dexie (IndexedDB), React Hook Form + Zod, Recharts. This is a local-first frontend — the blueprint's backend (NestJS + PostgreSQL + Prisma + Redis) does not exist yet.
-- **Architecture:** Feature-First — each domain lives under `src/features/<name>/` with its own `components/`, `pages/`, `hooks/`, `store/`, `services/`, `repositories/`, `types/`, `schemas/`. UI never touches Dexie directly: components → store → service → repository → `src/database/db.ts`. Shared code lives at `src/{components,hooks,layouts,providers,contexts,config,constants}/`. All cross-folder imports use the `@/` alias (see `tsconfig.app.json` / `vite.config.ts`).
-- **Built:** Dashboard (`src/features/dashboard/` — balance/income/expense/saving cards, cash flow bar chart, expense pie chart, recent transactions, AI Analytics insights panel), Finance (`src/features/finance/`) — Transactions (income/expense/transfer/refund/adjustment, with tags/attachment/time/status/recurring metadata), Accounts (full CRUD, in-use delete guard), Categories (full CRUD, merge, in-use delete guard), **Budget** (per-category recurring budgets with live progress against real spend), **Saving Goals** (target/current tracking with quick contributions), **Rule Engine + Learning Engine** (recipient-keyed auto-categorization that learns from transaction history, falls back to a seeded merchant database, with a Recipient Profiles page for transparency/control), **rule-based "AI Analytics"** (category month-over-month spend spikes, duplicate-subscription detection, unusual single-transaction flags — all pure computation, no LLM); Trading (`src/features/trading/`) — Trading Journal (full trade CRUD: symbol/market/direction/entry-exit/risk fields/before-after psychology/strategy/session/tags/screenshots) and a Trading Dashboard computing win rate, profit factor, average RR, max drawdown, today/weekly/monthly P/L, and best/worst strategy; layout shell (`src/layouts/`), theme system (`src/providers/ThemeProvider.tsx` + `src/contexts/ThemeContext.tsx` + `src/config/themes.ts`).
-- **Stubbed:** Reports and Settings routes still render "Coming Soon" (`src/pages/`, wired in `src/router/router.tsx`).
-- **Data model so far:** Dexie v5 tables `transactions` (5 types, tags/attachment/time/status/recurring/recipient), `accounts`, `categories`, `trades`, `recipientProfiles` (learned category mappings keyed by recipient), `merchants` (seeded fallback lookup), `budgets`, `goals` — see `src/database/db.ts` and each feature's `types/`. Net-worth/subscriptions tables not started; Trading Analytics/Psychology-as-workflow/Risk Management config/Strategy Library/Playbook/Trade Replay/AI Coach not started.
-- **Explicitly NOT built (needs infrastructure decisions first):** Authentication (Register/Login/Google/Apple/JWT — needs a real backend or auth provider), OCR receipt scanning (cloud API vs. client-side Tesseract.js is an open architecture choice), the conversational AI Assistant (needs a real LLM API + backend proxy — cannot safely hold an API key in client code), Android/iOS native apps. See "Nexus Finance PRD infrastructure gap" in Open Questions.
-- **Not started otherwise:** everything below; no backend, no AI integration, no auth.
+This roadmap replaces the previous version (last updated 2026-07-21), which was written before Trading, Portfolio, Todo, Habits, Life Schedule, Sync, Encryption, App Lock, and the entire AI Analytics engine existed in their current form — most of what it listed as "not started" is now built. This version is derived directly from the current source tree (see [MODULES.md](MODULES.md), [AI_ANALYTICS.md](AI_ANALYTICS.md)), not from an external blueprint document. Checkboxes are a backlog, not a commitment.
 
-## Phase 1 — Core
+## Completed
 
-Goal: finish the modules everything else depends on, staying on the current local-first (Dexie) stack.
+### Finance
+- [x] Transactions (5 types: income/expense/transfer/refund/adjustment), Accounts, Categories — full CRUD, in-use delete guards, duplicate merge
+- [x] Budgets (recurring, per-category, live progress) and Savings Goals (with a 25/50/75/100% milestone-event log)
+- [x] Recipient-based Learning Engine (confidence-scored auto-categorization) + seeded Merchant Database fallback
+- [x] Recipient Profiles page (view/delete, read-only — profiles are server-derived)
+- [x] Duplicate transaction/account/category detection and merge
+- [x] Thai + English on-device receipt-slip OCR (Tesseract.js) with regex-based parsing
+- [x] CSV/PDF/JSON export, CSV import with validation preview
+- [x] Quick Add transaction templates, Favorites
 
-### 1.1 Finance (extends existing work)
-- [x] Foundation — expanded transaction schema (income/expense/transfer/refund/adjustment, tags, attachment, time, status, recurring), Accounts CRUD, Categories CRUD + merge, delete guards preventing orphaned references
-- [x] Budget — recurring monthly/weekly/yearly budgets per category, with progress computed live against actual spend for the current period
-- [x] Financial Goals — savings goal progress with target/current tracking and quick contributions
-- [x] Rule Engine + Learning Engine — recipient-keyed category auto-suggestion/auto-fill, learns from transaction history (confidence score grows with usage), falls back to a seeded Merchant Database matched against the transaction title; Recipient Profiles page for visibility/control (view, delete)
-- [x] Rule-based "AI Analytics" — category month-over-month spend increases, duplicate-subscription detection (recurring transactions sharing a category), unusually large single transactions vs. category history; surfaced on the Dashboard. Pure computation, no LLM — see open question on the real AI Assistant below.
-- [ ] Net Worth — assets/liabilities tracking, net worth over time (new `assets`/`liabilities` tables)
-- [ ] Subscription Manager — renewal reminders as a dedicated feature (the transaction-level `recurring` field stores frequency metadata and duplicate-subscription detection already exists, but nothing manages subscriptions as first-class entities with renewal dates yet)
-- [ ] Merchant Database management UI (currently seed-only, no CRUD — `src/database/seed.ts`)
-- [ ] Replace the Reports stub with a first real slice: daily/weekly/monthly cash flow view
-- [ ] Search/Filter/Sort polish on Transactions (keyword/category/account/date range/amount range/tag search; sort by newest/oldest/amount/alphabetical) — the type filter dropdown already covers all 5 types, but full search+sort per the blueprint is still open
+### AI Analytics (rule-based, fully local — see [AI_ANALYTICS.md](AI_ANALYTICS.md) and the Sprint 1 P001–P011 audit)
+- [x] Weighted, explainable Financial Health Score (7 sub-scores)
+- [x] Rule Engine (~46 rules across 15 categories)
+- [x] Recommendation Engine (difficulty/timeline/impact-enriched)
+- [x] Behavior Analysis Engine (9 detectors, 8 domain analyzers, spending-style classification)
+- [x] Forecast & Trend Engine, including an interactive What-If scenario simulator
+- [x] Executive Summary Generator
+- [x] AI Coach (16-intent keyword-classified Q&A)
+- [x] AI Gateway infrastructure (`src/ai/`) — built, tested, **not yet wired into the app**
 
-### 1.2 Investment (new module)
-- [ ] Portfolio — holdings + cost basis + current value (`holdings`, `investmentTransactions` tables)
-- [ ] Asset Allocation — breakdown by asset class/sector
-- [ ] DCA Planner
-- [ ] Dividend Tracker
-- [ ] Rebalancing suggestions
+### Trading & Portfolio
+- [x] Trading Journal — full trade CRUD with psychology/session/strategy metadata
+- [x] Trading Dashboard — win rate, profit factor, average RR, max drawdown, equity curve, drawdown chart, R-multiple risk distribution, per-session stats, performance calendar
+- [x] Heuristic (non-AI) market-type detection, CSV export
+- [x] Portfolio — manual holdings tracker with cost basis and unrealized P/L
 
-### 1.3 Productivity (baseline, new module)
-- [ ] Todo
-- [ ] Smart Calendar (basic, no AI scheduling yet)
-- [ ] Habit Tracker
-- [ ] Journal
-- [ ] Goal Management (reconcile with Financial Goals — see open question)
+### Productivity
+- [x] Todo (priority, due date, filters)
+- [x] Habit Tracker (daily/weekly streaks with grace period, native reminders)
+- [x] Life Schedule (recurring daily-routine timeline, drag-to-retime, live current-activity tracking) — replaced the earlier Calendar feature
 
-### 1.4 Foundation
-- [ ] Decide local-first vs. backend-first timing (see open questions)
-- [ ] Real Settings page: currency, theme, Dexie export/import
+### Security & Sync
+- [x] Device-local PIN + biometric App Lock, auto-lock timeout
+- [x] Supabase email/password authentication (optional, no-op if unconfigured)
+- [x] Client-side AES-GCM encryption-at-rest, PBKDF2 key derivation, account-password-based escrow/recovery
+- [x] Generic push/pull sync engine, tombstone-based deletion propagation, last-write-wins conflict handling, malformed-row guard
 
-## Phase 2 — Analytics
+### Platform & cross-cutting
+- [x] Full Thai/English i18n (validation messages included, via a `TranslateFn`-factory pattern)
+- [x] Dark/light/system/mono themes
+- [x] Gamification layer (XP, levels, streaks)
+- [x] Global search across every entity type
+- [x] Capacitor Android build (APK), Electron desktop shell
+- [x] Sentry error monitoring (optional)
+- [x] CI pipeline (lint, type-check, unit/integration tests, build, e2e) on every push/PR to `main`
 
-Goal: deepen Finance/Investment analytics, add Trading, ship real Reports.
+## In Progress
 
-### 2.1 Trading (foundation built — see current state above)
-- [x] Foundation — full trade data model, Trading Journal CRUD, Trading Dashboard with computed stats
-- [ ] Trade Analytics (deeper: expectancy, avg holding time, avg winner/loser, monthly/yearly return, strategy comparison — beyond the dashboard's current win rate/profit factor/RR/drawdown)
-- [ ] Risk Management config (max daily/weekly loss limits, alerts when approached)
-- [ ] Strategy Library (named strategies with entry/exit/risk rules, checklists — journal's `strategy` field is currently free text)
-- [ ] Playbook (best/worst trades curation, lessons aggregation)
-- [ ] Trade Replay
-- [ ] Search/Filter/Sort polish on the Journal (currently just a table; blueprint wants symbol/market/date/strategy/emotion/tags/RR/profit/loss search + win/loss/breakeven/long/short/strategy/session/emotion filters)
-- [ ] Company Analyzer
-- [ ] Watchlist
-- [ ] Economic Calendar
-- [ ] AI News — needs external data + LLM, pulls AI infra forward from Phase 3
-- [ ] AI Trade Coach — same, journal already captures the metadata (psychology, mistakes, lessons) it would need
+Nothing is currently mid-build in the repository as of this writing — the most recent commits (`3909f1b` → `4e9adb7`) were a consolidation/hardening/documentation pass over already-shipped features, not new in-progress work.
 
-### 2.2 Reports (full module)
-- [ ] Daily/Weekly/Monthly report generation
-- [ ] PDF/Excel/CSV export
+## Planned
 
-### 2.3 Smart Scheduler (Productivity)
+Items explicitly implied as unfinished by the current architecture, in rough order of how directly the existing code already supports them:
 
-### 2.4 Backend milestone
-- [ ] Stand up NestJS + PostgreSQL + Prisma + Redis
-- [ ] Design Dexie → PostgreSQL migration path (needed once Trading needs external/live data or multi-device sync matters)
+- **AI Gateway integration** — the seam (`AIProvider`, `LocalRuleProvider`) is fully built; wiring a real LLM provider (e.g. Claude) needs a backend proxy first, since an API key cannot safely live in client code. See [SECURITY.md](SECURITY.md), [DECISIONS.md](DECISIONS.md).
+- **"Disable encryption" flow** — explicitly blocked in `appLockStore.ts` today with a comment naming it as future work; only enable/escrow/recover exist.
+- **Net Worth tracking** (assets/liabilities, net worth over time) — no `assets`/`liabilities` tables exist.
+- **Subscription Manager as a first-class entity** (renewal dates, reminders) — duplicate-subscription *detection* exists (`spendingAlerts.ts`, the Rule Engine), but nothing manages subscriptions as their own tracked entity yet.
+- **Merchant Database management UI** — `merchants` is currently seed-only, no CRUD exists (`merchantRepository.ts` is read-only by design).
+- **Deeper Trading analytics** — expectancy, average holding time, strategy comparison, a named Strategy Library, a Playbook, Trade Replay, Watchlist, Economic Calendar.
+- **Risk Management config** (max daily/weekly loss limits + alerts) for Trading.
+- **Reports module** — no `Reports` page or route exists at all (not even a stub) as of this writing.
 
-## Phase 3 — AI
+## Future
 
-Goal: AI Center + Knowledge Base, layered on the data from Phases 1-2.
+Larger initiatives with no code-level scaffolding yet:
 
-- [ ] AI Chat
-- [ ] AI Financial Advisor (reads Finance + Investment data)
-- [ ] AI Personal Coach (reads Productivity data)
-- [ ] AI Daily Summary (Dashboard + Notification Center)
-- [ ] Knowledge Base: Documents, OCR, Semantic Search (Qdrant + RAG + LangChain)
-- [ ] Move AI News / AI Trade Coach (built early in Phase 2) onto this shared AI infra
+- **Push notifications** (FCM/APNs/Web Push) — the current `reminders/` module is native-local-only (Capacitor local-notifications), not a push infrastructure.
+- **Automation** (IF/THEN workflows, scheduled reports/alerts).
+- **2FA and login history** — current security is PIN/biometric (device-local) + Supabase email/password (account-level); no second factor or login-history surface exists.
+- **iOS build** — only an Android Capacitor project exists (`android/`, 53 tracked files); no `ios/` project directory exists in the repository.
+- **A real backend / multi-user architecture** — Supabase is used only as an auth provider + a generic sync relay (see [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)); there is no server-side business logic, and none is currently planned. See [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)'s "Future Backend Architecture."
+- **Semantic versioning / tagged releases** — `package.json` is still at `0.0.0`.
 
-## Phase 4 — Mobile & Automation
+## Current Status
 
-- [ ] Notification Center: mobile push (FCM/APNs/Web Push), calendar reminders, price alerts, habit reminders, AI recommendations
-- [ ] Automation: IF/THEN workflows, daily reports, trading alerts
-- [ ] Security: Password Vault, 2FA, Encryption, Login History
-- [ ] Backup: Local, Cloud, Version History
-- [ ] Mobile app / PWA packaging
-- [ ] Deployment pipeline: Docker, GitHub Actions, Nginx
+This roadmap reflects the repository exactly as of commit `4e9adb7` (2026-08-02) — regenerate against the code, not this document, if a long time has passed since this date.
 
-## Open questions
+## Future Improvements
 
-- **Local-first vs. backend-first:** how long does Dexie/IndexedDB carry the app before NestJS + PostgreSQL is worth standing up? Recommendation above is to defer until Trading/AI/Notifications need server-side infra in Phase 2-3, but confirm — starting the backend earlier changes how Phase 1 modules should be built (API-shaped from day one vs. store-shaped).
-- **Financial Goals vs. Goal Management:** resolved for now — built once under Finance (`src/features/finance/pages/Goals.tsx`) as `Goal`. Revisit if/when Productivity's Goal Management is built — reuse this model or keep them distinct?
-- **Auth/multi-user:** single-user only, or multi-user with accounts from the start? Affects when the backend becomes mandatory rather than optional.
-- **Nexus Finance PRD infrastructure gap:** a later PRD (OCR receipt scanning, real Authentication with Google/Apple/JWT, a conversational LLM-backed AI Assistant, Android/iOS) assumes backend + auth + AI-API infrastructure that doesn't exist yet. The local-only-computable slice of that PRD (Rule/Learning Engine, rule-based analytics, Budget, Goals) is built — see 1.1 above. Still open: which auth provider/backend to stand up, OCR approach (cloud API vs. client-side Tesseract.js), and how to proxy LLM calls without exposing API keys client-side, before the remaining PRD items are buildable.
+Consider re-deriving this roadmap automatically (e.g. from route table + module folder presence) rather than by hand, given how quickly it went stale last time (12 days between the previous update and this one, during which most of the "Not started" list was built).
