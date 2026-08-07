@@ -66,8 +66,14 @@ export function useFinancialAnalysis(engine: FinancialIntelligenceEngine = local
     const thisRequestId = ++requestId.current;
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
-    engine
-      .analyze(input)
+    // `engine` is a swappable seam, so don't assume analyze() always returns
+    // a promise — a synchronous throw (e.g. the local engine's
+    // Promise.resolve(runAnalysis(input)) evaluating runAnalysis before the
+    // wrap) would otherwise escape this chain and leave the UI stuck on
+    // `loading`. Starting from Promise.resolve() routes that throw into the
+    // same .catch as a rejection, so it surfaces as an error state (UX-002).
+    Promise.resolve()
+      .then(() => engine.analyze(input))
       .then((data) => {
         if (thisRequestId !== requestId.current) return;
         setState({ data, loading: false, error: null });

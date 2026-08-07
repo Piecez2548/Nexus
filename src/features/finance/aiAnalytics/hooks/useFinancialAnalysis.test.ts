@@ -236,6 +236,20 @@ describe("useFinancialAnalysis", () => {
     expect(hookResult.current.data).toBeNull();
   });
 
+  it("surfaces a synchronously-thrown analyze() as an error instead of hanging on loading", async () => {
+    const engine: FinancialIntelligenceEngine = {
+      analyze: () => {
+        throw new Error("sync boom");
+      },
+    };
+
+    const { result: hookResult } = renderHook(() => useFinancialAnalysis(engine, now));
+
+    await waitFor(() => expect(hookResult.current.loading).toBe(false));
+    expect(hookResult.current.error).toBe("sync boom");
+    expect(hookResult.current.data).toBeNull();
+  });
+
   it("re-runs analyze() when retry() is called, recovering from an error without a reload", async () => {
     let call = 0;
     const okResult = stubResult({ meta: { generatedAt: now.toISOString(), transactionCount: 5, monthsOfHistory: 2 } });

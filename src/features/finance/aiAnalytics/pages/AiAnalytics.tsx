@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
@@ -46,7 +46,11 @@ export default function AiAnalytics() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const categoryDetail = useCategoryDetail(selectedCategory);
 
-  useEffect(() => {
+  // The page owns load orchestration (the hooks read the stores but never
+  // fetch them). Shared by mount and retry so the retry re-fetches the
+  // finance data before re-analysing — recovering from a transient
+  // data-load failure, not just re-running the analysis (UX-002).
+  const loadAll = useCallback(() => {
     loadTransactions();
     loadBudgets();
     loadCategories();
@@ -54,6 +58,15 @@ export default function AiAnalytics() {
     loadProfiles();
     loadEvents();
   }, [loadTransactions, loadBudgets, loadCategories, loadGoals, loadProfiles, loadEvents]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  const handleRetry = useCallback(() => {
+    loadAll();
+    retry();
+  }, [loadAll, retry]);
 
   return (
     <div className="space-y-6">
@@ -63,7 +76,7 @@ export default function AiAnalytics() {
       </div>
 
       {error ? (
-        <ErrorState message={error} onRetry={retry} />
+        <ErrorState message={error} onRetry={handleRetry} />
       ) : loading && !data ? (
         <LoadingState label={t("aiAnalytics.loading")} />
       ) : !data || data.meta.transactionCount === 0 ? (
