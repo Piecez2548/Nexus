@@ -1,4 +1,5 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import ChartFigure from "@/features/finance/aiAnalytics/components/ChartFigure";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { WeeklyTrendPoint } from "@/features/finance/aiAnalytics/engine/analyzers/spendingAnalysis";
 
@@ -17,14 +18,16 @@ export default function WeeklyTrendChart({ weeklyTrend }: Props) {
   const data = weeklyTrend.map((w) => ({ week: w.weekStart.slice(5), amount: w.amount }));
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data}>
-        <CartesianGrid stroke="#333" />
-        <XAxis dataKey="week" />
-        <YAxis />
-        <Tooltip formatter={(value) => `฿${Number(value).toLocaleString()}`} />
-        <Bar dataKey="amount" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <ChartFigure label={t("aiAnalytics.charts.weeklyTrend", { count: data.length })}>
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={data}>
+          <CartesianGrid stroke="#333" />
+          <XAxis dataKey="week" />
+          <YAxis />
+          <Tooltip formatter={(value) => `฿${Number(value).toLocaleString()}`} />
+          <Bar dataKey="amount" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartFigure>
   );
 }

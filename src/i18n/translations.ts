@@ -846,6 +846,23 @@ export const translations = {
       pageSubtitle: "A local, private breakdown of your financial habits — no data ever leaves your device.",
       loading: "Analyzing your finances...",
       emptyState: "Add some transactions to see your financial analysis",
+      charts: {
+        // Accessible names (aria-label) announced for each chart figure in
+        // place of its decorative SVG/grid internals. One concise sentence,
+        // data-driven where a count/label adds real meaning.
+        healthRadar: "Radar chart of financial health scores across {{count}} categories",
+        healthTrend: "Line chart of your overall financial health score across {{count}} points in time",
+        behaviorRadar: "Radar chart of six spending-behaviour scores",
+        monthlyTrend: "Line chart of monthly income, expense, and savings across {{count}} months",
+        weeklyTrend: "Bar chart of weekly spending across {{count}} weeks",
+        dailyTrend: "Bar chart of daily spending across {{count}} days",
+        weekdayAnalysis: "Bar chart of total spending by day of the week",
+        categoryComparison: "Bar chart comparing current and previous spending across {{count}} categories",
+        categoryMonthlyTrend: "Line chart of monthly spending for this category across {{count}} months",
+        forecastTrend: "Line chart of monthly savings with a projected next-month value",
+        heatmap: "Heatmap of spending intensity by day of week and hour of day",
+        habitCalendar: "Calendar of daily spending intensity for {{month}}",
+      },
       healthScore: {
         // Only `notApplicable` survives — it's a shared "N/A" label reused
         // by FinancialHealthScoreSection.tsx and BehaviorRadarChart.tsx.
@@ -2716,6 +2733,23 @@ export const translations = {
       pageSubtitle: "วิเคราะห์พฤติกรรมการเงินของคุณแบบส่วนตัว ทั้งหมดประมวลผลในเครื่อง ไม่มีข้อมูลออกจากอุปกรณ์",
       loading: "กำลังวิเคราะห์ข้อมูลการเงิน...",
       emptyState: "เพิ่มรายการธุรกรรมเพื่อดูการวิเคราะห์ทางการเงินของคุณ",
+      charts: {
+        // ชื่อสำหรับโปรแกรมอ่านหน้าจอ (aria-label) ของกราฟแต่ละตัว
+        // ใช้แทนเนื้อหาภายในกราฟที่เป็นภาพล้วน — หนึ่งประโยคสั้น
+        // อิงข้อมูลจริงเมื่อจำนวน/ป้ายช่วยให้เข้าใจมากขึ้น
+        healthRadar: "แผนภูมิเรดาร์คะแนนสุขภาพการเงินใน {{count}} หมวด",
+        healthTrend: "กราฟเส้นคะแนนสุขภาพการเงินโดยรวมตามช่วงเวลา {{count}} จุด",
+        behaviorRadar: "แผนภูมิเรดาร์คะแนนพฤติกรรมการใช้จ่าย 6 ด้าน",
+        monthlyTrend: "กราฟเส้นรายรับ รายจ่าย และเงินออมรายเดือน {{count}} เดือน",
+        weeklyTrend: "กราฟแท่งการใช้จ่ายรายสัปดาห์ {{count}} สัปดาห์",
+        dailyTrend: "กราฟแท่งการใช้จ่ายรายวัน {{count}} วัน",
+        weekdayAnalysis: "กราฟแท่งการใช้จ่ายรวมแยกตามวันในสัปดาห์",
+        categoryComparison: "กราฟแท่งเปรียบเทียบการใช้จ่ายงวดปัจจุบันกับงวดก่อนใน {{count}} หมวด",
+        categoryMonthlyTrend: "กราฟเส้นการใช้จ่ายรายเดือนของหมวดนี้ {{count}} เดือน",
+        forecastTrend: "กราฟเส้นเงินออมรายเดือนพร้อมค่าคาดการณ์เดือนถัดไป",
+        heatmap: "แผนภูมิความหนาแน่นการใช้จ่ายตามวันในสัปดาห์และชั่วโมง",
+        habitCalendar: "ปฏิทินความหนาแน่นการใช้จ่ายรายวันของ {{month}}",
+      },
       healthScore: {
         notApplicable: "ไม่มีข้อมูล",
       },

@@ -1,4 +1,5 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import ChartFigure from "@/features/finance/aiAnalytics/components/ChartFigure";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { CategoryMonthlyTrendPoint } from "@/features/finance/aiAnalytics/engine/analyzers/categoryDetail";
 
@@ -19,14 +20,16 @@ export default function CategoryMonthlyTrendChart({ monthlyTrend }: Props) {
   const data = monthlyTrend.map((m) => ({ month: m.monthKey.slice(5), amount: m.amount }));
 
   return (
-    <ResponsiveContainer width="100%" height={180}>
-      <LineChart data={data}>
-        <CartesianGrid stroke="#333" />
-        <XAxis dataKey="month" />
-        <YAxis />
-        <Tooltip formatter={(value) => `฿${Number(value).toLocaleString()}`} />
-        <Line type="monotone" dataKey="amount" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} />
-      </LineChart>
-    </ResponsiveContainer>
+    <ChartFigure label={t("aiAnalytics.charts.categoryMonthlyTrend", { count: data.length })}>
+      <ResponsiveContainer width="100%" height={180}>
+        <LineChart data={data}>
+          <CartesianGrid stroke="#333" />
+          <XAxis dataKey="month" />
+          <YAxis />
+          <Tooltip formatter={(value) => `฿${Number(value).toLocaleString()}`} />
+          <Line type="monotone" dataKey="amount" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </ChartFigure>
   );
 }

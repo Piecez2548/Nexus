@@ -11,8 +11,13 @@ function TrendSparkline({ merchant }: { merchant: TopMerchantEntry }) {
   const hasData = merchant.monthlyTrend.some((m) => m.amount > 0);
   if (!hasData) return null;
 
+  // Decorative sparkline: the merchant's transaction count, average, and
+  // total are already read out from the adjacent text cells, so this graphic
+  // is redundant to a screen reader — hide it rather than announce an
+  // unlabeled SVG. (It also sizes with height="100%", so it can't be wrapped
+  // in a plain role="img" block without collapsing.)
   return (
-    <div className="h-8 w-20">
+    <div className="h-8 w-20" aria-hidden="true">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={merchant.monthlyTrend}>
           <Line type="monotone" dataKey="amount" stroke="#0ea5e9" strokeWidth={2} dot={false} isAnimationActive={false} />

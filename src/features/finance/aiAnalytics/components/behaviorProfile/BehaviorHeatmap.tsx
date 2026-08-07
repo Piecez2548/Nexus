@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import ChartFigure from "@/features/finance/aiAnalytics/components/ChartFigure";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { HourWeekdayCell, TimeAnalysisResult } from "@/features/finance/aiAnalytics/engine/behavior/types";
 
@@ -38,7 +39,7 @@ export default function BehaviorHeatmap({ timeAnalysis }: Props) {
   }
 
   return (
-    <div>
+    <ChartFigure label={t("aiAnalytics.charts.heatmap")}>
       <div className="overflow-x-auto">
         <div className="inline-flex flex-col gap-1">
           {grid.map((row, weekday) => (
@@ -51,6 +52,6 @@ export default function BehaviorHeatmap({ timeAnalysis }: Props) {
           ))}
         </div>
       </div>
-    </div>
+    </ChartFigure>
   );
 }

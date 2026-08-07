@@ -1,4 +1,5 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import ChartFigure from "@/features/finance/aiAnalytics/components/ChartFigure";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { WeekdayAnalysisEntry } from "@/features/finance/aiAnalytics/engine/analyzers/spendingAnalysis";
 
@@ -24,14 +25,16 @@ export default function WeekdayAnalysisChart({ weekdayAnalysis }: Props) {
   const data = weekdayAnalysis.map((w) => ({ weekday: t(`aiAnalytics.weekdays.${WEEKDAY_KEYS[w.weekday]}`), total: w.total }));
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data}>
-        <CartesianGrid stroke="#333" />
-        <XAxis dataKey="weekday" />
-        <YAxis />
-        <Tooltip formatter={(value) => `฿${Number(value).toLocaleString()}`} />
-        <Bar dataKey="total" fill={BAR_COLOR} radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <ChartFigure label={t("aiAnalytics.charts.weekdayAnalysis")}>
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={data}>
+          <CartesianGrid stroke="#333" />
+          <XAxis dataKey="weekday" />
+          <YAxis />
+          <Tooltip formatter={(value) => `฿${Number(value).toLocaleString()}`} />
+          <Bar dataKey="total" fill={BAR_COLOR} radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartFigure>
   );
 }

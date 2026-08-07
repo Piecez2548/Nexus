@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import ChartFigure from "@/features/finance/aiAnalytics/components/ChartFigure";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { DailyTrendPoint } from "@/features/finance/aiAnalytics/engine/analyzers/spendingAnalysis";
 
@@ -49,7 +50,7 @@ export default function HabitCalendar({ dailyTrend, now }: Props) {
   }, [dailyTrend, now, language]);
 
   return (
-    <div>
+    <ChartFigure label={t("aiAnalytics.charts.habitCalendar", { month: monthLabel })}>
       <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">{monthLabel}</p>
 
       <div className="grid grid-cols-7 gap-1 text-center text-[10px] text-zinc-500 dark:text-zinc-400">
@@ -67,6 +68,6 @@ export default function HabitCalendar({ dailyTrend, now }: Props) {
           </div>
         ))}
       </div>
-    </div>
+    </ChartFigure>
   );
 }

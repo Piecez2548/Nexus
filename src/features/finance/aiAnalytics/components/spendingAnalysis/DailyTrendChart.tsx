@@ -1,4 +1,5 @@
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import ChartFigure from "@/features/finance/aiAnalytics/components/ChartFigure";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { DailyTrendPoint } from "@/features/finance/aiAnalytics/engine/analyzers/spendingAnalysis";
 
@@ -16,14 +17,16 @@ export default function DailyTrendChart({ dailyTrend }: Props) {
   const data = dailyTrend.map((d) => ({ day: d.date.slice(-2), amount: d.amount }));
 
   return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data}>
-        <CartesianGrid stroke="#333" />
-        <XAxis dataKey="day" />
-        <YAxis />
-        <Tooltip formatter={(value) => `฿${Number(value).toLocaleString()}`} />
-        <Bar dataKey="amount" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <ChartFigure label={t("aiAnalytics.charts.dailyTrend", { count: data.length })}>
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={data}>
+          <CartesianGrid stroke="#333" />
+          <XAxis dataKey="day" />
+          <YAxis />
+          <Tooltip formatter={(value) => `฿${Number(value).toLocaleString()}`} />
+          <Bar dataKey="amount" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartFigure>
   );
 }

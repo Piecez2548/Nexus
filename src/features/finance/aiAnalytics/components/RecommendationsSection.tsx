@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Lightbulb, ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { RecommendationPriority } from "@/features/finance/aiAnalytics/engine/analyzers/recommendations";
@@ -32,6 +32,7 @@ const ACTION_BUCKETS = [
 function RecommendationCard({ rec }: { rec: ActionableRecommendation }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const panelId = useId();
   const impact = rec.estimatedFinancialImpact;
 
   return (
@@ -84,6 +85,8 @@ function RecommendationCard({ rec }: { rec: ActionableRecommendation }) {
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
+        aria-expanded={expanded}
+        aria-controls={panelId}
         className="mt-2 flex items-center gap-1 text-xs font-medium text-brand-600 dark:text-brand-400"
       >
         {t("aiAnalytics.executiveSummaryReport.actionPlan.title")}
@@ -91,7 +94,7 @@ function RecommendationCard({ rec }: { rec: ActionableRecommendation }) {
       </button>
 
       {expanded && (
-        <div className="mt-2 grid gap-2 border-t border-zinc-100 dark:border-zinc-800 pt-2 sm:grid-cols-2">
+        <div id={panelId} className="mt-2 grid gap-2 border-t border-zinc-100 dark:border-zinc-800 pt-2 sm:grid-cols-2">
           {ACTION_BUCKETS.map((bucket) => {
             const message = rec.suggestedActions[bucket.key];
             return (
