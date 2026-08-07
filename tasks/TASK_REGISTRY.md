@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 13 | 37 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 14 | 36 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **40** | **68** | **0** | **0** |
+| **Total** | **108** | **41** | **67** | **0** | **0** |
 
 ---
 
@@ -185,7 +185,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-011 | Gallery Scanner | Bank Identification | High | Completed | GS-010 |
 | GS-012 | Gallery Scanner | OCR Fallback | High | Completed | GS-009 |
 | GS-013 | Gallery Scanner | Duplicate Detection | High | Completed | GS-010 |
-| GS-014 | Gallery Scanner | Bank Selection Popup | Medium | Todo | GS-011 |
+| GS-014 | Gallery Scanner | Bank Selection Popup | Medium | Completed | GS-011 |
 | GS-015 | Gallery Scanner | Import Preview | High | Todo | GS-013 |
 | GS-016 | Gallery Scanner | Smart Import | High | Todo | GS-015 |
 | GS-017 | Gallery Scanner | Security | High | Todo | GS-008 |
@@ -240,6 +240,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-012 (OCR Fallback) recovers slip fields when the QR path can't. It reuses the app's existing on-device OCR rather than adding a second engine: `engine/ocr/ocrRecognizer.ts` exposes a byte-oriented `OcrTextRecognizer` seam whose default wraps the existing Tesseract `recognizeSlipText` (dynamic import, so the WASM engine stays out of the path/bundle until a slip needs it), and `slipOcrFields.ts` reuses `parseSlipText` verbatim for amount/date/merchant — adding only the two fields that parser lacks, transaction time (HH:MM[:SS], range-validated) and reference number (Thai/English label-anchored). `ocrFallback.ts`'s `shouldRunOcrFallback(qrOutcome)` enforces the "OCR only when QR missing/damaged/unreadable" rule: it runs OCR when no QR was detected, when a decoded QR isn't valid EMVCo, or when the CRC fails — and skips it for a clean CRC-valid payload. Logic is unit-testable via a fake recognizer (no Tesseract in tests). Not yet wired as the default processor; assembled into the extraction pipeline in a later GS task. Validated build/tsc/lint; slipScanner 70 tests, full suite green.
 >
 > GS-013 (Duplicate Detection) prevents importing the same *transaction* twice — distinct from the image-byte content-hash dedup the orchestration already does (which only prevents scanning the same *file* twice). `engine/dedup/slipDuplicate.ts`'s `slipDuplicateKey(fields)` builds a deterministic fingerprint from the fields a slip carries (payload, ref1/ref2, amount, timestamp, merchant, bank): a reference number is the authoritative key when present (so the same transaction seen via QR and via OCR collapses to one, and cosmetic dash/space formatting is normalised away), otherwise it falls back to the full field tuple — which correctly keeps distinct payments to the same static PromptPay QR (identical payload, different amount/time) separate. `createDuplicateDetector(seedKeys?)` holds a seen-key set with `isDuplicate`/`register` and an atomic `markSeen` (race-free has()+add() under the concurrent queue, per the GS-007 pattern); it can be seeded with already-imported keys to block re-imports, and never flags a slip that carries no dedup signal. Pure/in-memory — persistence wiring is left to the import task. Validated build/tsc/lint; slipScanner 77 tests, full suite green.
+>
+> GS-014 (Bank Selection Popup) is the pre-scan popup that picks which banks' slips to import. Business logic stays out of React: `selection/bankSelection.ts` (pure) supplies the bank list from the pluggable registry, search filtering, an immutable toggle, the quick-select preset, and a scan-time estimate (image count × a documented per-image heuristic); `store/bankSelectionStore.ts` is a zustand `persist` store that *remembers the previous selection* (a `chosen` flag distinguishes "never picked → default to all" from "explicitly deselected all"); `hooks/useBankSelection.ts` composes them (search, select-all/deselect-all/quick-select, counts, estimate) and `components/BankSelectionPopup.tsx` is a thin presentational layer reusing the shared `Drawer`, with new i18n keys under `slipScanner.bankSelect.*` (en+th). Displays estimated image count + scan time; Start-scan is disabled until at least one bank is chosen. Not yet mounted on a route (the scanner UI is assembled in later GS tasks). Validated build/tsc/lint; slipScanner 97 tests (added bankSelection/store/hook/component suites), full suite green.
 
 ---
 
