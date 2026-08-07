@@ -23,15 +23,17 @@ tasks/
 ├── Testing/           Unit, integration, e2e testing
 ├── Accessibility/     Screen-reader, keyboard, ARIA work (cross-cutting)
 ├── Performance/       Engine/pipeline performance passes (cross-cutting)
-└── UX/                User-experience fixes (cross-cutting)
+├── UX/                User-experience fixes (cross-cutting)
+├── GalleryScanner/    Production Gallery Slip Scanner (GS epic — see MASTER_TASK.md)
+└── Platform/          Cross-cutting platform frameworks (PLT epic)
 ```
 
 Each Epic folder holds individual task files **once a task is started** (none exist yet — the registry is the current source of truth). Folders map 1:1 to Epics in the registry.
 
 ## Task Naming Convention
 
-- **Task ID:** `<EPIC>-<NNN>` — a fixed Epic prefix + zero-padded number: `AI-001`, `OCR-003`, `VAULT-001`, `FIN-002`, `SEC-004`, `CORE-001`, `TEST-002`, `A11Y-001`, `PERF-001`, `UX-001`.
-- **Epic prefixes:** `AI`, `FIN`, `OCR`, `VAULT`, `SEC`, `CORE`, `TEST`, `A11Y`, `PERF`, `UX`.
+- **Task ID:** `<EPIC>-<NNN>` — a fixed Epic prefix + zero-padded number: `AI-001`, `OCR-003`, `VAULT-001`, `FIN-002`, `SEC-004`, `CORE-001`, `TEST-002`, `A11Y-001`, `PERF-001`, `UX-001`, `GS-005`, `PLT-002`.
+- **Epic prefixes:** `AI`, `FIN`, `OCR`, `VAULT`, `SEC`, `CORE`, `TEST`, `A11Y`, `PERF`, `UX`, `GS`, `PLT`.
 - **Task file (when created):** `tasks/<Epic>/<TASK-ID>-<kebab-title>.md`, e.g. `tasks/Vault/VAULT-001-vault-core.md`.
 - IDs are never reused — retire a task by marking it `Completed`/cancelled in the registry, don't recycle its number.
 

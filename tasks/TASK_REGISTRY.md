@@ -24,7 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| **Total** | **38** | **27** | **11** | **0** | **0** |
+| Gallery Scanner (GS) | 50 | 5 | 45 | 0 | 0 |
+| Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
+| **Total** | **108** | **32** | **76** | **0** | **0** |
 
 ---
 
@@ -161,3 +163,93 @@ AI Analytics user-experience fixes.
 | UX-002 | UX | Harden AI Analytics Retry & Error Handling | Medium | Completed | UX-001 |
 
 > UX-002 fixed the synchronous-engine-throw hang (a sync throw now surfaces as an error state instead of leaving the page on `loading`) and made retry re-fetch the finance data before re-analysing. Remaining: surfacing store-level data-load errors as their own `ErrorState` — they currently fall through to the empty state — which is not yet a registered task.
+
+---
+
+## Gallery Scanner (GS)
+
+Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own **`GS`** epic to avoid colliding with the existing `OCR-001…007` Slip Scanner tasks (which stay unchanged). GS-001–GS-004 were delivered as design docs (architecture, roadmap, database, API/interfaces); GS-005+ are implementation. Full task briefs live in [MASTER_TASK.md](MASTER_TASK.md).
+
+| Task ID | Epic | Title | Priority | Status | Dependencies |
+|---|---|---|---|---|---|
+| GS-001 | Gallery Scanner | Gallery Scanner System Architecture (design) | High | Completed | — |
+| GS-002 | Gallery Scanner | Implementation Roadmap (design) | Medium | Completed | GS-001 |
+| GS-003 | Gallery Scanner | Database Design (design) | High | Completed | GS-001 |
+| GS-004 | Gallery Scanner | API & Interface Design (design) | High | Completed | GS-003 |
+| GS-005 | Gallery Scanner | Gallery Permission Manager | High | Completed | — |
+| GS-006 | Gallery Scanner | Gallery Scanner (auto scan) | Critical | Todo | GS-005 |
+| GS-007 | Gallery Scanner | Scan Queue | High | Todo | GS-006 |
+| GS-008 | Gallery Scanner | Scan Cache | High | Todo | GS-006 |
+| GS-009 | Gallery Scanner | QR Detector | Critical | Todo | GS-007 |
+| GS-010 | Gallery Scanner | EMVCo Payload Parser | Critical | Todo | GS-009 |
+| GS-011 | Gallery Scanner | Bank Identification | High | Todo | GS-010 |
+| GS-012 | Gallery Scanner | OCR Fallback | High | Todo | GS-009 |
+| GS-013 | Gallery Scanner | Duplicate Detection | High | Todo | GS-010 |
+| GS-014 | Gallery Scanner | Bank Selection Popup | Medium | Todo | GS-011 |
+| GS-015 | Gallery Scanner | Import Preview | High | Todo | GS-013 |
+| GS-016 | Gallery Scanner | Smart Import | High | Todo | GS-015 |
+| GS-017 | Gallery Scanner | Security | High | Todo | GS-008 |
+| GS-018 | Gallery Scanner | Performance Optimization | Medium | Todo | GS-007 |
+| GS-019 | Gallery Scanner | AI Validation | Medium | Todo | GS-016 |
+| GS-020 | Gallery Scanner | Scanner Analytics | Low | Todo | GS-016 |
+| GS-021 | Gallery Scanner | Testing | High | Todo | GS-016 |
+| GS-022 | Gallery Scanner | Final Review | Medium | Todo | GS-021 |
+| GS-023 | Gallery Scanner | Smart Scan Scheduler | Medium | Todo | GS-006 |
+| GS-024 | Gallery Scanner | Image Hash Engine | High | Todo | GS-008 |
+| GS-025 | Gallery Scanner | Slip Validation Engine | High | Todo | GS-010 |
+| GS-026 | Gallery Scanner | QR Recovery Engine | Medium | Todo | GS-009 |
+| GS-027 | Gallery Scanner | Image Enhancement | Medium | Todo | GS-012 |
+| GS-028 | Gallery Scanner | OCR Text Engine | High | Todo | GS-012 |
+| GS-029 | Gallery Scanner | Slip Classifier | Medium | Todo | GS-010 |
+| GS-030 | Gallery Scanner | Bank Template Engine | Medium | Todo | GS-011 |
+| GS-031 | Gallery Scanner | Smart Duplicate Engine | Medium | Todo | GS-013 |
+| GS-032 | Gallery Scanner | Import Conflict Resolver | Medium | Todo | GS-016 |
+| GS-033 | Gallery Scanner | Background Worker | High | Todo | GS-007 |
+| GS-034 | Gallery Scanner | Scan Progress Dashboard | Medium | Todo | GS-006 |
+| GS-035 | Gallery Scanner | Import History | Medium | Todo | GS-016 |
+| GS-036 | Gallery Scanner | Performance Monitor | Low | Todo | GS-018 |
+| GS-037 | Gallery Scanner | Recovery System | Medium | Todo | GS-033 |
+| GS-038 | Gallery Scanner | Security Audit | Medium | Todo | GS-017 |
+| GS-039 | Gallery Scanner | Developer Tools | Low | Todo | GS-021 |
+| GS-040 | Gallery Scanner | Production Readiness | Medium | Todo | GS-022 |
+| GS-041 | Gallery Scanner | AI Slip Verification | Medium | Todo | GS-019 |
+| GS-042 | Gallery Scanner | Fraud Detection Engine | Medium | Todo | GS-041 |
+| GS-043 | Gallery Scanner | AI Transaction Categorization | Medium | Todo | GS-016 |
+| GS-044 | Gallery Scanner | Merchant Intelligence | Medium | Todo | GS-043 |
+| GS-045 | Gallery Scanner | Smart Learning Engine | Low | Todo | GS-043 |
+| GS-046 | Gallery Scanner | Confidence Engine | Medium | Todo | GS-025 |
+| GS-047 | Gallery Scanner | Transaction Linking | Low | Todo | GS-016 |
+| GS-048 | Gallery Scanner | Spending Intelligence | Low | Todo | GS-043 |
+| GS-049 | Gallery Scanner | AI Quality Review | Low | Todo | GS-019 |
+| GS-050 | Gallery Scanner | Financial Intelligence Report | Low | Todo | GS-048 |
+
+> GS-005 (Gallery Permission Manager) implemented as the permission foundation: a unified status model (granted/limited/prompt/denied/blocked/unavailable) spanning Android 13/14/15 + web, a native plugin contract (`registerPlugin`) that degrades gracefully until the on-device media plugin is wired, `useGalleryPermission` (denial + Settings-recovery flow), and the `READ_MEDIA_IMAGES`/`READ_MEDIA_VISUAL_USER_SELECTED` manifest permissions. Validated build/tsc/lint/test; native behaviour to be verified on-device.
+
+---
+
+## Platform (PLT)
+
+Cross-cutting platform frameworks from `MASTER_TASK.md` — plugin SDK, event bus, background task engine, import/export frameworks, search/filter/table/dashboard, AI gateway, command palette, telemetry. Not started.
+
+| Task ID | Epic | Title | Priority | Status | Dependencies |
+|---|---|---|---|---|---|
+| PLT-001 | Platform | Plugin SDK (design) | Medium | Todo | — |
+| PLT-002 | Platform | Event Bus | High | Todo | — |
+| PLT-003 | Platform | Background Task Engine | High | Todo | PLT-002 |
+| PLT-004 | Platform | File Import Framework | Medium | Todo | PLT-001 |
+| PLT-005 | Platform | Export Framework | Medium | Todo | PLT-001 |
+| PLT-006 | Platform | Notification Center | Medium | Todo | PLT-002 |
+| PLT-007 | Platform | Audit Log | Medium | Todo | — |
+| PLT-008 | Platform | Feature Flags | Low | Todo | — |
+| PLT-009 | Platform | Settings Framework | Medium | Todo | — |
+| PLT-010 | Platform | Configuration Manager | Medium | Todo | PLT-009 |
+| PLT-011 | Platform | Global Search | Medium | Todo | — |
+| PLT-012 | Platform | Filter Engine | Medium | Todo | — |
+| PLT-013 | Platform | Table Engine | Medium | Todo | PLT-012 |
+| PLT-014 | Platform | Dashboard Framework | Medium | Todo | PLT-015 |
+| PLT-015 | Platform | Widget SDK | Medium | Todo | PLT-001 |
+| PLT-016 | Platform | Local AI Gateway | High | Todo | — |
+| PLT-017 | Platform | AI Memory | Medium | Todo | PLT-016 |
+| PLT-018 | Platform | Command Palette | Medium | Todo | PLT-011 |
+| PLT-019 | Platform | Local Telemetry | Low | Todo | — |
+| PLT-020 | Platform | Platform Certification | Medium | Todo | — |
