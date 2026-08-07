@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 18 | 32 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 19 | 31 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **45** | **63** | **0** | **0** |
+| **Total** | **108** | **46** | **62** | **0** | **0** |
 
 ---
 
@@ -190,7 +190,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-016 | Gallery Scanner | Smart Import | High | Completed | GS-015 |
 | GS-017 | Gallery Scanner | Security | High | Completed | GS-008 |
 | GS-018 | Gallery Scanner | Performance Optimization | Medium | Completed | GS-007 |
-| GS-019 | Gallery Scanner | AI Validation | Medium | Todo | GS-016 |
+| GS-019 | Gallery Scanner | AI Validation | Medium | Completed | GS-016 |
 | GS-020 | Gallery Scanner | Scanner Analytics | Low | Todo | GS-016 |
 | GS-021 | Gallery Scanner | Testing | High | Todo | GS-016 |
 | GS-022 | Gallery Scanner | Final Review | Medium | Todo | GS-021 |
@@ -250,6 +250,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-017 (Security) adds the scanner's security utilities, reusing existing integrity primitives rather than inventing an encryption layer for data the scanner deliberately doesn't persist in plaintext (the scan cache holds only asset ids / hashes / versions — a structurally "secure cache"). `security/scanAuditLog.ts` is an append-only, bounded (200-event) audit trail for **permission** and **import** events, recording only non-sensitive metadata (statuses, counts, ids) with an injectable sink (best-effort — a throwing sink never breaks scanning) and clock. `security/secureDeletion.ts` handles **secure deletion** of transient artifacts: `wipeBytes` zero-fills a decoded-image buffer once used, and `revokeThumbnails`/`secureDiscardCandidates` release the object-URLs backing thumbnails (which otherwise keep the Blob alive) — `revoke` injectable for tests. `security/tamperDetection.ts` does **tamper detection** grounded in the real EMVCo CRC (`detectPayloadTamper` → `crc-mismatch`) plus a replayed-slip signal (`isReplayedSlip`: a duplicate QR slip) and a non-positive-amount sanity check. All pure/isolated (no shared-file edits). Validated build/tsc/lint; slipScanner 137 tests, full suite green.
 >
 > GS-018 (Performance Optimization) adds the observability layer for the 50,000-image target. The mechanisms that make that scale viable already exist — lazy provider enumeration (GS-006, nothing buffered), the ByteBudget-bounded concurrent queue (GS-007, caps in-flight memory + parallelism), and the versioned skip-unchanged cache (GS-008, incremental re-scans) — so rather than redesign them, `perf/scanMetrics.ts` *measures* them so the target can be validated and tuned: `createScanMetrics()` records cache decisions, scanned bytes, failures, duplicates and observed in-flight bytes, and its `snapshot()` derives cache-hit ratio, incremental skip ratio, throughput (images/sec), average image size and peak in-flight memory — counters only, no image data, injectable clock. Validated build/tsc/lint; slipScanner 141 tests, full suite green.
+>
+> GS-019 (AI Validation) is the scanner's advisory pre-import validation — the app's local, rule-based "AI" (the LLM Gateway stays unwired), so it is fully deterministic. Hard contract: it **never modifies the candidate**, only returns findings (a test asserts input immutability). `validation/slipValidation.ts`'s `validateSlipCandidate()` verifies the listed fields: amount (missing / non-positive → error; implausibly large → warning), merchant (missing → warning), date (missing / in-the-future → warning, with an injectable today), duplicate probability (0.9 when the dedup engine flagged it, else 0.1 — refined into a graded score by the Smart Duplicate Engine GS-031) with a possible-duplicate warning, and confidence (below a threshold → warning). `valid` is true when there are no error-severity issues; `validateSlipCandidates()` batches by id. Validated build/tsc/lint; slipScanner 148 tests, full suite green.
 
 ---
 
