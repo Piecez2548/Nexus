@@ -1,5 +1,6 @@
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ChartFigure from "@/features/finance/aiAnalytics/components/ChartFigure";
+import ChartDataTable from "@/features/finance/aiAnalytics/components/ChartDataTable";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { ScoreTrendPoint } from "@/features/finance/aiAnalytics/engine/scoring/types";
 
@@ -32,6 +33,11 @@ export default function TrendComparisonChart({ points }: Props) {
           </LineChart>
         </ResponsiveContainer>
       </ChartFigure>
+      <ChartDataTable
+        caption={t("aiAnalytics.charts.healthTrend", { count: data.length })}
+        columns={[t("aiAnalytics.charts.table.period"), t("aiAnalytics.charts.table.score")]}
+        rows={data.map((d) => [d.label, d.score === null ? t("aiAnalytics.healthScore.notApplicable") : Math.round(d.score)])}
+      />
     </div>
   );
 }

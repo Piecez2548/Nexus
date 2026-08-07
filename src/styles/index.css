@@ -23,6 +23,17 @@
     --color-brand-glow: oklch(14.1% 0.005 285.823);
 }
 
+/* App-wide keyboard-focus indicator. `:focus-visible` only matches
+   keyboard/programmatic focus, so mouse and touch interactions are
+   unaffected — no visual change for pointer users. Left unlayered on
+   purpose so it overrides Tailwind's `outline-none` utility on the inputs
+   that opt out of the browser default. Uses the brand accent (which the
+   `.mono` theme already remaps) so the ring matches every theme. */
+:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+}
+
 html,
 body,
 #root {

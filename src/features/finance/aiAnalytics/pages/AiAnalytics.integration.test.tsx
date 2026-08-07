@@ -98,9 +98,12 @@ describe("AiAnalytics page", () => {
     expect(await screen.findByText("Budget Analysis")).toBeInTheDocument();
     expect(screen.getByText("Over Budget")).toBeInTheDocument();
 
-    // Cash Flow Analysis — real income/expense figures.
+    // Cash Flow Analysis — real income/expense figures. The figure is no
+    // longer unique: the monthly-trend chart's visually-hidden data table
+    // (A11Y screen-reader alternative) surfaces the same amount, and that
+    // chart renders in both the Spending and Cash Flow sections.
     expect(await screen.findByText("Cash Flow Analysis")).toBeInTheDocument();
-    expect(screen.getByText("฿30,000")).toBeInTheDocument();
+    expect(screen.getAllByText("฿30,000").length).toBeGreaterThan(0);
 
     // Forecast
     expect(await screen.findByText("Forecast")).toBeInTheDocument();

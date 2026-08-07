@@ -55,7 +55,8 @@ export default function MerchantDetailList({ merchants }: Props) {
         ))}
       </div>
 
-      <table className="hidden w-full text-sm md:table">
+      <div className="hidden overflow-x-auto md:block">
+      <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             <th className="py-2">{t("aiAnalytics.behaviorAnalysis.merchant")}</th>
@@ -84,6 +85,7 @@ export default function MerchantDetailList({ merchants }: Props) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

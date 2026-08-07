@@ -23,11 +23,15 @@ export default function BehaviorAnalysisSection({ result }: Props) {
         <h2 className="text-lg font-semibold">{t("aiAnalytics.behaviorAnalysis.title")}</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {result.flags.map((flag) => (
-          <BehaviorFlagCard key={flag.key} flag={flag} />
-        ))}
-      </div>
+      {result.flags.length === 0 ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{t("aiAnalytics.behaviorAnalysis.noFlags")}</p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {result.flags.map((flag) => (
+            <BehaviorFlagCard key={flag.key} flag={flag} />
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-4">

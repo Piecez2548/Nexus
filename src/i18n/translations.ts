@@ -862,6 +862,16 @@ export const translations = {
         forecastTrend: "Line chart of monthly savings with a projected next-month value",
         heatmap: "Heatmap of spending intensity by day of week and hour of day",
         habitCalendar: "Calendar of daily spending intensity for {{month}}",
+        // Column headers for the visually-hidden data tables that back the
+        // key charts (see ChartDataTable). Amount columns reuse the
+        // cashFlowAnalysis income/expense/saving labels.
+        table: {
+          category: "Category",
+          score: "Score",
+          period: "Period",
+          month: "Month",
+          dimension: "Behaviour",
+        },
       },
       healthScore: {
         // Only `notApplicable` survives — it's a shared "N/A" label reused
@@ -1132,6 +1142,7 @@ export const translations = {
           aboveAverageNoBudget: "Much larger than usual, no budget set for this category",
           multipleSameDay: "Multiple purchases in one day",
         },
+        noFlags: "No notable spending behaviours flagged — nothing stands out right now",
         mostActiveHour: "You spend the most around {{hour}}:00",
         mostActiveHourUnavailable: "No transactions have a recorded time yet",
         mostActiveWeekday: "You spend the most on {{weekday}}",
@@ -2749,6 +2760,14 @@ export const translations = {
         forecastTrend: "กราฟเส้นเงินออมรายเดือนพร้อมค่าคาดการณ์เดือนถัดไป",
         heatmap: "แผนภูมิความหนาแน่นการใช้จ่ายตามวันในสัปดาห์และชั่วโมง",
         habitCalendar: "ปฏิทินความหนาแน่นการใช้จ่ายรายวันของ {{month}}",
+        // หัวคอลัมน์ของตารางข้อมูลแบบซ่อน (สำหรับโปรแกรมอ่านหน้าจอ) ที่แนบกราฟหลัก
+        table: {
+          category: "หมวด",
+          score: "คะแนน",
+          period: "ช่วงเวลา",
+          month: "เดือน",
+          dimension: "พฤติกรรม",
+        },
       },
       healthScore: {
         notApplicable: "ไม่มีข้อมูล",
@@ -3009,6 +3028,7 @@ export const translations = {
           aboveAverageNoBudget: "สูงกว่าปกติมาก และหมวดนี้ยังไม่มีงบประมาณ",
           multipleSameDay: "ซื้อหลายรายการในวันเดียวกัน",
         },
+        noFlags: "ยังไม่พบพฤติกรรมการใช้จ่ายที่ต้องระวัง — ตอนนี้ยังไม่มีอะไรน่าเป็นห่วง",
         mostActiveHour: "คุณใช้จ่ายมากที่สุดช่วงเวลา {{hour}}:00 น.",
         mostActiveHourUnavailable: "ยังไม่มีรายการที่บันทึกเวลาไว้",
         mostActiveWeekday: "คุณใช้จ่ายมากที่สุดในวัน{{weekday}}",
