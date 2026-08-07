@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 19 | 31 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 20 | 30 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **46** | **62** | **0** | **0** |
+| **Total** | **108** | **47** | **61** | **0** | **0** |
 
 ---
 
@@ -191,7 +191,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-017 | Gallery Scanner | Security | High | Completed | GS-008 |
 | GS-018 | Gallery Scanner | Performance Optimization | Medium | Completed | GS-007 |
 | GS-019 | Gallery Scanner | AI Validation | Medium | Completed | GS-016 |
-| GS-020 | Gallery Scanner | Scanner Analytics | Low | Todo | GS-016 |
+| GS-020 | Gallery Scanner | Scanner Analytics | Low | Completed | GS-016 |
 | GS-021 | Gallery Scanner | Testing | High | Todo | GS-016 |
 | GS-022 | Gallery Scanner | Final Review | Medium | Todo | GS-021 |
 | GS-023 | Gallery Scanner | Smart Scan Scheduler | Medium | Todo | GS-006 |
@@ -252,6 +252,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-018 (Performance Optimization) adds the observability layer for the 50,000-image target. The mechanisms that make that scale viable already exist — lazy provider enumeration (GS-006, nothing buffered), the ByteBudget-bounded concurrent queue (GS-007, caps in-flight memory + parallelism), and the versioned skip-unchanged cache (GS-008, incremental re-scans) — so rather than redesign them, `perf/scanMetrics.ts` *measures* them so the target can be validated and tuned: `createScanMetrics()` records cache decisions, scanned bytes, failures, duplicates and observed in-flight bytes, and its `snapshot()` derives cache-hit ratio, incremental skip ratio, throughput (images/sec), average image size and peak in-flight memory — counters only, no image data, injectable clock. Validated build/tsc/lint; slipScanner 141 tests, full suite green.
 >
 > GS-019 (AI Validation) is the scanner's advisory pre-import validation — the app's local, rule-based "AI" (the LLM Gateway stays unwired), so it is fully deterministic. Hard contract: it **never modifies the candidate**, only returns findings (a test asserts input immutability). `validation/slipValidation.ts`'s `validateSlipCandidate()` verifies the listed fields: amount (missing / non-positive → error; implausibly large → warning), merchant (missing → warning), date (missing / in-the-future → warning, with an injectable today), duplicate probability (0.9 when the dedup engine flagged it, else 0.1 — refined into a graded score by the Smart Duplicate Engine GS-031) with a possible-duplicate warning, and confidence (below a threshold → warning). `valid` is true when there are no error-severity issues; `validateSlipCandidates()` batches by id. Validated build/tsc/lint; slipScanner 148 tests, full suite green.
+>
+> GS-020 (Scanner Analytics) accumulates usage stats **across** scan runs over time — distinct from GS-018's per-run in-memory perf metrics — adding the QR/OCR/import dimensions the task lists. `analytics/scannerAnalytics.ts` (pure) defines `ScannerRunStats`, `mergeRun` (immutable fold, increments run count) and `deriveAnalytics` (duplicate rate, QR-detection rate, OCR-usage rate, cache-hit rate, import-success rate, average scan speed images/sec + ms/image — all zero-safe); `store/scannerAnalyticsStore.ts` is a zustand `persist` store holding the aggregate counters (no slip content) across sessions; `hooks/useScannerAnalytics.ts` exposes the derived analytics + `recordRun`/`reset`. Validated build/tsc/lint; slipScanner 155 tests, full suite green.
 
 ---
 
