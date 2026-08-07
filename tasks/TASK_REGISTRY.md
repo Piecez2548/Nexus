@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 17 | 33 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 18 | 32 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **44** | **64** | **0** | **0** |
+| **Total** | **108** | **45** | **63** | **0** | **0** |
 
 ---
 
@@ -189,7 +189,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-015 | Gallery Scanner | Import Preview | High | Completed | GS-013 |
 | GS-016 | Gallery Scanner | Smart Import | High | Completed | GS-015 |
 | GS-017 | Gallery Scanner | Security | High | Completed | GS-008 |
-| GS-018 | Gallery Scanner | Performance Optimization | Medium | Todo | GS-007 |
+| GS-018 | Gallery Scanner | Performance Optimization | Medium | Completed | GS-007 |
 | GS-019 | Gallery Scanner | AI Validation | Medium | Todo | GS-016 |
 | GS-020 | Gallery Scanner | Scanner Analytics | Low | Todo | GS-016 |
 | GS-021 | Gallery Scanner | Testing | High | Todo | GS-016 |
@@ -248,6 +248,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-016 (Smart Import) turns selected `SlipCandidate`s into transactions. `import/candidateToTransaction.ts` (pure) maps a slip to a completed expense (bank + reference into the note, date falling back to an injectable today); `import/smartImport.ts` is a persistence-agnostic batch importer behind an injectable `SmartImportDeps` (create returns the new id, delete for rollback): it reports per-item **progress**, is **resilient by design** (a bad amount or a create error is recorded in `failed` and the batch continues — **error recovery** — rather than aborting), supports cooperative **cancellation** and **resume** (skips already-imported candidate ids), and ships `rollbackImport(importedIds)` to **undo** a run. `import/smartImportDeps.ts` wires the real `transactionService` (same CRUD the finance module already uses — no new data path); `hooks/useSmartImport.ts` runs the batch, tracks progress/result, refreshes the transaction store once after the batch (not per row), and exposes `undo`. Persistence is injected in tests, so no Dexie is touched there. Not yet mounted on a route — the scanner→preview→import flow is assembled behind a UI entry point in a later GS task. Validated build/tsc/lint; slipScanner 126 tests, full suite green.
 >
 > GS-017 (Security) adds the scanner's security utilities, reusing existing integrity primitives rather than inventing an encryption layer for data the scanner deliberately doesn't persist in plaintext (the scan cache holds only asset ids / hashes / versions — a structurally "secure cache"). `security/scanAuditLog.ts` is an append-only, bounded (200-event) audit trail for **permission** and **import** events, recording only non-sensitive metadata (statuses, counts, ids) with an injectable sink (best-effort — a throwing sink never breaks scanning) and clock. `security/secureDeletion.ts` handles **secure deletion** of transient artifacts: `wipeBytes` zero-fills a decoded-image buffer once used, and `revokeThumbnails`/`secureDiscardCandidates` release the object-URLs backing thumbnails (which otherwise keep the Blob alive) — `revoke` injectable for tests. `security/tamperDetection.ts` does **tamper detection** grounded in the real EMVCo CRC (`detectPayloadTamper` → `crc-mismatch`) plus a replayed-slip signal (`isReplayedSlip`: a duplicate QR slip) and a non-positive-amount sanity check. All pure/isolated (no shared-file edits). Validated build/tsc/lint; slipScanner 137 tests, full suite green.
+>
+> GS-018 (Performance Optimization) adds the observability layer for the 50,000-image target. The mechanisms that make that scale viable already exist — lazy provider enumeration (GS-006, nothing buffered), the ByteBudget-bounded concurrent queue (GS-007, caps in-flight memory + parallelism), and the versioned skip-unchanged cache (GS-008, incremental re-scans) — so rather than redesign them, `perf/scanMetrics.ts` *measures* them so the target can be validated and tuned: `createScanMetrics()` records cache decisions, scanned bytes, failures, duplicates and observed in-flight bytes, and its `snapshot()` derives cache-hit ratio, incremental skip ratio, throughput (images/sec), average image size and peak in-flight memory — counters only, no image data, injectable clock. Validated build/tsc/lint; slipScanner 141 tests, full suite green.
 
 ---
 
