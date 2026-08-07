@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 8 | 42 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 9 | 41 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **35** | **73** | **0** | **0** |
+| **Total** | **108** | **36** | **72** | **0** | **0** |
 
 ---
 
@@ -180,7 +180,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-006 | Gallery Scanner | Gallery Scanner (auto scan) | Critical | Completed | GS-005 |
 | GS-007 | Gallery Scanner | Scan Queue | High | Completed | GS-006 |
 | GS-008 | Gallery Scanner | Scan Cache | High | Completed | GS-006 |
-| GS-009 | Gallery Scanner | QR Detector | Critical | Todo | GS-007 |
+| GS-009 | Gallery Scanner | QR Detector | Critical | Completed | GS-007 |
 | GS-010 | Gallery Scanner | EMVCo Payload Parser | Critical | Todo | GS-009 |
 | GS-011 | Gallery Scanner | Bank Identification | High | Todo | GS-010 |
 | GS-012 | Gallery Scanner | OCR Fallback | High | Todo | GS-009 |
@@ -230,6 +230,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-007 (Scan Queue) added the concurrent worker pool under the orchestration: `runConcurrentQueue` (N self-balancing workers pulling lazily from the provider stream — the source is the backpressure, nothing is buffered), bounded retries with linear backoff, and a `ByteBudget` semaphore that caps total in-flight image bytes (memory protection + dynamic batching by image size). `scanSessionService` now runs through the queue with a synchronous within-run content-dedup Set (race-free under concurrency, alongside the cross-run DB check); concurrency is device-derived (`resolveConcurrency`) and overridable via `ScanOptions`. Cursor advances only on a clean finish; interruption resumes via assetId dedup. Full suite green (1716 tests).
 >
 > GS-008 (Scan Cache) upgraded the GS-006 store into a versioned production cache (Dexie v16 `slipScanCache`, replacing `slipScannedAssets`) behind a `ScanCache` interface — so the orchestration and queue stay independent of the cache implementation (`dexieScanCache`, injectable/fakeable). Entries carry lastModified + status + OCR/payload/parser versions + failure count. Behaviour: skip-unchanged (cache hit), re-scan changed (lastModified) and stale (version bump — the `hasContent` check excludes an asset's own entry so identical content still re-scans), remembered failures retried across runs up to a policy limit then skipped, plus `invalidate`/`clear`. Engine versions are placeholder `0` until extraction (GS-009+) defines real ones. Full suite green (1724 tests).
+>
+> GS-009 (QR Detector) added the first extraction stage behind a swappable `QrDecoder` interface, so detection logic and the jsQR backend stay decoupled and the logic is unit-testable with a fake decoder: `createQrDetector` runs a decoder over image bytes and returns `{ hasQr, payload }` — non-QR images resolve to `hasQr:false` rather than throwing, so a whole-gallery scan flows past photos that aren't slips. The concrete `imageDataQrDecoder` (jsQR@1.4.0, pure-JS) decodes via createImageBitmap → OffscreenCanvas → ImageData and degrades to null outside a browser/WebView; jsQR is referenced only there. The raw payload is returned verbatim — no parsing (EMVCo interpretation is GS-010). `createQrScanProcessor` plugs QR detection into the existing GS-006 `ScanProcessor` seam without changing orchestration; it is not yet the default processor since the payload has no consumer until GS-010. Validated build/tsc/lint; slipScanner 32 tests, full suite green.
 
 ---
 
