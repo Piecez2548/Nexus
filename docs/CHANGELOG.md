@@ -4,7 +4,7 @@
 
 ## Overview
 
-This changelog is reconstructed directly from `git log` (64 commits, `26abcb9` → `HEAD`), grouped into milestones rather than listed commit-by-commit. `package.json` still declares `"version": "0.0.0"` — **no semantic versioning scheme is in use yet**; this document uses the term "version" loosely to mean development milestones.
+This changelog is reconstructed directly from `git log` (66 commits, `26abcb9` → `HEAD`), grouped into milestones rather than listed commit-by-commit. `package.json` still declares `"version": "0.0.0"` — **no semantic versioning scheme is in use yet**; this document uses the term "version" loosely to mean development milestones.
 
 ## Current Version
 
@@ -69,6 +69,7 @@ The `/docs` documentation set and a file-based `tasks/` registry (previously unt
 - **PERF-001** — `monthlyValuesFor` rewritten as a single pass over transactions (O(months×N) → O(N)) with byte-identical output (`088f3ac`).
 - **PERF-002** — a lean `computeHealthScoreSummary` lets score-trend points skip the explanation aggregation they discard; the full health score is unchanged (`ebc9f85`).
 - **UX-001** — the AI Analytics error retry re-runs the analysis in place via a new `useFinancialAnalysis().retry()` instead of `window.location.reload()`, leaving all state outside the module untouched (`754a98f`).
+- **UX-002** — hardened that retry: a synchronous engine throw now surfaces as an error state (the `analyze()` call is routed through `Promise.resolve().then(...)`) instead of hanging on `loading`, and retry re-fetches the finance stores before re-analysing (`86df606`).
 
 ## Implemented Features
 

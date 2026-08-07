@@ -23,8 +23,8 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Testing | 3 | 3 | 0 | 0 | 0 |
 | Accessibility | 1 | 1 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
-| UX | 1 | 1 | 0 | 0 | 0 |
-| **Total** | **36** | **25** | **11** | **0** | **0** |
+| UX | 2 | 2 | 0 | 0 | 0 |
+| **Total** | **37** | **26** | **11** | **0** | **0** |
 
 ---
 
@@ -157,5 +157,6 @@ AI Analytics user-experience fixes.
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
 | UX-001 | UX | Replace Full Page Reload with Analysis Re-run | Low | Completed | — |
+| UX-002 | UX | Harden AI Analytics Retry & Error Handling | Medium | Completed | UX-001 |
 
-> UX-002 (cover data-load errors in the same retry, make a synchronous engine throw surface as an error state, add a retry pending state) is scoped in UX-001's report but not yet registered.
+> UX-002 fixed the synchronous-engine-throw hang (a sync throw now surfaces as an error state instead of leaving the page on `loading`) and made retry re-fetch the finance data before re-analysing. Remaining: surfacing store-level data-load errors as their own `ErrorState` — they currently fall through to the empty state — which is not yet a registered task.

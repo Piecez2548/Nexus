@@ -126,7 +126,7 @@ Loads the 6 finance stores on mount, runs `useFinancialAnalysis()` + `useFinanci
 
 Plus a modal `CategoryInsightsDrawer`, powered by the separate on-demand `useCategoryDetail()` hook (legacy `analyzeCategoryDetail`, not part of the batch result).
 
-**States & accessibility:** the page handles error (`ErrorState`, whose retry re-runs the analysis in place — UX-001, no reload), loading, and zero-transaction empty states at the page level. Every chart across these sections is wrapped in a shared `ChartFigure` (`role="img"` + a data-driven `aria-label`) so a screen reader announces the chart's headline instead of an unlabeled SVG (A11Y-001).
+**States & accessibility:** the page handles error (`ErrorState`, whose retry re-fetches the finance stores and re-runs the analysis in place — UX-001/UX-002, no full-page reload; a synchronous engine throw is caught and shown here rather than hanging on loading), loading, and zero-transaction empty states at the page level. Every chart across these sections is wrapped in a shared `ChartFigure` (`role="img"` + a data-driven `aria-label`) so a screen reader announces the chart's headline instead of an unlabeled SVG (A11Y-001).
 
 ## Current Status
 
@@ -134,4 +134,4 @@ Fully implemented across all 7 sub-engines plus the legacy analyzer foundation. 
 
 ## Future Improvements
 
-Wiring `src/ai/`'s Gateway to a real LLM provider is the one clearly-designed-for extension point — it would sit alongside this deterministic engine (e.g. for open-ended natural-language Q&A beyond the Coach's 16 fixed intents), not replace it. See [DECISIONS.md](DECISIONS.md) for why the engine stays rule-based today. Nearer-term, scoped follow-ups are **PERF-003** (share `now` across the analysis/trend hooks to dedupe the trend's current point), **UX-002** (cover data-load errors in the same retry and surface a synchronous engine throw as an error state), and the remaining A11Y-001 items (focus-visible rings, data-table chart alternatives) — see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) and [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md).
+Wiring `src/ai/`'s Gateway to a real LLM provider is the one clearly-designed-for extension point — it would sit alongside this deterministic engine (e.g. for open-ended natural-language Q&A beyond the Coach's 16 fixed intents), not replace it. See [DECISIONS.md](DECISIONS.md) for why the engine stays rule-based today. Nearer-term, scoped follow-ups are **PERF-003** (share `now` across the analysis/trend hooks to dedupe the trend's current point), surfacing store-level data-load errors as their own error state (UX-002 hardened the retry and synchronous-throw handling but left this piece), and the remaining A11Y-001 items (focus-visible rings, data-table chart alternatives) — see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) and [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md).

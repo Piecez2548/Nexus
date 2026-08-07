@@ -14,7 +14,7 @@ This document lists specific, verified issues found while reading the codebase f
 - **`PLAINTEXT_KEYS` (which fields stay unencrypted per table) is hand-duplicated in three places** with no single source of truth: each `createRepository()` call's `plaintextKeys` option, `backupService.ts`, and `enableEncryption.ts`. Each file's own comment acknowledges this and says the three must be kept in sync manually. A drift between them would be a subtle, hard-to-detect bug (e.g. a field silently encrypted in one path and not another).
 - **Root `README.md` is still the unmodified Vite template** ("React + TypeScript + Vite... This template provides a minimal setup..."). The real project documentation now lives entirely in `/docs` — worth either replacing the root README with a short pointer to `/docs/README.md`, or leaving it as-is with an explicit note, since right now a first-time visitor to the repo root sees generic scaffolding text instead of what the project actually is.
 - **`package.json` version is still `0.0.0`** (the Vite template default) despite the app being under active, substantial development — see [CHANGELOG.md](CHANGELOG.md).
-- **`localStatisticalEngine.analyze()` can throw synchronously and escape the analysis hook's error handling.** `analyze: (input) => Promise.resolve(runAnalysis(input))` evaluates `runAnalysis` *before* `Promise.resolve` wraps it, so a synchronous throw propagates out of the call rather than rejecting the returned promise — `useFinancialAnalysis`'s `.catch` never runs and the AI Analytics page can stay stuck on `loading` instead of showing `ErrorState`. Low likelihood (the local engine is defensive), but it means the UX-001 retry cannot recover from that class of failure. Scoped as **UX-002** (see [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)).
+- **Store-level data-load errors are not surfaced on the AI Analytics page.** The 6 finance stores each track their own `error`, but `AiAnalytics.tsx` only renders `ErrorState` for an *analysis* error — a failed `load*()` falls through to the empty state instead. UX-002 made the retry re-fetch the stores, so recovery works once the user retries, but a load failure still shows "no data" rather than an error. Not yet a registered task.
 
 ## Code Smells
 
@@ -47,7 +47,7 @@ This document lists specific, verified issues found while reading the codebase f
 
 ## Current Status
 
-All items above are current findings verified by direct code reading, re-checked during the 2026-08-07 `update` pass. Since the original 2026-08-02 audit, four scoped AI Analytics passes landed — A11Y-001 (chart accessibility), PERF-001 and PERF-002 (analyzer/trend performance), and UX-001 (retry without full-page reload) — each output-preserving; the two new follow-ups they surfaced (UX-002, PERF-003) are recorded above.
+All items above are current findings verified by direct code reading, re-checked during the 2026-08-07 `update` pass. Since the original 2026-08-02 audit, five scoped AI Analytics passes landed — A11Y-001 (chart accessibility), PERF-001 and PERF-002 (analyzer/trend performance), and UX-001/UX-002 (retry without a full-page reload, plus surfacing a synchronous engine throw as an error state and re-fetching data on retry). The remaining follow-up they surfaced, PERF-003 (trend "current"-point dedup), is recorded above.
 
 ## Future Improvements
 
