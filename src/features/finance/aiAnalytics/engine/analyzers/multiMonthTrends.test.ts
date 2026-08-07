@@ -26,6 +26,17 @@ describe("monthlyValuesFor", () => {
     const incomeValues = monthlyValuesFor(transactions, null, "income", 1, now);
     expect(incomeValues).toEqual([30000]);
   });
+
+  it("sums multiple transactions within the same month and excludes ones outside the window", () => {
+    const transactions = [
+      txn({ amount: 40, date: "2026-07-02" }),
+      txn({ amount: 60, date: "2026-07-20" }), // same month as above → 100 combined
+      txn({ amount: 100, date: "2026-05-15" }),
+      txn({ amount: 999, date: "2026-04-30" }), // older than the 3-month window → excluded
+    ];
+    const values = monthlyValuesFor(transactions, null, "expense", 3, now);
+    expect(values).toEqual([100, 0, 100]); // May, Jun, Jul
+  });
 });
 
 describe("trailingConsecutiveCount", () => {
