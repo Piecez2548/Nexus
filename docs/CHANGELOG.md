@@ -79,7 +79,13 @@ A new, fully plugin-agnostic Gallery Slip Scanner is being built out under its o
 - **GS-007** — concurrent scan queue: N self-balancing workers pulling lazily from the provider (the source is the backpressure), bounded retries with backoff, and a `ByteBudget` semaphore capping in-flight image bytes (memory protection + dynamic batching) (`c9b35e1`).
 - **GS-008** — production scan cache (Dexie v16 `slipScanCache`) behind an injectable `ScanCache` interface: versioned entries (OCR/payload/parser) for staleness, skip-unchanged / re-scan-changed / re-scan-stale, a remembered-failure cross-run retry policy, and invalidation.
 
-Native gallery enumeration and slip extraction (QR → EMVCo → OCR) are pending later GS tasks; the scanner is web-picker-only until then. See [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s GS epic.
+The extraction pipeline and its supporting layers then landed (2026-08-08, GS-009 → GS-022), each behind swappable interfaces so nothing is coupled to a plugin or a backend, and each validated (tsc/lint/build + a growing test suite, 159 slipScanner tests by GS-021):
+- **GS-009 → GS-013** — the extraction engine: a plugin-agnostic QR detector (jsQR isolated behind a `QrDecoder` seam), an EMVCo/PromptPay TLV payload parser with CRC-16 integrity, plugin-based bank identification keyed on the real Bank of Thailand codes, an OCR fallback that *reuses the existing Tesseract engine* and runs only when the QR is missing/damaged, and slip-level duplicate detection (same transaction across different images).
+- **GS-014, GS-015, GS-016** — the import flow: a pre-scan bank-selection popup (remembered selection, search, estimates), the unified `SlipCandidate` model + Import Preview (thumbnail/bank/amount/date/time/merchant/duplicate/confidence, filter/search/select), and Smart Import (batch with per-item progress, error recovery, cancel/resume, and rollback), reusing the existing `transactionService` — no new data path.
+- **GS-017 → GS-020** — cross-cutting: scanner security (permission/import audit log, secure deletion of thumbnails/decoded bytes, CRC-based tamper detection), performance metrics, deterministic (never-mutating) AI validation, and cross-run analytics.
+- **GS-021, GS-022** — critical-path integration + stress/memory tests, and this module-wide review checkpoint.
+
+Native gallery enumeration (the `NativeMediaProvider` remains a stub until a media plugin is wired) and a UI entry point mounting the scan→preview→import flow on a route are the main remaining gaps; the scanner is web-picker-only and not yet surfaced in the app until then. See [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s GS epic.
 
 ## Implemented Features
 
