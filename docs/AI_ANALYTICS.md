@@ -1,6 +1,6 @@
 # AI Analytics
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-07
 
 ## Overview
 
@@ -34,7 +34,7 @@ Tier 3 — merge everything into one flat FinancialAnalysisResult, returned to t
 
 ## Intelligence Engine — `hooks/useFinancialAnalysis.ts`
 
-`useFinancialAnalysis(engine = localStatisticalEngine, now?)`: reads 6 finance stores (transactions, budgets, categories, goals, recipientProfiles, goalMilestoneEvents) — does not load them itself, the page owns load orchestration; runs `engine.analyze(input)` inside a `useEffect`, guarding against stale-response races with an incrementing request-id ref; returns `{data, loading, error}`. The `engine` parameter is the documented future-swap seam — a real backend/AI engine would just need to implement `FinancialIntelligenceEngine` and be passed in, with zero page changes.
+`useFinancialAnalysis(engine = localStatisticalEngine, now?)`: reads 6 finance stores (transactions, budgets, categories, goals, recipientProfiles, goalMilestoneEvents) — does not load them itself, the page owns load orchestration; runs `engine.analyze(input)` inside a `useEffect`, guarding against stale-response races with an incrementing request-id ref; returns `{data, loading, error, retry}`. `retry()` is a stable callback that re-fires `analyze()` against the current store data — used by `ErrorState` to recover from an analysis error in place, without a full-page reload or touching any state outside this hook (UX-001). The `engine` parameter is the documented future-swap seam — a real backend/AI engine would just need to implement `FinancialIntelligenceEngine` and be passed in, with zero page changes.
 
 ## Rule Engine (`engine/rules/`)
 
@@ -60,7 +60,7 @@ An independent, weighted, explainable 0-100 **Financial Health Score**, alongsid
 
 **Combination:** categories with `score === null` (insufficient data — e.g. no goals/budgets set yet) are excluded and the remaining weights **renormalized**, never treated as a 0: `overallScore = Σ(weight·score) / Σweight` over only the scored categories. Grade comes from a 7-band table (A+ ≥95 … F <50), each carrying a `status` (excellent → critical). `explanations/aggregateExplanations.ts` rolls every category's factors into 5 output buckets: `strengths, weaknesses, warnings, recommendations, improvementOpportunities`.
 
-`score-engine/scoreTrend.ts` additionally re-runs the pipeline once per historical point to produce a trend line, powering `useFinancialHealthTrend.ts`.
+`score-engine/scoreTrend.ts` additionally re-runs the pipeline once per historical point to produce a trend line, powering `useFinancialHealthTrend.ts`. Each point uses the lean `computeHealthScoreSummary` (overallScore + grade only), skipping the explanation aggregation the trend would otherwise compute and discard (PERF-002); the shared `multiMonthTrends.monthlyValuesFor` helper it leans on is a single pass over transactions rather than one scan per month (PERF-001). Both are output-preserving; the remaining duplicate — the trend's "current" point overlapping the main pipeline's score — is scoped as PERF-003 (see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)).
 
 ## Behavior Engine (`engine/behavior/`)
 
@@ -126,10 +126,12 @@ Loads the 6 finance stores on mount, runs `useFinancialAnalysis()` + `useFinanci
 
 Plus a modal `CategoryInsightsDrawer`, powered by the separate on-demand `useCategoryDetail()` hook (legacy `analyzeCategoryDetail`, not part of the batch result).
 
+**States & accessibility:** the page handles error (`ErrorState`, whose retry re-runs the analysis in place — UX-001, no reload), loading, and zero-transaction empty states at the page level. Every chart across these sections is wrapped in a shared `ChartFigure` (`role="img"` + a data-driven `aria-label`) so a screen reader announces the chart's headline instead of an unlabeled SVG (A11Y-001).
+
 ## Current Status
 
-Fully implemented across all 7 sub-engines plus the legacy analyzer foundation. This is the single most extensively built module in the codebase.
+Fully implemented across all 7 sub-engines plus the legacy analyzer foundation. This is the single most extensively built module in the codebase. Four output-preserving quality passes landed on 2026-08-07 — A11Y-001 (chart accessibility), PERF-001 and PERF-002 (analyzer/trend performance), and UX-001 (in-place retry) — see [CHANGELOG.md](CHANGELOG.md).
 
 ## Future Improvements
 
-Wiring `src/ai/`'s Gateway to a real LLM provider is the one clearly-designed-for extension point — it would sit alongside this deterministic engine (e.g. for open-ended natural-language Q&A beyond the Coach's 16 fixed intents), not replace it. See [DECISIONS.md](DECISIONS.md) for why the engine stays rule-based today.
+Wiring `src/ai/`'s Gateway to a real LLM provider is the one clearly-designed-for extension point — it would sit alongside this deterministic engine (e.g. for open-ended natural-language Q&A beyond the Coach's 16 fixed intents), not replace it. See [DECISIONS.md](DECISIONS.md) for why the engine stays rule-based today. Nearer-term, scoped follow-ups are **PERF-003** (share `now` across the analysis/trend hooks to dedupe the trend's current point), **UX-002** (cover data-load errors in the same retry and surface a synchronous engine throw as an error state), and the remaining A11Y-001 items (focus-visible rings, data-table chart alternatives) — see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) and [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md).

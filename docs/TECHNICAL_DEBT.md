@@ -1,6 +1,6 @@
 # Technical Debt
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-07
 
 ## Overview
 
@@ -14,6 +14,7 @@ This document lists specific, verified issues found while reading the codebase f
 - **`PLAINTEXT_KEYS` (which fields stay unencrypted per table) is hand-duplicated in three places** with no single source of truth: each `createRepository()` call's `plaintextKeys` option, `backupService.ts`, and `enableEncryption.ts`. Each file's own comment acknowledges this and says the three must be kept in sync manually. A drift between them would be a subtle, hard-to-detect bug (e.g. a field silently encrypted in one path and not another).
 - **Root `README.md` is still the unmodified Vite template** ("React + TypeScript + Vite... This template provides a minimal setup..."). The real project documentation now lives entirely in `/docs` — worth either replacing the root README with a short pointer to `/docs/README.md`, or leaving it as-is with an explicit note, since right now a first-time visitor to the repo root sees generic scaffolding text instead of what the project actually is.
 - **`package.json` version is still `0.0.0`** (the Vite template default) despite the app being under active, substantial development — see [CHANGELOG.md](CHANGELOG.md).
+- **`localStatisticalEngine.analyze()` can throw synchronously and escape the analysis hook's error handling.** `analyze: (input) => Promise.resolve(runAnalysis(input))` evaluates `runAnalysis` *before* `Promise.resolve` wraps it, so a synchronous throw propagates out of the call rather than rejecting the returned promise — `useFinancialAnalysis`'s `.catch` never runs and the AI Analytics page can stay stuck on `loading` instead of showing `ErrorState`. Low likelihood (the local engine is defensive), but it means the UX-001 retry cannot recover from that class of failure. Scoped as **UX-002** (see [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)).
 
 ## Code Smells
 
@@ -31,6 +32,7 @@ This document lists specific, verified issues found while reading the codebase f
 - Consolidate `PLAINTEXT_KEYS` into one exported constant (see "Known Issues" above) — the most concrete, low-risk refactor identified.
 - Decide the fate of `src/features/calendar/` — either commit to keeping `calendarEvents` indefinitely (and document why, e.g. "some users may still have data in it"), or design a one-time migration/export prompt so the table and its orphaned type can eventually be removed.
 - Replace or annotate the root `README.md`.
+- **Deduplicate the AI Analytics score-trend's "current" point.** `useFinancialHealthTrend` and `useFinancialAnalysis` each capture their own `now`, so the trend's "now" point re-runs `buildScoreContext` for a health score the main pipeline just computed. Deduping it deterministically requires the two hooks to share one `now` timestamp (a small UI-level change), so it was deliberately left out of PERF-002. Scoped as **PERF-003**. PERF-001 (single-pass `monthlyValuesFor`) and PERF-002 (lean score-trend summary) already reduced the surrounding per-point cost — see [AI_ANALYTICS.md](AI_ANALYTICS.md).
 
 ## Potential Risks
 
@@ -45,7 +47,7 @@ This document lists specific, verified issues found while reading the codebase f
 
 ## Current Status
 
-All items above are current findings as of this documentation sprint (2026-08-02), verified by direct code reading, not carried over from a stale prior list (this is the first time this project has had a `TECHNICAL_DEBT.md`).
+All items above are current findings verified by direct code reading, re-checked during the 2026-08-07 `update` pass. Since the original 2026-08-02 audit, four scoped AI Analytics passes landed — A11Y-001 (chart accessibility), PERF-001 and PERF-002 (analyzer/trend performance), and UX-001 (retry without full-page reload) — each output-preserving; the two new follow-ups they surfaced (UX-002, PERF-003) are recorded above.
 
 ## Future Improvements
 

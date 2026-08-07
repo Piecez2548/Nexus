@@ -1,10 +1,10 @@
 # Changelog
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-07
 
 ## Overview
 
-This changelog is reconstructed directly from `git log` (52 commits, `26abcb9` → `4e9adb7`), grouped into milestones rather than listed commit-by-commit. `package.json` still declares `"version": "0.0.0"` — **no semantic versioning scheme is in use yet**; this document uses the term "version" loosely to mean development milestones.
+This changelog is reconstructed directly from `git log` (64 commits, `26abcb9` → `HEAD`), grouped into milestones rather than listed commit-by-commit. `package.json` still declares `"version": "0.0.0"` — **no semantic versioning scheme is in use yet**; this document uses the term "version" loosely to mean development milestones.
 
 ## Current Version
 
@@ -12,7 +12,7 @@ This changelog is reconstructed directly from `git log` (52 commits, `26abcb9` �
 
 ## Timeline
 
-The full commit history spans **2026-07-25 to 2026-08-02** (8 days), with the AI Analytics module and several other major features landing on 2026-08-01 alone.
+The full commit history spans **2026-07-25 to 2026-08-07**, with the AI Analytics module and several other major features landing on 2026-08-01 alone.
 
 ## Major Milestones
 
@@ -61,7 +61,14 @@ One commit introducing the entire local, rule-based AI Analytics engine: Financi
 - Recommendations section consolidated onto the richer `ActionableRecommendation` model (`55bc651`).
 - Repository/service CRUD factories extracted, dead `ComingSoon` page removed (`4a84fd1`).
 - Sync engine merge safety hardened: malformed-row guard + last-write-wins (`3909f1b`).
-- Small info tooltips added to Dashboard cards/charts, translation strings updated (`47455b2`, `4e9adb7` — most recent commits as of this writing).
+- Small info tooltips added to Dashboard cards/charts, translation strings updated (`47455b2`, `4e9adb7`).
+
+### Documentation, task system, and AI Analytics quality passes (2026-08-07)
+The `/docs` documentation set and a file-based `tasks/` registry (previously untracked working-tree artifacts) were committed, followed by four scoped AI Analytics passes — each output-preserving, with no change to financial calculations:
+- **A11Y-001** — screen-reader and keyboard accessibility for the AI Analytics charts: a shared `ChartFigure` (`role="img"` + a data-driven `aria-label`) wraps every Recharts chart and the CSS-grid heatmap/calendar, the decorative merchant sparkline is hidden from assistive tech, and the recommendation disclosure gained `aria-expanded`/`aria-controls`. No visual change (`4134a56`).
+- **PERF-001** — `monthlyValuesFor` rewritten as a single pass over transactions (O(months×N) → O(N)) with byte-identical output (`088f3ac`).
+- **PERF-002** — a lean `computeHealthScoreSummary` lets score-trend points skip the explanation aggregation they discard; the full health score is unchanged (`ebc9f85`).
+- **UX-001** — the AI Analytics error retry re-runs the analysis in place via a new `useFinancialAnalysis().retry()` instead of `window.location.reload()`, leaving all state outside the module untouched (`754a98f`).
 
 ## Implemented Features
 
@@ -73,7 +80,7 @@ See [ROADMAP.md](ROADMAP.md)'s "Planned" and "Future" sections. Headline item: w
 
 ## Current Status
 
-This changelog is accurate as of commit `4e9adb7` (2026-08-02).
+This changelog is accurate as of the 2026-08-07 documentation and AI Analytics quality passes (A11Y-001, PERF-001, PERF-002, UX-001).
 
 ## Future Improvements
 
