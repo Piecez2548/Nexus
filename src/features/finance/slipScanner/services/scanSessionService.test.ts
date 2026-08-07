@@ -87,38 +87,46 @@ describe("createScanSession", () => {
   });
 
   it("cancel stops the scan and marks the run cancelled", async () => {
-    const provider = new FakeProvider([asset("a", 1, [1]), asset("b", 2, [2]), asset("c", 3, [3]), asset("d", 4, [4])]);
+    // More assets than the concurrency so cancel clearly leaves work undone.
+    const items = Array.from({ length: 10 }, (_, i) => asset(`c${i}`, (i % 9) + 1, [i, i + 1]));
     let session: ScanSession;
     session = createScanSession({
-      provider,
-      options: { source: "fake", incremental: false },
+      provider: new FakeProvider(items),
+      options: { source: "fake", incremental: false, concurrency: 2 },
       onProgress: (p) => {
-        if (p.done === 1) session.control.cancel();
+        if (p.done >= 1) session.control.cancel();
       },
     });
 
     const run = await session.done;
     expect(run.status).toBe("cancelled");
-    expect(run.done).toBeLessThan(4);
+    expect(run.done).toBeLessThan(10);
   });
 
   it("pause halts progress and resume runs it to completion", async () => {
-    const provider = new FakeProvider([asset("a", 1, [1]), asset("b", 2, [2]), asset("c", 3, [3])]);
+    const items = Array.from({ length: 8 }, (_, i) => asset(`p${i}`, (i % 9) + 1, [i, 100 + i]));
+    let lastDone = 0;
+    let pausedOnce = false;
     let session: ScanSession;
     session = createScanSession({
-      provider,
-      options: { source: "fake", incremental: false },
+      provider: new FakeProvider(items),
+      options: { source: "fake", incremental: false, concurrency: 2 },
       onProgress: (p, s) => {
-        if (p.done === 1 && s === "running") session.control.pause();
+        lastDone = p.done;
+        if (!pausedOnce && p.done >= 1 && s === "running") {
+          pausedOnce = true;
+          session.control.pause();
+        }
       },
     });
 
     await until(() => session.control.status === "paused");
-    expect(session.control.status).toBe("paused");
+    const doneAtPause = lastDone;
 
     session.control.resume();
     const run = await session.done;
     expect(run.status).toBe("completed");
-    expect(run.done).toBe(3);
+    expect(run.done).toBe(8);
+    expect(doneAtPause).toBeLessThan(8);
   });
 });

@@ -25,6 +25,12 @@ export interface ScanProgress {
 export interface ScanOptions {
   source: string; // provider id, e.g. "web-picker" | "native-media"
   incremental: boolean; // skip assets scanned in a previous run (via the cursor)
+  // Optional scan-queue tuning (GS-007); resolved to dynamic/device defaults
+  // when omitted.
+  concurrency?: number;
+  maxRetries?: number;
+  retryDelayMs?: number;
+  maxInflightBytes?: number;
 }
 
 // ── Persisted (Dexie) — device-local, not synced ──
