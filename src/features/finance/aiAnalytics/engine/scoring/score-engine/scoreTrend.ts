@@ -4,7 +4,7 @@
 // covers the spec's weekly/monthly/yearly comparison ask with one week,
 // one/three/six months, and one year ago, plus the current point.
 
-import { computeFinancialHealthScore } from "@/features/finance/aiAnalytics/engine/scoring/score-engine/computeFinancialHealthScore";
+import { computeHealthScoreSummary } from "@/features/finance/aiAnalytics/engine/scoring/score-engine/computeFinancialHealthScore";
 import { buildScoreContext, type ScoreContextInput } from "@/features/finance/aiAnalytics/engine/scoring/score-engine/buildScoreContext";
 import type { ScoringConfig } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
 import type { ScoreTrendPoint } from "@/features/finance/aiAnalytics/engine/scoring/types";
@@ -17,7 +17,10 @@ export interface TrendPointSpec {
 export function computeScoreTrend(input: ScoreContextInput, points: TrendPointSpec[], config?: Partial<ScoringConfig>): ScoreTrendPoint[] {
   return points.map((point) => {
     const context = buildScoreContext(input, point.now);
-    const result = computeFinancialHealthScore(context, config);
+    // Trend points only surface overallScore + grade, so use the lean
+    // summary — it runs the identical scoring core but skips the explanation
+    // aggregation this path would otherwise compute and discard per point.
+    const result = computeHealthScoreSummary(context, config);
     return { label: point.label, now: point.now, overallScore: result.overallScore, grade: result.grade };
   });
 }

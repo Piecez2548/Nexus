@@ -11,11 +11,22 @@ import { calculateIncomeStabilityScore } from "@/features/finance/aiAnalytics/en
 import { calculateBehaviorScore } from "@/features/finance/aiAnalytics/engine/scoring/calculators/behaviorScore";
 import { calculateGoalProgressScore } from "@/features/finance/aiAnalytics/engine/scoring/calculators/goalProgressScore";
 import { aggregateExplanations } from "@/features/finance/aiAnalytics/engine/scoring/explanations/aggregateExplanations";
-import { mergeScoringConfig, gradeForScore, type ScoringConfig } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
-import type { CategoryScoreResult, FinancialHealthScoreResult, ScoreContext } from "@/features/finance/aiAnalytics/engine/scoring/types";
+import { mergeScoringConfig, gradeForScore, type GradeBand, type ScoringConfig } from "@/features/finance/aiAnalytics/engine/scoring/weights/defaultConfig";
+import type { CategoryScoreResult, FinancialHealthGrade, FinancialHealthScoreResult, ScoreContext } from "@/features/finance/aiAnalytics/engine/scoring/types";
 
-export function computeFinancialHealthScore(context: ScoreContext, overrides?: Partial<ScoringConfig>): FinancialHealthScoreResult {
-  const config = mergeScoringConfig(overrides);
+interface ScoreCore {
+  categoryScores: CategoryScoreResult[];
+  overallScore: number | null;
+  gradeBand: GradeBand | null;
+  insufficientData: boolean;
+}
+
+// The weighted-score computation shared by both entry points below: run the
+// 7 calculators, renormalize the weights over the non-null ones, and grade.
+// Deliberately stops before aggregateExplanations so the score-trend path
+// can skip that step (it discards the explanation buckets); the full
+// computeFinancialHealthScore adds it back for identical output.
+function computeScoreCore(context: ScoreContext, config: ScoringConfig): ScoreCore {
   const { weights, thresholds } = config;
 
   const categoryScores: CategoryScoreResult[] = [
@@ -35,6 +46,12 @@ export function computeFinancialHealthScore(context: ScoreContext, overrides?: P
   const overallScore = insufficientData || totalWeight === 0 ? null : scored.reduce((sum, c) => sum + c.weight * c.score, 0) / totalWeight;
 
   const gradeBand = overallScore === null ? null : gradeForScore(overallScore, config.gradeTable);
+
+  return { categoryScores, overallScore, gradeBand, insufficientData };
+}
+
+export function computeFinancialHealthScore(context: ScoreContext, overrides?: Partial<ScoringConfig>): FinancialHealthScoreResult {
+  const { categoryScores, overallScore, gradeBand, insufficientData } = computeScoreCore(context, mergeScoringConfig(overrides));
   const explanations = aggregateExplanations(categoryScores);
 
   return {
@@ -45,4 +62,21 @@ export function computeFinancialHealthScore(context: ScoreContext, overrides?: P
     categoryScores,
     ...explanations,
   };
+}
+
+export interface HealthScoreSummary {
+  overallScore: number | null;
+  grade: FinancialHealthGrade | null;
+}
+
+// Lean variant for the score-trend history points, which read only
+// overallScore + grade (see scoreTrend.ts) and discard categoryScores,
+// status, and the five explanation buckets. Reuses the exact same
+// computeScoreCore as computeFinancialHealthScore, so the returned
+// overallScore + grade are identical — it just avoids running
+// aggregateExplanations once per historical trend point only to throw the
+// result away.
+export function computeHealthScoreSummary(context: ScoreContext, overrides?: Partial<ScoringConfig>): HealthScoreSummary {
+  const { overallScore, gradeBand } = computeScoreCore(context, mergeScoringConfig(overrides));
+  return { overallScore, grade: gradeBand?.grade ?? null };
 }
