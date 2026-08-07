@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-08
 
 ## Overview
 
@@ -56,7 +56,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 
 ## In Progress
 
-Nothing is currently mid-build in the repository as of this writing — the most recent commits (`3909f1b` → `4e9adb7`) were a consolidation/hardening/documentation pass over already-shipped features, not new in-progress work.
+- **Gallery Slip Scanner** (`GS` epic — see [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md) and `MASTER_TASK.md`) — a production, plugin-agnostic gallery scanner is being built out incrementally. Landed so far (local, not yet released): permission manager (GS-005), scan orchestration with a `MediaProvider` adapter (GS-006), concurrent queue with retry + memory budget (GS-007), and a versioned scan cache (GS-008). Still to come: native gallery enumeration (media plugin), slip extraction (QR → EMVCo → OCR), bank identification, duplicate detection, import preview/smart import, and the AI/analytics layers. Web-picker-only until native enumeration + extraction land.
 
 ## Planned
 

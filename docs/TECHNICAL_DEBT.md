@@ -1,6 +1,6 @@
 # Technical Debt
 
-**Last Updated:** 2026-08-07
+**Last Updated:** 2026-08-08
 
 ## Overview
 
@@ -15,6 +15,7 @@ This document lists specific, verified issues found while reading the codebase f
 - **Root `README.md` is still the unmodified Vite template** ("React + TypeScript + Vite... This template provides a minimal setup..."). The real project documentation now lives entirely in `/docs` — worth either replacing the root README with a short pointer to `/docs/README.md`, or leaving it as-is with an explicit note, since right now a first-time visitor to the repo root sees generic scaffolding text instead of what the project actually is.
 - **`package.json` version is still `0.0.0`** (the Vite template default) despite the app being under active, substantial development — see [CHANGELOG.md](CHANGELOG.md).
 - **Store-level data-load errors are not surfaced on the AI Analytics page.** The 6 finance stores each track their own `error`, but `AiAnalytics.tsx` only renders `ErrorState` for an *analysis* error — a failed `load*()` falls through to the empty state instead. UX-002 made the retry re-fetch the stores, so recovery works once the user retries, but a load failure still shows "no data" rather than an error. Not yet a registered task.
+- **The Gallery Slip Scanner (GS epic) is not yet functional end-to-end — deliberately incremental.** The scan orchestration, concurrent queue, and versioned cache (GS-005–GS-008) are built and tested, but the `NativeMediaProvider` is a stub (no on-device gallery enumeration until a media plugin is wired) and there is no slip extraction yet (QR/EMVCo/OCR are later GS tasks). So today the scanner only runs against user-picked files on web and records/dedupes them without extracting transaction data. This is tracked as forward work in [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s GS epic, not a shortcut — flagged here only so the module isn't mistaken for a shipping feature.
 
 ## Code Smells
 

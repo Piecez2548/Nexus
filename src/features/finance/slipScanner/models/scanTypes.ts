@@ -49,12 +49,23 @@ export interface SlipScanRun {
   failed: number;
 }
 
-// One record per successfully scanned image — powers incremental scan
-// (by assetId) and duplicate prevention (by contentHash).
-export interface SlipScannedAsset {
-  id?: number;
-  assetId: string;
-  contentHash: string;
+export type ScanCacheStatus = "scanned" | "failed";
+
+// One scan-cache entry per gallery image (the production scan cache, GS-008).
+// Powers: skip-unchanged (assetId + lastModified), stale detection (version
+// fields), duplicate prevention (contentHash), and the remembered-failure
+// retry policy (status + failedAttempts). `id` is the internal image id;
+// `assetId` is the gallery identity.
+export interface ScanCacheEntry {
+  id?: number; // Image ID (internal Dexie PK)
+  assetId: string; // Asset ID (gallery identity)
+  contentHash?: string; // Hash — absent for a failure that never reached hashing
+  lastModified?: string; // Last Modified (asset.capturedAt at scan time)
+  scannedAt: string; // Scan Timestamp
+  status: ScanCacheStatus; // Scan Status
+  ocrVersion: string; // OCR Version
+  payloadVersion: string; // Payload Version
+  parserVersion: string; // Parser Version
+  failedAttempts: number; // cross-run failure count for the retry policy
   runId: number;
-  scannedAt: string;
 }

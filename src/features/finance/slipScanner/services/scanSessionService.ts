@@ -1,5 +1,6 @@
 import { scanRunRepository } from "@/features/finance/slipScanner/repositories/scanRunRepository";
-import { scannedAssetRepository } from "@/features/finance/slipScanner/repositories/scannedAssetRepository";
+import { dexieScanCache } from "@/features/finance/slipScanner/cache/dexieScanCache";
+import { CURRENT_ENGINE_VERSIONS } from "@/features/finance/slipScanner/cache/scanCachePolicy";
 import { sha256Hex } from "@/features/finance/slipScanner/engine/hash/contentHash";
 import { recordingProcessor, type ScanProcessor } from "@/features/finance/slipScanner/services/scanProcessor";
 import { runConcurrentQueue } from "@/features/finance/slipScanner/queue/runConcurrentQueue";
@@ -12,6 +13,7 @@ import {
   resolveConcurrency,
 } from "@/features/finance/slipScanner/queue/scanQueueConfig";
 import type { MediaProvider } from "@/features/finance/slipScanner/gallery/media/MediaProvider";
+import type { EngineVersions, ScanCache } from "@/features/finance/slipScanner/cache/scanCache";
 import type { GalleryAssetRef, ScanOptions, ScanProgress, ScanStatus, SlipScanRun } from "@/features/finance/slipScanner/models/scanTypes";
 
 export interface ScanControl {
@@ -27,6 +29,12 @@ export interface ScanSessionParams {
   // Per-image work (extraction) — defaults to a no-op recorder (GS-006 only
   // enumerates/hashes/dedupes/records; extraction plugs in here later).
   processor?: ScanProcessor;
+  // The scan cache (GS-008) — injected so the orchestration stays independent
+  // of the cache implementation; defaults to the Dexie-backed cache.
+  cache?: ScanCache;
+  // Extraction-engine versions stamped onto cache entries; a bump makes older
+  // entries stale and re-scanned. Defaults to the current engine versions.
+  engineVersions?: EngineVersions;
   onProgress?: (progress: ScanProgress, status: ScanStatus) => void;
 }
 
@@ -47,6 +55,8 @@ function nowIso(): string {
 // (GS-007) — concurrent workers, retry, and byte-budget memory protection.
 export function createScanSession(params: ScanSessionParams): ScanSession {
   const processor = params.processor ?? recordingProcessor;
+  const cache = params.cache ?? dexieScanCache;
+  const versions = params.engineVersions ?? CURRENT_ENGINE_VERSIONS;
 
   let status: ScanStatus = "idle";
   let runId = 0; // 0 = not created yet (Dexie ids start at 1)
@@ -125,8 +135,11 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
     async function handleAsset(asset: GalleryAssetRef): Promise<void> {
       if (asset.capturedAt && (!maxCapturedAt || asset.capturedAt > maxCapturedAt)) maxCapturedAt = asset.capturedAt;
 
-      if (await scannedAssetRepository.hasAsset(asset.assetId)) {
-        progress.skipped++; // incremental: this asset was already scanned
+      // Consult the cache only for incremental scans; a non-incremental
+      // (forced) scan re-processes everything but still records + dedupes.
+      const decision = params.options.incremental ? await cache.decide(asset.assetId, asset.capturedAt, versions) : "scan";
+      if (decision === "skip-unchanged" || decision === "skip-failed") {
+        progress.skipped++; // cache hit (unchanged) or a remembered, retries-exhausted failure
         return;
       }
 
@@ -142,13 +155,13 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
         }
         seenContent.add(contentHash); // reserve synchronously (race-free)
 
-        if (await scannedAssetRepository.hasContent(contentHash)) {
-          progress.skipped++; // duplicate content from a previous run
+        if (await cache.hasContent(contentHash, asset.assetId)) {
+          progress.skipped++; // duplicate content from another asset (dedup preserved)
           return;
         }
 
         await processor.process(asset, bytes, contentHash, runId);
-        await scannedAssetRepository.record({ assetId: asset.assetId, contentHash, runId, scannedAt: nowIso() });
+        await cache.recordScanned({ assetId: asset.assetId, contentHash, lastModified: asset.capturedAt, runId, versions });
         progress.done++;
       } finally {
         budget.release(estBytes);
@@ -163,8 +176,13 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
       retryDelayMs: params.options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS,
       waitWhilePaused,
       isCancelled: () => cancelled,
-      onSettled: async ({ ok }) => {
-        if (!ok) progress.failed++; // one bad image (after retries) never aborts the batch
+      onSettled: async ({ item, ok }) => {
+        if (!ok) {
+          // One bad image (after the queue's retries) never aborts the batch;
+          // remember the failure so the cache's cross-run retry policy applies.
+          progress.failed++;
+          await cache.recordFailed({ assetId: item.assetId, lastModified: item.capturedAt, runId });
+        }
         await scanRunRepository.checkpoint(runId, {
           done: progress.done,
           skipped: progress.skipped,

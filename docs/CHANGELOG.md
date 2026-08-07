@@ -1,10 +1,10 @@
 # Changelog
 
-**Last Updated:** 2026-08-07
+**Last Updated:** 2026-08-08
 
 ## Overview
 
-This changelog is reconstructed directly from `git log` (68 commits, `26abcb9` → `HEAD`), grouped into milestones rather than listed commit-by-commit. `package.json` still declares `"version": "0.0.0"` — **no semantic versioning scheme is in use yet**; this document uses the term "version" loosely to mean development milestones.
+This changelog is reconstructed directly from `git log` (72 commits, `26abcb9` → `HEAD`), grouped into milestones rather than listed commit-by-commit. `package.json` still declares `"version": "0.0.0"` — **no semantic versioning scheme is in use yet**; this document uses the term "version" loosely to mean development milestones.
 
 ## Current Version
 
@@ -72,6 +72,15 @@ The `/docs` documentation set and a file-based `tasks/` registry (previously unt
 - **UX-002** — hardened that retry: a synchronous engine throw now surfaces as an error state (the `analyze()` call is routed through `Promise.resolve().then(...)`) instead of hanging on `loading`, and retry re-fetches the finance stores before re-analysing (`86df606`).
 - **A11Y-002** — a second accessibility pass: a global keyboard `:focus-visible` ring (`index.css`), a shared visually-hidden `ChartDataTable` exposing the key charts' numbers (score radars, health trend, monthly cash flow) to screen readers, a no-behaviour-flags empty state, and an `overflow-x-auto` wrapper on the desktop merchant table (`34acf5b`).
 
+### Gallery Slip Scanner — foundation (2026-08-07 → 2026-08-08, `GS` epic, in progress)
+A new, fully plugin-agnostic Gallery Slip Scanner is being built out under its own `GS` epic (the `MASTER_TASK.md` program, renumbered to avoid colliding with the existing `OCR-001…007`). Local commits, **not yet released**:
+- **GS-005** — gallery permission manager spanning Android 13/14/15 + web, behind a `registerPlugin` native contract that degrades gracefully until an on-device media plugin is wired; `READ_MEDIA_IMAGES`/`READ_MEDIA_VISUAL_USER_SELECTED` manifest permissions (`3a3ba6e`).
+- **GS-006** — plugin-agnostic scan orchestration: a `MediaProvider` interface with a web file-picker provider + a native stub, driving scan-all, incremental skip, duplicate prevention, progress, pause/resume/cancel, cooperative backgrounding, and resumable session persistence (Dexie v15) (`286adbf`).
+- **GS-007** — concurrent scan queue: N self-balancing workers pulling lazily from the provider (the source is the backpressure), bounded retries with backoff, and a `ByteBudget` semaphore capping in-flight image bytes (memory protection + dynamic batching) (`c9b35e1`).
+- **GS-008** — production scan cache (Dexie v16 `slipScanCache`) behind an injectable `ScanCache` interface: versioned entries (OCR/payload/parser) for staleness, skip-unchanged / re-scan-changed / re-scan-stale, a remembered-failure cross-run retry policy, and invalidation.
+
+Native gallery enumeration and slip extraction (QR → EMVCo → OCR) are pending later GS tasks; the scanner is web-picker-only until then. See [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s GS epic.
+
 ## Implemented Features
 
 See [ROADMAP.md](ROADMAP.md)'s "Completed" section for the full current-state feature list across every module, and [MODULES.md](MODULES.md) for per-module detail.
@@ -82,7 +91,7 @@ See [ROADMAP.md](ROADMAP.md)'s "Planned" and "Future" sections. Headline item: w
 
 ## Current Status
 
-This changelog is accurate as of the 2026-08-07 documentation and AI Analytics quality passes (A11Y-001, PERF-001, PERF-002, UX-001).
+This changelog is accurate as of the 2026-08-08 Gallery Slip Scanner foundation work (GS-005 → GS-008), which builds on the 2026-08-07 documentation and AI Analytics quality passes.
 
 ## Future Improvements
 

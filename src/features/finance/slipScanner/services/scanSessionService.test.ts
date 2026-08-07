@@ -55,7 +55,7 @@ async function until(pred: () => boolean, timeoutMs = 3000): Promise<void> {
 
 beforeEach(async () => {
   await db.slipScanRuns.clear();
-  await db.slipScannedAssets.clear();
+  await db.slipScanCache.clear();
 });
 
 describe("createScanSession", () => {
@@ -66,7 +66,35 @@ describe("createScanSession", () => {
     expect(run.status).toBe("completed");
     expect(run.done).toBe(3);
     expect(run.skipped).toBe(0);
-    expect(await db.slipScannedAssets.count()).toBe(3);
+    expect(await db.slipScanCache.count()).toBe(3);
+  });
+
+  it("re-scans an asset whose last-modified changed", async () => {
+    const original = asset("edit", 1, [1]);
+    await createScanSession({ provider: new FakeProvider([original]), options: { source: "fake", incremental: true } }).done;
+
+    const edited: FakeAsset = { assetId: "edit", capturedAt: "2026-06-01T00:00:00.000Z", bytes: new Uint8Array([2]) };
+    const run = await createScanSession({ provider: new FakeProvider([edited]), options: { source: "fake", incremental: true } }).done;
+
+    expect(run.done).toBe(1); // changed → re-scanned, not skipped
+    expect(run.skipped).toBe(0);
+  });
+
+  it("re-scans when the engine version bumps, despite identical content (stale cache)", async () => {
+    const a = asset("v", 1, [7]);
+    await createScanSession({
+      provider: new FakeProvider([a]),
+      options: { source: "fake", incremental: true },
+      engineVersions: { ocr: "1", payload: "1", parser: "1" },
+    }).done;
+
+    const run = await createScanSession({
+      provider: new FakeProvider([a]),
+      options: { source: "fake", incremental: true },
+      engineVersions: { ocr: "1", payload: "1", parser: "2" },
+    }).done;
+
+    expect(run.done).toBe(1); // stale entry re-scanned even though the image is unchanged
   });
 
   it("prevents duplicates — identical content is scanned once", async () => {

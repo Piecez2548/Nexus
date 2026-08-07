@@ -17,7 +17,7 @@ import type { Holding } from "@/features/portfolio/types";
 import type { CalendarEvent } from "@/features/calendar/types";
 import type { ScheduleItem } from "@/features/schedule/types";
 import type { Tombstone, SyncStateRow } from "@/features/sync/types";
-import type { SlipScanRun, SlipScannedAsset } from "@/features/finance/slipScanner/models/scanTypes";
+import type { SlipScanRun, ScanCacheEntry } from "@/features/finance/slipScanner/models/scanTypes";
 
 class NexusDatabase extends Dexie {
 
@@ -39,7 +39,7 @@ class NexusDatabase extends Dexie {
   public syncTombstones;
   public syncState;
   public slipScanRuns;
-  public slipScannedAssets;
+  public slipScanCache;
 
   constructor() {
     super("NexusDatabase");
@@ -232,6 +232,18 @@ class NexusDatabase extends Dexie {
         "++id,&assetId,contentHash,runId",
     });
 
+    // Gallery Scanner (GS-008) — the GS-006 slipScannedAssets store is
+    // superseded by a versioned production scan cache. Drop the old table
+    // (rebuildable, unreleased) and create slipScanCache with the richer
+    // shape (last-modified, status, ocr/payload/parser versions, failure
+    // count). Additive to history; a fresh DB just lands on slipScanCache.
+    this.version(16).stores({
+      slipScannedAssets: null,
+
+      slipScanCache:
+        "++id,&assetId,contentHash,status",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -286,8 +298,8 @@ class NexusDatabase extends Dexie {
     this.slipScanRuns =
       this.table<SlipScanRun, number>("slipScanRuns");
 
-    this.slipScannedAssets =
-      this.table<SlipScannedAsset, number>("slipScannedAssets");
+    this.slipScanCache =
+      this.table<ScanCacheEntry, number>("slipScanCache");
   }
 }
 
