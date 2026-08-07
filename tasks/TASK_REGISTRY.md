@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 10 | 40 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 11 | 39 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **37** | **71** | **0** | **0** |
+| **Total** | **108** | **38** | **70** | **0** | **0** |
 
 ---
 
@@ -182,7 +182,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-008 | Gallery Scanner | Scan Cache | High | Completed | GS-006 |
 | GS-009 | Gallery Scanner | QR Detector | Critical | Completed | GS-007 |
 | GS-010 | Gallery Scanner | EMVCo Payload Parser | Critical | Completed | GS-009 |
-| GS-011 | Gallery Scanner | Bank Identification | High | Todo | GS-010 |
+| GS-011 | Gallery Scanner | Bank Identification | High | Completed | GS-010 |
 | GS-012 | Gallery Scanner | OCR Fallback | High | Todo | GS-009 |
 | GS-013 | Gallery Scanner | Duplicate Detection | High | Todo | GS-010 |
 | GS-014 | Gallery Scanner | Bank Selection Popup | Medium | Todo | GS-011 |
@@ -234,6 +234,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-009 (QR Detector) added the first extraction stage behind a swappable `QrDecoder` interface, so detection logic and the jsQR backend stay decoupled and the logic is unit-testable with a fake decoder: `createQrDetector` runs a decoder over image bytes and returns `{ hasQr, payload }` — non-QR images resolve to `hasQr:false` rather than throwing, so a whole-gallery scan flows past photos that aren't slips. The concrete `imageDataQrDecoder` (jsQR@1.4.0, pure-JS) decodes via createImageBitmap → OffscreenCanvas → ImageData and degrades to null outside a browser/WebView; jsQR is referenced only there. The raw payload is returned verbatim — no parsing (EMVCo interpretation is GS-010). `createQrScanProcessor` plugs QR detection into the existing GS-006 `ScanProcessor` seam without changing orchestration; it is not yet the default processor since the payload has no consumer until GS-010. Validated build/tsc/lint; slipScanner 32 tests, full suite green.
 >
 > GS-010 (EMVCo Payload Parser) turns a raw QR payload string into a structured payment record. `engine/emvco/emvcoTlv.ts` is a pure Tag-Length-Value walker: it parses the flat EMVCo field stream, recurses into template tags (merchant-account 02–51, additional-data 62, language 64), gracefully keeps a template's raw value when its content isn't nested TLV (e.g. a card-scheme GUID), and returns null for non-EMVCo strings (a URL/plain-text QR is cleanly rejected). Integrity is the CRC-16/CCITT-FALSE checksum in tag 63 (`crc16ccitt`, pinned by the canonical `123456789`→`0x29B1` vector); `parseEmvcoPayload` reports it as `crcValid` and still parses a structurally-valid-but-corrupted payload rather than discarding it. `emvcoPayloadParser.ts` extracts the standard fields — PromptPay AID + proxy (mobile/national-id/e-wallet), merchant name/city, MCC, amount, currency (numeric + a small ISO-4217 alpha map), country, and reference IDs from the additional-data template. Two deliberate deferrals (no invention): bank *identity* is left to GS-011 (the raw `merchantAccounts` templates are exposed for it), and timestamp is left to OCR/slip-verify (GS-012) since EMVCo payment QRs carry none. Validated build/tsc/lint; slipScanner 49 tests, full suite green.
+>
+> GS-011 (Bank Identification) is a plugin-based institution identifier over the GS-010 payload. `engine/bank/bankRegistry.ts` seeds a mutable registry with the listed institutions keyed on the real, published Bank of Thailand 3-digit codes (BBL 002, KBank 004, Krungthai 006, TTB 011, SCB 014, UOB 024, Krungsri 025, GSB 030, BAAC 034) plus PromptPay as a rail (code null) — no codes are guessed. `registerBankPlugin` adds or replaces a bank by id, so future banks plug in without editing the identifier; `identifyBankByCode` is the reusable code→bank resolver other stages (OCR/slip-verify) call. `bankIdentifier.ts`'s `identifyBank(payload)` prefers a registered plugin whose custom `match` or `aidGuids` (bank-specific QR rails) fits, then falls back to the PromptPay rail when the payload carries a PromptPay proxy, else null — honest about the fact that a plain PromptPay QR identifies the rail, not the receiving bank (only known later from slip verification/OCR). Validated build/tsc/lint; slipScanner 58 tests, full suite green.
 
 ---
 
