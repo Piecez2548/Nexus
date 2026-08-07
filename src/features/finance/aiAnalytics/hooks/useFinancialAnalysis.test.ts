@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { useFinancialAnalysis } from "./useFinancialAnalysis";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
@@ -234,6 +234,29 @@ describe("useFinancialAnalysis", () => {
     await waitFor(() => expect(hookResult.current.loading).toBe(false));
     expect(hookResult.current.error).toBe("boom");
     expect(hookResult.current.data).toBeNull();
+  });
+
+  it("re-runs analyze() when retry() is called, recovering from an error without a reload", async () => {
+    let call = 0;
+    const okResult = stubResult({ meta: { generatedAt: now.toISOString(), transactionCount: 5, monthsOfHistory: 2 } });
+    const engine: FinancialIntelligenceEngine = {
+      analyze: () => {
+        call += 1;
+        return call === 1 ? Promise.reject(new Error("boom")) : Promise.resolve(okResult);
+      },
+    };
+
+    const { result: hookResult } = renderHook(() => useFinancialAnalysis(engine, now));
+
+    await waitFor(() => expect(hookResult.current.error).toBe("boom"));
+    expect(hookResult.current.data).toBeNull();
+
+    act(() => hookResult.current.retry());
+
+    await waitFor(() => expect(hookResult.current.loading).toBe(false));
+    expect(hookResult.current.error).toBeNull();
+    expect(hookResult.current.data).toBe(okResult);
+    expect(call).toBe(2);
   });
 
   it("never lets a slower, earlier-started request overwrite a faster, later one", async () => {

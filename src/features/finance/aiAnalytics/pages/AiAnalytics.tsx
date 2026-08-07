@@ -38,7 +38,7 @@ export default function AiAnalytics() {
   const { loadEvents } = useGoalMilestoneEventStore();
 
   const { t } = useTranslation();
-  const { data, loading, error } = useFinancialAnalysis();
+  const { data, loading, error, retry } = useFinancialAnalysis();
   const trendPoints = useFinancialHealthTrend();
   // Category Insights drawer: local page state, not the shared finance
   // uiStore — this only ever opens from this one page, unlike the
@@ -63,7 +63,7 @@ export default function AiAnalytics() {
       </div>
 
       {error ? (
-        <ErrorState message={error} onRetry={() => window.location.reload()} />
+        <ErrorState message={error} onRetry={retry} />
       ) : loading && !data ? (
         <LoadingState label={t("aiAnalytics.loading")} />
       ) : !data || data.meta.transactionCount === 0 ? (

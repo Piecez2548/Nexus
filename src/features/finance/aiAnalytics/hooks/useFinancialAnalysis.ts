@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
@@ -9,10 +9,17 @@ import { localStatisticalEngine } from "@/features/finance/aiAnalytics/engine/lo
 import { toErrorMessage } from "@/utils/asyncState";
 import type { FinancialAnalysisResult, FinancialIntelligenceEngine } from "@/features/finance/aiAnalytics/types";
 
-export interface FinancialAnalysisState {
+interface AnalysisSnapshot {
   data: FinancialAnalysisResult | null;
   loading: boolean;
   error: string | null;
+}
+
+export interface FinancialAnalysisState extends AnalysisSnapshot {
+  // Re-runs the analysis against the current store data. Reruns nothing
+  // outside this hook — no reload, no store refetch — so it's a safe retry
+  // affordance for ErrorState (replacing a full-page reload).
+  retry: () => void;
 }
 
 // `engine` defaults to the local statistical engine — this default param is
@@ -28,7 +35,7 @@ export function useFinancialAnalysis(engine: FinancialIntelligenceEngine = local
   const { profiles: recipientProfiles } = useRecipientProfileStore();
   const { events: goalMilestoneEvents } = useGoalMilestoneEventStore();
 
-  const [state, setState] = useState<FinancialAnalysisState>({ data: null, loading: true, error: null });
+  const [state, setState] = useState<AnalysisSnapshot>({ data: null, loading: true, error: null });
 
   // `now ?? new Date()` as a plain default parameter would construct a new
   // Date — a new object identity — on every render, since a caller that
@@ -49,6 +56,12 @@ export function useFinancialAnalysis(engine: FinancialIntelligenceEngine = local
   // resolve — only the response to the most recently started request wins.
   const requestId = useRef(0);
 
+  // Bumping this re-fires the effect below with the same `input`, recomputing
+  // the analysis on demand. `retry` is stable (empty deps), so passing it to
+  // ErrorState never triggers an extra render.
+  const [retryToken, setRetryToken] = useState(0);
+  const retry = useCallback(() => setRetryToken((token) => token + 1), []);
+
   useEffect(() => {
     const thisRequestId = ++requestId.current;
     setState((prev) => ({ ...prev, loading: true, error: null }));
@@ -63,7 +76,7 @@ export function useFinancialAnalysis(engine: FinancialIntelligenceEngine = local
         if (thisRequestId !== requestId.current) return;
         setState((prev) => ({ ...prev, loading: false, error: toErrorMessage(err) }));
       });
-  }, [engine, input]);
+  }, [engine, input, retryToken]);
 
-  return state;
+  return { ...state, retry };
 }
