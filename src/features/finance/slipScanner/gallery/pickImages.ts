@@ -15,7 +15,10 @@ export async function pickSlipImages(): Promise<File[]> {
   if (!Capacitor.isNativePlatform()) return [];
 
   const { Camera } = await import("@capacitor/camera");
-  const result = await Camera.pickImages({ quality: 80 });
+  // quality 100 (minimal JPEG re-compression → sharper digits for OCR) and no
+  // width/height so the picker keeps the image at full resolution — any
+  // downscale would blur small slip numbers.
+  const result = await Camera.pickImages({ quality: 100 });
 
   const files: File[] = [];
   for (let i = 0; i < result.photos.length; i++) {
