@@ -87,9 +87,24 @@ function extractDate(text: string): string | undefined {
   return undefined;
 }
 
+// Lines that look like a merchant/shop name (used when a slip has no explicit
+// recipient label — e.g. a KBank bill slip where the payee "SCB มณี SHOP
+// (ร้านริญญ์น้ำ)" is only positional).
+const MERCHANT_MARKERS = /(ร้าน|ห้าง|บริษัท|บจก|หจก|shop|store|company|co\.|ltd|โรงพยาบาล|คลินิก|clinic|hospital)/i;
+
 function extractRecipient(text: string): string | undefined {
-  const match = /(?:ไปยัง|ถึง|ผู้รับเงิน|โอนไปยัง|Name)\s*[:-]?\s*([^\n\r]+)/.exec(text);
-  return match?.[1]?.trim() || undefined;
+  // 1) Explicit recipient label (longest alternatives first so the label isn't
+  //    partially consumed).
+  const labeled = /(?:โอนไปยัง|ไปยัง|ถึง|ผู้รับเงิน|ผู้รับ|Name)\s*[:-]?\s*([^\n\r]+)/.exec(text);
+  const labeledName = labeled?.[1]?.trim();
+  if (labeledName) return labeledName;
+
+  // 2) No label: the first line that reads like a shop/merchant name.
+  const merchantLine = text
+    .split(/[\n\r]+/)
+    .map((line) => line.trim())
+    .find((line) => MERCHANT_MARKERS.test(line));
+  return merchantLine || undefined;
 }
 
 export interface ParsedSlip {

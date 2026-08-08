@@ -64,4 +64,18 @@ describe("parseSlipText", () => {
   it("reads an amount marked with the ฿ symbol", () => {
     expect(parseSlipText("โอนสำเร็จ ฿20.00").amount).toBe(20);
   });
+
+  it("extracts a shop-name merchant from a label-less slip (KBank bill layout)", () => {
+    const text = [
+      "จ่ายบิลสำเร็จ",
+      "นาย ภัทรพล ข",
+      "ธ.กสิกรไทย",
+      "SCB มณี SHOP (ร้านริญญ์น้ำ)",
+      "014000008031056",
+      "จำนวน 20.00 บาท",
+    ].join("\n");
+    const result = parseSlipText(text);
+    expect(result.recipient).toBe("SCB มณี SHOP (ร้านริญญ์น้ำ)");
+    expect(result.amount).toBe(20);
+  });
 });
