@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 48 | 2 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 49 | 1 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **75** | **33** | **0** | **0** |
+| **Total** | **108** | **76** | **32** | **0** | **0** |
 
 ---
 
@@ -220,7 +220,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-046 | Gallery Scanner | Confidence Engine | Medium | Completed | GS-025 |
 | GS-047 | Gallery Scanner | Transaction Linking | Low | Completed | GS-016 |
 | GS-048 | Gallery Scanner | Spending Intelligence | Low | Completed | GS-043 |
-| GS-049 | Gallery Scanner | AI Quality Review | Low | Todo | GS-019 |
+| GS-049 | Gallery Scanner | AI Quality Review | Low | Completed | GS-019 |
 | GS-050 | Gallery Scanner | Financial Intelligence Report | Low | Todo | GS-048 |
 
 > GS-005 (Gallery Permission Manager) implemented as the permission foundation: a unified status model (granted/limited/prompt/denied/blocked/unavailable) spanning Android 13/14/15 + web, a native plugin contract (`registerPlugin`) that degrades gracefully until the on-device media plugin is wired, `useGalleryPermission` (denial + Settings-recovery flow), and the `READ_MEDIA_IMAGES`/`READ_MEDIA_VISUAL_USER_SELECTED` manifest permissions. Validated build/tsc/lint/test; native behaviour to be verified on-device.
@@ -312,6 +312,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-047 (Transaction Linking) `ai/transactionLinking.ts` `linkTransactions(txns)`: deterministic detection of related transactions as a directed relationship graph — refund (matches a prior expense's merchant+amount), transfer+fee (small same-day fee), installment (3+ same merchant+amount), split-payment (2+ same merchant+day), cashback (small income within 3 days of an expense). Advisory (proposes links, doesn't alter data); edges deduped. Validated build/tsc/lint; 6 tests.
 >
 > GS-048 (Spending Intelligence) `ai/spendingIntelligence.ts` `generateSpendingInsights(txns)`: deterministic insights with plain-language explanations — top spending category, most-frequent merchant, month-over-month trend (warning when up >20%), and abnormal expenses (robust `> 3× median` rule, which — unlike mean+Nσ — a single huge expense can't inflate its own cutoff). Advisory. Validated build/tsc/lint; 4 tests.
+>
+> GS-049 (AI Quality Review) `ai/qualityReview.ts` `reviewImportQuality(items)`: reviews imported/about-to-import items for missing data, suspect OCR, uncategorised (Others), low confidence (<50), and duplicate risk (≥0.7), returning per-item findings with a combined recommendation; clean items are omitted. Advisory. Validated build/tsc/lint; 4 tests.
 
 ---
 
