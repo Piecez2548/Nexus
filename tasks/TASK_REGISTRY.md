@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 29 | 21 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 30 | 20 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **56** | **52** | **0** | **0** |
+| **Total** | **108** | **57** | **51** | **0** | **0** |
 
 ---
 
@@ -201,7 +201,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-027 | Gallery Scanner | Image Enhancement | Medium | Completed | GS-012 |
 | GS-028 | Gallery Scanner | OCR Text Engine | High | Completed | GS-012 |
 | GS-029 | Gallery Scanner | Slip Classifier | Medium | Completed | GS-010 |
-| GS-030 | Gallery Scanner | Bank Template Engine | Medium | Todo | GS-011 |
+| GS-030 | Gallery Scanner | Bank Template Engine | Medium | Completed | GS-011 |
 | GS-031 | Gallery Scanner | Smart Duplicate Engine | Medium | Todo | GS-013 |
 | GS-032 | Gallery Scanner | Import Conflict Resolver | Medium | Todo | GS-016 |
 | GS-033 | Gallery Scanner | Background Worker | High | Todo | GS-007 |
@@ -274,6 +274,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-028 (OCR Text Engine) `engine/ocr/ocrTextEngine.ts` `extractOcrText(text)`: per-field extraction with a confidence for every field — amount, date, time, merchant, sender, receiver, reference. Reuses GS-012's field extraction (no duplicated regex) and adds label-anchored sender/receiver; deterministic confidence (label-anchored fields score higher, absent fields 0). Validated build/tsc/lint; 2 tests.
 >
 > GS-029 (Slip Classifier) `engine/classify/slipClassifier.ts` `classifySlip(input)`: identifies the slip type — promptpay / bank-slip / transfer / deposit / withdrawal / bill-payment / unknown — from the EMVCo AID (PromptPay credit vs bill-payment) and OCR-text keywords (Thai + English), most-specific-first, returning `unknown` rather than guessing. Validated build/tsc/lint; 5 tests.
+>
+> GS-030 (Bank Template Engine) `engine/bank/bankTemplateRegistry.ts`: per-bank template (brand-approximate primary colour + on-primary, an initials logo placeholder — no bundled logo assets, OCR label hints, and a `parserId`) behind a registry seeded for the GS-011 institutions. `registerBankTemplate` adds/replaces by bankId (future banks plug in without editing business logic; missing fields fall back to shared defaults), `getBankTemplate`/`getAllBankTemplates`/`resetBankTemplates`. OCR labels are a shared default (no per-bank specimens invented). Validated build/tsc/lint; 4 tests.
 
 ---
 
