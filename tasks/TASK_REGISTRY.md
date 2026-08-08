@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 42 | 8 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 43 | 7 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **69** | **39** | **0** | **0** |
+| **Total** | **108** | **70** | **38** | **0** | **0** |
 
 ---
 
@@ -214,7 +214,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-040 | Gallery Scanner | Production Readiness | Medium | Completed | GS-022 |
 | GS-041 | Gallery Scanner | AI Slip Verification | Medium | Completed | GS-019 |
 | GS-042 | Gallery Scanner | Fraud Detection Engine | Medium | Completed | GS-041 |
-| GS-043 | Gallery Scanner | AI Transaction Categorization | Medium | Todo | GS-016 |
+| GS-043 | Gallery Scanner | AI Transaction Categorization | Medium | Completed | GS-016 |
 | GS-044 | Gallery Scanner | Merchant Intelligence | Medium | Todo | GS-043 |
 | GS-045 | Gallery Scanner | Smart Learning Engine | Low | Todo | GS-043 |
 | GS-046 | Gallery Scanner | Confidence Engine | Medium | Todo | GS-025 |
@@ -300,6 +300,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-041 (AI Slip Verification) `ai/slipVerification.ts` `verifySlip(input)`: cross-checks the QR-derived and OCR-derived views (amount/merchant/reference, only when both sides have a field) plus CRC/bank/timestamp signals, producing deterministic authenticity / confidence / risk scores (0–100) with explicit reasons (crc-invalid, amount/merchant/reference-mismatch, timestamp-invalid). Advisory only — never mutates imported data. Validated build/tsc/lint; 4 tests.
 >
 > GS-042 (Fraud Detection Engine) `ai/fraudDetection.ts` `detectFraud(input)`: combines CRC validity, verification risk (GS-041), amount mismatch, duplicate probability (GS-031), future-timestamp and screenshot signals into a weighted 0–100 score and a Low/Medium/High level, with named reasons (invalid-payload, duplicate-reuse, suspicious-ocr-mismatch, impossible-timestamp, edited-slip, fake-screenshot). Deterministic, advisory (flags only). Validated build/tsc/lint; 6 tests.
+>
+> GS-043 (AI Transaction Categorization) `ai/transactionCategorizer.ts` `categorize(text, learned?)`: deterministic keyword rules (Thai + English, most-specific-first) mapping a merchant/title to one of the 10 categories, with **learned user corrections taking precedence** (confidence 1.0). `store/categoryLearningStore.ts` (zustand persist) stores corrections keyed by normalised merchant and feeds them back as a Map — all local, no cloud. Unmatched → Others (low confidence). Validated build/tsc/lint; 7 tests.
 
 ---
 
