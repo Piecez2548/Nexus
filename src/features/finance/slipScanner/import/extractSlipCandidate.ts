@@ -1,7 +1,7 @@
 import { identifyBank } from "@/features/finance/slipScanner/engine/bank/bankIdentifier";
 import { identifyBankFromText } from "@/features/finance/slipScanner/engine/bank/bankTextIdentifier";
 import { parseEmvcoPayload } from "@/features/finance/slipScanner/engine/emvco/emvcoPayloadParser";
-import { enhanceIfNeeded } from "@/features/finance/slipScanner/engine/image/imageEnhancer";
+import { preprocessForOcr } from "@/features/finance/slipScanner/engine/image/ocrPreprocess";
 import { shouldRunOcrFallback } from "@/features/finance/slipScanner/engine/ocr/ocrFallback";
 import { tesseractOcrRecognizer, type OcrTextRecognizer } from "@/features/finance/slipScanner/engine/ocr/ocrRecognizer";
 import { extractOcrSlipFields } from "@/features/finance/slipScanner/engine/ocr/slipOcrFields";
@@ -33,10 +33,11 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
 
   let ocr = null;
   if (shouldRunOcrFallback({ hasQr: detection.hasQr, emvco })) {
-    // Enhance first (grayscale/contrast) to cut slip watermarks/noise that
-    // hurt OCR accuracy; a no-op off-browser or when the image is already fine.
-    const enhanced = await enhanceIfNeeded(input.bytes);
-    const text = await recognizer.recognize(enhanced.bytes);
+    // Preprocess for OCR (upscale + grayscale + Otsu binarisation) to strip
+    // slip watermarks/coloured backgrounds so text is crisp; a no-op
+    // off-browser or on failure.
+    const prepared = await preprocessForOcr(input.bytes);
+    const text = await recognizer.recognize(prepared);
     ocr = extractOcrSlipFields(text);
     if (!bank) bank = identifyBankFromText(text);
   }
