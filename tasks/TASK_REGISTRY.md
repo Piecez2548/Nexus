@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 25 | 25 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 26 | 24 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **52** | **56** | **0** | **0** |
+| **Total** | **108** | **53** | **55** | **0** | **0** |
 
 ---
 
@@ -197,7 +197,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-023 | Gallery Scanner | Smart Scan Scheduler | Medium | Completed | GS-006 |
 | GS-024 | Gallery Scanner | Image Hash Engine | High | Completed | GS-008 |
 | GS-025 | Gallery Scanner | Slip Validation Engine | High | Completed | GS-010 |
-| GS-026 | Gallery Scanner | QR Recovery Engine | Medium | Todo | GS-009 |
+| GS-026 | Gallery Scanner | QR Recovery Engine | Medium | Completed | GS-009 |
 | GS-027 | Gallery Scanner | Image Enhancement | Medium | Todo | GS-012 |
 | GS-028 | Gallery Scanner | OCR Text Engine | High | Todo | GS-012 |
 | GS-029 | Gallery Scanner | Slip Classifier | Medium | Todo | GS-010 |
@@ -266,6 +266,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-024 (Image Hash Engine) complements the exact SHA-256 content hash (GS-006, reused) with a perceptual hash for near-duplicate/modified-image detection. `engine/hash/perceptualHash.ts` (pure) is a DCT-based 64-bit pHash over a 32×32 grayscale block (`computePHash`) plus `hammingDistanceHex`/`arePerceptuallySimilar`; `engine/hash/imageHash.ts` `hashImage(bytes)` returns `{ sha256, pHash }`, computing pHash via the browser image pipeline (null off-browser). Consumed by the Smart Duplicate Engine (GS-031). Validated build/tsc/lint; 8 hash tests.
 >
 > GS-025 (Slip Validation Engine) `validation/slipValidationEngine.ts` `validateSlip(input)`: rigorous deterministic validation of EMVCo format (CRC), PromptPay payload (AID), and the amount/timestamp/merchant/reference *formats* (bounds, regex, EMVCo length limits, future-date check), producing per-field validity + a weighted 0–100 confidence and an overall `valid`. Works for QR slips (payload) and OCR slips (fields). Distinct from GS-019's advisory warnings; feeds the Confidence Engine (GS-046). Validated build/tsc/lint; 5 tests.
+>
+> GS-026 (QR Recovery Engine) `engine/qr/qrRecovery.ts` `recoverQr(bytes)`: decode the original, and on failure automatically retry over transformed variants until one yields a QR, reporting `recoveredBy` + `attempts`. `engine/qr/imageVariants.ts` `browserImageVariants` generates rotate-90/180/270, brighten, contrast and upscale variants via canvas (rotated/dark/faded/low-res recovery), yielding nothing off-browser. Orchestration is pure/testable with a fake decoder + variant generator; `maxAttempts` bounds the retries. Validated build/tsc/lint; 6 tests.
 
 ---
 
