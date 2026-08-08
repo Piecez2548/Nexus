@@ -9,6 +9,7 @@ import { useAccountStore } from "@/features/finance/store/accountStore";
 import TransactionTable from "@/features/finance/components/TransactionTable";
 import TransactionToolbar from "@/features/finance/components/TransactionToolbar";
 import SlipScanner from "@/features/finance/components/SlipScanner";
+import GalleryScanFlow from "@/features/finance/slipScanner/components/GalleryScanFlow";
 import LoadingState from "@/components/ui/LoadingState";
 import ErrorState from "@/components/ui/ErrorState";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -105,6 +106,8 @@ export default function Transactions() {
             <ScanLine size={18} />
             {t("transactions.scanSlip")}
           </button>
+
+          <GalleryScanFlow />
 
           <button
             onClick={handleAddClick}

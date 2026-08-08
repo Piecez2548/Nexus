@@ -191,6 +191,7 @@ export const translations = {
       noResults: "No transactions found",
       editTransaction: "Edit Transaction",
       scanSlip: "Scan Slip",
+      scanGallery: "Scan Gallery",
       savedSuccess: "Transaction saved",
       updatedSuccess: "Transaction updated",
       loadingData: "Loading data...",
@@ -413,6 +414,11 @@ export const translations = {
         selectedCount: "{{count}} selected",
         importSelected: "Import {{count}} selected",
         empty: "No slips to preview",
+      },
+      galleryScan: {
+        scanning: "Scanning slip {{done}}/{{total}}…",
+        noneFound: "No slips found in the selected images",
+        imported: "Imported {{count}} transactions",
       },
     },
     trading: {
@@ -2123,6 +2129,7 @@ export const translations = {
       noResults: "ไม่พบรายการ",
       editTransaction: "แก้ไขรายการ",
       scanSlip: "สแกนสลิป",
+      scanGallery: "สแกนแกลเลอรี",
       savedSuccess: "เพิ่มรายการเรียบร้อย",
       updatedSuccess: "แก้ไขรายการเรียบร้อย",
       loadingData: "กำลังโหลดข้อมูล...",
@@ -2345,6 +2352,11 @@ export const translations = {
         selectedCount: "เลือกแล้ว {{count}} รายการ",
         importSelected: "นำเข้า {{count}} รายการ",
         empty: "ไม่มีสลิปให้แสดง",
+      },
+      galleryScan: {
+        scanning: "กำลังสแกนสลิป {{done}}/{{total}}…",
+        noneFound: "ไม่พบสลิปในรูปที่เลือก",
+        imported: "นำเข้า {{count}} รายการแล้ว",
       },
     },
     trading: {

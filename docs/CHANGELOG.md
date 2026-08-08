@@ -85,7 +85,7 @@ The extraction pipeline and its supporting layers then landed (2026-08-08, GS-00
 - **GS-017 → GS-020** — cross-cutting: scanner security (permission/import audit log, secure deletion of thumbnails/decoded bytes, CRC-based tamper detection), performance metrics, deterministic (never-mutating) AI validation, and cross-run analytics.
 - **GS-021, GS-022** — critical-path integration + stress/memory tests, and this module-wide review checkpoint.
 
-Native gallery enumeration (the `NativeMediaProvider` remains a stub until a media plugin is wired) and a UI entry point mounting the scan→preview→import flow on a route are the main remaining gaps; the scanner is web-picker-only and not yet surfaced in the app until then. See [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s GS epic.
+**Live wiring (2026-08-08)** — the scanner is now user-facing on web: a **"Scan Gallery"** button on the Transactions page (`GalleryScanFlow`) drives the full flow — bank selection → image picker → real jsQR + Tesseract extraction (`extractSlipCandidate` + `useSlipScan`) → Import Preview → Smart Import into transactions. The native gallery path uses `@capacitor/camera`'s `pickImages` (guarded, dynamically imported), wired but pending `npx cap sync android` + an on-device test. Full-gallery *auto*-enumeration (the `NativeMediaProvider` / MediaStore path) remains a stub — today's shipping path is the picker, not whole-library auto-scan. See [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s GS epic.
 
 ## Implemented Features
 
