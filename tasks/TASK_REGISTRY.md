@@ -25,8 +25,8 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
-| Platform (PLT) | 20 | 4 | 16 | 0 | 0 |
-| **Total** | **108** | **81** | **27** | **0** | **0** |
+| Platform (PLT) | 20 | 19 | 1 | 0 | 0 |
+| **Total** | **108** | **96** | **12** | **0** | **0** |
 
 ---
 
@@ -321,27 +321,27 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 
 ## Platform (PLT)
 
-Cross-cutting platform frameworks from `MASTER_TASK.md` — plugin SDK, event bus, background task engine, import/export frameworks, search/filter/table/dashboard, AI gateway, command palette, telemetry. Not started.
+Cross-cutting platform frameworks from `MASTER_TASK.md`. Handled per the reuse rule (`CLAUDE.md`) and the user's decision to **implement only the genuinely-new frameworks**: **PLT-002 Event Bus, PLT-008 Feature Flags, PLT-018 Command Palette, PLT-019 Local Telemetry** are implemented as new modules under `src/platform/` (21 tests); the rest are **satisfied by existing app/GS systems** (Global Search, AI Gateway, import/export, notifications, settings, audit, AI memory, background worker…) or specified **design-only** (Plugin SDK). The full per-item design & reuse map is in [Platform/PLATFORM_DESIGN.md](Platform/PLATFORM_DESIGN.md). Only PLT-020 (certification) remains.
 
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
-| PLT-001 | Platform | Plugin SDK (design) | Medium | Todo | — |
+| PLT-001 | Platform | Plugin SDK (design) | Medium | Completed | — |
 | PLT-002 | Platform | Event Bus | High | Completed | — |
-| PLT-003 | Platform | Background Task Engine | High | Todo | PLT-002 |
-| PLT-004 | Platform | File Import Framework | Medium | Todo | PLT-001 |
-| PLT-005 | Platform | Export Framework | Medium | Todo | PLT-001 |
-| PLT-006 | Platform | Notification Center | Medium | Todo | PLT-002 |
-| PLT-007 | Platform | Audit Log | Medium | Todo | — |
+| PLT-003 | Platform | Background Task Engine | High | Completed | PLT-002 |
+| PLT-004 | Platform | File Import Framework | Medium | Completed | PLT-001 |
+| PLT-005 | Platform | Export Framework | Medium | Completed | PLT-001 |
+| PLT-006 | Platform | Notification Center | Medium | Completed | PLT-002 |
+| PLT-007 | Platform | Audit Log | Medium | Completed | — |
 | PLT-008 | Platform | Feature Flags | Low | Completed | — |
-| PLT-009 | Platform | Settings Framework | Medium | Todo | — |
-| PLT-010 | Platform | Configuration Manager | Medium | Todo | PLT-009 |
-| PLT-011 | Platform | Global Search | Medium | Todo | — |
-| PLT-012 | Platform | Filter Engine | Medium | Todo | — |
-| PLT-013 | Platform | Table Engine | Medium | Todo | PLT-012 |
-| PLT-014 | Platform | Dashboard Framework | Medium | Todo | PLT-015 |
-| PLT-015 | Platform | Widget SDK | Medium | Todo | PLT-001 |
-| PLT-016 | Platform | Local AI Gateway | High | Todo | — |
-| PLT-017 | Platform | AI Memory | Medium | Todo | PLT-016 |
+| PLT-009 | Platform | Settings Framework | Medium | Completed | — |
+| PLT-010 | Platform | Configuration Manager | Medium | Completed | PLT-009 |
+| PLT-011 | Platform | Global Search | Medium | Completed | — |
+| PLT-012 | Platform | Filter Engine | Medium | Completed | — |
+| PLT-013 | Platform | Table Engine | Medium | Completed | PLT-012 |
+| PLT-014 | Platform | Dashboard Framework | Medium | Completed | PLT-015 |
+| PLT-015 | Platform | Widget SDK | Medium | Completed | PLT-001 |
+| PLT-016 | Platform | Local AI Gateway | High | Completed | — |
+| PLT-017 | Platform | AI Memory | Medium | Completed | PLT-016 |
 | PLT-018 | Platform | Command Palette | Medium | Completed | PLT-011 |
 | PLT-019 | Platform | Local Telemetry | Low | Completed | — |
 | PLT-020 | Platform | Platform Certification | Medium | Todo | — |
