@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 28 | 22 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 29 | 21 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **55** | **53** | **0** | **0** |
+| **Total** | **108** | **56** | **52** | **0** | **0** |
 
 ---
 
@@ -200,7 +200,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-026 | Gallery Scanner | QR Recovery Engine | Medium | Completed | GS-009 |
 | GS-027 | Gallery Scanner | Image Enhancement | Medium | Completed | GS-012 |
 | GS-028 | Gallery Scanner | OCR Text Engine | High | Completed | GS-012 |
-| GS-029 | Gallery Scanner | Slip Classifier | Medium | Todo | GS-010 |
+| GS-029 | Gallery Scanner | Slip Classifier | Medium | Completed | GS-010 |
 | GS-030 | Gallery Scanner | Bank Template Engine | Medium | Todo | GS-011 |
 | GS-031 | Gallery Scanner | Smart Duplicate Engine | Medium | Todo | GS-013 |
 | GS-032 | Gallery Scanner | Import Conflict Resolver | Medium | Todo | GS-016 |
@@ -272,6 +272,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-027 (Image Enhancement) preprocesses "only when necessary". `engine/image/imageEnhancement.ts` (pure) `planEnhancements(stats)` decides corrections from brightness/contrast stats (brighten dark, dim blown-out, boost + sharpen low-contrast; grayscale alongside corrections) and `isEnhancementNeeded` leaves a healthy image untouched; `enhancementFilterString` builds the canvas filter. `engine/image/imageEnhancer.ts` `analyzeImage` (64×64 luma mean/std) + `enhanceIfNeeded(bytes)` apply the plan via canvas filter + a 3×3 sharpen convolution, returning the originals when nothing's needed/off-browser. Auto-rotate is covered by GS-026; auto-crop deferred. Validated build/tsc/lint; 4 tests.
 >
 > GS-028 (OCR Text Engine) `engine/ocr/ocrTextEngine.ts` `extractOcrText(text)`: per-field extraction with a confidence for every field — amount, date, time, merchant, sender, receiver, reference. Reuses GS-012's field extraction (no duplicated regex) and adds label-anchored sender/receiver; deterministic confidence (label-anchored fields score higher, absent fields 0). Validated build/tsc/lint; 2 tests.
+>
+> GS-029 (Slip Classifier) `engine/classify/slipClassifier.ts` `classifySlip(input)`: identifies the slip type — promptpay / bank-slip / transfer / deposit / withdrawal / bill-payment / unknown — from the EMVCo AID (PromptPay credit vs bill-payment) and OCR-text keywords (Thai + English), most-specific-first, returning `unknown` rather than guessing. Validated build/tsc/lint; 5 tests.
 
 ---
 
