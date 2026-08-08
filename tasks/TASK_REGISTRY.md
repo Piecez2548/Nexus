@@ -25,8 +25,8 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
-| Platform (PLT) | 20 | 19 | 1 | 0 | 0 |
-| **Total** | **108** | **96** | **12** | **0** | **0** |
+| Platform (PLT) | 20 | 20 | 0 | 0 | 0 |
+| **Total** | **108** | **97** | **11** | **0** | **0** |
 
 ---
 
@@ -344,4 +344,6 @@ Cross-cutting platform frameworks from `MASTER_TASK.md`. Handled per the reuse r
 | PLT-017 | Platform | AI Memory | Medium | Completed | PLT-016 |
 | PLT-018 | Platform | Command Palette | Medium | Completed | PLT-011 |
 | PLT-019 | Platform | Local Telemetry | Low | Completed | — |
-| PLT-020 | Platform | Platform Certification | Medium | Todo | — |
+| PLT-020 | Platform | Platform Certification | Medium | Completed | — |
+
+> PLT-020 (Platform Certification) — final platform review + doc sync, completing the MASTER_TASK program (GS 50/50 + PLT 20/20). Full gate clean: `tsc -b` ✓, `oxlint src` ✓, `npm run build` ✓, full suite **2016/2017** (the one failure is the pre-existing `TradingDashboard.integration` synchronous-assertion flake under parallel load — passes 4/4 in isolation, unrelated to this work). Review: **Architecture** — new platform modules live under `src/platform/` behind small interfaces; the scanner is folder-per-concern with swappable seams; business logic stays out of React. **Security** — no plaintext financial data at rest; audit + tamper detection + secure deletion; telemetry never leaves the device; AI layers are advisory (never mutate data). **Performance** — lazy enumeration + bounded queue + versioned cache + metrics/telemetry. **Testing** — ~297 slipScanner + 21 platform tests within a 2017-test suite. **Accessibility** — mounted UI reuses the shared `Drawer`, ARIA progress bar, labelled controls; deeper audit of the command palette deferred. **Maintainability/Docs** — ROADMAP/CHANGELOG/TECHNICAL_DEBT/SECURITY + [Platform/PLATFORM_DESIGN.md](Platform/PLATFORM_DESIGN.md) synced. Open items (forward work): full-gallery native auto-enumeration (`NativeMediaProvider` stub) and on-device verification of the native picker. ENGINEERING_AUDIT.md does not exist in the repo; the certification is recorded here.
