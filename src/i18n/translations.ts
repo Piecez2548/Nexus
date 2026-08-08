@@ -20,6 +20,11 @@ export const translations = {
       prev: "Prev",
       retry: "Retry",
       loading: "Loading...",
+      commandPalette: {
+        placeholder: "Type a command or search…",
+        empty: "No matching commands",
+        addTransaction: "Add transaction",
+      },
       all: "All",
       moreInfo: "More info",
       viewAll: "View all",
@@ -1970,6 +1975,11 @@ export const translations = {
       prev: "ก่อนหน้า",
       retry: "ลองใหม่",
       loading: "กำลังโหลด...",
+      commandPalette: {
+        placeholder: "พิมพ์คำสั่งหรือค้นหา…",
+        empty: "ไม่พบคำสั่งที่ตรงกัน",
+        addTransaction: "เพิ่มรายการ",
+      },
       all: "ทั้งหมด",
       moreInfo: "ข้อมูลเพิ่มเติม",
       viewAll: "ดูทั้งหมด",
