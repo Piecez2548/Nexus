@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 27 | 23 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 28 | 22 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **54** | **54** | **0** | **0** |
+| **Total** | **108** | **55** | **53** | **0** | **0** |
 
 ---
 
@@ -199,7 +199,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-025 | Gallery Scanner | Slip Validation Engine | High | Completed | GS-010 |
 | GS-026 | Gallery Scanner | QR Recovery Engine | Medium | Completed | GS-009 |
 | GS-027 | Gallery Scanner | Image Enhancement | Medium | Completed | GS-012 |
-| GS-028 | Gallery Scanner | OCR Text Engine | High | Todo | GS-012 |
+| GS-028 | Gallery Scanner | OCR Text Engine | High | Completed | GS-012 |
 | GS-029 | Gallery Scanner | Slip Classifier | Medium | Todo | GS-010 |
 | GS-030 | Gallery Scanner | Bank Template Engine | Medium | Todo | GS-011 |
 | GS-031 | Gallery Scanner | Smart Duplicate Engine | Medium | Todo | GS-013 |
@@ -270,6 +270,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-026 (QR Recovery Engine) `engine/qr/qrRecovery.ts` `recoverQr(bytes)`: decode the original, and on failure automatically retry over transformed variants until one yields a QR, reporting `recoveredBy` + `attempts`. `engine/qr/imageVariants.ts` `browserImageVariants` generates rotate-90/180/270, brighten, contrast and upscale variants via canvas (rotated/dark/faded/low-res recovery), yielding nothing off-browser. Orchestration is pure/testable with a fake decoder + variant generator; `maxAttempts` bounds the retries. Validated build/tsc/lint; 6 tests.
 >
 > GS-027 (Image Enhancement) preprocesses "only when necessary". `engine/image/imageEnhancement.ts` (pure) `planEnhancements(stats)` decides corrections from brightness/contrast stats (brighten dark, dim blown-out, boost + sharpen low-contrast; grayscale alongside corrections) and `isEnhancementNeeded` leaves a healthy image untouched; `enhancementFilterString` builds the canvas filter. `engine/image/imageEnhancer.ts` `analyzeImage` (64×64 luma mean/std) + `enhanceIfNeeded(bytes)` apply the plan via canvas filter + a 3×3 sharpen convolution, returning the originals when nothing's needed/off-browser. Auto-rotate is covered by GS-026; auto-crop deferred. Validated build/tsc/lint; 4 tests.
+>
+> GS-028 (OCR Text Engine) `engine/ocr/ocrTextEngine.ts` `extractOcrText(text)`: per-field extraction with a confidence for every field — amount, date, time, merchant, sender, receiver, reference. Reuses GS-012's field extraction (no duplicated regex) and adds label-anchored sender/receiver; deterministic confidence (label-anchored fields score higher, absent fields 0). Validated build/tsc/lint; 2 tests.
 
 ---
 
