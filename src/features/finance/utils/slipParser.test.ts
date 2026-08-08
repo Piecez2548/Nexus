@@ -78,4 +78,25 @@ describe("parseSlipText", () => {
     expect(result.recipient).toBe("SCB มณี SHOP (ร้านริญญ์น้ำ)");
     expect(result.amount).toBe(20);
   });
+
+  it("extracts the payee positionally on a label-less e-wallet top-up slip (K+ G-Wallet)", () => {
+    // No ร้าน/SHOP marker; the payee is the name line after the payer's account.
+    const text = [
+      "เติมเงินสำเร็จ",
+      "8 ส.ค. 69 18:27 น.",
+      "นาย ภัทรพล ข",
+      "ธ.กสิกรไทย",
+      "xxx-x-x5327-x",
+      "พร้อมเพย์ อี-วอลเล็ต / G-Wallet",
+      "006-xxxxxxxx-6996",
+      "เลขที่รายการ 016220182730CPM19695",
+      "จำนวน 200.00 บาท",
+      "ค่าธรรมเนียม 0.00 บาท",
+    ].join("\n");
+    const result = parseSlipText(text);
+    expect(result.recipient).toBe("พร้อมเพย์ อี-วอลเล็ต / G-Wallet");
+    expect(result.amount).toBe(200);
+    expect(result.date).toBe("2026-08-08");
+    expect(result.title).toBe("โอนเงินให้ พร้อมเพย์ อี-วอลเล็ต / G-Wallet");
+  });
 });

@@ -92,6 +92,12 @@ function extractDate(text: string): string | undefined {
 // (ร้านริญญ์น้ำ)" is only positional).
 const MERCHANT_MARKERS = /(ร้าน|ห้าง|บริษัท|บจก|หจก|shop|store|company|co\.|ltd|โรงพยาบาล|คลินิก|clinic|hospital)/i;
 
+// A masked/plain account or wallet number line (e.g. "xxx-x-x5327-x",
+// "006-xxxxxxxx-6996", "014000008031056") — digits/x/dashes/spaces only.
+const ACCOUNT_LINE = /^[0-9xX][0-9xX\s-]{7,}$/;
+// Amount/reference/meta labels that are never the payee name.
+const META_LINE = /เลขที่รายการ|จำนวน|ค่าธรรมเนียม|รายละเอียด|วันที่|เวลา|amount|date|ref/i;
+
 function extractRecipient(text: string): string | undefined {
   // 1) Explicit recipient label (longest alternatives first so the label isn't
   //    partially consumed).
@@ -99,12 +105,27 @@ function extractRecipient(text: string): string | undefined {
   const labeledName = labeled?.[1]?.trim();
   if (labeledName) return labeledName;
 
-  // 2) No label: the first line that reads like a shop/merchant name.
-  const merchantLine = text
+  const lines = text
     .split(/[\n\r]+/)
     .map((line) => line.trim())
-    .find((line) => MERCHANT_MARKERS.test(line));
-  return merchantLine || undefined;
+    .filter(Boolean);
+
+  // 2) Positional: on Thai transfer/top-up slips the payer block is
+  //    name → bank → account, then the payee's name. So the payee is the first
+  //    "name-like" line after the payer's account number (skipping the payee's
+  //    own account, amount/meta lines, and arrow/punctuation-only lines).
+  const isNameLike = (line: string): boolean => line.replace(/[^\p{L}\p{N}]/gu, "").length >= 3;
+  const firstAccount = lines.findIndex((line) => ACCOUNT_LINE.test(line));
+  if (firstAccount >= 0) {
+    for (let j = firstAccount + 1; j < lines.length; j++) {
+      const candidate = lines[j]!;
+      if (ACCOUNT_LINE.test(candidate) || META_LINE.test(candidate) || !isNameLike(candidate)) continue;
+      return candidate;
+    }
+  }
+
+  // 3) Fallback: the first line that reads like a shop/merchant name.
+  return lines.find((line) => MERCHANT_MARKERS.test(line)) || undefined;
 }
 
 export interface ParsedSlip {
