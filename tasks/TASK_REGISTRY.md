@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 37 | 13 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 38 | 12 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **64** | **44** | **0** | **0** |
+| **Total** | **108** | **65** | **43** | **0** | **0** |
 
 ---
 
@@ -209,7 +209,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-035 | Gallery Scanner | Import History | Medium | Completed | GS-016 |
 | GS-036 | Gallery Scanner | Performance Monitor | Low | Completed | GS-018 |
 | GS-037 | Gallery Scanner | Recovery System | Medium | Completed | GS-033 |
-| GS-038 | Gallery Scanner | Security Audit | Medium | Todo | GS-017 |
+| GS-038 | Gallery Scanner | Security Audit | Medium | Completed | GS-017 |
 | GS-039 | Gallery Scanner | Developer Tools | Low | Todo | GS-021 |
 | GS-040 | Gallery Scanner | Production Readiness | Medium | Todo | GS-022 |
 | GS-041 | Gallery Scanner | AI Slip Verification | Medium | Todo | GS-019 |
@@ -290,6 +290,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-036 (Performance Monitor) `perf/performanceMonitor.ts` `createPerformanceMonitor(now?)`: per-stage runtime timing (QR/OCR/scan) via `time(stage, fn)`/`record`, cache-hit ratio, and memory sampling (`performance.memory` where available, else null). Reports per-stage count/avgMs/perSec. CPU% isn't readable in browser JS, so it's represented honestly by per-stage throughput rather than a fabricated percentage. Complements GS-018 (per-run counters) and GS-020 (cross-run analytics). Validated build/tsc/lint; 4 tests.
 >
 > GS-037 (Recovery System) `recovery/recoverySystem.ts`: on startup, `detectRecovery()` finds a left-over running/paused scan run (via `scanRunRepository.getResumable`, GS-006) and a failed/partial last import (GS-035 history); `planRecovery(state)` (pure) turns that into ordered actions (`resume-scan` / `retry-import` / `none`). Execution reuses createScanSession's cursor resume and Smart Import's skipCandidateIds. Validated build/tsc/lint; 4 tests.
+>
+> GS-038 (Security Audit) `security/securityAudit.ts` extends the GS-017 audit log with `validation` + `suspicious` event types and recorders for deletions / failed validations / suspicious activity (on top of permission/import), plus `getSecurityEvents()` (the security slice, excluding routine scan events) and `summarizeSecurityAudit()` (counts by type). Stores only non-sensitive metadata like the base log; encrypted-at-rest persistence is a matter of wiring the base log's injectable sink. Validated build/tsc/lint; 3 tests.
 
 ---
 

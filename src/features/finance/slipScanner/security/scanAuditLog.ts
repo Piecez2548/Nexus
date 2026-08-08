@@ -5,7 +5,7 @@
 // in-memory ring buffer with an injectable sink so a later task can persist it
 // without changing call sites.
 
-export type ScanAuditType = "permission" | "import" | "scan" | "delete";
+export type ScanAuditType = "permission" | "import" | "scan" | "delete" | "validation" | "suspicious";
 
 export interface ScanAuditEvent {
   type: ScanAuditType;
