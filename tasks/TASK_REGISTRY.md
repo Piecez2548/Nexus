@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 22 | 28 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 23 | 27 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **49** | **59** | **0** | **0** |
+| **Total** | **108** | **50** | **58** | **0** | **0** |
 
 ---
 
@@ -194,7 +194,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-020 | Gallery Scanner | Scanner Analytics | Low | Completed | GS-016 |
 | GS-021 | Gallery Scanner | Testing | High | Completed | GS-016 |
 | GS-022 | Gallery Scanner | Final Review | Medium | Completed | GS-021 |
-| GS-023 | Gallery Scanner | Smart Scan Scheduler | Medium | Todo | GS-006 |
+| GS-023 | Gallery Scanner | Smart Scan Scheduler | Medium | Completed | GS-006 |
 | GS-024 | Gallery Scanner | Image Hash Engine | High | Todo | GS-008 |
 | GS-025 | Gallery Scanner | Slip Validation Engine | High | Todo | GS-010 |
 | GS-026 | Gallery Scanner | QR Recovery Engine | Medium | Todo | GS-009 |
@@ -258,6 +258,10 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-021 (Testing) closes the critical-path coverage the per-stage unit tests (GS-009…GS-020) left open, adding the higher-level categories under `__tests__/`: `pipeline.integration.test.ts` composes the *real* engine stages end-to-end — QR detect → EMVCo parse → bank identify → OCR fallback → candidate build → duplicate detect → validate → smart import (+ rollback) — with only image decoding and persistence faked, proving the pieces fit together (a QR slip resolves to a PromptPay candidate, a non-QR photo falls back to OCR, a re-scanned slip is caught as a duplicate and excluded from import). `scanSession.stress.test.ts` is the stress/memory test: it drives the real orchestration over 600 lazily-enumerated assets and asserts everything is processed while in-flight parallelism stays bounded by the configured concurrency (the memory-protection property the 50k target relies on). Validated build/tsc/lint; slipScanner 159 tests, full suite green.
 >
 > GS-022 (Final Review) is the module-wide review + doc-sync checkpoint for the GS-005…GS-021 build. Full gate run clean: `tsc -b` ✓, `oxlint src` ✓, `npm run build` ✓, full test suite green (159 slipScanner tests within it). Review findings: **Architecture** — every stage sits behind a swappable interface (`MediaProvider`, `ScanCache`, `QrDecoder`, `OcrTextRecognizer`, `SmartImportDeps`, `BankPlugin`), so nothing is coupled to a plugin/backend and each unit is fakeable; business logic stays out of React (pure modules + hooks + thin components), per project rules. **Security** — no plaintext financial data is persisted (the cache holds only ids/hashes/versions); audit, CRC-based tamper detection, and secure deletion are in place. **Performance** — lazy enumeration + bounded byte-budget queue + versioned skip-cache give the 50k headroom, with a metrics layer to measure it. **Accessibility** — the two UI surfaces reuse the shared `Drawer` and label their controls; deeper a11y review deferred until they are mounted on a route. **Maintainability** — consistent folder-per-concern layout, high test density (159 tests), no business logic in components. Open items recorded in [TECHNICAL_DEBT.md](../docs/TECHNICAL_DEBT.md): the `NativeMediaProvider` stub (no on-device enumeration yet) and the not-yet-mounted UI, plus placeholder engine versions / heuristic confidence (GS-046). Docs synced: ROADMAP, CHANGELOG, TECHNICAL_DEBT, this registry.
+>
+> **Live wiring (post-GS-022)** — the scanner is now user-facing on web via a "Scan Gallery" button on the Transactions page (`GalleryScanFlow`): bank selection → image picker → real jsQR + Tesseract extraction (`extractSlipCandidate` + `useSlipScan`) → Import Preview → Smart Import. Native gallery picking wired via `@capacitor/camera` `pickImages` (guarded); the Android build was enabled (cap sync + Gradle foojay JDK-21 auto-provisioning) and a debug APK built + installed on-device. Full-gallery *auto*-enumeration remains a stub.
+>
+> GS-023 (Smart Scan Scheduler) — `schedule/scanScheduler.ts` `decideScan(trigger, config, device, lastScanAt)` (pure): a manual scan always runs; automatic (startup/scheduled) scans honour an enabled switch, a startup toggle, a minimum interval, and battery/charging gates (low-battery/not-charging, never gating when battery is unknown). Not rescanning previously-scanned images is delegated to the incremental cache (GS-008). `schedule/deviceState.ts` reads battery via the web Battery API (nulls when unknown); `store/scanScheduleStore.ts` persists config + last-scan time. Validated build/tsc/lint; 7 tests.
 
 ---
 
