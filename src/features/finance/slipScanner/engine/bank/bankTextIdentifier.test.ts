@@ -19,4 +19,10 @@ describe("identifyBankFromText", () => {
   it("returns null when no bank keyword is present", () => {
     expect(identifyBankFromText("random slip with no bank name")).toBeNull();
   });
+
+  it("picks the earliest-mentioned bank (payer at top) over one in later text", () => {
+    // Real KBank bill slip: payer bank กสิกรไทย at top, merchant "SCB มณี SHOP" below.
+    const slip = "จ่ายบิลสำเร็จ\nนาย ภัทรพล ข\nธ.กสิกรไทย\nSCB มณี SHOP (ร้านริญญ์น้ำ)\nSCB";
+    expect(identifyBankFromText(slip)?.bank.id).toBe("kbank");
+  });
 });

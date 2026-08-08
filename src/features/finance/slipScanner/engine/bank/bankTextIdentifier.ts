@@ -18,16 +18,28 @@ const BANK_TEXT_KEYWORDS: Array<{ id: string; keywords: string[] }> = [
   { id: "promptpay", keywords: ["promptpay", "พร้อมเพย์", "prompt pay"] },
 ];
 
-// Returns the first bank whose keyword appears in the text, or null. "กรุงเทพ"
-// (Bangkok) is checked as part of "ธนาคารกรุงเทพ"/"กรุงเทพ" — placed after the
-// other banks so a more specific match wins first.
+// Identify the bank by the *earliest-appearing* name keyword in the text. On a
+// transfer/bill slip the payer's own bank is printed at the top (the account
+// the money left), while other bank names can appear lower — e.g. a merchant
+// called "SCB มณี SHOP" on a KBank slip. Earliest-position wins so the payer's
+// bank (the one relevant to the user's expense) is chosen over a name buried in
+// the recipient/merchant text.
 export function identifyBankFromText(text: string): BankIdentification | null {
   const haystack = text.toLowerCase();
+
+  let bestId: string | null = null;
+  let bestIndex = Number.POSITIVE_INFINITY;
   for (const { id, keywords } of BANK_TEXT_KEYWORDS) {
-    if (keywords.some((kw) => haystack.includes(kw.toLowerCase()))) {
-      const bank = getBankPlugins().find((p) => p.bank.id === id)?.bank;
-      if (bank) return { bank, matchedBy: "ocrText" };
+    for (const kw of keywords) {
+      const index = haystack.indexOf(kw.toLowerCase());
+      if (index >= 0 && index < bestIndex) {
+        bestIndex = index;
+        bestId = id;
+      }
     }
   }
-  return null;
+
+  if (bestId === null) return null;
+  const bank = getBankPlugins().find((p) => p.bank.id === bestId)?.bank;
+  return bank ? { bank, matchedBy: "ocrText" } : null;
 }

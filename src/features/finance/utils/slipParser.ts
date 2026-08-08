@@ -38,6 +38,10 @@ function extractAmount(text: string): number | undefined {
   // first 2-decimal number.
   const DECIMAL = "\\d{1,3}(?:,\\d{3})*\\.\\d{2}";
 
+  // Most specific: the amount label "จำนวน/จำนวนเงิน" (never "ค่าธรรมเนียม"/fee).
+  const amountLabel = new RegExp(`(?:จำนวนเงิน|จำนวน)\\s*[:\\-]?\\s*(${DECIMAL})`, "i").exec(text);
+  if (amountLabel?.[1]) return toAmount(amountLabel[1]);
+
   const beforeCurrency = new RegExp(`(${DECIMAL})\\s*(?:บาท|฿|THB|บ\\.)`, "i").exec(text);
   if (beforeCurrency?.[1]) return toAmount(beforeCurrency[1]);
 
