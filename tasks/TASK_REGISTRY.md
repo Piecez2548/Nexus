@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 44 | 6 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 45 | 5 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **71** | **37** | **0** | **0** |
+| **Total** | **108** | **72** | **36** | **0** | **0** |
 
 ---
 
@@ -216,7 +216,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-042 | Gallery Scanner | Fraud Detection Engine | Medium | Completed | GS-041 |
 | GS-043 | Gallery Scanner | AI Transaction Categorization | Medium | Completed | GS-016 |
 | GS-044 | Gallery Scanner | Merchant Intelligence | Medium | Completed | GS-043 |
-| GS-045 | Gallery Scanner | Smart Learning Engine | Low | Todo | GS-043 |
+| GS-045 | Gallery Scanner | Smart Learning Engine | Low | Completed | GS-043 |
 | GS-046 | Gallery Scanner | Confidence Engine | Medium | Todo | GS-025 |
 | GS-047 | Gallery Scanner | Transaction Linking | Low | Todo | GS-016 |
 | GS-048 | Gallery Scanner | Spending Intelligence | Low | Todo | GS-043 |
@@ -304,6 +304,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-043 (AI Transaction Categorization) `ai/transactionCategorizer.ts` `categorize(text, learned?)`: deterministic keyword rules (Thai + English, most-specific-first) mapping a merchant/title to one of the 10 categories, with **learned user corrections taking precedence** (confidence 1.0). `store/categoryLearningStore.ts` (zustand persist) stores corrections keyed by normalised merchant and feeds them back as a Map — all local, no cloud. Unmatched → Others (low confidence). Validated build/tsc/lint; 7 tests.
 >
 > GS-044 (Merchant Intelligence) `ai/merchantIntelligence.ts` `buildMerchantProfiles(txns)`: merges alias/duplicate spellings (`normalizeMerchant`), groups chains by a brand key (`merchantKey` = first token), and produces profiles with display name, distinct aliases (location variants), `isChain`, spending frequency (count), total/average, and first/last seen — sorted by frequency. Pure/deterministic; the first-token chain heuristic is documented (generic tokens could over-group; `merchantKey` is exposed to override). Validated build/tsc/lint; 4 tests.
+>
+> GS-045 (Smart Learning Engine) unifies local, no-cloud learning of user corrections. `learning/applyLearning.ts` (pure): `applyMerchantMapping` (raw→corrected, normalised key), `applyOcrCorrections` (learned wrong→right text fixes, longest-first), `applyBankNaming` (bankId→preferred name). `store/learningStore.ts` (zustand persist) holds the merchant/OCR/bank-naming maps with learn methods; preferred-category learning lives in `categoryLearningStore` (GS-043). Validated build/tsc/lint; 7 tests.
 
 ---
 
