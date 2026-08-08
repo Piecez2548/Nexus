@@ -69,6 +69,17 @@ Already implemented: Supabase email/password (see Layer 2). **Not implemented an
 
 Already implemented: enable, escrow, and account-password-based recovery (see Layer 3). **Not implemented:** a "disable encryption" flow — `appLockStore.ts` explicitly blocks turning off the PIN while encryption is enabled, citing the missing disable flow as the reason. This is the most concrete, verified security-related gap in the app today (see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)).
 
+## Gallery Slip Scanner (GS epic)
+
+The scanner is designed to be privacy-preserving and to hold no sensitive financial content at rest:
+
+- **On-device only.** QR decoding (jsQR) and OCR (Tesseract) run entirely in the browser/WebView — slip images are never uploaded. (Tesseract's language-model files may be fetched from a CDN like any npm asset, but no user data is transmitted.)
+- **No plaintext financial data persisted.** The scan cache (`slipScanCache`) stores only asset ids, content hashes, and versions; import history (`slipImportHistory`) stores counts/status/duration and a bank id — not slip payloads or amounts as records to mine. Imported transactions live in the normal (optionally-encrypted) `transactions` table via the existing `transactionService`.
+- **Integrity + tamper detection.** EMVCo payloads are checksum-verified (CRC-16, GS-010); the tamper-detection layer (GS-017) flags CRC mismatches and replayed (duplicate) QR slips.
+- **Audit trail.** A bounded, metadata-only audit log records permission changes, imports, deletions, failed validations, and suspicious activity (GS-017/GS-038); it can be routed to encrypted-at-rest storage via an injectable sink.
+- **Secure disposal.** Decoded image bytes are zero-filled and thumbnail object-URLs revoked after use (GS-017), so slip pixels don't linger in memory.
+- **AI never mutates data.** The validation/AI layers (GS-019, GS-041) are advisory only — they never modify imported transactions automatically.
+
 ## Security Recommendations
 
 - Build the missing "disable encryption" flow, or at minimum document the manual export/reset/re-import workaround clearly in-app.
