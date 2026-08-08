@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 23 | 27 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 24 | 26 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **50** | **58** | **0** | **0** |
+| **Total** | **108** | **51** | **57** | **0** | **0** |
 
 ---
 
@@ -195,7 +195,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-021 | Gallery Scanner | Testing | High | Completed | GS-016 |
 | GS-022 | Gallery Scanner | Final Review | Medium | Completed | GS-021 |
 | GS-023 | Gallery Scanner | Smart Scan Scheduler | Medium | Completed | GS-006 |
-| GS-024 | Gallery Scanner | Image Hash Engine | High | Todo | GS-008 |
+| GS-024 | Gallery Scanner | Image Hash Engine | High | Completed | GS-008 |
 | GS-025 | Gallery Scanner | Slip Validation Engine | High | Todo | GS-010 |
 | GS-026 | Gallery Scanner | QR Recovery Engine | Medium | Todo | GS-009 |
 | GS-027 | Gallery Scanner | Image Enhancement | Medium | Todo | GS-012 |
@@ -262,6 +262,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > **Live wiring (post-GS-022)** — the scanner is now user-facing on web via a "Scan Gallery" button on the Transactions page (`GalleryScanFlow`): bank selection → image picker → real jsQR + Tesseract extraction (`extractSlipCandidate` + `useSlipScan`) → Import Preview → Smart Import. Native gallery picking wired via `@capacitor/camera` `pickImages` (guarded); the Android build was enabled (cap sync + Gradle foojay JDK-21 auto-provisioning) and a debug APK built + installed on-device. Full-gallery *auto*-enumeration remains a stub.
 >
 > GS-023 (Smart Scan Scheduler) — `schedule/scanScheduler.ts` `decideScan(trigger, config, device, lastScanAt)` (pure): a manual scan always runs; automatic (startup/scheduled) scans honour an enabled switch, a startup toggle, a minimum interval, and battery/charging gates (low-battery/not-charging, never gating when battery is unknown). Not rescanning previously-scanned images is delegated to the incremental cache (GS-008). `schedule/deviceState.ts` reads battery via the web Battery API (nulls when unknown); `store/scanScheduleStore.ts` persists config + last-scan time. Validated build/tsc/lint; 7 tests.
+>
+> GS-024 (Image Hash Engine) complements the exact SHA-256 content hash (GS-006, reused) with a perceptual hash for near-duplicate/modified-image detection. `engine/hash/perceptualHash.ts` (pure) is a DCT-based 64-bit pHash over a 32×32 grayscale block (`computePHash`) plus `hammingDistanceHex`/`arePerceptuallySimilar`; `engine/hash/imageHash.ts` `hashImage(bytes)` returns `{ sha256, pHash }`, computing pHash via the browser image pipeline (null off-browser). Consumed by the Smart Duplicate Engine (GS-031). Validated build/tsc/lint; 8 hash tests.
 
 ---
 
