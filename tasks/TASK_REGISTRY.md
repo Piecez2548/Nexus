@@ -25,8 +25,8 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
-| Platform (PLT) | 20 | 1 | 19 | 0 | 0 |
-| **Total** | **108** | **78** | **30** | **0** | **0** |
+| Platform (PLT) | 20 | 2 | 18 | 0 | 0 |
+| **Total** | **108** | **79** | **29** | **0** | **0** |
 
 ---
 
@@ -332,7 +332,7 @@ Cross-cutting platform frameworks from `MASTER_TASK.md` — plugin SDK, event bu
 | PLT-005 | Platform | Export Framework | Medium | Todo | PLT-001 |
 | PLT-006 | Platform | Notification Center | Medium | Todo | PLT-002 |
 | PLT-007 | Platform | Audit Log | Medium | Todo | — |
-| PLT-008 | Platform | Feature Flags | Low | Todo | — |
+| PLT-008 | Platform | Feature Flags | Low | Completed | — |
 | PLT-009 | Platform | Settings Framework | Medium | Todo | — |
 | PLT-010 | Platform | Configuration Manager | Medium | Todo | PLT-009 |
 | PLT-011 | Platform | Global Search | Medium | Todo | — |
