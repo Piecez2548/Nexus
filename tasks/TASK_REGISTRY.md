@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 40 | 10 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 41 | 9 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **67** | **41** | **0** | **0** |
+| **Total** | **108** | **68** | **40** | **0** | **0** |
 
 ---
 
@@ -212,7 +212,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-038 | Gallery Scanner | Security Audit | Medium | Completed | GS-017 |
 | GS-039 | Gallery Scanner | Developer Tools | Low | Completed | GS-021 |
 | GS-040 | Gallery Scanner | Production Readiness | Medium | Completed | GS-022 |
-| GS-041 | Gallery Scanner | AI Slip Verification | Medium | Todo | GS-019 |
+| GS-041 | Gallery Scanner | AI Slip Verification | Medium | Completed | GS-019 |
 | GS-042 | Gallery Scanner | Fraud Detection Engine | Medium | Todo | GS-041 |
 | GS-043 | Gallery Scanner | AI Transaction Categorization | Medium | Todo | GS-016 |
 | GS-044 | Gallery Scanner | Merchant Intelligence | Medium | Todo | GS-043 |
@@ -296,6 +296,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-039 (Developer Tools) `devtools/scannerDevTools.ts`: dev-gated helpers — `isScannerDevMode()`/`runInDev(fn, dev?)` (guards to `import.meta.env.DEV`, injectable flag for tests), `exportScannerLogs(extra?)` (audit trail + profiling payload → JSON), and `buildValidationReport(candidates)` (aggregates valid/invalid + issue-code counts via GS-019). Validated build/tsc/lint; 3 tests.
 >
 > GS-040 (Production Readiness) — production review + doc sync for the GS-023…GS-039 refinement wave (on top of the GS-005…GS-022 core + the live web wiring). Full gate clean: `tsc -b` ✓, `oxlint src` ✓, `npm run build` ✓, full suite **1945/1946** (the single failure was the pre-existing `TradingDashboard.integration` synchronous-assertion flake under parallel load — passes 4/4 in isolation, unrelated to the GS work). Review: **Architecture** — every refinement engine is pure logic or sits behind a swappable interface / injectable dep, folder-per-concern, business logic out of React. **Security** — no plaintext financial data persisted (cache/history hold ids/hashes/counts); audit + security-audit + tamper detection + secure deletion in place. **Performance** — lazy enumeration + bounded queue + versioned cache, now with per-run metrics (GS-018), cross-run analytics (GS-020) and per-stage timing (GS-036). **Accessibility** — the mounted UI (Scan Gallery flow, dashboards) reuses the shared `Drawer`, labels controls, and uses an ARIA progress bar. **UX** — bank select → preview → import with progress + rollback + conflict resolution. **Maintainability/Docs** — high test density (~280 slipScanner tests), ROADMAP/CHANGELOG/TECHNICAL_DEBT/SECURITY synced. Open items: full-gallery auto-enumeration (NativeMediaProvider stub) and the AI layers (GS-041–GS-050). ENGINEERING_AUDIT.md does not exist in the repo; the review is recorded here instead.
+>
+> GS-041 (AI Slip Verification) `ai/slipVerification.ts` `verifySlip(input)`: cross-checks the QR-derived and OCR-derived views (amount/merchant/reference, only when both sides have a field) plus CRC/bank/timestamp signals, producing deterministic authenticity / confidence / risk scores (0–100) with explicit reasons (crc-invalid, amount/merchant/reference-mismatch, timestamp-invalid). Advisory only — never mutates imported data. Validated build/tsc/lint; 4 tests.
 
 ---
 
