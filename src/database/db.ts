@@ -18,6 +18,7 @@ import type { CalendarEvent } from "@/features/calendar/types";
 import type { ScheduleItem } from "@/features/schedule/types";
 import type { Tombstone, SyncStateRow } from "@/features/sync/types";
 import type { SlipScanRun, ScanCacheEntry } from "@/features/finance/slipScanner/models/scanTypes";
+import type { ImportHistoryEntry } from "@/features/finance/slipScanner/models/importHistory";
 
 class NexusDatabase extends Dexie {
 
@@ -40,6 +41,7 @@ class NexusDatabase extends Dexie {
   public syncState;
   public slipScanRuns;
   public slipScanCache;
+  public slipImportHistory;
 
   constructor() {
     super("NexusDatabase");
@@ -244,6 +246,14 @@ class NexusDatabase extends Dexie {
         "++id,&assetId,contentHash,status",
     });
 
+    // v17 adds slipImportHistory (GS-035): a device-local log of Smart Import
+    // runs (date/source/bank/amount/status/duration/errors) for the Import
+    // History view. Additive — a fresh DB just creates it.
+    this.version(17).stores({
+      slipImportHistory:
+        "++id,importedAt,status,bank",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -300,6 +310,9 @@ class NexusDatabase extends Dexie {
 
     this.slipScanCache =
       this.table<ScanCacheEntry, number>("slipScanCache");
+
+    this.slipImportHistory =
+      this.table<ImportHistoryEntry, number>("slipImportHistory");
   }
 }
 
