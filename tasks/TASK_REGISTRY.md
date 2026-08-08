@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 35 | 15 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 36 | 14 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **62** | **46** | **0** | **0** |
+| **Total** | **108** | **63** | **45** | **0** | **0** |
 
 ---
 
@@ -207,7 +207,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-033 | Gallery Scanner | Background Worker | High | Completed | GS-007 |
 | GS-034 | Gallery Scanner | Scan Progress Dashboard | Medium | Completed | GS-006 |
 | GS-035 | Gallery Scanner | Import History | Medium | Completed | GS-016 |
-| GS-036 | Gallery Scanner | Performance Monitor | Low | Todo | GS-018 |
+| GS-036 | Gallery Scanner | Performance Monitor | Low | Completed | GS-018 |
 | GS-037 | Gallery Scanner | Recovery System | Medium | Todo | GS-033 |
 | GS-038 | Gallery Scanner | Security Audit | Medium | Todo | GS-017 |
 | GS-039 | Gallery Scanner | Developer Tools | Low | Todo | GS-021 |
@@ -286,6 +286,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-034 (Scan Progress Dashboard) `progress/scanProgress.ts` `computeScanProgress(counts, startedAt, now)` (pure): derives speed (images/sec), remaining, ETA and percent from raw counters + elapsed time (null-safe when total/elapsed unknown), plus `formatEta`. `components/ScanProgressDashboard.tsx` renders the live metrics (scanned/QR/OCR/imported/remaining/speed/ETA) + an ARIA progress bar from a snapshot; i18n under `slipScanner.progressDashboard.*` (en+th). Real-time updates come from the parent recomputing the snapshot. Validated build/tsc/lint; 5 tests.
 >
 > GS-035 (Import History) persists one record per Smart Import run — date, source, bank, amount, status, duration, errors — in the additive Dexie table `slipImportHistory` (v17, device-local/unsynced). `models/importHistory.ts` (types + `deriveImportStatus`), `repositories/importHistoryRepository.ts` (add/list-newest-first/clear, direct-`db.table` like scanRunRepository), and `history/importHistoryFilter.ts` (pure filter+search by status/bank/date-range/free-text). Validated build/tsc/lint; slipScanner 233 tests (v17 migration confirmed safe).
+>
+> GS-036 (Performance Monitor) `perf/performanceMonitor.ts` `createPerformanceMonitor(now?)`: per-stage runtime timing (QR/OCR/scan) via `time(stage, fn)`/`record`, cache-hit ratio, and memory sampling (`performance.memory` where available, else null). Reports per-stage count/avgMs/perSec. CPU% isn't readable in browser JS, so it's represented honestly by per-stage throughput rather than a fabricated percentage. Complements GS-018 (per-run counters) and GS-020 (cross-run analytics). Validated build/tsc/lint; 4 tests.
 
 ---
 
