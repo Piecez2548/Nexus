@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 32 | 18 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 33 | 17 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **59** | **49** | **0** | **0** |
+| **Total** | **108** | **60** | **48** | **0** | **0** |
 
 ---
 
@@ -204,7 +204,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-030 | Gallery Scanner | Bank Template Engine | Medium | Completed | GS-011 |
 | GS-031 | Gallery Scanner | Smart Duplicate Engine | Medium | Completed | GS-013 |
 | GS-032 | Gallery Scanner | Import Conflict Resolver | Medium | Completed | GS-016 |
-| GS-033 | Gallery Scanner | Background Worker | High | Todo | GS-007 |
+| GS-033 | Gallery Scanner | Background Worker | High | Completed | GS-007 |
 | GS-034 | Gallery Scanner | Scan Progress Dashboard | Medium | Todo | GS-006 |
 | GS-035 | Gallery Scanner | Import History | Medium | Todo | GS-016 |
 | GS-036 | Gallery Scanner | Performance Monitor | Low | Todo | GS-018 |
@@ -280,6 +280,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-031 (Smart Duplicate Engine) `engine/dedup/smartDuplicate.ts` `duplicateProbability(a, b)`: a graded 0–1 probability refining GS-013's binary key, comparing QR payload, reference (format-normalised), amount, merchant, timestamp and image pHash (GS-024). Independent signals combine via noisy-OR (any strong signal → high probability; weak signals reinforce), returning the matched signal names; `isLikelyDuplicate` (threshold) and `findBestDuplicate` (best match in a list). Validated build/tsc/lint; 7 tests.
 >
 > GS-032 (Import Conflict Resolver) `import/conflictResolver.ts`: replace / skip / merge / keep-both reconciliation for an incoming slip that duplicates an existing transaction. `defaultResolution(probability)` (skip near-certain, keep-both otherwise); `resolveBatch(conflicts, { applyToAll?, overrides? })` supports batch (one choice for all) and per-candidate overrides; `partitionDecisions` groups by action; `mergeCandidate(existing, candidate)` fills only gaps (time, bank/reference note) without overwriting user-edited values. Validated build/tsc/lint; 6 tests.
+>
+> GS-033 (Background Worker) `worker/backgroundWorker.ts` `createBackgroundWorker(options)`: a general enqueue-able task queue with bounded concurrency, retry+backoff, pause/resume, cancellation, and a `whenDrained()` promise. Tasks run off the render path (microtasks/timers) so the UI thread is never blocked; `onSettled` reports each outcome (ok/error/attempts). Distinct from GS-007's stream-pull scan queue — this accepts arbitrary jobs enqueued over time. Validated build/tsc/lint; 5 tests (incl. concurrency bound + pause/resume).
 
 ---
 
