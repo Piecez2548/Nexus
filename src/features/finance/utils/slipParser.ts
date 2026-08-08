@@ -24,14 +24,35 @@ function toGregorianYear(year: number): number {
   return year;
 }
 
-function extractAmount(text: string): number | undefined {
-  // Thai slip amounts are almost always shown with exactly 2 decimal
-  // places, unlike account/reference numbers — a decent discriminator.
-  const matches = text.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g);
-  if (!matches || matches.length === 0) return undefined;
-
-  const amount = Number(matches[0].replace(/,/g, ""));
+function toAmount(raw: string): number | undefined {
+  const amount = Number(raw.replace(/,/g, ""));
   return Number.isFinite(amount) && amount > 0 ? amount : undefined;
+}
+
+function extractAmount(text: string): number | undefined {
+  // Thai slip amounts are almost always shown with exactly 2 decimal places,
+  // unlike account/reference numbers. But simply taking the first 2-decimal
+  // number is wrong — a balance, fee or misread digit elsewhere can be picked
+  // (the "20 → 520" bug). Prefer the number anchored to a currency marker
+  // (X.XX บาท / ฿X.XX / THB) or an amount label, and only then fall back to the
+  // first 2-decimal number.
+  const DECIMAL = "\\d{1,3}(?:,\\d{3})*\\.\\d{2}";
+
+  const beforeCurrency = new RegExp(`(${DECIMAL})\\s*(?:บาท|฿|THB|บ\\.)`, "i").exec(text);
+  if (beforeCurrency?.[1]) return toAmount(beforeCurrency[1]);
+
+  const afterSymbol = new RegExp(`฿\\s*(${DECIMAL})`, "i").exec(text);
+  if (afterSymbol?.[1]) return toAmount(afterSymbol[1]);
+
+  const afterLabel = new RegExp(
+    `(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอดชำระ|ยอด|Amount|รวมทั้งสิ้น|รวม)\\s*[:\\-]?\\s*(${DECIMAL})`,
+    "i",
+  ).exec(text);
+  if (afterLabel?.[1]) return toAmount(afterLabel[1]);
+
+  const matches = text.match(new RegExp(DECIMAL, "g"));
+  if (!matches || matches.length === 0) return undefined;
+  return toAmount(matches[0]);
 }
 
 function extractDate(text: string): string | undefined {

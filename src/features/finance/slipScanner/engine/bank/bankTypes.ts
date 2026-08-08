@@ -11,7 +11,7 @@ export interface BankInfo {
   shortName: string;
 }
 
-export type BankMatchSource = "bankCode" | "promptPayAid" | "aidGuid";
+export type BankMatchSource = "bankCode" | "promptPayAid" | "aidGuid" | "ocrText";
 
 export interface BankIdentification {
   bank: BankInfo;

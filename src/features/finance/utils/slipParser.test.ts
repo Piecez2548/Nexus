@@ -54,4 +54,14 @@ describe("parseSlipText", () => {
 
     expect(result.amount).toBe(99);
   });
+
+  it("picks the currency-anchored amount, not an earlier decimal number", () => {
+    // A balance/other number appears first; the real amount is next to บาท.
+    const text = "ยอดคงเหลือ 5,520.00\nจำนวนเงิน 20.00 บาท\nเลขที่รายการ 015520";
+    expect(parseSlipText(text).amount).toBe(20);
+  });
+
+  it("reads an amount marked with the ฿ symbol", () => {
+    expect(parseSlipText("โอนสำเร็จ ฿20.00").amount).toBe(20);
+  });
 });

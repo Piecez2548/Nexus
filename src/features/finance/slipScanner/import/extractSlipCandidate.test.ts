@@ -55,4 +55,17 @@ describe("extractSlipCandidate", () => {
     expect(candidate.amount).toBe(89);
     expect(candidate.time).toBe("10:15");
   });
+
+  it("identifies the bank from OCR text on a non-EMVCo (slip-verify) QR / OCR slip", async () => {
+    const candidate = await extractSlipCandidate({
+      assetId: "photo2",
+      bytes: new Uint8Array([0]),
+      detector: createQrDetector(qrDecoder(null)),
+      recognizer: ocrRecognizer("ธนาคารกสิกรไทย\nจำนวนเงิน 20.00 บาท"),
+    });
+
+    expect(candidate.source).toBe("ocr");
+    expect(candidate.amount).toBe(20);
+    expect(candidate.bankId).toBe("kbank");
+  });
 });
