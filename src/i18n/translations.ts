@@ -424,6 +424,7 @@ export const translations = {
         scanning: "Scanning slip {{done}}/{{total}}…",
         noneFound: "No slips found in the selected images",
         imported: "Imported {{count}} transactions",
+        importedOne: "Imported 1 transaction",
       },
       progressDashboard: {
         title: "Scan progress",
@@ -2379,6 +2380,7 @@ export const translations = {
         scanning: "กำลังสแกนสลิป {{done}}/{{total}}…",
         noneFound: "ไม่พบสลิปในรูปที่เลือก",
         imported: "นำเข้า {{count}} รายการแล้ว",
+        importedOne: "นำเข้า 1 รายการแล้ว",
       },
       progressDashboard: {
         title: "ความคืบหน้าการสแกน",

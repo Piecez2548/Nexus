@@ -26,10 +26,17 @@ describe("candidateToTransaction", () => {
       date: "2024-05-12",
       time: "14:30",
       note: "SCB · TX111",
+      category: "Food", // auto-categorised from "Coffee Shop"
     });
   });
 
-  it("uses the fallback title and default account when the slip lacks a merchant", () => {
+  it("titles by bank name when there is no merchant", () => {
+    const tx = candidateToTransaction(candidate({ amount: 20, bankName: "KBank" }));
+    expect(tx.title).toBe("KBank");
+    expect(tx.category).toBe("Others"); // no keyword match → Others, not empty
+  });
+
+  it("uses the fallback title and default account when the slip lacks a merchant and bank", () => {
     const tx = candidateToTransaction(candidate({ amount: 50 }), { fallbackTitle: "Slip import", defaultAccount: "Bank" });
     expect(tx.title).toBe("Slip import");
     expect(tx.account).toBe("Bank");

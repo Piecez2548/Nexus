@@ -73,7 +73,12 @@ export default function GalleryScanFlow() {
   async function handleImport(selected: SlipCandidate[]): Promise<void> {
     try {
       const result = await smartImport.importCandidates(selected, { fallbackTitle: t("slipScanner.defaultTitle") });
-      toast.success(t("slipScanner.galleryScan.imported", { count: result.importedIds.length }));
+      const count = result.importedIds.length;
+      toast.success(
+        count === 1
+          ? t("slipScanner.galleryScan.importedOne")
+          : t("slipScanner.galleryScan.imported", { count }),
+      );
       slipScan.reset();
       setPhase("idle");
     } catch (err) {
