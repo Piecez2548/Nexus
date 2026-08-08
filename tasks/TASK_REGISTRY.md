@@ -24,9 +24,9 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
 | UX | 2 | 2 | 0 | 0 | 0 |
-| Gallery Scanner (GS) | 50 | 46 | 4 | 0 | 0 |
+| Gallery Scanner (GS) | 50 | 47 | 3 | 0 | 0 |
 | Platform (PLT) | 20 | 0 | 20 | 0 | 0 |
-| **Total** | **108** | **73** | **35** | **0** | **0** |
+| **Total** | **108** | **74** | **34** | **0** | **0** |
 
 ---
 
@@ -218,7 +218,7 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 | GS-044 | Gallery Scanner | Merchant Intelligence | Medium | Completed | GS-043 |
 | GS-045 | Gallery Scanner | Smart Learning Engine | Low | Completed | GS-043 |
 | GS-046 | Gallery Scanner | Confidence Engine | Medium | Completed | GS-025 |
-| GS-047 | Gallery Scanner | Transaction Linking | Low | Todo | GS-016 |
+| GS-047 | Gallery Scanner | Transaction Linking | Low | Completed | GS-016 |
 | GS-048 | Gallery Scanner | Spending Intelligence | Low | Todo | GS-043 |
 | GS-049 | Gallery Scanner | AI Quality Review | Low | Todo | GS-019 |
 | GS-050 | Gallery Scanner | Financial Intelligence Report | Low | Todo | GS-048 |
@@ -308,6 +308,8 @@ Production Gallery Slip Scanner — the `MASTER_TASK.md` program, given its own 
 > GS-045 (Smart Learning Engine) unifies local, no-cloud learning of user corrections. `learning/applyLearning.ts` (pure): `applyMerchantMapping` (raw→corrected, normalised key), `applyOcrCorrections` (learned wrong→right text fixes, longest-first), `applyBankNaming` (bankId→preferred name). `store/learningStore.ts` (zustand persist) holds the merchant/OCR/bank-naming maps with learn methods; preferred-category learning lives in `categoryLearningStore` (GS-043). Validated build/tsc/lint; 7 tests.
 >
 > GS-046 (Confidence Engine) `ai/confidenceEngine.ts` `combineConfidence(inputs, weights?)`: combines the per-stage confidences — QR, parser, OCR, AI validation, bank template — into one overall 0–100 score with a breakdown. Only signals actually present are weighted (weights renormalise over them), so a QR-only or OCR-only slip still scores fairly; inputs are clamped 0–1. Refines GS-015's `basicConfidence`. Validated build/tsc/lint; 4 tests.
+>
+> GS-047 (Transaction Linking) `ai/transactionLinking.ts` `linkTransactions(txns)`: deterministic detection of related transactions as a directed relationship graph — refund (matches a prior expense's merchant+amount), transfer+fee (small same-day fee), installment (3+ same merchant+amount), split-payment (2+ same merchant+day), cashback (small income within 3 days of an expense). Advisory (proposes links, doesn't alter data); edges deduped. Validated build/tsc/lint; 6 tests.
 
 ---
 
