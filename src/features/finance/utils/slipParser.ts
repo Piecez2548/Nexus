@@ -1,3 +1,5 @@
+import { DEFAULT_OCR_LABELS } from "@/features/finance/slipScanner/engine/bank/bankTemplateRegistry";
+
 const THAI_MONTHS: Record<string, number> = {
   "ม.ค.": 1, "มกราคม": 1,
   "ก.พ.": 2, "กุมภาพันธ์": 2,
@@ -49,7 +51,7 @@ function extractAmount(text: string): number | undefined {
   if (afterSymbol?.[1]) return toAmount(afterSymbol[1]);
 
   const afterLabel = new RegExp(
-    `(?:จำนวนเงิน|จำนวน|ยอดเงิน|ยอดชำระ|ยอด|Amount|รวมทั้งสิ้น|รวม)\\s*[:\\-]?\\s*(${DECIMAL})`,
+    `(?:${DEFAULT_OCR_LABELS.amount.join("|")})\\s*[:\\-]?\\s*(${DECIMAL})`,
     "i",
   ).exec(text);
   if (afterLabel?.[1]) return toAmount(afterLabel[1]);
@@ -59,14 +61,22 @@ function extractAmount(text: string): number | undefined {
   return toAmount(matches[0]);
 }
 
+// Plausible Gregorian year bounds for a slip date — rejects a fabricated year
+// (e.g. from toGregorianYear misreading a matched account/reference fragment).
+const MIN_PLAUSIBLE_YEAR = 2000;
+const MAX_PLAUSIBLE_YEAR = 2100;
+
 function extractDate(text: string): string | undefined {
-  const numeric = /(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/.exec(text);
+  // Not anchored to digit/dash/x on either side, so the match can't be a
+  // fragment inside a longer masked-account or reference-number run (e.g.
+  // "xxx-x-x5327-x 006-2-34567-6996" misread as a date).
+  const numeric = /(?<![\d\-xX])(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})(?![\d\-xX])/.exec(text);
   if (numeric) {
     const day = Number(numeric[1]);
     const month = Number(numeric[2]);
     const year = toGregorianYear(Number(numeric[3]));
 
-    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= MIN_PLAUSIBLE_YEAR && year <= MAX_PLAUSIBLE_YEAR) {
       return `${year}-${pad2(month)}-${pad2(day)}`;
     }
   }
@@ -93,15 +103,31 @@ function extractDate(text: string): string | undefined {
 const MERCHANT_MARKERS = /(ร้าน|ห้าง|บริษัท|บจก|หจก|shop|store|company|co\.|ltd|โรงพยาบาล|คลินิก|clinic|hospital)/i;
 
 // A masked/plain account or wallet number line (e.g. "xxx-x-x5327-x",
-// "006-xxxxxxxx-6996", "014000008031056") — digits/x/dashes/spaces only.
-const ACCOUNT_LINE = /^[0-9xX][0-9xX\s-]{7,}$/;
+// "006-xxxxxxxx-6996", "014000008031056", or one with a short label glued on
+// the same OCR line like "A/C: 006-xxxxxxxx-6996") — an optional short
+// letters/dot/slash label followed by ':'/'-', then digits/x/dashes/spaces.
+const ACCOUNT_LINE = /^(?:[A-Za-z฀-๿./]{1,20}[:-]\s*)?[0-9xX][0-9xX\s-]{7,}$/;
+// Recipient label words (Thai; longest alternatives first so a label isn't
+// partially consumed). Reused for tier 1 below AND folded into META_LINE, so a
+// bare label line on its own (no name on the same line — the name is on the
+// next line instead) isn't later mistaken for the recipient itself by the
+// tier-2 positional scan. Deliberately Thai-only here: DEFAULT_OCR_LABELS'
+// generic English hints ("to"/"name") are too short to use as a bare
+// substring match without risking a false capture inside unrelated text.
+const RECIPIENT_LABEL_WORDS = ["โอนไปยัง", "ไปยัง", "ถึง", "ผู้รับเงิน", "ผู้รับ"];
+// A line that is just the payee's bank label (e.g. "ธ.กสิกรไทย",
+// "ธนาคารกสิกรไทย") rather than their actual name — seen on transfer slips
+// where the payee's bank is printed the same way the payer's bank is.
+const BANK_LABEL_LINE = /^(?:ธนาคาร|ธ\.)\s*\S/i;
 // Amount/reference/meta labels that are never the payee name.
-const META_LINE = /เลขที่รายการ|จำนวน|ค่าธรรมเนียม|รายละเอียด|วันที่|เวลา|amount|date|ref/i;
+const META_LINE = new RegExp(
+  `${[...DEFAULT_OCR_LABELS.amount, ...DEFAULT_OCR_LABELS.date, ...DEFAULT_OCR_LABELS.reference, ...RECIPIENT_LABEL_WORDS].join("|")}|ค่าธรรมเนียม|รายละเอียด|เวลา`,
+  "i",
+);
 
 function extractRecipient(text: string): string | undefined {
-  // 1) Explicit recipient label (longest alternatives first so the label isn't
-  //    partially consumed).
-  const labeled = /(?:โอนไปยัง|ไปยัง|ถึง|ผู้รับเงิน|ผู้รับ|Name)\s*[:-]?\s*([^\n\r]+)/.exec(text);
+  // 1) Explicit recipient label.
+  const labeled = new RegExp(`(?:${RECIPIENT_LABEL_WORDS.join("|")}|Name)\\s*[:-]?\\s*([^\\n\\r]+)`).exec(text);
   const labeledName = labeled?.[1]?.trim();
   if (labeledName) return labeledName;
 
@@ -113,13 +139,14 @@ function extractRecipient(text: string): string | undefined {
   // 2) Positional: on Thai transfer/top-up slips the payer block is
   //    name → bank → account, then the payee's name. So the payee is the first
   //    "name-like" line after the payer's account number (skipping the payee's
-  //    own account, amount/meta lines, and arrow/punctuation-only lines).
+  //    own account, amount/meta lines, a bare bank-label line, and
+  //    arrow/punctuation-only lines).
   const isNameLike = (line: string): boolean => line.replace(/[^\p{L}\p{N}]/gu, "").length >= 3;
   const firstAccount = lines.findIndex((line) => ACCOUNT_LINE.test(line));
   if (firstAccount >= 0) {
     for (let j = firstAccount + 1; j < lines.length; j++) {
       const candidate = lines[j]!;
-      if (ACCOUNT_LINE.test(candidate) || META_LINE.test(candidate) || !isNameLike(candidate)) continue;
+      if (ACCOUNT_LINE.test(candidate) || META_LINE.test(candidate) || BANK_LABEL_LINE.test(candidate) || !isNameLike(candidate)) continue;
       return candidate;
     }
   }

@@ -1,5 +1,6 @@
 import { sha256Hex } from "@/features/finance/slipScanner/engine/hash/contentHash";
 import { computePHash } from "@/features/finance/slipScanner/engine/hash/perceptualHash";
+import { luma } from "@/features/finance/slipScanner/engine/image/canvas";
 
 export interface ImageHashes {
   sha256: string; // exact content hash (GS-006) — same bytes → same hash
@@ -20,8 +21,7 @@ async function toGrayscale32(bytes: Uint8Array): Promise<number[] | null> {
     const { data } = ctx.getImageData(0, 0, 32, 32);
     const gray: number[] = [];
     for (let i = 0; i < data.length; i += 4) {
-      // Rec. 601 luma.
-      gray.push(0.299 * data[i]! + 0.587 * data[i + 1]! + 0.114 * data[i + 2]!);
+      gray.push(luma(data[i]!, data[i + 1]!, data[i + 2]!));
     }
     return gray;
   } catch {

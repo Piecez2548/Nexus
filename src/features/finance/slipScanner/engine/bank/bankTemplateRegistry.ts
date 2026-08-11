@@ -26,11 +26,14 @@ export interface BankTemplate {
 // Shared default OCR label hints (Thai + English). Per-bank overrides can be
 // supplied via a registered template once real slip specimens exist; guessing
 // per-bank labels without specimens would be inventing, so all seeds share this.
-const DEFAULT_OCR_LABELS: BankOcrLabels = {
-  amount: ["จำนวน", "จำนวนเงิน", "amount"],
+// Exported so other slip-text consumers (e.g. slipParser's field extraction)
+// can recognise the same label words instead of maintaining a second list that
+// silently drifts out of sync with this one.
+export const DEFAULT_OCR_LABELS: BankOcrLabels = {
+  amount: ["จำนวน", "จำนวนเงิน", "ยอดเงิน", "ยอดชำระ", "ยอด", "รวมทั้งสิ้น", "รวม", "amount"],
   date: ["วันที่", "date"],
   reference: ["เลขที่รายการ", "รหัสอ้างอิง", "หมายเลขอ้างอิง", "reference", "ref"],
-  recipient: ["ไปยัง", "ถึง", "ผู้รับเงิน", "to", "name"],
+  recipient: ["โอนไปยัง", "ไปยัง", "ถึง", "ผู้รับเงิน", "ผู้รับ", "to", "name"],
 };
 
 const DEFAULT_PARSER = "emvco-ocr"; // shared EMVCo (GS-010) + OCR (GS-028) pipeline

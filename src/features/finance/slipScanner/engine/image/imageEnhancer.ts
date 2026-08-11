@@ -1,3 +1,4 @@
+import { luma } from "@/features/finance/slipScanner/engine/image/canvas";
 import {
   enhancementFilterString,
   isEnhancementNeeded,
@@ -26,9 +27,9 @@ export async function analyzeImage(bytes: Uint8Array): Promise<ImageStats | null
     let sum = 0;
     const lumas: number[] = [];
     for (let i = 0; i < data.length; i += 4) {
-      const luma = 0.299 * data[i]! + 0.587 * data[i + 1]! + 0.114 * data[i + 2]!;
-      lumas.push(luma);
-      sum += luma;
+      const l = luma(data[i]!, data[i + 1]!, data[i + 2]!);
+      lumas.push(l);
+      sum += l;
     }
     const brightness = sum / lumas.length;
     const variance = lumas.reduce((acc, l) => acc + (l - brightness) ** 2, 0) / lumas.length;

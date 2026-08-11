@@ -50,4 +50,35 @@ describe("candidateToTransaction", () => {
   it("omits the note when there is no bank or reference", () => {
     expect(candidateToTransaction(candidate({ amount: 50 })).note).toBeUndefined();
   });
+
+  it("falls back to the bank name for categorisation too when merchant is an empty string", () => {
+    // EMVCo merchant-name tag present but empty ("") is not nullish, so a `??`
+    // fallback would keep it and force categorize("") -> "Others". Title and
+    // category should agree: both should be driven by the bank name here.
+    const tx = candidateToTransaction(candidate({ merchant: "", amount: 20, bankName: "KBank" }));
+    expect(tx.title).toBe("KBank");
+    expect(tx.category).toBe("Others"); // "KBank" itself has no keyword match
+  });
+
+  it("keeps a categorize() guess that matches one of the user's live categories", () => {
+    const tx = candidateToTransaction(candidate({ merchant: "Coffee Shop", amount: 20 }), {
+      validCategoryNames: new Set(["Food", "Transport", "Others"]),
+    });
+    expect(tx.category).toBe("Food");
+  });
+
+  it("falls back to Others when the guessed category no longer exists for the user", () => {
+    // e.g. the categoriser's "Healthcare" vs. the default-seeded "Health".
+    const tx = candidateToTransaction(candidate({ merchant: "โรงพยาบาล", amount: 20 }), {
+      validCategoryNames: new Set(["Health", "Others"]),
+    });
+    expect(tx.category).toBe("Others");
+  });
+
+  it("leaves category unset when neither the guess nor Others exists for the user", () => {
+    const tx = candidateToTransaction(candidate({ merchant: "โรงพยาบาล", amount: 20 }), {
+      validCategoryNames: new Set(["Health"]),
+    });
+    expect(tx.category).toBeUndefined();
+  });
 });

@@ -56,6 +56,34 @@ describe("extractSlipCandidate", () => {
     expect(candidate.time).toBe("10:15");
   });
 
+  it("identifies the bank from OCR text when a clean, non-PromptPay EMVCo QR leaves the bank unresolved", async () => {
+    // A real-bank merchant-presented QR: valid, CRC-correct, not PromptPay, and
+    // with no registered plugin match for its GUID — identifyBank(emvco) alone
+    // returns null for this. The OCR text (from the slip's bank logo/name)
+    // should still resolve the bank without touching the QR-sourced amount.
+    const NON_PROMPTPAY_QR = withCrc(
+      "000201010211" +
+        "29310010A00000099201130066812345678" +
+        "5303764" +
+        "5406120.00" +
+        "5802TH" +
+        "5909TEST SHOP" +
+        "62090505REF77",
+    );
+
+    const candidate = await extractSlipCandidate({
+      assetId: "slip3",
+      bytes: new Uint8Array([1]),
+      detector: createQrDetector(qrDecoder(NON_PROMPTPAY_QR)),
+      recognizer: ocrRecognizer("ธนาคารกสิกรไทย\nจำนวนเงิน 120.00 บาท"),
+    });
+
+    expect(candidate.source).toBe("qr");
+    expect(candidate.amount).toBe(120);
+    expect(candidate.merchant).toBe("TEST SHOP");
+    expect(candidate.bankId).toBe("kbank");
+  });
+
   it("identifies the bank from OCR text on a non-EMVCo (slip-verify) QR / OCR slip", async () => {
     const candidate = await extractSlipCandidate({
       assetId: "photo2",

@@ -423,8 +423,9 @@ export const translations = {
       galleryScan: {
         scanning: "Scanning slip {{done}}/{{total}}…",
         noneFound: "No slips found in the selected images",
-        imported: "Imported {{count}} transactions",
-        importedOne: "Imported 1 transaction",
+        imported: "Imported {{count}} transaction(s)",
+        importedPartial: "Imported {{count}} transaction(s) — {{failed}} couldn't be imported",
+        importFailed: "Couldn't import {{failed}} slip(s) — check the amount and try again",
       },
       progressDashboard: {
         title: "Scan progress",
@@ -2380,7 +2381,8 @@ export const translations = {
         scanning: "กำลังสแกนสลิป {{done}}/{{total}}…",
         noneFound: "ไม่พบสลิปในรูปที่เลือก",
         imported: "นำเข้า {{count}} รายการแล้ว",
-        importedOne: "นำเข้า 1 รายการแล้ว",
+        importedPartial: "นำเข้า {{count}} รายการแล้ว — อีก {{failed}} รายการนำเข้าไม่สำเร็จ",
+        importFailed: "นำเข้าไม่สำเร็จ {{failed}} รายการ — ตรวจสอบจำนวนเงินแล้วลองใหม่",
       },
       progressDashboard: {
         title: "ความคืบหน้าการสแกน",

@@ -7,6 +7,8 @@ import { isNativeGalleryAvailable, pickSlipImages } from "@/features/finance/sli
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import BankSelectionPopup from "@/features/finance/slipScanner/components/BankSelectionPopup";
 import ImportPreview from "@/features/finance/slipScanner/components/ImportPreview";
+import { useCategoryLearningStore } from "@/features/finance/slipScanner/store/categoryLearningStore";
+import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useToast } from "@/hooks/useToast";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -72,13 +74,23 @@ export default function GalleryScanFlow() {
 
   async function handleImport(selected: SlipCandidate[]): Promise<void> {
     try {
-      const result = await smartImport.importCandidates(selected, { fallbackTitle: t("slipScanner.defaultTitle") });
+      const categoryNames = new Set(useCategoryStore.getState().categories.map((c) => c.name));
+      const result = await smartImport.importCandidates(selected, {
+        fallbackTitle: t("slipScanner.defaultTitle"),
+        learnedCategories: useCategoryLearningStore.getState().asMap(),
+        validCategoryNames: categoryNames,
+      });
       const count = result.importedIds.length;
-      toast.success(
-        count === 1
-          ? t("slipScanner.galleryScan.importedOne")
-          : t("slipScanner.galleryScan.imported", { count }),
-      );
+      const failed = result.failed.length;
+
+      if (failed === 0) {
+        toast.success(t("slipScanner.galleryScan.imported", { count }));
+      } else if (count > 0) {
+        toast.error(t("slipScanner.galleryScan.importedPartial", { count, failed }));
+      } else {
+        toast.error(t("slipScanner.galleryScan.importFailed", { failed }));
+      }
+
       slipScan.reset();
       setPhase("idle");
     } catch (err) {

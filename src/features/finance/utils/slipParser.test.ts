@@ -99,4 +99,35 @@ describe("parseSlipText", () => {
     expect(result.date).toBe("2026-08-08");
     expect(result.title).toBe("โอนเงินให้ พร้อมเพย์ อี-วอลเล็ต / G-Wallet");
   });
+
+  it("skips the payee's own bank-label line and picks their name instead", () => {
+    const text = [
+      "โอนเงินสำเร็จ",
+      "นายสมชาย ใจดี",
+      "ธ.กสิกรไทย",
+      "xxx-x-x5327-x",
+      "ธ.ไทยพาณิชย์",
+      "สมหญิง รักดี",
+      "จำนวน 300.00 บาท",
+    ].join("\n");
+    expect(parseSlipText(text).recipient).toBe("สมหญิง รักดี");
+  });
+
+  it("does not fabricate a date from digits inside a masked account/reference number", () => {
+    const text = "โอนเงินสำเร็จ\nxxx-x-x5327-x 006-2-34567-6996\nจำนวน 50.00 บาท";
+    expect(parseSlipText(text).date).toBeUndefined();
+    expect(parseSlipText(text).amount).toBe(50);
+  });
+
+  it("recognises an account line with a short leading label (e.g. 'A/C:')", () => {
+    const text = [
+      "โอนเงินสำเร็จ",
+      "นายสมชาย ใจดี",
+      "ธ.กสิกรไทย",
+      "A/C: xxx-x-x5327-x",
+      "สมหญิง รักดี",
+      "จำนวน 150.00 บาท",
+    ].join("\n");
+    expect(parseSlipText(text).recipient).toBe("สมหญิง รักดี");
+  });
 });

@@ -1,49 +1,29 @@
-import { binarize, otsuThreshold } from "@/features/finance/slipScanner/engine/image/otsu";
+import { canvasToBytes, luma, makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
+import { enhanceIfNeeded } from "@/features/finance/slipScanner/engine/image/imageEnhancer";
+import { otsuThreshold } from "@/features/finance/slipScanner/engine/image/otsu";
 
-// OCR preprocessing (OCR tuning): upscale small images and binarise (grayscale
-// → Otsu threshold → black/white) so watermarks/coloured backgrounds drop out
-// and text is crisp for Tesseract. Browser-only; returns the original bytes
-// off-browser or on any failure, so it never blocks OCR.
+// OCR preprocessing (OCR tuning): correct brightness/contrast only when the
+// image actually needs it (GS-027's "only process when necessary" rule, via
+// enhanceIfNeeded — this also gives Otsu a real signal on an overexposed/
+// near-uniform slip that would otherwise degenerate to its default threshold
+// and wipe the text to blank), then upscale/downscale toward a target size and
+// binarise (grayscale → Otsu threshold → black/white) so watermarks/coloured
+// backgrounds drop out and text is crisp for Tesseract. Browser-only; returns
+// the original bytes off-browser or on any failure, so it never blocks OCR.
 
-interface Canvas2D {
-  canvas: OffscreenCanvas | HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
-}
-
-function makeCanvas(width: number, height: number): Canvas2D | null {
-  if (typeof OffscreenCanvas === "function") {
-    const canvas = new OffscreenCanvas(width, height);
-    const ctx = canvas.getContext("2d");
-    if (ctx) return { canvas, ctx };
-  }
-  if (typeof document !== "undefined") {
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (ctx) return { canvas, ctx };
-  }
-  return null;
-}
-
-async function toBytes(canvas: OffscreenCanvas | HTMLCanvasElement): Promise<Uint8Array> {
-  if ("convertToBlob" in canvas) {
-    const blob = await canvas.convertToBlob({ type: "image/png" });
-    return new Uint8Array(await blob.arrayBuffer());
-  }
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-  if (!blob) throw new Error("toBlob failed");
-  return new Uint8Array(await blob.arrayBuffer());
-}
+const TARGET_SHORT_EDGE = 1200;
+const MAX_UPSCALE = 2;
 
 export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
   if (typeof createImageBitmap !== "function") return bytes;
 
   try {
-    const bitmap = await createImageBitmap(new Blob([bytes as unknown as BlobPart]));
-    // Upscale small images toward ~1200px on the short edge (helps Tesseract on
-    // small digits); never downscale, cap at 2× to bound memory.
-    const scale = Math.min(2, Math.max(1, 1200 / Math.max(1, Math.min(bitmap.width, bitmap.height))));
+    const { bytes: corrected } = await enhanceIfNeeded(bytes);
+    const bitmap = await createImageBitmap(new Blob([corrected as unknown as BlobPart]));
+    // Scale toward ~1200px on the short edge (helps Tesseract on small digits,
+    // and bounds memory/CPU on a full-resolution gallery photo); capped at 2×
+    // upscale for tiny images, but free to downscale large ones.
+    const scale = Math.min(MAX_UPSCALE, TARGET_SHORT_EDGE / Math.max(1, Math.min(bitmap.width, bitmap.height)));
     const width = Math.round(bitmap.width * scale);
     const height = Math.round(bitmap.height * scale);
 
@@ -54,13 +34,15 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
     const image = target.ctx.getImageData(0, 0, width, height);
     const gray = new Uint8Array(width * height);
     for (let i = 0, p = 0; i < image.data.length; i += 4, p += 1) {
-      gray[p] = Math.round(0.299 * image.data[i]! + 0.587 * image.data[i + 1]! + 0.114 * image.data[i + 2]!);
+      gray[p] = Math.round(luma(image.data[i]!, image.data[i + 1]!, image.data[i + 2]!));
     }
 
-    binarize(gray, otsuThreshold(gray));
+    const threshold = otsuThreshold(gray);
 
+    // Binarise and write back in the same pass (instead of a separate
+    // binarize() loop over `gray` followed by a copy loop into `image.data`).
     for (let i = 0, p = 0; i < image.data.length; i += 4, p += 1) {
-      const v = gray[p]!;
+      const v = gray[p]! > threshold ? 255 : 0;
       image.data[i] = v;
       image.data[i + 1] = v;
       image.data[i + 2] = v;
@@ -68,7 +50,7 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
     }
     target.ctx.putImageData(image, 0, 0);
 
-    return await toBytes(target.canvas);
+    return await canvasToBytes(target.canvas);
   } catch {
     return bytes;
   }

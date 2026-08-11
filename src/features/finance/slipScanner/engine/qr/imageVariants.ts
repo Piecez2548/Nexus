@@ -1,3 +1,5 @@
+import { canvasToBytes } from "@/features/finance/slipScanner/engine/image/canvas";
+
 export interface ImageVariant {
   label: string;
   bytes: Uint8Array;
@@ -9,11 +11,6 @@ export interface ImageVariant {
 // recovery orchestration degrades cleanly. Cropped-QR recovery isn't attempted
 // here — the crop region is unknown.
 export type ImageVariantGenerator = (bytes: Uint8Array) => AsyncIterable<ImageVariant>;
-
-async function canvasToBytes(canvas: OffscreenCanvas): Promise<Uint8Array> {
-  const blob = await canvas.convertToBlob({ type: "image/png" });
-  return new Uint8Array(await blob.arrayBuffer());
-}
 
 export const browserImageVariants: ImageVariantGenerator = async function* (bytes) {
   if (typeof createImageBitmap !== "function" || typeof OffscreenCanvas !== "function") return;

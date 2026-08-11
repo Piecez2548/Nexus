@@ -1,4 +1,5 @@
 import type { EmvcoPayload } from "@/features/finance/slipScanner/engine/emvco/emvcoPayloadParser";
+import { preprocessForOcr } from "@/features/finance/slipScanner/engine/image/ocrPreprocess";
 import { tesseractOcrRecognizer, type OcrTextRecognizer } from "@/features/finance/slipScanner/engine/ocr/ocrRecognizer";
 import { extractOcrSlipFields, type OcrSlipFields } from "@/features/finance/slipScanner/engine/ocr/slipOcrFields";
 
@@ -20,14 +21,22 @@ export function shouldRunOcrFallback(qr: QrOutcome): boolean {
   return !qr.emvco.crcValid;
 }
 
+export interface OcrFallbackResult extends OcrSlipFields {
+  // The recognised raw text, exposed so callers can also run bank-text
+  // identification (identifyBankFromText) without re-recognising the image.
+  text: string;
+}
+
 // Recognise a slip's text (reusing the app's Tesseract OCR by default) and
-// extract the amount/date/time/reference/merchant fields. Callers gate this on
-// `shouldRunOcrFallback` so the expensive OCR pass is skipped for slips whose
-// QR already yielded a usable payload.
+// extract the amount/date/time/reference/merchant fields. Preprocesses the
+// image first (upscale + binarise) to beat watermarks/coloured backgrounds.
+// Callers gate this on `shouldRunOcrFallback` so the expensive OCR pass is
+// skipped for slips whose QR already yielded a usable payload.
 export async function runOcrFallback(
   bytes: Uint8Array,
   recognizer: OcrTextRecognizer = tesseractOcrRecognizer,
-): Promise<OcrSlipFields> {
-  const text = await recognizer.recognize(bytes);
-  return extractOcrSlipFields(text);
+): Promise<OcrFallbackResult> {
+  const prepared = await preprocessForOcr(bytes);
+  const text = await recognizer.recognize(prepared);
+  return { ...extractOcrSlipFields(text), text };
 }
