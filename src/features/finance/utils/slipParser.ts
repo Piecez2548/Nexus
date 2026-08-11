@@ -103,25 +103,29 @@ function extractDate(text: string): string | undefined {
 const MERCHANT_MARKERS = /(ร้าน|ห้าง|บริษัท|บจก|หจก|shop|store|company|co\.|ltd|โรงพยาบาล|คลินิก|clinic|hospital)/i;
 
 // A masked/plain account or wallet number line (e.g. "xxx-x-x5327-x",
-// "006-xxxxxxxx-6996", "014000008031056", or one with a short label glued on
-// the same OCR line like "A/C: 006-xxxxxxxx-6996") — an optional short
-// letters/dot/slash label followed by ':'/'-', then digits/x/dashes/spaces.
-const ACCOUNT_LINE = /^(?:[A-Za-z฀-๿./]{1,20}[:-]\s*)?[0-9xX][0-9xX\s-]{7,}$/;
-// Recipient label words (Thai; longest alternatives first so a label isn't
-// partially consumed). Reused for tier 1 below AND folded into META_LINE, so a
-// bare label line on its own (no name on the same line — the name is on the
-// next line instead) isn't later mistaken for the recipient itself by the
-// tier-2 positional scan. Deliberately Thai-only here: DEFAULT_OCR_LABELS'
-// generic English hints ("to"/"name") are too short to use as a bare
-// substring match without risking a false capture inside unrelated text.
-const RECIPIENT_LABEL_WORDS = ["โอนไปยัง", "ไปยัง", "ถึง", "ผู้รับเงิน", "ผู้รับ"];
+// "006-xxxxxxxx-6996", "014000008031056", or one with an account label glued on
+// the same OCR line like "A/C: 006-xxxxxxxx-6996"). The optional prefix is an
+// account-specific label only (not any word) so an unrelated labelled digit run
+// — e.g. "โทร: 0812345678" — isn't mistaken for the account anchor.
+const ACCOUNT_LINE = /^(?:(?:เลขที่บัญชี|เลขบัญชี|บัญชี|A\/?C|ACCT|Account)\s*[:-]?\s*)?[0-9xX][0-9xX\s-]{7,}$/i;
+// Recipient label words. Derived from the shared registry (Thai entries only —
+// its generic English hints "to"/"name" are too short to use as a bare
+// substring match without risking a false capture) so this list can't drift
+// from DEFAULT_OCR_LABELS. Reused for tier 1 below AND folded into META_LINE,
+// so a bare label line on its own (name on the next line) isn't later mistaken
+// for the recipient itself by the tier-2 positional scan.
+const RECIPIENT_LABEL_WORDS = DEFAULT_OCR_LABELS.recipient.filter((w) => /[฀-๿]/.test(w));
 // A line that is just the payee's bank label (e.g. "ธ.กสิกรไทย",
 // "ธนาคารกสิกรไทย") rather than their actual name — seen on transfer slips
 // where the payee's bank is printed the same way the payer's bank is.
 const BANK_LABEL_LINE = /^(?:ธนาคาร|ธ\.)\s*\S/i;
-// Amount/reference/meta labels that are never the payee name.
+// Lines that are never the payee name. Amount labels must be followed by a
+// number (so a generic word like "ยอด" in a real name — "ยอดรัก", "ร้านยอดเยี่ยม"
+// — isn't skipped), while date/reference/recipient/fee labels are distinctive
+// enough to match as plain substrings.
 const META_LINE = new RegExp(
-  `${[...DEFAULT_OCR_LABELS.amount, ...DEFAULT_OCR_LABELS.date, ...DEFAULT_OCR_LABELS.reference, ...RECIPIENT_LABEL_WORDS].join("|")}|ค่าธรรมเนียม|รายละเอียด|เวลา`,
+  `(?:${DEFAULT_OCR_LABELS.amount.join("|")})\\s*[:\\-]?\\s*\\d` +
+    `|${[...DEFAULT_OCR_LABELS.date, ...DEFAULT_OCR_LABELS.reference, ...RECIPIENT_LABEL_WORDS].join("|")}|ค่าธรรมเนียม|รายละเอียด|เวลา`,
   "i",
 );
 

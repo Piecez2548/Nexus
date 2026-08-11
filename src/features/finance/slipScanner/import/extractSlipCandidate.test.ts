@@ -75,13 +75,17 @@ describe("extractSlipCandidate", () => {
       assetId: "slip3",
       bytes: new Uint8Array([1]),
       detector: createQrDetector(qrDecoder(NON_PROMPTPAY_QR)),
-      recognizer: ocrRecognizer("ธนาคารกสิกรไทย\nจำนวนเงิน 120.00 บาท"),
+      recognizer: ocrRecognizer("ธนาคารกสิกรไทย\n22/07/2569 14:35\nจำนวนเงิน 120.00 บาท"),
     });
 
     expect(candidate.source).toBe("qr");
-    expect(candidate.amount).toBe(120);
-    expect(candidate.merchant).toBe("TEST SHOP");
-    expect(candidate.bankId).toBe("kbank");
+    expect(candidate.amount).toBe(120); // EMVCo wins for amount
+    expect(candidate.merchant).toBe("TEST SHOP"); // EMVCo wins for merchant
+    expect(candidate.bankId).toBe("kbank"); // resolved from OCR text
+    // A CRC-valid EMVCo QR carries no date/time, so these come from OCR even
+    // though OCR ran only to resolve the bank.
+    expect(candidate.date).toBe("2026-07-22");
+    expect(candidate.time).toBe("14:35");
   });
 
   it("identifies the bank from OCR text on a non-EMVCo (slip-verify) QR / OCR slip", async () => {

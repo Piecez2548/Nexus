@@ -1,4 +1,4 @@
-import { luma } from "@/features/finance/slipScanner/engine/image/canvas";
+import { canvasToBytes, luma, makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
 import {
   enhancementFilterString,
   isEnhancementNeeded,
@@ -13,14 +13,14 @@ export interface EnhancementResult {
 }
 
 // Measure mean brightness + contrast (luma std) from a downscaled copy. Browser
-// only; null off-browser.
+// only (via the shared OffscreenCanvas/DOM-canvas fallback); null off-browser.
 export async function analyzeImage(bytes: Uint8Array): Promise<ImageStats | null> {
-  if (typeof createImageBitmap !== "function" || typeof OffscreenCanvas !== "function") return null;
+  if (typeof createImageBitmap !== "function") return null;
   try {
     const bitmap = await createImageBitmap(new Blob([bytes as unknown as BlobPart]));
-    const canvas = new OffscreenCanvas(64, 64);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
+    const target = makeCanvas(64, 64);
+    if (!target) return null;
+    const ctx = target.ctx;
     ctx.drawImage(bitmap, 0, 0, 64, 64);
     const { data } = ctx.getImageData(0, 0, 64, 64);
 
@@ -39,7 +39,11 @@ export async function analyzeImage(bytes: Uint8Array): Promise<ImageStats | null
   }
 }
 
-function sharpen(ctx: OffscreenCanvasRenderingContext2D, width: number, height: number): void {
+function sharpen(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  width: number,
+  height: number,
+): void {
   const src = ctx.getImageData(0, 0, width, height);
   const out = ctx.createImageData(width, height);
   const kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0];
@@ -75,19 +79,18 @@ export async function enhanceIfNeeded(bytes: Uint8Array): Promise<EnhancementRes
 
   try {
     const bitmap = await createImageBitmap(new Blob([bytes as unknown as BlobPart]));
-    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return { bytes, applied: null };
+    const target = makeCanvas(bitmap.width, bitmap.height);
+    if (!target) return { bytes, applied: null };
+    const ctx = target.ctx;
 
     ctx.filter = enhancementFilterString(plan);
     ctx.drawImage(bitmap, 0, 0);
     if (plan.sharpen) {
       ctx.filter = "none";
-      sharpen(ctx, canvas.width, canvas.height);
+      sharpen(ctx, bitmap.width, bitmap.height);
     }
 
-    const blob = await canvas.convertToBlob({ type: "image/png" });
-    return { bytes: new Uint8Array(await blob.arrayBuffer()), applied: plan };
+    return { bytes: await canvasToBytes(target.canvas), applied: plan };
   } catch {
     return { bytes, applied: null };
   }

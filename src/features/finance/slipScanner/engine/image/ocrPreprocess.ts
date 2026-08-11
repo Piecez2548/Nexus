@@ -39,8 +39,8 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
 
     const threshold = otsuThreshold(gray);
 
-    // Binarise and write back in the same pass (instead of a separate
-    // binarize() loop over `gray` followed by a copy loop into `image.data`).
+    // Binarise (value > threshold → white bg, else black text) and write back
+    // in a single pass, rather than a separate threshold loop then a copy loop.
     for (let i = 0, p = 0; i < image.data.length; i += 4, p += 1) {
       const v = gray[p]! > threshold ? 255 : 0;
       image.data[i] = v;

@@ -12,6 +12,11 @@ export interface QrRecoveryOptions {
   decoder?: QrDecoder;
   variants?: ImageVariantGenerator;
   maxAttempts?: number;
+  // Skip re-decoding the original bytes and go straight to transformed
+  // variants. Set by callers that have already tried the original with the same
+  // decoder (e.g. extractSlipCandidate's QR-detect stage), so the guaranteed-to-
+  // fail-again first decode isn't repeated.
+  skipOriginal?: boolean;
 }
 
 // QR Recovery Engine (GS-026): decode the original image, and if that fails,
@@ -23,9 +28,12 @@ export async function recoverQr(bytes: Uint8Array, options: QrRecoveryOptions = 
   const variants = options.variants ?? browserImageVariants;
   const maxAttempts = options.maxAttempts ?? Number.POSITIVE_INFINITY;
 
-  let attempts = 1;
-  const original = await decoder.decode(bytes);
-  if (original !== null) return { payload: original, recoveredBy: "original", attempts };
+  let attempts = 0;
+  if (!options.skipOriginal) {
+    attempts = 1;
+    const original = await decoder.decode(bytes);
+    if (original !== null) return { payload: original, recoveredBy: "original", attempts };
+  }
 
   for await (const variant of variants(bytes)) {
     if (attempts >= maxAttempts) break;

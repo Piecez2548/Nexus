@@ -38,12 +38,3 @@ export function otsuThreshold(gray: ArrayLike<number>): number {
 
   return threshold;
 }
-
-// Binarise a grayscale buffer in place using a threshold: value > threshold →
-// 255 (white background), else 0 (black text). Uses `>` so that pixels equal to
-// the Otsu threshold (the top of the dark/foreground class) stay black. Returns
-// the same buffer.
-export function binarize(gray: Uint8Array, threshold: number): Uint8Array {
-  for (let i = 0; i < gray.length; i++) gray[i] = gray[i]! > threshold ? 255 : 0;
-  return gray;
-}

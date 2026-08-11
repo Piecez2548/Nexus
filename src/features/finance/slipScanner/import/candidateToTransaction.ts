@@ -42,14 +42,16 @@ export function candidateToTransaction(candidate: SlipCandidate, options: Candid
     validCategoryNames,
   } = options;
 
-  const merchantOrBank = candidate.merchant?.trim() || candidate.bankName?.trim();
-  const title = merchantOrBank || fallbackTitle;
+  const title = candidate.merchant?.trim() || candidate.bankName?.trim() || fallbackTitle;
 
   const noteParts = [candidate.bankName, candidate.reference].filter(
     (part): part is string => typeof part === "string" && part.trim() !== "",
   );
 
-  const guessedCategory = categorize(merchantOrBank || title, learnedCategories).category;
+  // `title` is already merchant → bank → fallback, so it is the right
+  // categorisation signal (categorising the fallback title is harmless — it has
+  // no keyword hits and resolves to "Others").
+  const guessedCategory = categorize(title, learnedCategories).category;
 
   return {
     title,

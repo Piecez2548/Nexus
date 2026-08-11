@@ -32,12 +32,19 @@ export interface ExtractSlipInput {
 export async function extractSlipCandidate(input: ExtractSlipInput): Promise<SlipCandidate> {
   const detector = input.detector ?? defaultQrDetector;
   const recognizer = input.recognizer ?? tesseractOcrRecognizer;
-  const recover = input.recover ?? recoverQr;
+  // The detect stage already tried the original bytes with the same decoder, so
+  // recovery skips straight to transformed variants.
+  const recover = input.recover ?? ((bytes: Uint8Array) => recoverQr(bytes, { skipOriginal: true }));
 
   let detection = await detector.detect(input.bytes);
   if (!detection.hasQr) {
-    const recovery = await recover(input.bytes);
-    if (recovery.payload !== null) detection = { hasQr: true, payload: recovery.payload };
+    try {
+      const recovery = await recover(input.bytes);
+      if (recovery.payload !== null) detection = { hasQr: true, payload: recovery.payload };
+    } catch {
+      // Recovery is best-effort (canvas transforms can throw under memory
+      // pressure); a failure must not abort the batch — fall through to OCR.
+    }
   }
 
   const emvco = detection.payload !== null ? parseEmvcoPayload(detection.payload) : null;
@@ -47,7 +54,10 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
   const needsOcrFallback = shouldRunOcrFallback({ hasQr: detection.hasQr, emvco });
   if (needsOcrFallback || !bank) {
     const result = await runOcrFallback(input.bytes, recognizer);
-    if (needsOcrFallback) ocr = result;
+    // Keep the OCR fields even when OCR ran only to resolve the bank: a
+    // CRC-valid EMVCo QR carries no date/time, so these come from OCR
+    // regardless (buildSlipCandidate still prefers EMVCo for amount/merchant).
+    ocr = result;
     if (!bank) bank = identifyBankFromText(result.text);
   }
 

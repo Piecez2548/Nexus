@@ -130,4 +130,29 @@ describe("parseSlipText", () => {
     ].join("\n");
     expect(parseSlipText(text).recipient).toBe("สมหญิง รักดี");
   });
+
+  it("does not skip a real name that merely contains an amount-label word ('ยอด')", () => {
+    const text = [
+      "โอนเงินสำเร็จ",
+      "นายสมชาย ใจดี",
+      "ธ.กสิกรไทย",
+      "xxx-x-x5327-x",
+      "ยอดรัก คงยิ่งยง",
+      "จำนวน 100.00 บาท",
+    ].join("\n");
+    expect(parseSlipText(text).recipient).toBe("ยอดรัก คงยิ่งยง");
+  });
+
+  it("does not anchor the positional scan to a non-account labelled digit line (e.g. a phone number)", () => {
+    const text = [
+      "โอนเงินสำเร็จ",
+      "โทร: 0812345678",
+      "นายสมชาย ใจดี",
+      "ธ.กสิกรไทย",
+      "xxx-x-x5327-x",
+      "สมหญิง รักดี",
+      "จำนวน 100.00 บาท",
+    ].join("\n");
+    expect(parseSlipText(text).recipient).toBe("สมหญิง รักดี");
+  });
 });
