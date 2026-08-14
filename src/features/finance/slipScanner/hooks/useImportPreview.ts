@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { isAutoImportEligible } from "@/features/finance/slipScanner/ai/confidenceTier";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import { filterCandidates, type DuplicateFilter } from "@/features/finance/slipScanner/preview/importPreview";
 
@@ -18,10 +19,13 @@ export interface UseImportPreview {
   selectedCount: number;
 }
 
-// Default to importing every non-duplicate candidate — duplicates start
-// unchecked so a careless "Import Selected" doesn't re-import a transaction.
+// Default to importing only what's auto-import-eligible: high-confidence,
+// non-duplicate, with its critical fields present (confidence tier policy,
+// Section 9 of the Slip Intelligence review). A duplicate, a missing amount,
+// or merely medium/low confidence starts unchecked so a careless "Import
+// Selected" doesn't wave through something that needed a look first.
 function defaultSelection(candidates: SlipCandidate[]): Set<string> {
-  return new Set(candidates.filter((c) => !c.isDuplicate).map((c) => c.id));
+  return new Set(candidates.filter((c) => isAutoImportEligible(c)).map((c) => c.id));
 }
 
 // Drives the Import Preview: search, duplicate filter, and per-row selection.

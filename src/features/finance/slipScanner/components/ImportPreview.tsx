@@ -1,10 +1,18 @@
 import { Check, ImageOff, Search } from "lucide-react";
 
 import Drawer from "@/components/ui/Drawer";
+import { confidenceTier, type ConfidenceTier } from "@/features/finance/slipScanner/ai/confidenceTier";
 import { useImportPreview } from "@/features/finance/slipScanner/hooks/useImportPreview";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { DuplicateFilter } from "@/features/finance/slipScanner/preview/importPreview";
 import { useTranslation } from "@/i18n/useTranslation";
+
+const TIER_CLASSES: Record<ConfidenceTier, string> = {
+  high: "text-emerald-600 dark:text-emerald-400",
+  medium: "text-amber-600 dark:text-amber-400",
+  low: "text-orange-600 dark:text-orange-400",
+  critical: "text-red-600 dark:text-red-400",
+};
 
 interface Props {
   open: boolean;
@@ -142,8 +150,8 @@ export default function ImportPreview({ open, onClose, candidates, onImport }: P
                         <span className="text-zinc-500 dark:text-zinc-400">
                           {[candidate.date, candidate.time].filter(Boolean).join(" ") || "—"}
                         </span>
-                        <span className="ml-auto text-xs text-zinc-400">
-                          {t("slipScanner.importPreview.confidence")} {candidate.confidence}%
+                        <span className={`ml-auto text-xs font-medium ${TIER_CLASSES[confidenceTier(candidate)]}`}>
+                          {t(`slipScanner.importPreview.tier.${confidenceTier(candidate)}`)} · {candidate.confidence}%
                         </span>
                       </div>
                     </div>

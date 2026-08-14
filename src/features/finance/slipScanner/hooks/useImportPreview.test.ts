@@ -5,12 +5,16 @@ import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCa
 
 import { useImportPreview } from "./useImportPreview";
 
+// High confidence + an amount present, by default, so the fixture list is
+// auto-import-eligible unless a test overrides one of those (matching the
+// confidence-tier policy: only high-tier, non-duplicate candidates default-select).
 const candidate = (over: Partial<SlipCandidate>): SlipCandidate => ({
   id: "x",
   assetId: "x",
   source: "qr",
   isDuplicate: false,
-  confidence: 50,
+  confidence: 90,
+  amount: 100,
   ...over,
 });
 
@@ -21,10 +25,20 @@ const list: SlipCandidate[] = [
 ];
 
 describe("useImportPreview", () => {
-  it("defaults to selecting every non-duplicate candidate", () => {
+  it("defaults to selecting every high-confidence, non-duplicate candidate", () => {
     const { result } = renderHook(() => useImportPreview(list));
     expect(result.current.selectedCandidates.map((c) => c.id)).toEqual(["1", "3"]);
     expect(result.current.isSelected("2")).toBe(false);
+  });
+
+  it("does not default-select a candidate that is merely medium/low confidence or missing its amount, even when not a duplicate", () => {
+    const mixed: SlipCandidate[] = [
+      candidate({ id: "sure", confidence: 90, amount: 100 }),
+      candidate({ id: "unsure", confidence: 40, amount: 100 }),
+      candidate({ id: "no-amount", confidence: 90, amount: undefined }),
+    ];
+    const { result } = renderHook(() => useImportPreview(mixed));
+    expect(result.current.selectedCandidates.map((c) => c.id)).toEqual(["sure"]);
   });
 
   it("toggles a single candidate", () => {

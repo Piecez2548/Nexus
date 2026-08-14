@@ -419,6 +419,12 @@ export const translations = {
         selectedCount: "{{count}} selected",
         importSelected: "Import {{count}} selected",
         empty: "No slips to preview",
+        tier: {
+          high: "High",
+          medium: "Medium",
+          low: "Low",
+          critical: "No amount",
+        },
       },
       galleryScan: {
         scanning: "Scanning slip {{done}}/{{total}}…",
@@ -2382,6 +2388,12 @@ export const translations = {
         selectedCount: "เลือกแล้ว {{count}} รายการ",
         importSelected: "นำเข้า {{count}} รายการ",
         empty: "ไม่มีสลิปให้แสดง",
+        tier: {
+          high: "มั่นใจสูง",
+          medium: "มั่นใจปานกลาง",
+          low: "มั่นใจต่ำ",
+          critical: "ไม่มีจำนวนเงิน",
+        },
       },
       galleryScan: {
         scanning: "กำลังสแกนสลิป {{done}}/{{total}}…",

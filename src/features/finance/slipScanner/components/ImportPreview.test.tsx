@@ -26,12 +26,15 @@ beforeEach(() => {
 });
 
 describe("ImportPreview", () => {
-  it("lists candidates with bank, merchant, confidence and a duplicate badge", () => {
+  it("lists candidates with bank, merchant, confidence tier and a duplicate badge", () => {
     render(<ImportPreview open onClose={() => {}} candidates={list} onImport={() => {}} />);
     expect(screen.getByText("Coffee Shop")).toBeInTheDocument();
     expect(screen.getByText("Bookstore")).toBeInTheDocument();
     expect(screen.getByText("Duplicate")).toBeInTheDocument();
-    expect(screen.getByText("Confidence 90%")).toBeInTheDocument();
+    // Candidate 1: confidence 90 -> "high" tier.
+    expect(screen.getByText((_, node) => node?.textContent === "High · 90%")).toBeInTheDocument();
+    // Candidate 2: confidence 60 -> "medium" tier.
+    expect(screen.getByText((_, node) => node?.textContent === "Medium · 60%")).toBeInTheDocument();
   });
 
   it("imports only the default (non-duplicate) selection", async () => {
