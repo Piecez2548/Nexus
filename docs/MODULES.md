@@ -1,6 +1,6 @@
 # Modules
 
-**Last Updated:** 2026-08-14
+**Last Updated:** 2026-08-15
 
 ## Overview
 
@@ -60,11 +60,13 @@ A separate, ~100-file subsystem within Finance for **batch** slip import — dis
 
 **Extraction pipeline** (`extractSlipCandidate`): QR detect (jsQR, with a rotate/brighten/contrast/upscale recovery retry) → EMVCo/PromptPay TLV parse (with CRC-16 integrity) → plugin-based bank identification (falls back to OCR-text bank identification when EMVCo can't resolve it) → OCR fallback (Tesseract.js, reused from the single-slip scanner) when the QR is missing/damaged/non-EMVCo — adaptively brightness/contrast-corrected then upscaled/downscaled + Otsu-binarised to beat slip watermarks — → slip-level duplicate detection (SHA-256 + perceptual hash).
 
-**Also includes:** a versioned scan cache and concurrent queue (`ScanCache`/`MediaProvider`, built for a 50k-image library, though full-gallery auto-enumeration is still a stub — today's shipping path is the picker); Smart Import with progress/cancel/resume/rollback into the existing `transactionService`; security (audit log, secure deletion, CRC tamper detection); a deterministic, advisory (never-mutating) AI layer — slip verification, fraud detection, transaction categorization with local learning, merchant intelligence, transaction linking, spending intelligence, a financial intelligence report.
+**Also includes:** a versioned scan cache and concurrent, byte-budgeted queue (`ScanCache`/`MediaProvider`, `scanSessionService`) built for a 50k-image library, now driving real extraction (`slipExtractionProcessor`) behind `useFullGalleryScan`/`FullGalleryScanPanel` — a live progress dashboard with pause/resume/cancel, tested but not yet wired into navigation; Smart Import with progress/cancel/resume/rollback into the existing `transactionService`, plus conflict resolution against existing transactions; security (audit log, secure deletion, CRC tamper detection); a deterministic, advisory (never-mutating) AI layer — slip verification, fraud detection, transaction categorization with local learning (now with a Review Queue UI to correct a guess and have it stick), merchant intelligence, transaction linking, spending intelligence, a financial intelligence report.
 
-**Current Status:** Complete (GS epic 50/50) and verified on-device (Android APK installed and tested against real slips, with two follow-up bug-fix/code-review rounds — see [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s "Post-Launch Stabilization"). Known gap: category-learning corrections are wired but nothing in the UI writes one yet (no category field in Import Preview) — see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md).
+**Two scan paths coexist by design:** the shipping picker flow (`GalleryScanFlow`/`useSlipScan`, sequential, same-batch near-duplicate detection) and the concurrent orchestrator path (`FullGalleryScanPanel`/`useFullGalleryScan`, built for a full native-gallery scan) — the latter intentionally skips same-batch dedup, since that logic depends on a processing order the concurrent queue doesn't guarantee. See [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md).
 
-**Future Plans:** Full-gallery native auto-enumeration; a category-correction UI. See [ROADMAP.md](ROADMAP.md) and [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md) for full detail (this module has no dedicated architecture doc the way AI Analytics does — the task registry's per-task notes serve that role).
+**Current Status:** Complete (GS epic 50/50) and verified on-device (Android APK installed and tested against real slips, with two follow-up bug-fix/code-review rounds — see [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s "Post-Launch Stabilization"). The 2026-08-15 Slip Intelligence Phases 1-9 closed the confidence-engine, smart-duplicate, conflict-resolver, recovery-system, and category-learning-UI gaps, added a confidence-tier import policy and an Import History screen, and implemented the native `GalleryMediaPlugin.java` MediaStore plugin (compiles, packages; not yet device-validated). Known gaps: the native plugin needs an on-device pass, and `FullGalleryScanPanel` has no nav entry point yet — see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md).
+
+**Future Plans:** Device-validate the native plugin, then wire `FullGalleryScanPanel` into live navigation (likely alongside or replacing the picker button); a deterministic same-batch dedup pass for the orchestrator path. See [ROADMAP.md](ROADMAP.md) and [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md) for full detail (this module has no dedicated architecture doc the way AI Analytics does — the task registry's per-task notes serve that role).
 
 ---
 
