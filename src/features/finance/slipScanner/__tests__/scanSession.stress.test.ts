@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "@/database/db";
 import type { ScanCache } from "@/features/finance/slipScanner/cache/scanCache";
@@ -19,9 +19,11 @@ class StressProvider implements MediaProvider {
   readonly capabilities = { canEnumerate: true, needsPermission: false };
 
   private readonly n: number;
+  private readonly declaredBytes: number;
 
-  constructor(n: number) {
+  constructor(n: number, declaredBytes = 4) {
     this.n = n;
+    this.declaredBytes = declaredBytes;
   }
 
   async count(): Promise<number | null> {
@@ -30,7 +32,11 @@ class StressProvider implements MediaProvider {
 
   async *enumerate(): AsyncGenerator<GalleryAssetRef> {
     for (let i = 0; i < this.n; i++) {
-      yield { assetId: `a${i}`, capturedAt: `2026-01-01T00:00:00.${String(i % 1000).padStart(3, "0")}Z`, bytes: 4 };
+      yield {
+        assetId: `a${i}`,
+        capturedAt: `2026-01-01T00:00:00.${String(i % 1000).padStart(3, "0")}Z`,
+        bytes: this.declaredBytes,
+      };
     }
   }
 
@@ -101,4 +107,69 @@ describe("scan session stress / memory", () => {
     // ...and it genuinely ran in parallel.
     expect(peak).toBeGreaterThan(1);
   });
+
+  it("ByteBudget, not just the worker cap, bounds in-flight images once they're realistically sized", async () => {
+    // At the default budget (32MB) and DEFAULT_IMAGE_BYTES (2MB), 4 workers
+    // never actually pressure ByteBudget -- 4 * 2MB is well under 32MB, so
+    // the earlier test's peak<=concurrency bound is really just the worker
+    // cap. Push concurrency past what the budget can support at a realistic
+    // image size (4MB) to prove ByteBudget is a real, independent limiter,
+    // not just documentation.
+    const N = 500;
+    const concurrency = 20;
+    const imageBytes = 4 * 1024 * 1024; // 4MB/image
+    const budgetBytes = 32 * 1024 * 1024; // scanSessionService's default
+    const budgetImplied = Math.floor(budgetBytes / imageBytes); // 8
+
+    let inFlight = 0;
+    let peak = 0;
+    const processor: ScanProcessor = {
+      async process() {
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        inFlight -= 1;
+      },
+    };
+
+    const run = await createScanSession({
+      provider: new StressProvider(N, imageBytes),
+      options: { source: "stress-bytes", incremental: false, concurrency },
+      cache: memoryCache(),
+      processor,
+    }).done;
+
+    expect(run.status).toBe("completed");
+    expect(run.done).toBe(N);
+    // Bounded by the byte budget, well below the 20-worker cap.
+    expect(peak).toBeLessThanOrEqual(budgetImplied);
+    expect(peak).toBeLessThan(concurrency);
+    expect(peak).toBeGreaterThan(1);
+  });
+
+  it("handles a 10k-image library with throttled checkpoint writes (not one write per image)", async () => {
+    const N = 10_000;
+    const updateSpy = vi.spyOn(db.slipScanRuns, "update");
+
+    const processor: ScanProcessor = {
+      async process() {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      },
+    };
+
+    const run = await createScanSession({
+      provider: new StressProvider(N),
+      options: { source: "stress-10k", incremental: false, concurrency: 4 },
+      cache: memoryCache(),
+      processor,
+    }).done;
+
+    expect(run.status).toBe("completed");
+    expect(run.done).toBe(N);
+    // Checkpoint throttling (every 2s or 50 items, whichever first) plus one
+    // final flush -- nowhere near N writes for N items.
+    expect(updateSpy.mock.calls.length).toBeLessThan(N / 10);
+
+    updateSpy.mockRestore();
+  }, 30_000);
 });
