@@ -15,6 +15,26 @@ export type SlipCategory =
   | "Investment"
   | "Others";
 
+// Runtime membership list mirroring the SlipCategory union — lets callers
+// guard values (e.g. a user's free-form category name) before treating them
+// as a SlipCategory, since the type itself doesn't exist at runtime.
+export const SLIP_CATEGORIES: readonly SlipCategory[] = [
+  "Food",
+  "Transport",
+  "Shopping",
+  "Bills",
+  "Education",
+  "Healthcare",
+  "Entertainment",
+  "Salary",
+  "Investment",
+  "Others",
+];
+
+export function isSlipCategory(value: string): value is SlipCategory {
+  return (SLIP_CATEGORIES as readonly string[]).includes(value);
+}
+
 export interface CategoryGuess {
   category: SlipCategory;
   confidence: number; // 0–1

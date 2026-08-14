@@ -1,7 +1,8 @@
-import { Check, ImageOff, Search } from "lucide-react";
+import { Check, ImageOff, Pencil, Search } from "lucide-react";
 
 import Drawer from "@/components/ui/Drawer";
 import { confidenceTier, type ConfidenceTier } from "@/features/finance/slipScanner/ai/confidenceTier";
+import ReviewEditForm from "@/features/finance/slipScanner/components/ReviewEditForm";
 import { useImportPreview } from "@/features/finance/slipScanner/hooks/useImportPreview";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { DuplicateFilter } from "@/features/finance/slipScanner/preview/importPreview";
@@ -93,9 +94,25 @@ export default function ImportPreview({ open, onClose, candidates, onImport }: P
           <ul className="max-h-96 space-y-2 overflow-y-auto">
             {preview.visible.map((candidate) => {
               const checked = preview.isSelected(candidate.id);
+
+              if (preview.editingId === candidate.id) {
+                return (
+                  <li key={candidate.id}>
+                    <ReviewEditForm
+                      candidate={candidate}
+                      onCancel={() => preview.startEdit(null)}
+                      onSave={(patch) => {
+                        preview.applyEdit(candidate.id, patch);
+                        preview.startEdit(null);
+                      }}
+                    />
+                  </li>
+                );
+              }
+
               return (
-                <li key={candidate.id}>
-                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
+                <li key={candidate.id} className="flex items-center gap-2">
+                  <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 p-3">
                     <span
                       className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
                         checked ? "border-brand-500 bg-brand-500 text-white" : "border-zinc-300 dark:border-zinc-600"
@@ -140,6 +157,9 @@ export default function ImportPreview({ open, onClose, candidates, onImport }: P
                       </div>
                       <div className="truncate text-sm text-zinc-500 dark:text-zinc-400">
                         {candidate.merchant ?? "—"}
+                        {candidate.category && (
+                          <span className="ml-2 text-xs text-brand-500">({candidate.category})</span>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 text-sm">
                         <span className="font-semibold">
@@ -156,6 +176,14 @@ export default function ImportPreview({ open, onClose, candidates, onImport }: P
                       </div>
                     </div>
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => preview.startEdit(candidate.id)}
+                    aria-label={t("slipScanner.importPreview.editRow")}
+                    className="shrink-0 rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-100 hover:text-brand-500 dark:hover:bg-zinc-800"
+                  >
+                    <Pencil size={16} />
+                  </button>
                 </li>
               );
             })}

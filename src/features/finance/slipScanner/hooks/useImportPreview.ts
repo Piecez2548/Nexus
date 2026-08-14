@@ -4,6 +4,11 @@ import { isAutoImportEligible } from "@/features/finance/slipScanner/ai/confiden
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import { filterCandidates, type DuplicateFilter } from "@/features/finance/slipScanner/preview/importPreview";
 
+// The fields a person can correct in the Review Queue before import — a
+// deliberately small set (not the whole candidate): the ones a QR/OCR misread
+// or a wrong auto-category guess actually affects.
+export type CandidateEdit = Partial<Pick<SlipCandidate, "amount" | "merchant" | "category" | "date">>;
+
 export interface UseImportPreview {
   visible: SlipCandidate[];
   search: string;
@@ -17,6 +22,11 @@ export interface UseImportPreview {
   allVisibleSelected: boolean;
   selectedCandidates: SlipCandidate[];
   selectedCount: number;
+  // Review Queue field edits, applied on top of the original extraction.
+  editingId: string | null;
+  startEdit: (id: string | null) => void;
+  applyEdit: (id: string, patch: CandidateEdit) => void;
+  editsFor: (id: string) => CandidateEdit | undefined;
 }
 
 // Default to importing only what's auto-import-eligible: high-confidence,
@@ -28,32 +38,42 @@ function defaultSelection(candidates: SlipCandidate[]): Set<string> {
   return new Set(candidates.filter((c) => isAutoImportEligible(c)).map((c) => c.id));
 }
 
-// Drives the Import Preview: search, duplicate filter, and per-row selection.
-// Selection resets to the sensible default whenever the candidate set changes
-// (a new scan), but is preserved across search/filter changes within one set.
+// Drives the Import Preview / Review Queue: search, duplicate filter,
+// per-row selection, and per-row field edits. Selection and edits reset to
+// their defaults whenever the candidate set changes (a new scan), but persist
+// across search/filter changes within one set.
 export function useImportPreview(candidates: SlipCandidate[]): UseImportPreview {
   const [search, setSearch] = useState("");
   const [duplicateFilter, setDuplicateFilter] = useState<DuplicateFilter>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => defaultSelection(candidates));
+  const [edits, setEdits] = useState<Map<string, CandidateEdit>>(new Map());
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Reset selection to the default when the candidate set changes (a new scan),
-  // using React's "adjust state during render" pattern — preferred over an
-  // effect, and preserves selection across search/filter changes within one set.
+  // Reset selection/edits to the default when the candidate set changes (a new
+  // scan), using React's "adjust state during render" pattern — preferred over
+  // an effect, and preserves state across search/filter changes within one set.
   const signature = candidates.map((c) => c.id).join(",");
   const [prevSignature, setPrevSignature] = useState(signature);
   if (signature !== prevSignature) {
     setPrevSignature(signature);
     setSelectedIds(defaultSelection(candidates));
+    setEdits(new Map());
+    setEditingId(null);
   }
 
+  const edited = useMemo(
+    () => candidates.map((c) => (edits.has(c.id) ? { ...c, ...edits.get(c.id) } : c)),
+    [candidates, edits],
+  );
+
   const visible = useMemo(
-    () => filterCandidates(candidates, { search, duplicate: duplicateFilter }),
-    [candidates, search, duplicateFilter],
+    () => filterCandidates(edited, { search, duplicate: duplicateFilter }),
+    [edited, search, duplicateFilter],
   );
 
   const selectedCandidates = useMemo(
-    () => candidates.filter((c) => selectedIds.has(c.id)),
-    [candidates, selectedIds],
+    () => edited.filter((c) => selectedIds.has(c.id)),
+    [edited, selectedIds],
   );
 
   return {
@@ -80,5 +100,14 @@ export function useImportPreview(candidates: SlipCandidate[]): UseImportPreview 
     allVisibleSelected: visible.length > 0 && visible.every((c) => selectedIds.has(c.id)),
     selectedCandidates,
     selectedCount: selectedCandidates.length,
+    editingId,
+    startEdit: setEditingId,
+    applyEdit: (id, patch) =>
+      setEdits((prev) => {
+        const next = new Map(prev);
+        next.set(id, { ...next.get(id), ...patch });
+        return next;
+      }),
+    editsFor: (id) => edits.get(id),
   };
 }

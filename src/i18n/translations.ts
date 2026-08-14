@@ -425,6 +425,11 @@ export const translations = {
           low: "Low",
           critical: "No amount",
         },
+        editRow: "Edit",
+        editAmount: "Amount",
+        editMerchant: "Merchant",
+        editCategory: "Category",
+        editCategoryAuto: "Auto-detect",
       },
       galleryScan: {
         scanning: "Scanning slip {{done}}/{{total}}…",
@@ -2394,6 +2399,11 @@ export const translations = {
           low: "มั่นใจต่ำ",
           critical: "ไม่มีจำนวนเงิน",
         },
+        editRow: "แก้ไข",
+        editAmount: "จำนวนเงิน",
+        editMerchant: "ร้านค้า",
+        editCategory: "หมวดหมู่",
+        editCategoryAuto: "ตรวจจับอัตโนมัติ",
       },
       galleryScan: {
         scanning: "กำลังสแกนสลิป {{done}}/{{total}}…",

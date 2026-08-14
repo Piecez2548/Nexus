@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { categorize, type SlipCategory } from "./transactionCategorizer";
+import { categorize, isSlipCategory, type SlipCategory } from "./transactionCategorizer";
 
 describe("categorize", () => {
   it("maps keywords (Thai + English) to categories", () => {
@@ -29,5 +29,17 @@ describe("categorize", () => {
 
   it("handles empty text", () => {
     expect(categorize("   ").category).toBe("Others");
+  });
+});
+
+describe("isSlipCategory", () => {
+  it("accepts every fixed SlipCategory value", () => {
+    expect(isSlipCategory("Food")).toBe(true);
+    expect(isSlipCategory("Others")).toBe(true);
+  });
+
+  it("rejects a user's own free-form category name", () => {
+    expect(isSlipCategory("Gym")).toBe(false);
+    expect(isSlipCategory("")).toBe(false);
   });
 });

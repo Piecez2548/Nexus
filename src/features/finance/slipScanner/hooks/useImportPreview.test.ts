@@ -68,6 +68,44 @@ describe("useImportPreview", () => {
     expect(result.current.visible.map((c) => c.id)).toEqual(["3"]);
   });
 
+  it("applies a field edit on top of the original candidate, everywhere the candidate is read", () => {
+    const { result } = renderHook(() => useImportPreview(list));
+    act(() => result.current.applyEdit("1", { amount: 999, category: "Business" }));
+
+    const edited = result.current.visible.find((c) => c.id === "1");
+    expect(edited?.amount).toBe(999);
+    expect(edited?.category).toBe("Business");
+    // Everything not explicitly edited is untouched.
+    expect(edited?.merchant).toBe("Coffee");
+
+    // selectedCandidates (what actually gets imported) reflects the edit too.
+    const selected = result.current.selectedCandidates.find((c) => c.id === "1");
+    expect(selected?.amount).toBe(999);
+  });
+
+  it("tracks which row is being edited and exposes its pending edit", () => {
+    const { result } = renderHook(() => useImportPreview(list));
+    expect(result.current.editingId).toBeNull();
+
+    act(() => result.current.startEdit("1"));
+    expect(result.current.editingId).toBe("1");
+
+    act(() => result.current.applyEdit("1", { merchant: "Corrected Name" }));
+    expect(result.current.editsFor("1")).toEqual({ merchant: "Corrected Name" });
+    expect(result.current.editsFor("2")).toBeUndefined();
+  });
+
+  it("clears edits when the candidate set changes (a new scan)", () => {
+    const { result, rerender } = renderHook(({ items }) => useImportPreview(items), {
+      initialProps: { items: list },
+    });
+    act(() => result.current.applyEdit("1", { amount: 999 }));
+    expect(result.current.editsFor("1")).toBeDefined();
+
+    rerender({ items: [candidate({ id: "9", merchant: "New" })] });
+    expect(result.current.editsFor("1")).toBeUndefined();
+  });
+
   it("resets selection to the default when the candidate set changes", () => {
     const { result, rerender } = renderHook(({ items }) => useImportPreview(items), {
       initialProps: { items: list },

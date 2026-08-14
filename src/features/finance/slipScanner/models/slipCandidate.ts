@@ -29,6 +29,12 @@ export interface SlipCandidate {
   // 0–100, from the Confidence Engine (GS-046): a weighted combination of
   // whichever QR/parser/OCR/bank signals this candidate actually has.
   confidence: number;
+  // A user correction from the Review Queue, if any — set explicitly by a
+  // person, so candidateToTransaction prefers it over the auto-categorize()
+  // guess the same way an explicit merchant/amount already wins over a
+  // derived one. Absent from the extraction pipeline itself; the AI/parsing
+  // stages never set this field.
+  category?: string;
 }
 
 export interface SlipCandidateInput {

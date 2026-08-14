@@ -64,4 +64,35 @@ describe("ImportPreview", () => {
     await user.type(screen.getByPlaceholderText("Search merchant, reference, bank"), "nonexistent");
     expect(screen.getByText("No slips to preview")).toBeInTheDocument();
   });
+
+  it("edits a row via its pencil button and reflects the saved patch in the list and the import payload", async () => {
+    const onImport = vi.fn();
+    const user = userEvent.setup();
+    render(<ImportPreview open onClose={() => {}} candidates={list} onImport={onImport} />);
+
+    await user.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+    // The normal row for candidate 1 is replaced by the edit form.
+    expect(screen.queryByText("Coffee Shop")).not.toBeInTheDocument();
+
+    const merchantInput = screen.getByLabelText("Merchant");
+    await user.clear(merchantInput);
+    await user.type(merchantInput, "Corrected Cafe");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // Row reappears with the edit applied.
+    expect(screen.getByText("Corrected Cafe")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Import 1 selected" }));
+    expect(onImport.mock.calls[0][0][0]).toMatchObject({ id: "1", merchant: "Corrected Cafe" });
+  });
+
+  it("cancels an edit without changing the candidate", async () => {
+    const user = userEvent.setup();
+    render(<ImportPreview open onClose={() => {}} candidates={list} onImport={() => {}} />);
+
+    await user.click(screen.getAllByRole("button", { name: "Edit" })[0]);
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(screen.getByText("Coffee Shop")).toBeInTheDocument();
+  });
 });

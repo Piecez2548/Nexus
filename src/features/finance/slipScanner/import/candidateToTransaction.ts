@@ -52,13 +52,16 @@ export function candidateToTransaction(candidate: SlipCandidate, options: Candid
   // categorisation signal (categorising the fallback title is harmless — it has
   // no keyword hits and resolves to "Others").
   const guessedCategory = categorize(title, learnedCategories).category;
+  // A Review Queue correction is a person's explicit choice from their own
+  // live category list — trust it directly, skip the guess-validation path.
+  const category = candidate.category?.trim() || resolveCategory(guessedCategory, validCategoryNames);
 
   return {
     title,
     amount: candidate.amount ?? 0,
     type: "expense",
     account: defaultAccount,
-    category: resolveCategory(guessedCategory, validCategoryNames),
+    category,
     date: candidate.date ?? today(),
     time: candidate.time,
     note: noteParts.length > 0 ? noteParts.join(" · ") : undefined,

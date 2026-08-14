@@ -81,4 +81,18 @@ describe("candidateToTransaction", () => {
     });
     expect(tx.category).toBeUndefined();
   });
+
+  it("trusts an explicit Review Queue category override over the auto-categorize() guess", () => {
+    // Merchant would auto-categorize as "Food", but the user corrected it.
+    const tx = candidateToTransaction(
+      candidate({ merchant: "Coffee Shop", amount: 20, category: "Business Expense" }),
+      { validCategoryNames: new Set(["Food", "Others"]) }, // even one NOT in the live list is still trusted
+    );
+    expect(tx.category).toBe("Business Expense");
+  });
+
+  it("falls through to the normal guess when the category override is blank", () => {
+    const tx = candidateToTransaction(candidate({ merchant: "Coffee Shop", amount: 20, category: "   " }));
+    expect(tx.category).toBe("Food");
+  });
 });
