@@ -31,6 +31,9 @@ export interface ScanOptions {
   maxRetries?: number;
   retryDelayMs?: number;
   maxInflightBytes?: number;
+  // Progress-checkpoint persistence throttle (defaults in scanQueueConfig.ts).
+  checkpointIntervalMs?: number;
+  checkpointEveryN?: number;
 }
 
 // ── Persisted (Dexie) — device-local, not synced ──

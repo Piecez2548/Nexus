@@ -2,10 +2,13 @@ import { scanRunRepository } from "@/features/finance/slipScanner/repositories/s
 import { dexieScanCache } from "@/features/finance/slipScanner/cache/dexieScanCache";
 import { CURRENT_ENGINE_VERSIONS } from "@/features/finance/slipScanner/cache/scanCachePolicy";
 import { sha256Hex } from "@/features/finance/slipScanner/engine/hash/contentHash";
+import { createCheckpointThrottle } from "@/features/finance/slipScanner/services/checkpointThrottle";
 import { recordingProcessor, type ScanProcessor } from "@/features/finance/slipScanner/services/scanProcessor";
 import { runConcurrentQueue } from "@/features/finance/slipScanner/queue/runConcurrentQueue";
 import { ByteBudget } from "@/features/finance/slipScanner/queue/byteBudget";
 import {
+  DEFAULT_CHECKPOINT_EVERY_N,
+  DEFAULT_CHECKPOINT_INTERVAL_MS,
   DEFAULT_IMAGE_BYTES,
   DEFAULT_MAX_INFLIGHT_BYTES,
   DEFAULT_MAX_RETRIES,
@@ -63,6 +66,9 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
   let cancelled = false;
   let pauseGate: Promise<void> | null = null;
   let releasePause: (() => void) | null = null;
+  // Owned by run(), but pause() also needs to read it (to flush an accurate
+  // checkpoint at the moment the user steps away), so it lives out here.
+  const progress: ScanProgress = { total: null, done: 0, skipped: 0, failed: 0 };
 
   function pause(): void {
     if (status !== "running") return;
@@ -70,7 +76,14 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
     pauseGate = new Promise((resolve) => {
       releasePause = resolve;
     });
-    if (runId > 0) void scanRunRepository.checkpoint(runId, { status: "paused" }).catch(() => {});
+    // Flush current progress alongside the status, not just on the throttle's
+    // own schedule — a pause is a natural "the user stepped away" moment
+    // where an app kill shouldn't lose more than necessary.
+    if (runId > 0) {
+      void scanRunRepository
+        .checkpoint(runId, { status: "paused", done: progress.done, skipped: progress.skipped, failed: progress.failed })
+        .catch(() => {});
+    }
   }
 
   function resume(): void {
@@ -95,7 +108,13 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
   }
 
   async function run(): Promise<SlipScanRun> {
-    const progress: ScanProgress = { total: null, done: 0, skipped: 0, failed: 0 };
+    // Reset the shared progress object for this run (a fresh createScanSession
+    // call reuses neither the closure nor this state across runs, but resuming
+    // sets these fields explicitly below either way).
+    progress.total = null;
+    progress.done = 0;
+    progress.skipped = 0;
+    progress.failed = 0;
     let cursor: string | undefined;
 
     // Resume an interrupted session (incremental only), else start fresh.
@@ -172,6 +191,11 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
       }
     }
 
+    const checkpointThrottle = createCheckpointThrottle(
+      params.options.checkpointIntervalMs ?? DEFAULT_CHECKPOINT_INTERVAL_MS,
+      params.options.checkpointEveryN ?? DEFAULT_CHECKPOINT_EVERY_N,
+    );
+
     await runConcurrentQueue<GalleryAssetRef>({
       source: params.provider.enumerate(cursor),
       handler: handleAsset,
@@ -187,17 +211,27 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
           progress.failed++;
           await cache.recordFailed({ assetId: item.assetId, lastModified: item.capturedAt, runId });
         }
-        await scanRunRepository.checkpoint(runId, {
-          done: progress.done,
-          skipped: progress.skipped,
-          failed: progress.failed,
-        });
+        // Persisting on every settled item is 50k Dexie writes at 50k images;
+        // coalesce to the throttle's schedule. onProgress (a plain callback,
+        // no I/O) still fires every time — the UI can throttle its own
+        // re-renders independently if it wants to.
+        if (checkpointThrottle.shouldFlush()) {
+          await scanRunRepository.checkpoint(runId, {
+            done: progress.done,
+            skipped: progress.skipped,
+            failed: progress.failed,
+          });
+        }
         params.onProgress?.(progress, status);
       },
     });
 
     const finalStatus: ScanStatus = cancelled ? "cancelled" : "completed";
     status = finalStatus;
+    // Unconditional final flush — the persisted done/skipped/failed must be
+    // exact once the run ends, regardless of where the throttle's schedule
+    // happened to land on the last item.
+    await scanRunRepository.checkpoint(runId, { done: progress.done, skipped: progress.skipped, failed: progress.failed });
     await scanRunRepository.finish(runId, finalStatus, nowIso());
     // Only advance the incremental cursor on a clean finish. On interruption
     // the cursor stays put and a resume re-enumerates from it, relying on the

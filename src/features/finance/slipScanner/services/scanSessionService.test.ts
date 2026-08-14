@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 
 import { db } from "@/database/db";
 import { createScanSession, type ScanSession } from "@/features/finance/slipScanner/services/scanSessionService";
@@ -128,6 +128,26 @@ describe("createScanSession", () => {
     expect(run.failed).toBe(1);
     expect(run.skipped).toBe(0);
     expect(run.done).toBe(0);
+  });
+
+  it("coalesces progress checkpoint writes instead of persisting on every single item", async () => {
+    const items = Array.from({ length: 20 }, (_, i) => asset(`t${i}`, (i % 9) + 1, [i, i + 50]));
+    const updateSpy = vi.spyOn(db.slipScanRuns, "update");
+
+    const run = await createScanSession({
+      provider: new FakeProvider(items),
+      options: { source: "fake", incremental: false, concurrency: 4, checkpointIntervalMs: 1_000_000, checkpointEveryN: 5 },
+    }).done;
+
+    expect(run.status).toBe("completed");
+    expect(run.done).toBe(20); // final persisted state is exact...
+    // ...even though far fewer than 20 checkpoint writes happened along the way
+    // (1 create-time "running" checkpoint doesn't count here; every write below
+    // is from the throttled progress-persistence path, plus the unconditional
+    // final flush and the cursor checkpoint).
+    expect(updateSpy.mock.calls.length).toBeLessThan(20);
+
+    updateSpy.mockRestore();
   });
 
   it("incremental — a second scan skips already-scanned assets", async () => {
