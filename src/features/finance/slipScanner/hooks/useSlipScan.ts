@@ -1,6 +1,8 @@
 import { useCallback, useState } from "react";
 
 import { createDuplicateDetector } from "@/features/finance/slipScanner/engine/dedup/slipDuplicate";
+import { findBestDuplicate, isLikelyDuplicate, type DuplicateSignals } from "@/features/finance/slipScanner/engine/dedup/smartDuplicate";
+import { hashImage } from "@/features/finance/slipScanner/engine/hash/imageHash";
 import { webAssetId } from "@/features/finance/slipScanner/gallery/media/WebPickerProvider";
 import { extractSlipCandidate, type ExtractSlipInput } from "@/features/finance/slipScanner/import/extractSlipCandidate";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
@@ -42,6 +44,10 @@ export function useSlipScan(extractor: SlipExtractor = extractSlipCandidate): Us
 
     const dedup = createDuplicateDetector();
     const results: SlipCandidate[] = [];
+    // Smart Duplicate Engine (GS-031) signals seen so far this batch, for the
+    // graded check below — catches a near-duplicate (re-saved/recompressed
+    // copy, an OCR misread reference) the exact-match key alone would miss.
+    const signalsSoFar: DuplicateSignals[] = [];
 
     try {
       for (let i = 0; i < files.length; i++) {
@@ -50,14 +56,32 @@ export function useSlipScan(extractor: SlipExtractor = extractSlipCandidate): Us
         const thumbnailUrl = URL.createObjectURL(file);
 
         const candidate = await extractor({ assetId: webAssetId(file), bytes, thumbnailUrl });
-        const isDuplicate = dedup.markSeen({
+        const timestamp = [candidate.date, candidate.time].filter(Boolean).join(" ") || undefined;
+
+        const exactDuplicate = dedup.markSeen({
           payload: candidate.payload,
           ref1: candidate.reference,
           amount: candidate.amount,
           bank: candidate.bankId,
           merchant: candidate.merchant,
-          timestamp: [candidate.date, candidate.time].filter(Boolean).join(" ") || undefined,
+          timestamp,
         });
+
+        // Best-effort perceptual hash (browser-only; null off-browser/on any
+        // failure) so a visually-identical re-save/recompression still matches.
+        const { pHash } = await hashImage(bytes).catch(() => ({ sha256: "", pHash: null }));
+        const signals: DuplicateSignals = {
+          payload: candidate.payload,
+          reference: candidate.reference,
+          amount: candidate.amount,
+          merchant: candidate.merchant,
+          timestamp,
+          pHash,
+        };
+        const bestMatch = findBestDuplicate(signals, signalsSoFar);
+        signalsSoFar.push(signals);
+
+        const isDuplicate = exactDuplicate || (bestMatch !== null && isLikelyDuplicate(bestMatch.score));
 
         results.push({ ...candidate, isDuplicate });
         setProgress({ done: i + 1, total: files.length });

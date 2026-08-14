@@ -60,6 +60,34 @@ describe("useSlipScan", () => {
     expect(result.current.candidates[1]!.isDuplicate).toBe(true);
   });
 
+  it("flags a near-duplicate within the batch via the graded Smart Duplicate signal, even with no matching reference", async () => {
+    // Same amount/merchant/date/time (e.g. a re-saved copy with a misread
+    // reference) — no exact-match signal at all, so only the graded check
+    // (amount + merchant + timestamp combined) can catch this.
+    const nearDupExtractor: SlipExtractor = async ({ assetId, thumbnailUrl }): Promise<SlipCandidate> => ({
+      id: assetId,
+      assetId,
+      thumbnailUrl,
+      source: "ocr",
+      isDuplicate: false,
+      confidence: 70,
+      amount: 250,
+      merchant: "Coffee Shop",
+      date: "2026-08-08",
+      time: "09:15",
+      reference: `REF-${assetId}`, // distinct — the exact-match key must NOT catch this
+    });
+
+    const { result } = renderHook(() => useSlipScan(nearDupExtractor));
+
+    await act(async () => {
+      await result.current.scan([file("near1.jpg", "a"), file("near2.jpg", "b")]);
+    });
+
+    expect(result.current.candidates[0]!.isDuplicate).toBe(false);
+    expect(result.current.candidates[1]!.isDuplicate).toBe(true);
+  });
+
   it("reset clears candidates", async () => {
     const { result } = renderHook(() => useSlipScan(fakeExtractor));
     await act(async () => {

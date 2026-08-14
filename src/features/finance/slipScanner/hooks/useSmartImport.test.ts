@@ -1,6 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
+import { db } from "@/database/db";
 import type { SmartImportDeps } from "@/features/finance/slipScanner/import/smartImport";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 
@@ -28,7 +29,45 @@ function fakeDeps() {
   return { deps, deleted };
 }
 
+beforeEach(async () => {
+  await db.slipImportHistory.clear();
+});
+
 describe("useSmartImport", () => {
+  it("records an Import History entry for a real batch (GS-035, previously never called in production)", async () => {
+    const { deps } = fakeDeps();
+    const { result } = renderHook(() => useSmartImport(deps));
+
+    await act(async () => {
+      await result.current.importCandidates([
+        candidate({ id: "1", amount: 100, bankName: "KBank" }),
+        candidate({ id: "2", amount: 50, bankName: "KBank" }),
+      ]);
+    });
+
+    const history = await db.slipImportHistory.toArray();
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({
+      source: "gallery",
+      bank: "KBank",
+      amount: 150,
+      importedCount: 2,
+      failedCount: 0,
+      status: "success",
+    });
+  });
+
+  it("does not record history for an empty batch", async () => {
+    const { deps } = fakeDeps();
+    const { result } = renderHook(() => useSmartImport(deps));
+
+    await act(async () => {
+      await result.current.importCandidates([]);
+    });
+
+    expect(await db.slipImportHistory.count()).toBe(0);
+  });
+
   it("imports candidates and exposes the result", async () => {
     const { deps } = fakeDeps();
     const { result } = renderHook(() => useSmartImport(deps));

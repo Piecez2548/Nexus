@@ -1,3 +1,4 @@
+import { combineConfidence } from "@/features/finance/slipScanner/ai/confidenceEngine";
 import type { BankIdentification } from "@/features/finance/slipScanner/engine/bank/bankTypes";
 import type { EmvcoPayload } from "@/features/finance/slipScanner/engine/emvco/emvcoPayloadParser";
 import type { OcrSlipFields } from "@/features/finance/slipScanner/engine/ocr/slipOcrFields";
@@ -25,8 +26,8 @@ export interface SlipCandidate {
   payload?: string | null;
   source: SlipCandidateSource;
   isDuplicate: boolean;
-  // 0–100. A deterministic completeness/source heuristic here; the dedicated
-  // Confidence Engine (GS-046) refines it later.
+  // 0–100, from the Confidence Engine (GS-046): a weighted combination of
+  // whichever QR/parser/OCR/bank signals this candidate actually has.
   confidence: number;
 }
 
@@ -39,26 +40,41 @@ export interface SlipCandidateInput {
   isDuplicate?: boolean;
 }
 
-interface ConfidenceInput {
-  source: SlipCandidateSource;
-  crcValid: boolean;
-  amount?: number;
-  date?: string;
-  merchant?: string;
-  reference?: string;
-  bankId?: string;
+// Fraction of `fields` that are actually present (not undefined/null/empty).
+function completeness(fields: ReadonlyArray<string | number | undefined | null>): number {
+  if (fields.length === 0) return 0;
+  const present = fields.filter((f) => f !== undefined && f !== null && f !== "").length;
+  return present / fields.length;
 }
 
-// A transparent completeness score: a CRC-valid QR is the strongest base, then
-// points for each resolved field. Superseded by GS-046's Confidence Engine.
-export function basicConfidence(input: ConfidenceInput): number {
-  let score = input.source === "qr" ? (input.crcValid ? 40 : 20) : 10;
-  if (input.amount !== undefined) score += 20;
-  if (input.date) score += 10;
-  if (input.merchant) score += 10;
-  if (input.reference) score += 10;
-  if (input.bankId) score += 10;
-  return Math.min(100, score);
+interface ConfidenceInput {
+  emvco: EmvcoPayload | null;
+  qrUsable: boolean;
+  ocr: OcrSlipFields | null;
+  bank?: BankIdentification | null;
+}
+
+// Confidence (GS-046's Confidence Engine, combineConfidence): weights whichever
+// of the QR/parser/OCR/bank signals are actually present into one 0–100 score,
+// so a QR-only or OCR-only slip is still scored fairly. `qr` reflects whether
+// the payload's own checksum passed; `parser` reflects how many fields EMVCo
+// itself supplied once trusted; `ocr` reflects OCR field completeness; a
+// resolved bank always contributes (0 when the candidate carries QR/OCR data
+// but no bank was identified from it, since that's a real, assessable gap).
+function slipConfidence(input: ConfidenceInput): number {
+  const { emvco, qrUsable, ocr, bank } = input;
+
+  const qr = emvco === null ? undefined : qrUsable ? 1 : 0.4;
+  const parser =
+    emvco === null
+      ? undefined
+      : qrUsable
+        ? completeness([emvco.amount, emvco.merchantName, emvco.referenceIds[0], emvco.currency])
+        : 0.3;
+  const ocrScore = ocr === null ? undefined : completeness([ocr.amount, ocr.date, ocr.merchant, ocr.reference, ocr.time]);
+  const bankTemplate = bank ? 1 : 0;
+
+  return combineConfidence({ qr, parser, ocr: ocrScore, bankTemplate }).score;
 }
 
 // Assemble a candidate from the (already-computed) extraction outputs. Pure and
@@ -96,14 +112,6 @@ export function buildSlipCandidate(input: SlipCandidateInput): SlipCandidate {
     payload: emvco?.raw ?? null,
     source,
     isDuplicate: input.isDuplicate ?? false,
-    confidence: basicConfidence({
-      source,
-      crcValid: emvco?.crcValid ?? false,
-      amount,
-      date,
-      merchant,
-      reference,
-      bankId,
-    }),
+    confidence: slipConfidence({ emvco, qrUsable, ocr, bank: input.bank }),
   };
 }

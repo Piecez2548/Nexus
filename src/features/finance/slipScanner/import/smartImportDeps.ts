@@ -9,4 +9,5 @@ import type { SmartImportDeps } from "@/features/finance/slipScanner/import/smar
 export const defaultSmartImportDeps: SmartImportDeps = {
   createTransaction: (transaction) => transactionService.create(transaction),
   deleteTransaction: (id) => transactionService.remove(id),
+  listTransactions: () => transactionService.list(),
 };

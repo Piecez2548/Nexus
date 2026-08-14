@@ -95,6 +95,67 @@ describe("runSmartImport", () => {
   });
 });
 
+describe("runSmartImport — conflict resolution against existing transactions", () => {
+  it("skips a candidate that is a near-certain duplicate of an existing transaction (matching reference + amount + merchant + time)", async () => {
+    const { deps, created } = fakeDeps();
+    const withExisting: SmartImportDeps = {
+      ...deps,
+      listTransactions: async () => [
+        {
+          title: "Coffee Shop",
+          amount: 250,
+          type: "expense",
+          account: "Cash",
+          date: "2026-08-08",
+          time: "09:15",
+          note: "KBank · REF999", // candidateToTransaction always writes [bank, reference] this way
+          status: "completed",
+        },
+      ],
+    };
+
+    const result = await runSmartImport(
+      [candidate({ id: "1", amount: 250, merchant: "Coffee Shop", date: "2026-08-08", time: "09:15", reference: "REF999" })],
+      withExisting,
+    );
+
+    expect(result.importedCandidateIds).toEqual([]);
+    expect(result.skippedDuplicates).toEqual([{ candidateId: "1", error: "duplicate-of-existing" }]);
+    expect(result.failed).toEqual([]);
+    expect(created).toHaveLength(0);
+  });
+
+  it("keeps both when the match against an existing transaction is only a weak signal", async () => {
+    const { deps, created } = fakeDeps();
+    const withExisting: SmartImportDeps = {
+      ...deps,
+      listTransactions: async () => [
+        { title: "Coffee Shop", amount: 250, type: "expense", account: "Cash", date: "2026-01-01", status: "completed" },
+      ],
+    };
+
+    // Same amount and merchant, but a different date -- not enough to cross
+    // the conflict resolver's auto-skip bar.
+    const result = await runSmartImport(
+      [candidate({ id: "1", amount: 250, merchant: "Coffee Shop", date: "2026-08-08" })],
+      withExisting,
+    );
+
+    expect(result.importedCandidateIds).toEqual(["1"]);
+    expect(result.skippedDuplicates).toEqual([]);
+    expect(created).toHaveLength(1);
+  });
+
+  it("does not check for conflicts at all when listTransactions is not provided (unchanged prior behavior)", async () => {
+    const { deps, created } = fakeDeps();
+    const result = await runSmartImport([candidate({ id: "1", amount: 250 })], deps);
+
+    expect(result.importedCandidateIds).toEqual(["1"]);
+    expect(result.skippedDuplicates).toEqual([]);
+    expect(created).toHaveLength(1);
+  });
+});
+
 describe("rollbackImport", () => {
   it("deletes each imported id and returns the count removed", async () => {
     const { deps, deleted } = fakeDeps();

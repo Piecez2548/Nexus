@@ -74,17 +74,27 @@ export default function GalleryScanFlow() {
 
   async function handleImport(selected: SlipCandidate[]): Promise<void> {
     try {
-      const categoryNames = new Set(useCategoryStore.getState().categories.map((c) => c.name));
+      // An empty list means categories haven't loaded (not "the user has zero
+      // categories") — pass undefined then so resolveCategory skips validation
+      // instead of forcing every import to "Others"/uncategorised.
+      const liveCategories = useCategoryStore.getState().categories;
+      const validCategoryNames = liveCategories.length > 0 ? new Set(liveCategories.map((c) => c.name)) : undefined;
+
       const result = await smartImport.importCandidates(selected, {
         fallbackTitle: t("slipScanner.defaultTitle"),
         learnedCategories: useCategoryLearningStore.getState().asMap(),
-        validCategoryNames: categoryNames,
+        validCategoryNames,
       });
       const count = result.importedIds.length;
       const failed = result.failed.length;
+      const duplicates = result.skippedDuplicates.length;
 
-      if (failed === 0) {
+      if (failed === 0 && duplicates === 0) {
         toast.success(t("slipScanner.galleryScan.imported", { count }));
+      } else if (failed === 0 && count > 0) {
+        toast.success(t("slipScanner.galleryScan.importedWithDuplicates", { count, duplicates }));
+      } else if (failed === 0) {
+        toast.error(t("slipScanner.galleryScan.allDuplicates", { duplicates }));
       } else if (count > 0) {
         toast.error(t("slipScanner.galleryScan.importedPartial", { count, failed }));
       } else {

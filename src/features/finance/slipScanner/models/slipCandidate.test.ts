@@ -4,7 +4,7 @@ import type { BankIdentification } from "@/features/finance/slipScanner/engine/b
 import type { EmvcoPayload } from "@/features/finance/slipScanner/engine/emvco/emvcoPayloadParser";
 import type { OcrSlipFields } from "@/features/finance/slipScanner/engine/ocr/slipOcrFields";
 
-import { basicConfidence, buildSlipCandidate } from "./slipCandidate";
+import { buildSlipCandidate } from "./slipCandidate";
 
 const bank: BankIdentification = {
   bank: { id: "scb", code: "014", name: "Siam Commercial Bank", shortName: "SCB" },
@@ -61,13 +61,27 @@ describe("buildSlipCandidate", () => {
     expect(candidate.isDuplicate).toBe(true);
     expect(candidate.bankId).toBeUndefined();
   });
-});
 
-describe("basicConfidence", () => {
-  it("scores a full, CRC-valid QR at 100 and an empty OCR slip low", () => {
-    expect(
-      basicConfidence({ source: "qr", crcValid: true, amount: 1, date: "d", merchant: "m", reference: "r", bankId: "b" }),
-    ).toBe(100);
-    expect(basicConfidence({ source: "ocr", crcValid: false })).toBe(10);
+  it("scores a fully-populated, CRC-valid QR candidate (with bank + complete OCR) at 100", () => {
+    const candidate = buildSlipCandidate({ assetId: "full", emvco: emvco(true), bank, ocr });
+    expect(candidate.confidence).toBe(100);
+  });
+
+  it("scores a bare OCR-only candidate with no fields low, not zero", () => {
+    const candidate = buildSlipCandidate({ assetId: "bare", ocr: { amount: undefined, date: undefined, merchant: undefined, reference: undefined, time: undefined } });
+    // ocr signal present (non-null) but empty -> completeness 0; no qr/parser/bank signal at all.
+    expect(candidate.confidence).toBe(0);
+  });
+
+  it("scores lower when the bank is unresolved than when it is, all else equal", () => {
+    const withBank = buildSlipCandidate({ assetId: "b1", emvco: emvco(true), bank, ocr });
+    const withoutBank = buildSlipCandidate({ assetId: "b2", emvco: emvco(true), ocr });
+    expect(withoutBank.confidence).toBeLessThan(withBank.confidence);
+  });
+
+  it("scores a corrupted (CRC-invalid) QR lower than a clean one, all else equal", () => {
+    const clean = buildSlipCandidate({ assetId: "c1", emvco: emvco(true), bank, ocr });
+    const corrupted = buildSlipCandidate({ assetId: "c2", emvco: emvco(false), bank, ocr });
+    expect(corrupted.confidence).toBeLessThan(clean.confidence);
   });
 });

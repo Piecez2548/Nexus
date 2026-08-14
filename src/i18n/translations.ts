@@ -426,6 +426,12 @@ export const translations = {
         imported: "Imported {{count}} transaction(s)",
         importedPartial: "Imported {{count}} transaction(s) — {{failed}} couldn't be imported",
         importFailed: "Couldn't import {{failed}} slip(s) — check the amount and try again",
+        importedWithDuplicates: "Imported {{count}} transaction(s) — {{duplicates}} already existed and were skipped",
+        allDuplicates: "{{duplicates}} slip(s) already exist as transactions — nothing new to import",
+      },
+      recovery: {
+        resumableScan: "A previous gallery scan didn't finish",
+        lastImportFailed: "Your last slip import didn't fully complete — some slips may not have been saved",
       },
       progressDashboard: {
         title: "Scan progress",
@@ -2383,6 +2389,12 @@ export const translations = {
         imported: "นำเข้า {{count}} รายการแล้ว",
         importedPartial: "นำเข้า {{count}} รายการแล้ว — อีก {{failed}} รายการนำเข้าไม่สำเร็จ",
         importFailed: "นำเข้าไม่สำเร็จ {{failed}} รายการ — ตรวจสอบจำนวนเงินแล้วลองใหม่",
+        importedWithDuplicates: "นำเข้า {{count}} รายการแล้ว — ข้าม {{duplicates}} รายการที่มีอยู่แล้ว",
+        allDuplicates: "สลิป {{duplicates}} รายการมีอยู่ในระบบแล้ว — ไม่มีรายการใหม่ให้นำเข้า",
+      },
+      recovery: {
+        resumableScan: "มีการสแกนแกลเลอรีครั้งก่อนที่ยังไม่เสร็จสมบูรณ์",
+        lastImportFailed: "การนำเข้าสลิปครั้งล่าสุดไม่สำเร็จทั้งหมด — บางรายการอาจไม่ถูกบันทึก",
       },
       progressDashboard: {
         title: "ความคืบหน้าการสแกน",
