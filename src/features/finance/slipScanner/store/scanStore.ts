@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import { createScanSession, type ScanSession } from "@/features/finance/slipScanner/services/scanSessionService";
+import type { ScanProcessor } from "@/features/finance/slipScanner/services/scanProcessor";
 import { toErrorMessage } from "@/utils/asyncState";
 import type { MediaProvider } from "@/features/finance/slipScanner/gallery/media/MediaProvider";
 import type { ScanOptions, ScanProgress, ScanStatus } from "@/features/finance/slipScanner/models/scanTypes";
@@ -9,7 +10,10 @@ interface ScanState {
   status: ScanStatus;
   progress: ScanProgress | null;
   error: string | null;
-  start(provider: MediaProvider, options: ScanOptions): Promise<void>;
+  // `processor` defaults to the orchestrator's own no-op recorder when
+  // omitted (GS-006 enumerate/hash/dedupe-only mode); callers that want real
+  // extraction pass createSlipExtractionProcessor(...) here.
+  start(provider: MediaProvider, options: ScanOptions, processor?: ScanProcessor): Promise<void>;
   pause(): void;
   resume(): void;
   cancel(): void;
@@ -24,7 +28,7 @@ export const useScanStore = create<ScanState>((set) => ({
   progress: null,
   error: null,
 
-  async start(provider, options) {
+  async start(provider, options, processor) {
     // Ignore a second start while one is already running/paused.
     if (session && (session.control.status === "running" || session.control.status === "paused")) return;
 
@@ -32,6 +36,7 @@ export const useScanStore = create<ScanState>((set) => ({
     session = createScanSession({
       provider,
       options,
+      processor,
       onProgress: (progress, status) => set({ progress, status }),
     });
 
