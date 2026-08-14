@@ -6,6 +6,7 @@ import SyncSettings from "@/components/settings/SyncSettings";
 import EncryptionSettings from "@/components/settings/EncryptionSettings";
 import DataSettings from "@/components/settings/DataSettings";
 import TransactionDataSettings from "@/components/settings/TransactionDataSettings";
+import ImportHistorySettings from "@/components/settings/ImportHistorySettings";
 import DangerZoneSettings from "@/components/settings/DangerZoneSettings";
 import SettingsGroup from "@/components/settings/SettingsGroup";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -32,6 +33,7 @@ export default function Settings() {
       <SettingsGroup title={t("settings.groupDataManagement")}>
         <DataSettings />
         <TransactionDataSettings />
+        <ImportHistorySettings />
       </SettingsGroup>
 
       <SettingsGroup title={t("settings.groupDangerZone")}>
