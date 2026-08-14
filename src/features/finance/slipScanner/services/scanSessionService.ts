@@ -125,11 +125,14 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
     params.onProgress?.(progress, status);
 
     const budget = new ByteBudget(params.options.maxInflightBytes ?? DEFAULT_MAX_INFLIGHT_BYTES);
-    // Within-run content dedup. The has()+add() below run synchronously with
-    // no await between them, so concurrent workers can't both pass the check
-    // for the same content — the cross-run DB check alone would race under
-    // concurrency.
-    const seenContent = new Set<string>();
+    // Within-run content dedup, keyed by which asset reserved a content hash
+    // (not just a Set) so a *retry* of the same asset — same content, same
+    // assetId — isn't mistaken for a duplicate of itself and silently skipped
+    // instead of actually being retried. The has()+set() below still run
+    // synchronously with no await between them, so two *different* assets with
+    // the same content can't both pass the check — the cross-run DB check
+    // alone would race under concurrency.
+    const seenContent = new Map<string, string>(); // contentHash -> reserving assetId
     let maxCapturedAt = cursor;
 
     async function handleAsset(asset: GalleryAssetRef): Promise<void> {
@@ -149,11 +152,12 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
         const bytes = await params.provider.readBytes(asset);
         const contentHash = await sha256Hex(bytes);
 
-        if (seenContent.has(contentHash)) {
-          progress.skipped++; // duplicate content within this run
+        const reservedBy = seenContent.get(contentHash);
+        if (reservedBy !== undefined && reservedBy !== asset.assetId) {
+          progress.skipped++; // duplicate content within this run, from a different asset
           return;
         }
-        seenContent.add(contentHash); // reserve synchronously (race-free)
+        seenContent.set(contentHash, asset.assetId); // reserve synchronously (race-free); idempotent on a retry
 
         if (await cache.hasContent(contentHash, asset.assetId)) {
           progress.skipped++; // duplicate content from another asset (dedup preserved)

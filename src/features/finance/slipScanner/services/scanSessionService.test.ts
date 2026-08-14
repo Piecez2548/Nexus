@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach } from "vitest";
 
 import { db } from "@/database/db";
 import { createScanSession, type ScanSession } from "@/features/finance/slipScanner/services/scanSessionService";
+import type { ScanProcessor } from "@/features/finance/slipScanner/services/scanProcessor";
 import type { MediaProvider } from "@/features/finance/slipScanner/gallery/media/MediaProvider";
 import type { GalleryAssetRef } from "@/features/finance/slipScanner/models/scanTypes";
 
@@ -103,6 +104,30 @@ describe("createScanSession", () => {
 
     expect(run.done).toBe(1);
     expect(run.skipped).toBe(1);
+  });
+
+  it("retries a failing item instead of treating its retry as a duplicate of itself", async () => {
+    let attempts = 0;
+    const provider = new FakeProvider([asset("fails", 1, [5])]);
+    const processor: ScanProcessor = {
+      async process() {
+        attempts++;
+        throw new Error("boom");
+      },
+    };
+
+    const run = await createScanSession({
+      provider,
+      options: { source: "fake", incremental: false, maxRetries: 1, retryDelayMs: 0 },
+      processor,
+    }).done;
+
+    // 1 initial attempt + 1 retry — not silently skipped as a "duplicate" of
+    // its own first (failed) attempt's content hash.
+    expect(attempts).toBe(2);
+    expect(run.failed).toBe(1);
+    expect(run.skipped).toBe(0);
+    expect(run.done).toBe(0);
   });
 
   it("incremental — a second scan skips already-scanned assets", async () => {
