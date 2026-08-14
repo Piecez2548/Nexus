@@ -1,6 +1,6 @@
 # Changelog
 
-**Last Updated:** 2026-08-08
+**Last Updated:** 2026-08-14
 
 ## Overview
 
@@ -93,6 +93,14 @@ The extraction pipeline and its supporting layers then landed (2026-08-08, GS-00
 
 **Platform epic (2026-08-08, PLT-001 → PLT-020).** Per the reuse rule, only the genuinely-new frameworks were implemented under `src/platform/` — Event Bus, Feature Flags, Command Palette (global Ctrl+K, mounted in `MainLayout`), and Local Telemetry (never sends data online) — with 21 tests; the remaining PLT items are satisfied by existing app/GS systems (Global Search, AI Gateway, import/export, notifications, settings, audit, AI memory, background worker) or specified design-only (Plugin SDK), documented in [../tasks/Platform/PLATFORM_DESIGN.md](../tasks/Platform/PLATFORM_DESIGN.md). Certified at PLT-020. Remaining forward work: full-gallery native auto-enumeration and on-device verification of the native picker.
 
+### Gallery Slip Scanner — post-launch stabilization (2026-08-08 → 2026-08-11)
+With the GS (50/50) and PLT (20/20) epics complete, the native picker was verified on a real device and the scanner was run against real Thai bank slips, surfacing bugs that landed as they were found, then two code-review passes over the whole pipeline:
+- **On-device bug-fix round** (`a71d6cb`, `343f162`, `9d95994`, `7b9013f`, `ee45134`, `1e59da6`, `dfcc096`) — a QR-decode canvas fallback for Android WebViews without `OffscreenCanvas`; an amount-extraction bug picking the wrong number off a slip ("20 → 520"), fixed by anchoring to a currency marker/label; "Unknown bank" on real slips (completed Thai slips carry a slip-*verification* QR, not an EMVCo payment QR — added OCR-text bank identification, earliest-keyword-wins); imported-row quality (title/category/grammar); full-resolution gallery image picking for OCR; and merchant extraction extended from shop-keyword matching to positional extraction, so label-less e-wallet/person payees (e.g. a PromptPay/G-Wallet top-up) resolve correctly instead of falling back to the bank name.
+- **Code-review pass 1** (`dbe4ca2`) — a 10-agent parallel review found and fixed: `identifyBank()` could never match a real (non-PromptPay) bank from EMVCo (no GUIDs were ever populated) — now falls back to OCR text when EMVCo leaves the bank unresolved; the category-learning store was fully disconnected from import — wired (read side), with the guessed category now validated against the user's live category list; a `??`/`||` inconsistency broke category fallback on an empty merchant; OCR preprocessing hard-binarised every image unconditionally (could wipe an overexposed slip to blank) — now runs adaptive brightness/contrast correction first; the QR recovery engine (GS-026) and OCR fallback (GS-012) were built and tested but never called from production — wired in; a shared `engine/image/canvas.ts` replaced three drifted copies of the same canvas-fallback/luma code; several `slipParser.ts` edge cases (a date regex that could fabricate a year from an account number, an overly strict account-line pattern, a payee's bank-name line captured as their name).
+- **Code-review pass 2** (`ec75eff`) — a second review of pass 1's own diff caught regressions it introduced: OCR-derived date/time discarded when OCR ran only to resolve the bank; the newly-wired QR recovery had no error handling, so a canvas failure could abort a whole gallery batch; a redundant re-decode in QR recovery; `imageEnhancer.ts` not yet using the shared canvas helper (so adaptive enhancement silently no-opped on exactly the WebViews it exists for); an account-line pattern broad enough to match an unrelated phone number; a `META_LINE` word that could false-skip a real name.
+
+Full test suite: 159 slipScanner tests at the GS-022 checkpoint → ~297 at GS-050 → 2039 project-wide today. See [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s "Gallery Scanner — Post-Launch Stabilization" section for the detailed per-round notes. **Known open gap**: category-learning is wired read-side only — no UI yet lets a user correct a guessed category (see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)).
+
 ## Implemented Features
 
 See [ROADMAP.md](ROADMAP.md)'s "Completed" section for the full current-state feature list across every module, and [MODULES.md](MODULES.md) for per-module detail.
@@ -103,7 +111,7 @@ See [ROADMAP.md](ROADMAP.md)'s "Planned" and "Future" sections. Headline item: w
 
 ## Current Status
 
-This changelog is accurate as of the 2026-08-08 Gallery Slip Scanner foundation work (GS-005 → GS-008), which builds on the 2026-08-07 documentation and AI Analytics quality passes.
+This changelog is accurate as of the 2026-08-11 Gallery Slip Scanner post-launch stabilization work (commit `ec75eff`), which builds on the 2026-08-08 GS/PLT epic completion and the 2026-08-07 documentation and AI Analytics quality passes.
 
 ## Future Improvements
 
