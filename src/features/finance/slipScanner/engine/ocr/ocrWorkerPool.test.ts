@@ -35,9 +35,9 @@ describe("OcrWorkerPool (via getOcrWorkerPool)", () => {
     createWorker.mockResolvedValue(worker);
     const pool = getOcrWorkerPool();
 
-    await pool.recognize(new Uint8Array([1]));
-    await pool.recognize(new Uint8Array([2]));
-    await pool.recognize(new Uint8Array([3]));
+    await pool.recognize(new Blob([new Uint8Array([1])]));
+    await pool.recognize(new Blob([new Uint8Array([2])]));
+    await pool.recognize(new Blob([new Uint8Array([3])]));
 
     expect(createWorker).toHaveBeenCalledTimes(1);
     expect(worker.recognize).toHaveBeenCalledTimes(3);
@@ -54,7 +54,7 @@ describe("OcrWorkerPool (via getOcrWorkerPool)", () => {
 
     // 5 concurrent recognize() calls, maxSize is 2 -- expect exactly 2
     // workers created, the rest queued/reused as workers free up.
-    await Promise.all(Array.from({ length: 5 }, (_, i) => pool.recognize(new Uint8Array([i]))));
+    await Promise.all(Array.from({ length: 5 }, (_, i) => pool.recognize(new Blob([new Uint8Array([i])]))));
 
     expect(createWorker).toHaveBeenCalledTimes(2);
   });
@@ -66,10 +66,10 @@ describe("OcrWorkerPool (via getOcrWorkerPool)", () => {
     const pool = getOcrWorkerPool();
 
     const [a, b, c, d] = await Promise.all([
-      pool.recognize(new Uint8Array([1])),
-      pool.recognize(new Uint8Array([2])),
-      pool.recognize(new Uint8Array([3])),
-      pool.recognize(new Uint8Array([4])),
+      pool.recognize(new Blob([new Uint8Array([1])])),
+      pool.recognize(new Blob([new Uint8Array([2])])),
+      pool.recognize(new Blob([new Uint8Array([3])])),
+      pool.recognize(new Blob([new Uint8Array([4])])),
     ]);
 
     // Only two distinct workers exist, so every result must be one of the two.
@@ -85,7 +85,7 @@ describe("OcrWorkerPool (via getOcrWorkerPool)", () => {
     const worker = fakeWorker("a");
     createWorker.mockResolvedValue(worker);
     const pool = getOcrWorkerPool();
-    await pool.recognize(new Uint8Array([1]));
+    await pool.recognize(new Blob([new Uint8Array([1])]));
 
     await resetOcrWorkerPoolForTests();
 

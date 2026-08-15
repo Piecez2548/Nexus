@@ -1,4 +1,4 @@
-import { canvasToBytes, luma, makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
+import { luma, makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
 import { enhanceIfNeeded } from "@/features/finance/slipScanner/engine/image/imageEnhancer";
 import { otsuThreshold } from "@/features/finance/slipScanner/engine/image/otsu";
 
@@ -9,13 +9,21 @@ import { otsuThreshold } from "@/features/finance/slipScanner/engine/image/otsu"
 // and wipe the text to blank), then upscale/downscale toward a target size and
 // binarise (grayscale → Otsu threshold → black/white) so watermarks/coloured
 // backgrounds drop out and text is crisp for Tesseract. Browser-only; returns
-// the original bytes off-browser or on any failure, so it never blocks OCR.
-
+// the original bytes (wrapped as a Blob, still a valid Tesseract input) off-
+// browser or on any failure, so it never blocks OCR.
+//
+// Returns ImageData on the success path rather than encoding back to bytes:
+// real-device measurement (gallery-scan speed investigation) found the encode
+// step alone (canvasToBytes's convertToBlob) cost ~4-7s per call regardless
+// of format/resolution -- the same bug found and fixed in QR recovery
+// (imageVariants.ts). Tesseract.js's own ImageLike type accepts ImageData
+// directly, so the binarised pixels already in hand can be handed straight
+// to OCR with no encode/decode round trip.
 const TARGET_SHORT_EDGE = 1200;
 const MAX_UPSCALE = 2;
 
-export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
-  if (typeof createImageBitmap !== "function") return bytes;
+export async function preprocessForOcr(bytes: Uint8Array): Promise<ImageData | Blob> {
+  if (typeof createImageBitmap !== "function") return new Blob([bytes as unknown as BlobPart]);
 
   try {
     const { bytes: corrected } = await enhanceIfNeeded(bytes);
@@ -28,7 +36,7 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
     const height = Math.round(bitmap.height * scale);
 
     const target = makeCanvas(width, height);
-    if (!target) return bytes;
+    if (!target) return new Blob([bytes as unknown as BlobPart]);
     target.ctx.drawImage(bitmap, 0, 0, width, height);
 
     const image = target.ctx.getImageData(0, 0, width, height);
@@ -39,8 +47,7 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
 
     const threshold = otsuThreshold(gray);
 
-    // Binarise (value > threshold → white bg, else black text) and write back
-    // in a single pass, rather than a separate threshold loop then a copy loop.
+    // Binarise (value > threshold → white bg, else black text) in place.
     for (let i = 0, p = 0; i < image.data.length; i += 4, p += 1) {
       const v = gray[p]! > threshold ? 255 : 0;
       image.data[i] = v;
@@ -48,10 +55,9 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
       image.data[i + 2] = v;
       image.data[i + 3] = 255;
     }
-    target.ctx.putImageData(image, 0, 0);
 
-    return await canvasToBytes(target.canvas);
+    return image;
   } catch {
-    return bytes;
+    return new Blob([bytes as unknown as BlobPart]);
   }
 }
