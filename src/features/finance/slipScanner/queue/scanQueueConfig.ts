@@ -12,7 +12,10 @@ export const DEFAULT_IMAGE_BYTES = 2 * 1024 * 1024; // estimate when metadata om
 // promptly and a slow one (real OCR) doesn't wait out the whole interval.
 export const DEFAULT_CHECKPOINT_INTERVAL_MS = 2000;
 export const DEFAULT_CHECKPOINT_EVERY_N = 50;
-const MAX_CONCURRENCY = 4;
+// Exported so callers that need to size a resource pool to match the scan
+// queue's own parallelism ceiling (e.g. the OCR worker pool) share this one
+// number rather than duplicating it.
+export const MAX_CONCURRENCY = 4;
 
 export function resolveConcurrency(override?: number): number {
   if (override && override > 0) return override;
