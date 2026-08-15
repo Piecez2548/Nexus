@@ -97,13 +97,25 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     // to completion regardless.
     if (isCancelled()) throw new ScanCancelledError();
     const ocrStart = perfNow();
-    const result = await runOcrFallback(input.bytes, recognizer);
+    try {
+      const result = await runOcrFallback(input.bytes, recognizer);
+      // Keep the OCR fields even when OCR ran only to resolve the bank: a
+      // CRC-valid EMVCo QR carries no date/time, so these come from OCR
+      // regardless (buildSlipCandidate still prefers EMVCo for amount/merchant).
+      ocr = result;
+      if (!bank) bank = identifyBankFromText(result.text);
+    } catch (err) {
+      if (err instanceof ScanCancelledError) throw err;
+      // Tesseract can genuinely fail to read a specific image (corrupt file,
+      // unsupported format/codec) -- confirmed on-device via a real gallery
+      // photo throwing "Error attempting to read image" from Tesseract's own
+      // Leptonica layer. OCR is best-effort exactly like QR recovery above:
+      // one unreadable image must not crash the whole batch, and this asset
+      // still gets a candidate (QR-only fields, or none) rather than being
+      // lost to an uncaught rejection that could also leave a pooled worker
+      // in an inconsistent state for the next image.
+    }
     ocrMs = perfNow() - ocrStart;
-    // Keep the OCR fields even when OCR ran only to resolve the bank: a
-    // CRC-valid EMVCo QR carries no date/time, so these come from OCR
-    // regardless (buildSlipCandidate still prefers EMVCo for amount/merchant).
-    ocr = result;
-    if (!bank) bank = identifyBankFromText(result.text);
   }
 
   // NOTE: the WebView console bridge (Capacitor's onConsoleMessage) only

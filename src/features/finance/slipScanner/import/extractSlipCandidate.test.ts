@@ -119,6 +119,26 @@ describe("extractSlipCandidate", () => {
     expect(recoverCalled).toBe(false);
   });
 
+  it("survives OCR throwing (e.g. Tesseract unable to read a corrupt/unsupported image) instead of rejecting the whole extraction", async () => {
+    const candidate = await extractSlipCandidate({
+      assetId: "unreadable",
+      bytes: new Uint8Array([0]),
+      detector: createQrDetector(qrDecoder(null)), // no QR -- OCR fallback runs
+      recognizer: {
+        async recognize() {
+          throw new Error("Error attempting to read image.");
+        },
+      },
+    });
+
+    // Still resolves to a candidate (no OCR data available) rather than
+    // throwing -- one unreadable image in a gallery scan must not abort the
+    // batch, matching the existing best-effort contract for QR recovery.
+    expect(candidate.assetId).toBe("unreadable");
+    expect(candidate.amount).toBeUndefined();
+    expect(candidate.bankId).toBeUndefined();
+  });
+
   it("attempts QR recovery but stops before starting OCR once cancelled mid-extraction", async () => {
     let ocrCalled = false;
     let recoveryAttempted = false;
