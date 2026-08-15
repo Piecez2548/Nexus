@@ -168,32 +168,29 @@ public class GalleryMediaPlugin extends Plugin {
                     selection = MediaStore.Images.Media.DATE_ADDED + " > ?";
                     selectionArgs = new String[] { String.valueOf(sinceCursorMs / 1000L) };
                 }
-                // MediaStore's ContentProvider forwards a trailing LIMIT/OFFSET in the
-                // sort-order string to the underlying query -- the standard, long-used
-                // way to paginate MediaStore without the Bundle-based query API that
-                // this app's minSdk (24) doesn't have available.
-                String sortOrder =
-                    MediaStore.Images.Media.DATE_ADDED +
-                    " ASC, " +
-                    MediaStore.Images.Media._ID +
-                    " ASC LIMIT " +
-                    limit +
-                    " OFFSET " +
-                    offset;
+                String sortOrder = MediaStore.Images.Media.DATE_ADDED + " ASC, " + MediaStore.Images.Media._ID + " ASC";
 
+                // A trailing "LIMIT x OFFSET y" appended to the sort-order string is a
+                // widely-cited trick for paginating MediaStore, but it is NOT portable:
+                // on-device testing (Android 16 / API 36) threw
+                // "IllegalArgumentException: Invalid token LIMIT" from the underlying
+                // query validation. cursor.moveToPosition(offset) achieves the same
+                // pagination without relying on any non-standard SQL the provider has to
+                // accept, and works uniformly from this app's minSdk (24) up.
                 JSArray assets = new JSArray();
                 try (
                     Cursor cursor = getContext()
                         .getContentResolver()
                         .query(IMAGES_URI, PAGE_PROJECTION, selection, selectionArgs, sortOrder)
                 ) {
-                    if (cursor != null) {
+                    if (cursor != null && cursor.moveToPosition(offset)) {
                         int idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
                         int dateCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED);
                         int sizeCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.SIZE);
                         int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME);
 
-                        while (cursor.moveToNext()) {
+                        int collected = 0;
+                        do {
                             JSObject asset = new JSObject();
                             asset.put("assetId", String.valueOf(cursor.getLong(idCol)));
                             asset.put("capturedAt", isoFromEpochSeconds(cursor.getLong(dateCol)));
@@ -201,7 +198,8 @@ public class GalleryMediaPlugin extends Plugin {
                             String name = cursor.getString(nameCol);
                             asset.put("filename", name != null ? name : "");
                             assets.put(asset);
-                        }
+                            collected++;
+                        } while (collected < limit && cursor.moveToNext());
                     }
                 }
 
