@@ -15,7 +15,7 @@ interface PooledWorker {
   // Tesseract's own Worker type (avoids a static import of tesseract.js here
   // so the WASM engine stays out of the bundle until first actually used —
   // same reasoning as slipOcr.ts's dynamic import).
-  worker: { recognize: (image: ImageData | Blob) => Promise<{ data: { text: string } }>; terminate: () => Promise<unknown> };
+  worker: { recognize: (image: Blob) => Promise<{ data: { text: string } }>; terminate: () => Promise<unknown> };
   busy: boolean;
 }
 
@@ -83,16 +83,12 @@ class OcrWorkerPool {
     this.idle.push(pooled);
   }
 
-  // Takes an already-Tesseract-ready image (ImageData or Blob) rather than
-  // raw bytes -- preprocessForOcr produces one directly (see its own header
-  // comment for why encoding to bytes here and re-decoding on Tesseract's
-  // side was an expensive, unnecessary round trip).
-  async recognize(image: ImageData | Blob): Promise<string> {
+  async recognize(bytes: Uint8Array): Promise<string> {
     const pooled = await this.acquire();
     try {
       const {
         data: { text },
-      } = await pooled.worker.recognize(image);
+      } = await pooled.worker.recognize(new Blob([bytes as unknown as BlobPart]));
       return text;
     } finally {
       this.release(pooled);

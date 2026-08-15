@@ -10,11 +10,11 @@ import { getOcrWorkerPool } from "@/features/finance/slipScanner/engine/ocr/ocrW
 // this app already had, but the dominant cost when scanning a whole gallery
 // of mostly-non-slip photos through this engine.
 export interface OcrTextRecognizer {
-  recognize(image: ImageData | Blob): Promise<string>;
+  recognize(bytes: Uint8Array): Promise<string>;
 }
 
 export const tesseractOcrRecognizer: OcrTextRecognizer = {
-  recognize(image: ImageData | Blob): Promise<string> {
-    return getOcrWorkerPool().recognize(image);
+  recognize(bytes: Uint8Array): Promise<string> {
+    return getOcrWorkerPool().recognize(bytes);
   },
 };

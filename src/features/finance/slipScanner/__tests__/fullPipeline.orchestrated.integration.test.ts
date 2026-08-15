@@ -97,12 +97,8 @@ const fakeDecoder: QrDecoder = {
 };
 
 const fakeRecognizer: OcrTextRecognizer = {
-  async recognize(image) {
-    // jsdom has no createImageBitmap, so preprocessForOcr always falls back to
-    // wrapping the original bytes in a Blob here (never real ImageData) --
-    // handled generically anyway so this stays correct if that ever changes.
-    const firstByte = image instanceof Blob ? new Uint8Array(await image.arrayBuffer())[0] : image.data[0];
-    if (firstByte === 2) {
+  async recognize(bytes) {
+    if (bytes[0] === 2) {
       // Same physical slip re-scanned: matches the pre-seeded existing
       // transaction on amount, merchant, date/time AND reference. Amount +
       // merchant + timestamp alone only combine (noisy-OR, smartDuplicate.ts's
