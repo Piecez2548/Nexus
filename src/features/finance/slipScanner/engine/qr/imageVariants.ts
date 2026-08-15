@@ -12,6 +12,20 @@ export interface ImageVariant {
 // here — the crop region is unknown.
 export type ImageVariantGenerator = (bytes: Uint8Array) => AsyncIterable<ImageVariant>;
 
+// Recovery runs on every image the initial full-resolution decode already
+// failed on — which, for a real gallery, is nearly every photo (only a small
+// fraction are slips). Each attempt below is a canvas draw + PNG re-encode +
+// jsQR pass, up to 6 times, and "upscale" doubles both dimensions on top of
+// that — unbounded, that's up to ~9x a raw phone photo's pixel count (e.g. a
+// 12MP photo's upscale variant alone becomes 48MP) repeated for thousands of
+// photos with no QR to find. Capping the working size once, up front, keeps
+// every variant bounded without touching the initial full-resolution attempt
+// that successfully reads most real slip QR codes on the first try. 1600px
+// mirrors the same order of magnitude already proven sufficient for reading
+// (finer-grained) Thai slip text in ocrPreprocess.ts's 1200px short-edge
+// target — QR modules are coarser than glyph strokes, so this is generous.
+const MAX_LONG_EDGE = 1600;
+
 export const browserImageVariants: ImageVariantGenerator = async function* (bytes) {
   if (typeof createImageBitmap !== "function" || typeof OffscreenCanvas !== "function") return;
 
@@ -22,7 +36,24 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     return;
   }
 
-  const { width, height } = bitmap;
+  let base: CanvasImageSource = bitmap;
+  let width = bitmap.width;
+  let height = bitmap.height;
+  const longEdge = Math.max(width, height);
+  if (longEdge > MAX_LONG_EDGE) {
+    const downscale = MAX_LONG_EDGE / longEdge;
+    width = Math.round(width * downscale);
+    height = Math.round(height * downscale);
+    const baseCanvas = new OffscreenCanvas(width, height);
+    const baseCtx = baseCanvas.getContext("2d");
+    if (baseCtx) {
+      baseCtx.drawImage(bitmap, 0, 0, width, height);
+      base = baseCanvas;
+    } else {
+      width = bitmap.width;
+      height = bitmap.height;
+    }
+  }
 
   // Rotations.
   for (const deg of [90, 180, 270]) {
@@ -32,7 +63,7 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     if (!ctx) continue;
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((deg * Math.PI) / 180);
-    ctx.drawImage(bitmap, -width / 2, -height / 2);
+    ctx.drawImage(base, -width / 2, -height / 2);
     yield { label: `rotate-${deg}`, bytes: await canvasToBytes(canvas) };
   }
 
@@ -47,7 +78,7 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     const ctx = canvas.getContext("2d");
     if (!ctx) continue;
     ctx.filter = filter;
-    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
     yield { label, bytes: await canvasToBytes(canvas) };
   }
 };
