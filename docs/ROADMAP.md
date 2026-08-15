@@ -71,7 +71,7 @@ Items explicitly implied as unfinished by the current architecture, in rough ord
 - **Net Worth tracking** (assets/liabilities, net worth over time) — no `assets`/`liabilities` tables exist.
 - **Subscription Manager as a first-class entity** (renewal dates, reminders) — duplicate-subscription *detection* exists (`spendingAlerts.ts`, the Rule Engine), but nothing manages subscriptions as their own tracked entity yet.
 - **Merchant Database management UI** — `merchants` is currently seed-only, no CRUD exists (`merchantRepository.ts` is read-only by design).
-- **Gallery Scanner: device-validate the native MediaStore plugin and wire `FullGalleryScanPanel` into navigation** — `GalleryMediaPlugin.java` compiles and packages but has never run on a physical device; the orchestrator-driven scan UI it backs is built and tested but not reachable from the app yet. See [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md).
+- **Gallery Scanner: physically tap-test the live native "Scan Gallery" flow on-device.** The native adapter (`GalleryMediaPlugin.java`) is now device-validated at the plugin level and wired into the live "Scan Gallery" button (`GalleryScanFlow` runs on `useFullGalleryScan`), but no one has yet physically tapped through the button → bank popup → live progress dashboard → Import Preview → import on a real screen. See [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md).
 - **Deeper Trading analytics** — expectancy, average holding time, strategy comparison, a named Strategy Library, a Playbook, Trade Replay, Watchlist, Economic Calendar.
 - **Risk Management config** (max daily/weekly loss limits + alerts) for Trading.
 - **Reports module** — no `Reports` page or route exists at all (not even a stub) as of this writing.
