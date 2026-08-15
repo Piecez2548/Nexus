@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ChangeEvent } from "react";
-import { Pause, Play, X } from "lucide-react";
 
+import ScanControls from "@/features/finance/slipScanner/components/ScanControls";
 import ScanProgressDashboard from "@/features/finance/slipScanner/components/ScanProgressDashboard";
 import { isNativeGalleryAvailable, pickSlipImages } from "@/features/finance/slipScanner/gallery/pickImages";
 import { useFullGalleryScan } from "@/features/finance/slipScanner/hooks/useFullGalleryScan";
@@ -59,13 +59,17 @@ export default function FullGalleryScanPanel({ onComplete, extractor }: Props) {
     if (files.length > 0) await scan.scanPickedFiles(files, false);
   }
 
-  const idle = scan.status === "idle" || scan.status === "completed" || scan.status === "cancelled" || scan.status === "error";
+  // "cancelled"/"error" can still start a fresh scan; "running"/"paused" show
+  // the controls instead. These aren't each other's negation ("completed"
+  // and "idle" show neither), so both are their own checks.
+  const canStart = scan.status === "idle" || scan.status === "completed" || scan.status === "cancelled" || scan.status === "error";
+  const running = scan.status === "running" || scan.status === "paused";
 
   return (
     <div className="space-y-3">
       <input ref={inputRef} type="file" accept="image/*" multiple onChange={handleFiles} className="sr-only" />
 
-      {idle ? (
+      {canStart && (
         <button
           type="button"
           onClick={handleStart}
@@ -73,40 +77,15 @@ export default function FullGalleryScanPanel({ onComplete, extractor }: Props) {
         >
           {t("slipScanner.bankSelect.startScan")}
         </button>
-      ) : (
-        <div className="flex items-center gap-2">
-          {scan.status === "running" ? (
-            <button
-              type="button"
-              onClick={scan.pause}
-              className="flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              <Pause size={16} />
-              {t("slipScanner.progressDashboard.pause")}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={scan.resume}
-              className="flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-sm font-medium transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-            >
-              <Play size={16} />
-              {t("slipScanner.progressDashboard.resume")}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={scan.cancel}
-            className="flex items-center gap-2 rounded-lg border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-sm font-medium text-red-500 transition hover:bg-red-500/10"
-          >
-            <X size={16} />
-            {t("slipScanner.progressDashboard.cancelScan")}
-          </button>
-        </div>
+      )}
+      {running && (
+        <ScanControls running={scan.status === "running"} onPause={scan.pause} onResume={scan.resume} onCancel={scan.cancel} />
       )}
 
       {scan.error && <p className="text-sm text-red-500">{t("slipScanner.progressDashboard.statusError", { error: scan.error })}</p>}
-      {scan.status === "cancelled" && <p className="text-sm text-zinc-500 dark:text-zinc-400">{t("slipScanner.progressDashboard.statusCancelled")}</p>}
+      {scan.status === "cancelled" && (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{t("slipScanner.progressDashboard.statusCancelled")}</p>
+      )}
 
       {scan.snapshot && <ScanProgressDashboard progress={scan.snapshot} />}
     </div>
