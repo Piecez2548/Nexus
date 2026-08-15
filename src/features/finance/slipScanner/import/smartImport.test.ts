@@ -146,6 +146,47 @@ describe("runSmartImport — conflict resolution against existing transactions",
     expect(created).toHaveLength(1);
   });
 
+  it("KNOWN GAP: does not auto-skip a same-payment duplicate when the only missing signal is reference (e.g. a notification-confirmed transaction later re-captured by a gallery scan)", async () => {
+    // Payment Notification Capture confirms a transaction from bank push-
+    // notification text, which rarely carries a parseable reference number
+    // (unlike a full slip photo). If the SAME real payment is later also
+    // captured by a gallery scan of a screenshot/receipt (same amount,
+    // merchant, and minute-level timestamp -- the realistic case, not a
+    // contrived one), the conflict resolver's noisy-OR combination of
+    // amount(0.3) + merchant(0.3) + timestamp(0.4) with NO reference match
+    // only reaches 1-(0.7*0.7*0.6) = 0.706 -- below the auto-skip threshold
+    // -- so this creates a second, duplicate transaction rather than
+    // silently skipping it. This is a real, documented Phase-1 limitation of
+    // Payment Notification Capture (see its task-registry entry), not
+    // something this test expects to be fixed here; it exists so the actual
+    // current behavior is proven in code, not just asserted in a plan.
+    const { deps, created } = fakeDeps();
+    const withExisting: SmartImportDeps = {
+      ...deps,
+      listTransactions: async () => [
+        {
+          title: "Coffee Shop",
+          amount: 250,
+          type: "expense",
+          account: "Cash",
+          date: "2026-08-08",
+          time: "09:15",
+          note: undefined, // no reference -- realistic for a notification-confirmed import
+          status: "completed",
+        },
+      ],
+    };
+
+    const result = await runSmartImport(
+      [candidate({ id: "1", amount: 250, merchant: "Coffee Shop", date: "2026-08-08", time: "09:15" })],
+      withExisting,
+    );
+
+    expect(result.importedCandidateIds).toEqual(["1"]); // NOT skipped -- a duplicate transaction is created
+    expect(result.skippedDuplicates).toEqual([]);
+    expect(created).toHaveLength(1);
+  });
+
   it("does not check for conflicts at all when listTransactions is not provided (unchanged prior behavior)", async () => {
     const { deps, created } = fakeDeps();
     const result = await runSmartImport([candidate({ id: "1", amount: 250 })], deps);

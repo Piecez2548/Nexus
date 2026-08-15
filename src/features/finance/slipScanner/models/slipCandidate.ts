@@ -7,7 +7,10 @@ import type { OcrSlipFields } from "@/features/finance/slipScanner/engine/ocr/sl
 // per scanned slip, assembled from the extraction stages (QR/EMVCo GS-010, bank
 // GS-011, OCR fallback GS-012, dedup GS-013). It is the single shape the UI
 // binds to, so the preview never touches the individual engine outputs.
-export type SlipCandidateSource = "qr" | "ocr";
+// "notification" (Payment Notification Capture) is built directly by
+// buildNotificationCandidate.ts, not buildSlipCandidate below — a bank app's
+// own push notification carries no image/QR/OCR to extract.
+export type SlipCandidateSource = "qr" | "ocr" | "notification";
 
 export interface SlipCandidate {
   id: string;

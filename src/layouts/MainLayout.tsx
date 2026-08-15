@@ -9,6 +9,7 @@ import MobileMoreMenu from "./MobileMoreMenu";
 import ToastContainer from "@/components/ui/ToastContainer";
 import CommandPalette from "@/platform/commandPalette/CommandPalette";
 import ScanRecoveryNotice from "@/features/finance/slipScanner/components/ScanRecoveryNotice";
+import PendingPaymentSheet from "@/features/finance/notificationCapture/components/PendingPaymentSheet";
 import LoadingState from "@/components/ui/LoadingState";
 import { useTranslation } from "@/i18n/useTranslation";
 import { useUIStore } from "@/features/finance/store/uiStore";
@@ -79,6 +80,7 @@ export default function MainLayout() {
       <ToastContainer />
       <CommandPalette />
       <ScanRecoveryNotice />
+      <PendingPaymentSheet />
     </div>
   );
 }

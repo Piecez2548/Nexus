@@ -9,7 +9,7 @@ import {
   type SmartImportProgress,
   type SmartImportResult,
 } from "@/features/finance/slipScanner/import/smartImport";
-import { deriveImportStatus } from "@/features/finance/slipScanner/models/importHistory";
+import { deriveImportStatus, type ImportSource } from "@/features/finance/slipScanner/models/importHistory";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import { importHistoryRepository } from "@/features/finance/slipScanner/repositories/importHistoryRepository";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
@@ -23,6 +23,7 @@ async function recordImportHistory(
   candidates: SlipCandidate[],
   result: SmartImportResult,
   durationMs: number,
+  source: ImportSource,
 ): Promise<void> {
   const importedSet = new Set(result.importedCandidateIds);
   const bankCounts = new Map<string, number>();
@@ -47,7 +48,7 @@ async function recordImportHistory(
   try {
     await importHistoryRepository.add({
       importedAt: new Date().toISOString(),
-      source: "gallery",
+      source,
       bank,
       amount: amount > 0 ? amount : undefined,
       importedCount: result.importedIds.length,
@@ -65,7 +66,7 @@ export interface UseSmartImport {
   running: boolean;
   progress: SmartImportProgress | null;
   result: SmartImportResult | null;
-  importCandidates: (candidates: SlipCandidate[], options?: SmartImportOptions) => Promise<SmartImportResult>;
+  importCandidates: (candidates: SlipCandidate[], options?: SmartImportOptions, historySource?: ImportSource) => Promise<SmartImportResult>;
   undo: () => Promise<number>;
 }
 
@@ -82,6 +83,7 @@ export function useSmartImport(deps: SmartImportDeps = defaultSmartImportDeps): 
   async function importCandidates(
     candidates: SlipCandidate[],
     options: SmartImportOptions = {},
+    historySource: ImportSource = "gallery",
   ): Promise<SmartImportResult> {
     setRunning(true);
     setResult(null);
@@ -91,7 +93,7 @@ export function useSmartImport(deps: SmartImportDeps = defaultSmartImportDeps): 
       const res = await runSmartImport(candidates, deps, { ...options, onProgress: setProgress });
       setResult(res);
       await loadTransactions();
-      if (candidates.length > 0) await recordImportHistory(candidates, res, Date.now() - startedAt);
+      if (candidates.length > 0) await recordImportHistory(candidates, res, Date.now() - startedAt, historySource);
       return res;
     } finally {
       setRunning(false);

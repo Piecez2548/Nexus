@@ -2,7 +2,7 @@
 // what was imported and how it went. Device-local operational data (not synced),
 // stored in the additive Dexie table `slipImportHistory` (v17).
 
-export type ImportSource = "gallery" | "picker" | "qr" | "ocr" | "batch";
+export type ImportSource = "gallery" | "picker" | "qr" | "ocr" | "batch" | "notification";
 export type ImportStatus = "success" | "partial" | "failed";
 
 export interface ImportHistoryEntry {

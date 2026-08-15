@@ -80,6 +80,17 @@ The scanner is designed to be privacy-preserving and to hold no sensitive financ
 - **Secure disposal.** Decoded image bytes are zero-filled and thumbnail object-URLs revoked after use (GS-017), so slip pixels don't linger in memory.
 - **AI never mutates data.** The validation/AI layers (GS-019, GS-041) are advisory only — they never modify imported transactions automatically.
 
+## Payment Notification Capture
+
+A `NotificationListenerService` (`PaymentNotificationListenerService.java`), when granted, can technically read the content of *every* notification posted on the device by *any* app — a materially broader surface than the gallery scanner's own-photos-only model above. Nexus limits what it actually does with that access:
+
+- **Allowlist-gated.** Notifications from any package not on a small, hardcoded bank/payment-app list (Phase 1: SCB, K PLUS, Krungthai NEXT) are discarded inside `onNotificationPosted`, before storage or logging, unconditionally — content from any other app (WhatsApp, LINE, email, etc.) never enters this code path at all.
+- **Opt-in twice over.** Requires both the OS-level "Notification Access" special grant (manual, in system Settings — Android gives no in-app prompt for this permission category) *and* an in-app Settings toggle, checked first by the listener, which is a fast no-op when off.
+- **Never auto-creates a transaction.** The listener can only stash a small pending record (SharedPreferences, bounded ring buffer) and show its own "tap to confirm" notification; the Dexie write happens only after an explicit in-app "Confirm" tap, through the same Smart Import pipeline every other import path uses. Native code never touches Dexie directly — it structurally can't (Dexie lives in the WebView's JS engine).
+- **No raw content in audit logs.** Audit events record bank id / field-presence booleans, never notification text — the same metadata-only discipline the Gallery Scanner's audit log already follows.
+- **Known gap.** Unlike the gallery scanner (own photos only), this technically has OS-level visibility into notifications from any app on the device, bounded only by the in-code allowlist — a compromised build could in principle be changed to read anything. This is a trust boundary the user should understand before enabling it (the in-app explanation shown before sending them to system Settings says so plainly).
+- **Known duplicate-detection limitation.** A payment confirmed via notification and the same payment later re-captured by a gallery scan (e.g. a screenshot of the same transaction) may not be auto-skipped as a duplicate — bank notifications rarely carry a parseable reference number, and without one the conflict resolver's amount+merchant+timestamp signal alone falls just under its auto-skip threshold (proven in `smartImport.test.ts`). Both would then appear as separate transactions pending manual cleanup. See this feature's task-registry entry for status.
+
 ## Security Recommendations
 
 - Build the missing "disable encryption" flow, or at minimum document the manual export/reset/re-import workaround clearly in-app.

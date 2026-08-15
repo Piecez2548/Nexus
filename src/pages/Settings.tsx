@@ -7,6 +7,7 @@ import EncryptionSettings from "@/components/settings/EncryptionSettings";
 import DataSettings from "@/components/settings/DataSettings";
 import TransactionDataSettings from "@/components/settings/TransactionDataSettings";
 import ImportHistorySettings from "@/components/settings/ImportHistorySettings";
+import NotificationCaptureSettings from "@/components/settings/NotificationCaptureSettings";
 import DangerZoneSettings from "@/components/settings/DangerZoneSettings";
 import SettingsGroup from "@/components/settings/SettingsGroup";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -34,6 +35,7 @@ export default function Settings() {
         <DataSettings />
         <TransactionDataSettings />
         <ImportHistorySettings />
+        <NotificationCaptureSettings />
       </SettingsGroup>
 
       <SettingsGroup title={t("settings.groupDangerZone")}>
