@@ -4,18 +4,31 @@ import type { QrDecoder } from "./qrDecoder";
 import { browserImageVariants, type ImageVariant, type ImageVariantGenerator } from "./imageVariants";
 import { recoverQr } from "./qrRecovery";
 
-// Variant generator yielding labelled fakes.
+// Variant generator yielding labelled fakes. Encodes an identifying value into
+// a fake ImageData's width (real variants carry real pixels; the fake only
+// needs to be distinguishable in decodeVariantFor below).
 const fakeVariants = (labels: string[]): ImageVariantGenerator =>
   async function* () {
-    for (const label of labels) yield { label, bytes: new Uint8Array([label.length]) } satisfies ImageVariant;
+    for (const label of labels) {
+      const imageData = { width: label.length, height: 1, data: new Uint8ClampedArray(0) } as ImageData;
+      yield { label, imageData } satisfies ImageVariant;
+    }
   };
 
-// Decoder that returns a payload only for bytes whose first value matches.
+// Decoder for the *original* bytes attempt — returns a payload only for bytes
+// whose first value matches.
 const decoderFor = (successLen: number | null): QrDecoder => ({
   async decode(bytes) {
     return successLen !== null && bytes[0] === successLen ? "PAYLOAD" : null;
   },
 });
+
+// Decoder for a *variant*'s pixels — returns a payload only when the fake
+// ImageData's width (see fakeVariants) matches.
+const decodeVariantFor =
+  (successLen: number | null) =>
+  (imageData: ImageData): string | null =>
+    successLen !== null && imageData.width === successLen ? "PAYLOAD" : null;
 
 describe("recoverQr", () => {
   it("returns immediately when the original decodes", async () => {
@@ -24,9 +37,10 @@ describe("recoverQr", () => {
   });
 
   it("recovers via a variant when the original fails", async () => {
-    // "contrast".length === 8 → the decoder succeeds on that variant's bytes.
+    // "contrast".length === 8 → the decoder succeeds on that variant's pixels.
     const result = await recoverQr(new Uint8Array([0]), {
-      decoder: decoderFor(8),
+      decoder: decoderFor(null),
+      decodeVariant: decodeVariantFor(8),
       variants: fakeVariants(["rotate-90", "contrast", "upscale"]),
     });
     expect(result.payload).toBe("PAYLOAD");
@@ -37,6 +51,7 @@ describe("recoverQr", () => {
   it("gives up after exhausting variants", async () => {
     const result = await recoverQr(new Uint8Array([0]), {
       decoder: decoderFor(null),
+      decodeVariant: decodeVariantFor(null),
       variants: fakeVariants(["rotate-90", "rotate-180"]),
     });
     expect(result).toEqual({ payload: null, recoveredBy: null, attempts: 3 });
@@ -45,6 +60,7 @@ describe("recoverQr", () => {
   it("respects maxAttempts", async () => {
     const result = await recoverQr(new Uint8Array([0]), {
       decoder: decoderFor(99),
+      decodeVariant: decodeVariantFor(99),
       variants: fakeVariants(["a", "b", "c", "d"]),
       maxAttempts: 2,
     });
@@ -56,6 +72,7 @@ describe("recoverQr", () => {
     let checks = 0;
     const result = await recoverQr(new Uint8Array([0]), {
       decoder: decoderFor(null), // never finds a QR -- would otherwise exhaust every variant
+      decodeVariant: decodeVariantFor(null),
       variants: fakeVariants(["rotate-90", "rotate-180", "rotate-270", "brighten", "contrast", "upscale"]),
       isCancelled: () => {
         checks += 1;

@@ -29,23 +29,13 @@ export function makeCanvas(width: number, height: number): Canvas2D | null {
   return null;
 }
 
-// Encode a canvas (either kind) to image bytes. Defaults to lossless PNG
-// (existing callers — OCR preprocessing, image enhancement — need every pixel
-// exact); QR recovery passes "image/jpeg" instead (see imageVariants.ts) since
-// real-device measurement showed PNG encoding, run 6x per non-slip photo, was
-// the single largest cost in the whole scan pipeline (30-60s/image) — a QR
-// code's high-contrast two-tone pattern tolerates JPEG compression fine, and
-// JPEG encoding is markedly cheaper than PNG on-device.
-export async function canvasToBytes(
-  canvas: OffscreenCanvas | HTMLCanvasElement,
-  mimeType = "image/png",
-  quality?: number,
-): Promise<Uint8Array> {
+// Encode a canvas (either kind) to PNG bytes.
+export async function canvasToBytes(canvas: OffscreenCanvas | HTMLCanvasElement): Promise<Uint8Array> {
   if ("convertToBlob" in canvas) {
-    const blob = await canvas.convertToBlob({ type: mimeType, quality });
+    const blob = await canvas.convertToBlob({ type: "image/png" });
     return new Uint8Array(await blob.arrayBuffer());
   }
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, mimeType, quality));
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("toBlob failed");
   return new Uint8Array(await blob.arrayBuffer());
 }

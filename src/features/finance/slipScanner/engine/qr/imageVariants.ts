@@ -1,12 +1,10 @@
-import { canvasToBytes } from "@/features/finance/slipScanner/engine/image/canvas";
-
 function perfNow(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
 
 export interface ImageVariant {
   label: string;
-  bytes: Uint8Array;
+  imageData: ImageData;
 }
 
 // Produces recovery variants of an image for a QR re-decode: rotations (photo
@@ -18,28 +16,13 @@ export type ImageVariantGenerator = (bytes: Uint8Array) => AsyncIterable<ImageVa
 
 // Recovery runs on every image the initial full-resolution decode already
 // failed on — which, for a real gallery, is nearly every photo (only a small
-// fraction are slips). Each attempt below is a canvas draw + re-encode + jsQR
-// pass, up to 6 times, and "upscale" doubles both dimensions on top of that —
-// unbounded, that's up to ~9x a raw phone photo's pixel count (e.g. a 12MP
-// photo's upscale variant alone becomes 48MP) repeated for thousands of
-// photos with no QR to find. Capping the working size once, up front, keeps
-// every variant bounded without touching the initial full-resolution attempt
-// that successfully reads most real slip QR codes on the first try. 1600px
-// mirrors the same order of magnitude already proven sufficient for reading
-// (finer-grained) Thai slip text in ocrPreprocess.ts's 1200px short-edge
-// target — QR modules are coarser than glyph strokes, so this is generous.
+// fraction are slips). Capping the working size once, up front, keeps every
+// variant bounded without touching the initial full-resolution attempt that
+// successfully reads most real slip QR codes on the first try. 1600px mirrors
+// the same order of magnitude already proven sufficient for reading (finer-
+// grained) Thai slip text in ocrPreprocess.ts's 1200px short-edge target — QR
+// modules are coarser than glyph strokes, so this is generous.
 const MAX_LONG_EDGE = 1600;
-
-// Real-device measurement (gallery-scan speed investigation) showed the
-// resolution cap alone wasn't enough: at 1600px this device still spent
-// 30-60s per non-slip photo in this function, and the cost was the PNG
-// re-encode itself (canvasToBytes defaults to lossless PNG), not the pixel
-// count. JPEG encoding is markedly cheaper on-device, and a QR code's
-// high-contrast two-tone modules decode fine through JPEG's lossy compression
-// — jsQR doesn't need lossless input the way OCR text or a final saved image
-// would. Quality 0.85 favours decode reliability over file size (this is a
-// throwaway recovery attempt, not a stored asset).
-const RECOVERY_JPEG_QUALITY = 0.85;
 
 export const browserImageVariants: ImageVariantGenerator = async function* (bytes) {
   if (typeof createImageBitmap !== "function" || typeof OffscreenCanvas !== "function") return;
@@ -81,13 +64,19 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     ctx.rotate((deg * Math.PI) / 180);
     ctx.drawImage(base, -width / 2, -height / 2);
     const drawMs = perfNow() - drawStart;
-    const encodeStart = perfNow();
-    const variantBytes = await canvasToBytes(canvas, "image/jpeg", RECOVERY_JPEG_QUALITY);
-    const encodeMs = perfNow() - encodeStart;
+    // TEMPORARY perf-investigation instrumentation (gallery-scan speed
+    // investigation, PERF task plan) — confirms the fix: real-device data
+    // showed canvasToBytes's encode step alone cost ~4-7s/variant regardless
+    // of format, so variants now read pixels straight off the canvas
+    // (getImageData) instead of encoding to bytes and immediately decoding
+    // them back. Remove once confirmed on-device.
+    const readStart = perfNow();
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const getImageDataMs = perfNow() - readStart;
     console.debug(
-      `[perf-investigation] variant label=rotate-${deg} width=${canvas.width} height=${canvas.height} drawMs=${Math.round(drawMs)} encodeMs=${Math.round(encodeMs)}`,
+      `[perf-investigation] variant label=rotate-${deg} width=${canvas.width} height=${canvas.height} drawMs=${Math.round(drawMs)} getImageDataMs=${Math.round(getImageDataMs)}`,
     );
-    yield { label: `rotate-${deg}`, bytes: variantBytes };
+    yield { label: `rotate-${deg}`, imageData };
   }
 
   // Filtered variants (brightness / contrast) and an upscale.
@@ -104,12 +93,12 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     const drawStart = perfNow();
     ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
     const drawMs = perfNow() - drawStart;
-    const encodeStart = perfNow();
-    const variantBytes = await canvasToBytes(canvas, "image/jpeg", RECOVERY_JPEG_QUALITY);
-    const encodeMs = perfNow() - encodeStart;
+    const readStart = perfNow();
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const getImageDataMs = perfNow() - readStart;
     console.debug(
-      `[perf-investigation] variant label=${label} width=${canvas.width} height=${canvas.height} drawMs=${Math.round(drawMs)} encodeMs=${Math.round(encodeMs)}`,
+      `[perf-investigation] variant label=${label} width=${canvas.width} height=${canvas.height} drawMs=${Math.round(drawMs)} getImageDataMs=${Math.round(getImageDataMs)}`,
     );
-    yield { label, bytes: variantBytes };
+    yield { label, imageData };
   }
 };

@@ -62,3 +62,19 @@ export const imageDataQrDecoder: QrDecoder = {
     }
   },
 };
+
+// Decode a QR straight from pixels already in hand (used by QR recovery,
+// imageVariants.ts) instead of encoding the canvas to bytes and decoding it
+// straight back -- real-device measurement found that round trip's encode
+// step (canvas convertToBlob/toBlob) alone cost ~4-7s *per variant* on this
+// device regardless of format (PNG or JPEG) or resolution, while everything
+// else (bitmap decode, draw, getImageData, jsQR) stayed in the tens-to-low-
+// hundreds of ms. Six variants of that meant ~25-40s of pure, unnecessary
+// encoding per non-slip photo. Synchronous since jsQR itself is synchronous.
+export function decodeImageDataQr(image: ImageData): string | null {
+  try {
+    return jsQR(image.data, image.width, image.height)?.data ?? null;
+  } catch {
+    return null;
+  }
+}
