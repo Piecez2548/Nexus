@@ -47,6 +47,10 @@ export class ScanCancelledError extends Error {
 // slip-verification QR, not an EMVCo payment QR, so the bank name on the slip
 // is the reliable signal — this also covers a clean, CRC-valid EMVCo payload
 // from a bank rail the identifier has no GUID/plugin match for).
+function perfNow(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
 export async function extractSlipCandidate(input: ExtractSlipInput): Promise<SlipCandidate> {
   const detector = input.detector ?? defaultQrDetector;
   const recognizer = input.recognizer ?? tesseractOcrRecognizer;
@@ -55,11 +59,24 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
   // recovery skips straight to transformed variants.
   const recover = input.recover ?? ((bytes: Uint8Array, cancelled: () => boolean) => recoverQr(bytes, { skipOriginal: true, isCancelled: cancelled }));
 
+  // TEMPORARY perf-investigation instrumentation (gallery-scan speed
+  // investigation, PERF task plan) — per-stage timing so a real-device run
+  // shows exactly where the ~15-20s/image cost lives (QR detect vs recovery
+  // vs OCR) instead of guessing. Remove once the root cause is confirmed and
+  // fixed. Search "perf-investigation" to find every temporary probe.
+  const totalStart = perfNow();
+  let recoveryMs: number | null = null;
+  let ocrMs: number | null = null;
+
+  const detectStart = perfNow();
   let detection = await detector.detect(input.bytes);
+  const detectMs = perfNow() - detectStart;
   if (!detection.hasQr) {
     if (isCancelled()) throw new ScanCancelledError();
     try {
+      const recoveryStart = perfNow();
       const recovery = await recover(input.bytes, isCancelled);
+      recoveryMs = perfNow() - recoveryStart;
       if (recovery.payload !== null) detection = { hasQr: true, payload: recovery.payload };
     } catch (err) {
       if (err instanceof ScanCancelledError) throw err;
@@ -79,13 +96,22 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     // that can still skip it entirely rather than start a call that will run
     // to completion regardless.
     if (isCancelled()) throw new ScanCancelledError();
+    const ocrStart = perfNow();
     const result = await runOcrFallback(input.bytes, recognizer);
+    ocrMs = perfNow() - ocrStart;
     // Keep the OCR fields even when OCR ran only to resolve the bank: a
     // CRC-valid EMVCo QR carries no date/time, so these come from OCR
     // regardless (buildSlipCandidate still prefers EMVCo for amount/merchant).
     ocr = result;
     if (!bank) bank = identifyBankFromText(result.text);
   }
+
+  // NOTE: the WebView console bridge (Capacitor's onConsoleMessage) only
+  // relays the first string argument -- an object argument collapses to
+  // "[object Object]" in logcat. Everything must be inlined into one string.
+  console.debug(
+    `[perf-investigation] extractSlipCandidate assetId=${input.assetId} inputBytes=${input.bytes.length} hasQr=${detection.hasQr} detectMs=${Math.round(detectMs)} recoveryMs=${recoveryMs === null ? "null" : Math.round(recoveryMs)} ocrMs=${ocrMs === null ? "null" : Math.round(ocrMs)} totalMs=${Math.round(perfNow() - totalStart)}`,
+  );
 
   return buildSlipCandidate({
     assetId: input.assetId,

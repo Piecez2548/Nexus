@@ -14,10 +14,10 @@ export type ImageVariantGenerator = (bytes: Uint8Array) => AsyncIterable<ImageVa
 
 // Recovery runs on every image the initial full-resolution decode already
 // failed on — which, for a real gallery, is nearly every photo (only a small
-// fraction are slips). Each attempt below is a canvas draw + PNG re-encode +
-// jsQR pass, up to 6 times, and "upscale" doubles both dimensions on top of
-// that — unbounded, that's up to ~9x a raw phone photo's pixel count (e.g. a
-// 12MP photo's upscale variant alone becomes 48MP) repeated for thousands of
+// fraction are slips). Each attempt below is a canvas draw + re-encode + jsQR
+// pass, up to 6 times, and "upscale" doubles both dimensions on top of that —
+// unbounded, that's up to ~9x a raw phone photo's pixel count (e.g. a 12MP
+// photo's upscale variant alone becomes 48MP) repeated for thousands of
 // photos with no QR to find. Capping the working size once, up front, keeps
 // every variant bounded without touching the initial full-resolution attempt
 // that successfully reads most real slip QR codes on the first try. 1600px
@@ -25,6 +25,17 @@ export type ImageVariantGenerator = (bytes: Uint8Array) => AsyncIterable<ImageVa
 // (finer-grained) Thai slip text in ocrPreprocess.ts's 1200px short-edge
 // target — QR modules are coarser than glyph strokes, so this is generous.
 const MAX_LONG_EDGE = 1600;
+
+// Real-device measurement (gallery-scan speed investigation) showed the
+// resolution cap alone wasn't enough: at 1600px this device still spent
+// 30-60s per non-slip photo in this function, and the cost was the PNG
+// re-encode itself (canvasToBytes defaults to lossless PNG), not the pixel
+// count. JPEG encoding is markedly cheaper on-device, and a QR code's
+// high-contrast two-tone modules decode fine through JPEG's lossy compression
+// — jsQR doesn't need lossless input the way OCR text or a final saved image
+// would. Quality 0.85 favours decode reliability over file size (this is a
+// throwaway recovery attempt, not a stored asset).
+const RECOVERY_JPEG_QUALITY = 0.85;
 
 export const browserImageVariants: ImageVariantGenerator = async function* (bytes) {
   if (typeof createImageBitmap !== "function" || typeof OffscreenCanvas !== "function") return;
@@ -64,7 +75,7 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((deg * Math.PI) / 180);
     ctx.drawImage(base, -width / 2, -height / 2);
-    yield { label: `rotate-${deg}`, bytes: await canvasToBytes(canvas) };
+    yield { label: `rotate-${deg}`, bytes: await canvasToBytes(canvas, "image/jpeg", RECOVERY_JPEG_QUALITY) };
   }
 
   // Filtered variants (brightness / contrast) and an upscale.
@@ -79,6 +90,6 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     if (!ctx) continue;
     ctx.filter = filter;
     ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
-    yield { label, bytes: await canvasToBytes(canvas) };
+    yield { label, bytes: await canvasToBytes(canvas, "image/jpeg", RECOVERY_JPEG_QUALITY) };
   }
 };

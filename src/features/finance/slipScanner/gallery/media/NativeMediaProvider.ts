@@ -50,7 +50,28 @@ export class NativeMediaProvider implements MediaProvider {
   }
 
   async readBytes(asset: GalleryAssetRef): Promise<Uint8Array> {
+    // TEMPORARY perf-investigation instrumentation (gallery-scan speed
+    // investigation, PERF task plan) — isolates the native plugin round trip
+    // (file read + base64 encode + Capacitor bridge delivery) from the JS-side
+    // base64 decode, since both are suspected costs and "4 concurrent workers"
+    // doesn't parallelize either (Capacitor serializes all plugin calls
+    // through one native HandlerThread + delivers every result via the single
+    // UI thread's evaluateJavascript). Remove once confirmed/fixed.
+    const bridgeStart = typeof performance !== "undefined" ? performance.now() : Date.now();
     const { data } = await NativeGalleryMedia.readBytes({ assetId: asset.assetId });
-    return base64ToBytes(data);
+    const bridgeMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - bridgeStart;
+
+    const decodeStart = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const bytes = base64ToBytes(data);
+    const decodeMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - decodeStart;
+
+    // NOTE: the WebView console bridge (Capacitor's onConsoleMessage) only
+    // relays the first string argument -- an object argument collapses to
+    // "[object Object]" in logcat. Everything must be inlined into one string.
+    console.debug(
+      `[perf-investigation] readBytes assetId=${asset.assetId} base64Chars=${data.length} bridgeMs=${Math.round(bridgeMs)} decodeMs=${Math.round(decodeMs)} decodedBytes=${bytes.length}`,
+    );
+
+    return bytes;
   }
 }
