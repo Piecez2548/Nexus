@@ -34,7 +34,17 @@ export interface UseFullGalleryScan {
 // picker flow (useSlipScan) intentionally stays on its own simple sequential
 // loop, since its within-batch duplicate detection depends on strict
 // processing order that the concurrent queue does not guarantee.
-export function useFullGalleryScan(extractor: SlipExtractor = extractSlipCandidate): UseFullGalleryScan {
+//
+// Default extractor opts into skipOcrWhenNoQr: real-device measurement
+// showed OCR (even pooled) dominates per-image cost, and the overwhelming
+// majority of a real gallery's photos aren't slips at all -- see
+// extractSlipCandidate's own doc comment on the flag for the accuracy
+// tradeoff this accepts. The manual picker flow (useSlipScan) does NOT opt
+// into this, since every photo a user explicitly picks there is a
+// user-confirmed candidate slip.
+const defaultFullGalleryExtractor: SlipExtractor = (input) => extractSlipCandidate({ ...input, skipOcrWhenNoQr: true });
+
+export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGalleryExtractor): UseFullGalleryScan {
   const gallery = useGalleryScan();
   const [candidates, setCandidates] = useState<SlipCandidate[]>([]);
   const [counts, setCounts] = useState({ qrDetected: 0, ocrProcessed: 0 });

@@ -139,6 +139,49 @@ describe("extractSlipCandidate", () => {
     expect(candidate.bankId).toBeUndefined();
   });
 
+  it("skipOcrWhenNoQr: skips OCR entirely when neither detect nor recovery found any QR", async () => {
+    let ocrCalled = false;
+    const candidate = await extractSlipCandidate({
+      assetId: "no-qr-photo",
+      bytes: new Uint8Array([0]),
+      detector: createQrDetector(qrDecoder(null)),
+      recover: async () => ({ payload: null, recoveredBy: null, attempts: 6 }), // recovery also found nothing
+      recognizer: {
+        async recognize() {
+          ocrCalled = true;
+          return "should never run";
+        },
+      },
+      skipOcrWhenNoQr: true,
+    });
+
+    expect(ocrCalled).toBe(false);
+    expect(candidate.assetId).toBe("no-qr-photo");
+    expect(candidate.amount).toBeUndefined();
+  });
+
+  it("skipOcrWhenNoQr: still runs OCR when a QR WAS found but isn't usable (damaged/non-EMVCo/CRC-invalid)", async () => {
+    // A QR was detected (detection.hasQr === true) but it's not parseable
+    // EMVCo -- shouldRunOcrFallback says OCR is still needed, and skipOcrWhenNoQr
+    // only ever gates the "no QR at all" case, not "QR found but unusable".
+    let ocrCalled = false;
+    const candidate = await extractSlipCandidate({
+      assetId: "damaged-qr-photo",
+      bytes: new Uint8Array([1]),
+      detector: createQrDetector(qrDecoder("not a valid emvco payload")),
+      recognizer: {
+        async recognize() {
+          ocrCalled = true;
+          return "จำนวน 40.00 บาท";
+        },
+      },
+      skipOcrWhenNoQr: true,
+    });
+
+    expect(ocrCalled).toBe(true);
+    expect(candidate.amount).toBe(40);
+  });
+
   it("attempts QR recovery but stops before starting OCR once cancelled mid-extraction", async () => {
     let ocrCalled = false;
     let recoveryAttempted = false;

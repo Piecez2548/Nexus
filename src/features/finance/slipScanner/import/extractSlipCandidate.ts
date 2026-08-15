@@ -24,6 +24,20 @@ export interface ExtractSlipInput {
   // own recognize() call can't be interrupted once started, so this can't
   // make an in-flight OCR call stop, but it skips starting a NEW one.
   isCancelled?: () => boolean;
+  // Skip OCR entirely for an image where NEITHER the initial detect NOR QR
+  // recovery found any QR at all (detection.hasQr stays false all the way
+  // through) -- a deliberate speed/completeness tradeoff for the whole-
+  // gallery auto-scan (useFullGalleryScan), where the overwhelming majority
+  // of photos aren't slips and OCR (even pooled) is the dominant per-image
+  // cost on real devices. Real Thai bank-app completed-transaction slips
+  // overwhelmingly carry SOME QR (a slip-verification QR, not always a
+  // payment QR -- see the module comment below), so this is a real but
+  // deliberately bounded risk, not a blind heuristic: a slip whose QR is
+  // fully absent (not just damaged -- recovery already tried 6 variants) is
+  // the only case this can miss. Does NOT gate the manual single/multi-photo
+  // picker flow (useSlipScan leaves this unset), where every picked photo is
+  // a user-confirmed candidate slip and OCR should always be attempted.
+  skipOcrWhenNoQr?: boolean;
 }
 
 // Distinguishes a deliberate mid-extraction stop from a real extraction
@@ -90,7 +104,8 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
 
   let ocr: OcrSlipFields | null = null;
   const needsOcrFallback = shouldRunOcrFallback({ hasQr: detection.hasQr, emvco });
-  if (needsOcrFallback || !bank) {
+  const skipForNoQr = input.skipOcrWhenNoQr === true && !detection.hasQr;
+  if ((needsOcrFallback || !bank) && !skipForNoQr) {
     // OCR is the one stage that, once started, can't be interrupted (Tesseract
     // exposes no mid-recognize cancellation) -- this is the last checkpoint
     // that can still skip it entirely rather than start a call that will run
