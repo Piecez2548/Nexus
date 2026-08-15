@@ -105,6 +105,9 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
   let ocr: OcrSlipFields | null = null;
   const needsOcrFallback = shouldRunOcrFallback({ hasQr: detection.hasQr, emvco });
   const skipForNoQr = input.skipOcrWhenNoQr === true && !detection.hasQr;
+  console.debug(
+    `[perf-investigation] ocrGate assetId=${input.assetId} skipOcrWhenNoQr=${input.skipOcrWhenNoQr} hasQr=${detection.hasQr} needsOcrFallback=${needsOcrFallback} bank=${bank} skipForNoQr=${skipForNoQr}`,
+  );
   if ((needsOcrFallback || !bank) && !skipForNoQr) {
     // OCR is the one stage that, once started, can't be interrupted (Tesseract
     // exposes no mid-recognize cancellation) -- this is the last checkpoint
