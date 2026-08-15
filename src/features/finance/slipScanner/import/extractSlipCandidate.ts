@@ -17,7 +17,25 @@ export interface ExtractSlipInput {
   recognizer?: OcrTextRecognizer;
   // QR Recovery Engine (GS-026), overridable for tests; defaults to the real
   // rotate/brighten/contrast/upscale retry decoder.
-  recover?: (bytes: Uint8Array) => Promise<QrRecoveryResult>;
+  recover?: (bytes: Uint8Array, isCancelled: () => boolean) => Promise<QrRecoveryResult>;
+  // Checked between the slow stages (QR recovery's variant attempts, and
+  // before committing to OCR) so a scan cancelled mid-image stops promptly
+  // instead of only being interruptible between whole images -- Tesseract's
+  // own recognize() call can't be interrupted once started, so this can't
+  // make an in-flight OCR call stop, but it skips starting a NEW one.
+  isCancelled?: () => boolean;
+}
+
+// Distinguishes a deliberate mid-extraction stop from a real extraction
+// failure -- not that the queue needs to tell them apart today (its own
+// retry-loop cancellation check already short-circuits either way after one
+// cheap retry-delay wait), but a future caller inspecting a rejection reason
+// shouldn't mistake this for a bug.
+export class ScanCancelledError extends Error {
+  constructor() {
+    super("scan cancelled");
+    this.name = "ScanCancelledError";
+  }
 }
 
 // The single "image bytes → SlipCandidate" entry point wiring the extraction
@@ -32,16 +50,19 @@ export interface ExtractSlipInput {
 export async function extractSlipCandidate(input: ExtractSlipInput): Promise<SlipCandidate> {
   const detector = input.detector ?? defaultQrDetector;
   const recognizer = input.recognizer ?? tesseractOcrRecognizer;
+  const isCancelled = input.isCancelled ?? (() => false);
   // The detect stage already tried the original bytes with the same decoder, so
   // recovery skips straight to transformed variants.
-  const recover = input.recover ?? ((bytes: Uint8Array) => recoverQr(bytes, { skipOriginal: true }));
+  const recover = input.recover ?? ((bytes: Uint8Array, cancelled: () => boolean) => recoverQr(bytes, { skipOriginal: true, isCancelled: cancelled }));
 
   let detection = await detector.detect(input.bytes);
   if (!detection.hasQr) {
+    if (isCancelled()) throw new ScanCancelledError();
     try {
-      const recovery = await recover(input.bytes);
+      const recovery = await recover(input.bytes, isCancelled);
       if (recovery.payload !== null) detection = { hasQr: true, payload: recovery.payload };
-    } catch {
+    } catch (err) {
+      if (err instanceof ScanCancelledError) throw err;
       // Recovery is best-effort (canvas transforms can throw under memory
       // pressure); a failure must not abort the batch — fall through to OCR.
     }
@@ -53,6 +74,11 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
   let ocr: OcrSlipFields | null = null;
   const needsOcrFallback = shouldRunOcrFallback({ hasQr: detection.hasQr, emvco });
   if (needsOcrFallback || !bank) {
+    // OCR is the one stage that, once started, can't be interrupted (Tesseract
+    // exposes no mid-recognize cancellation) -- this is the last checkpoint
+    // that can still skip it entirely rather than start a call that will run
+    // to completion regardless.
+    if (isCancelled()) throw new ScanCancelledError();
     const result = await runOcrFallback(input.bytes, recognizer);
     // Keep the OCR fields even when OCR ran only to resolve the bank: a
     // CRC-valid EMVCo QR carries no date/time, so these come from OCR

@@ -183,7 +183,7 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
           return;
         }
 
-        await processor.process(asset, bytes, contentHash, runId);
+        await processor.process(asset, bytes, contentHash, runId, () => cancelled);
         await cache.recordScanned({ assetId: asset.assetId, contentHash, lastModified: asset.capturedAt, runId, versions });
         progress.done++;
       } finally {

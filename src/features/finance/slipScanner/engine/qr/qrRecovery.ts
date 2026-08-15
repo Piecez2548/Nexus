@@ -17,6 +17,10 @@ export interface QrRecoveryOptions {
   // decoder (e.g. extractSlipCandidate's QR-detect stage), so the guaranteed-to-
   // fail-again first decode isn't repeated.
   skipOriginal?: boolean;
+  // Checked before each variant attempt so a scan cancelled mid-recovery
+  // doesn't burn through the remaining rotate/brighten/contrast/upscale
+  // attempts (each a real canvas transform + re-decode) for nothing.
+  isCancelled?: () => boolean;
 }
 
 // QR Recovery Engine (GS-026): decode the original image, and if that fails,
@@ -37,6 +41,7 @@ export async function recoverQr(bytes: Uint8Array, options: QrRecoveryOptions = 
 
   for await (const variant of variants(bytes)) {
     if (attempts >= maxAttempts) break;
+    if (options.isCancelled?.()) break;
     attempts += 1;
     const payload = await decoder.decode(variant.bytes);
     if (payload !== null) return { payload, recoveredBy: variant.label, attempts };

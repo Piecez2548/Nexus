@@ -20,8 +20,8 @@ export function createSlipExtractionProcessor(
   extractor: SlipExtractor = extractSlipCandidate,
 ): ScanProcessor {
   return {
-    async process(asset: GalleryAssetRef, bytes: Uint8Array): Promise<void> {
-      const candidate = await extractor({ assetId: asset.assetId, bytes });
+    async process(asset: GalleryAssetRef, bytes: Uint8Array, _contentHash: string, _runId: number, isCancelled: () => boolean): Promise<void> {
+      const candidate = await extractor({ assetId: asset.assetId, bytes, isCancelled });
       await onCandidate(asset, candidate);
     },
   };

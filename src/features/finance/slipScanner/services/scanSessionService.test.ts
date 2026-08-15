@@ -176,6 +176,39 @@ describe("createScanSession", () => {
     expect(run.done).toBeLessThan(10);
   });
 
+  it("passes a live isCancelled callback to the processor, letting it abort mid-item instead of only being interruptible between items", async () => {
+    const items = [asset("w1", 1, [1]), asset("w2", 2, [2])];
+    const stageLog: string[] = [];
+    let session: ScanSession;
+
+    const processor: ScanProcessor = {
+      async process(a, _bytes, _hash, _runId, isCancelled) {
+        stageLog.push(`${a.assetId}:start`);
+        if (a.assetId === "w1") session.control.cancel(); // cancel from inside the first item's own processing
+        if (isCancelled()) {
+          stageLog.push(`${a.assetId}:aborted`);
+          return;
+        }
+        stageLog.push(`${a.assetId}:finished`);
+      },
+    };
+
+    session = createScanSession({
+      provider: new FakeProvider(items),
+      options: { source: "fake", incremental: false, concurrency: 1 }, // sequential -- deterministic order
+      processor,
+    });
+
+    const run = await session.done;
+
+    expect(run.status).toBe("cancelled");
+    expect(stageLog).toContain("w1:aborted");
+    expect(stageLog).not.toContain("w1:finished");
+    // w2 was never even pulled -- the existing between-item cancellation
+    // check still stops a second item from starting at all.
+    expect(stageLog).not.toContain("w2:start");
+  });
+
   it("pause halts progress and resume runs it to completion", async () => {
     const items = Array.from({ length: 8 }, (_, i) => asset(`p${i}`, (i % 9) + 1, [i, 100 + i]));
     let lastDone = 0;

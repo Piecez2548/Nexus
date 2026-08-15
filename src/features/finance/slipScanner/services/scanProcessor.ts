@@ -6,7 +6,19 @@ import type { GalleryAssetRef } from "@/features/finance/slipScanner/models/scan
 // scan loop. The default below does no extraction — recording the scanned
 // asset (done by the orchestrator) is the only output for now.
 export interface ScanProcessor {
-  process(asset: GalleryAssetRef, bytes: Uint8Array, contentHash: string, runId: number): Promise<void>;
+  // isCancelled lets a slow processor (real extraction: QR recovery, OCR)
+  // check for a mid-flight cancel between its own internal stages, rather
+  // than only being interruptible between whole assets -- runConcurrentQueue
+  // already re-checks cancellation on its own retry loop, so a processor
+  // that notices cancellation and throws is enough; it does not need to
+  // distinguish that from a real failure.
+  process(
+    asset: GalleryAssetRef,
+    bytes: Uint8Array,
+    contentHash: string,
+    runId: number,
+    isCancelled: () => boolean,
+  ): Promise<void>;
 }
 
 export const recordingProcessor: ScanProcessor = {

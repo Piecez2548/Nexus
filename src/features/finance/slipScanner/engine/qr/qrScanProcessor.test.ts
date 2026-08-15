@@ -23,7 +23,7 @@ describe("createQrScanProcessor", () => {
       fakeDetector("00020101021129PAYLOAD"),
     );
 
-    await processor.process(asset, new Uint8Array([1]), "hash", 1);
+    await processor.process(asset, new Uint8Array([1]), "hash", 1, () => false);
 
     expect(seen).toEqual([{ assetId: "a1", payload: "00020101021129PAYLOAD" }]);
   });
@@ -32,7 +32,7 @@ describe("createQrScanProcessor", () => {
     let calls = 0;
     const processor = createQrScanProcessor(() => void calls++, fakeDetector(null));
 
-    await processor.process(asset, new Uint8Array([1]), "hash", 1);
+    await processor.process(asset, new Uint8Array([1]), "hash", 1, () => false);
 
     expect(calls).toBe(0);
   });
@@ -44,7 +44,7 @@ describe("createQrScanProcessor", () => {
       order.push("callback");
     }, fakeDetector("x"));
 
-    await processor.process(asset, new Uint8Array([1]), "hash", 1);
+    await processor.process(asset, new Uint8Array([1]), "hash", 1, () => false);
     order.push("after");
 
     expect(order).toEqual(["callback", "after"]);

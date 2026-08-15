@@ -25,7 +25,7 @@ describe("createSlipExtractionProcessor", () => {
       async () => candidate,
     );
 
-    await processor.process(asset, new Uint8Array([1]), "hash", 1);
+    await processor.process(asset, new Uint8Array([1]), "hash", 1, () => false);
 
     expect(seen).toEqual([{ assetId: "a1", candidate }]);
   });
@@ -41,7 +41,7 @@ describe("createSlipExtractionProcessor", () => {
       },
     );
 
-    await processor.process(asset, bytes, "hash", 1);
+    await processor.process(asset, bytes, "hash", 1, () => false);
 
     expect(received).toEqual({ assetId: "a1", bytes });
   });
@@ -53,7 +53,7 @@ describe("createSlipExtractionProcessor", () => {
       order.push("callback");
     }, async () => fakeCandidate());
 
-    await processor.process(asset, new Uint8Array([1]), "hash", 1);
+    await processor.process(asset, new Uint8Array([1]), "hash", 1, () => false);
     order.push("after");
 
     expect(order).toEqual(["callback", "after"]);
@@ -67,6 +67,6 @@ describe("createSlipExtractionProcessor", () => {
       },
     );
 
-    await expect(processor.process(asset, new Uint8Array([1]), "hash", 1)).rejects.toThrow("extraction failed");
+    await expect(processor.process(asset, new Uint8Array([1]), "hash", 1, () => false)).rejects.toThrow("extraction failed");
   });
 });

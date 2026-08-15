@@ -5,7 +5,7 @@ import type { OcrTextRecognizer } from "@/features/finance/slipScanner/engine/oc
 import type { QrDecoder } from "@/features/finance/slipScanner/engine/qr/qrDecoder";
 import { createQrDetector } from "@/features/finance/slipScanner/engine/qr/qrDetector";
 
-import { extractSlipCandidate } from "./extractSlipCandidate";
+import { extractSlipCandidate, ScanCancelledError } from "./extractSlipCandidate";
 
 function withCrc(body: string): string {
   const marked = body + "6304";
@@ -99,5 +99,50 @@ describe("extractSlipCandidate", () => {
     expect(candidate.source).toBe("ocr");
     expect(candidate.amount).toBe(20);
     expect(candidate.bankId).toBe("kbank");
+  });
+
+  it("stops before attempting QR recovery when already cancelled, instead of running the full pipeline", async () => {
+    let recoverCalled = false;
+    await expect(
+      extractSlipCandidate({
+        assetId: "x",
+        bytes: new Uint8Array([0]),
+        detector: createQrDetector(qrDecoder(null)), // no QR -- would otherwise trigger recovery
+        recognizer: ocrRecognizer("should never run"),
+        recover: async () => {
+          recoverCalled = true;
+          return { payload: null, recoveredBy: null, attempts: 0 };
+        },
+        isCancelled: () => true,
+      }),
+    ).rejects.toThrow(ScanCancelledError);
+    expect(recoverCalled).toBe(false);
+  });
+
+  it("attempts QR recovery but stops before starting OCR once cancelled mid-extraction", async () => {
+    let ocrCalled = false;
+    let recoveryAttempted = false;
+    await expect(
+      extractSlipCandidate({
+        assetId: "x",
+        bytes: new Uint8Array([0]),
+        detector: createQrDetector(qrDecoder(null)),
+        recognizer: {
+          async recognize() {
+            ocrCalled = true;
+            return "text";
+          },
+        },
+        recover: async () => {
+          recoveryAttempted = true;
+          return { payload: null, recoveredBy: null, attempts: 3 };
+        },
+        // false during the pre-recovery check, true afterward -- cancellation
+        // lands while recovery is already in flight, same as a real scan.
+        isCancelled: () => recoveryAttempted,
+      }),
+    ).rejects.toThrow(ScanCancelledError);
+    expect(recoveryAttempted).toBe(true);
+    expect(ocrCalled).toBe(false);
   });
 });

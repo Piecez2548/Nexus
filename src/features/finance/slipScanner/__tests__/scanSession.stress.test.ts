@@ -171,5 +171,9 @@ describe("scan session stress / memory", () => {
     expect(updateSpy.mock.calls.length).toBeLessThan(N / 10);
 
     updateSpy.mockRestore();
-  }, 30_000);
+    // Passes in ~27s in isolation; under the full suite's parallel CPU
+    // contention (the same class of flakiness as the project's other
+    // documented full-suite-only timeouts) it can tip past 30s, so this
+    // gets real headroom rather than a value tuned to just barely fit.
+  }, 60_000);
 });

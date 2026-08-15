@@ -51,6 +51,34 @@ describe("recoverQr", () => {
     expect(result.payload).toBeNull();
     expect(result.attempts).toBe(2); // original + 1 variant, then stop
   });
+
+  it("stops trying further variants once isCancelled becomes true, instead of exhausting all of them", async () => {
+    let checks = 0;
+    const result = await recoverQr(new Uint8Array([0]), {
+      decoder: decoderFor(null), // never finds a QR -- would otherwise exhaust every variant
+      variants: fakeVariants(["rotate-90", "rotate-180", "rotate-270", "brighten", "contrast", "upscale"]),
+      isCancelled: () => {
+        checks += 1;
+        return checks > 1; // let the first variant through, cancel before the second
+      },
+    });
+
+    expect(result.payload).toBeNull();
+    // original (1) + exactly 1 variant tried before cancellation stopped it --
+    // not all 6 remaining variants.
+    expect(result.attempts).toBe(2);
+  });
+
+  it("never attempts a variant when already cancelled (skipOriginal too)", async () => {
+    const result = await recoverQr(new Uint8Array([0]), {
+      decoder: decoderFor(null),
+      variants: fakeVariants(["rotate-90", "rotate-180"]),
+      skipOriginal: true,
+      isCancelled: () => true,
+    });
+
+    expect(result).toEqual({ payload: null, recoveredBy: null, attempts: 0 });
+  });
 });
 
 describe("browserImageVariants", () => {
