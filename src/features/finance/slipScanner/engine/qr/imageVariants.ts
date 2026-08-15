@@ -1,5 +1,9 @@
 import { canvasToBytes } from "@/features/finance/slipScanner/engine/image/canvas";
 
+function perfNow(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
 export interface ImageVariant {
   label: string;
   bytes: Uint8Array;
@@ -72,10 +76,18 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     const canvas = new OffscreenCanvas(swap ? height : width, swap ? width : height);
     const ctx = canvas.getContext("2d");
     if (!ctx) continue;
+    const drawStart = perfNow();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((deg * Math.PI) / 180);
     ctx.drawImage(base, -width / 2, -height / 2);
-    yield { label: `rotate-${deg}`, bytes: await canvasToBytes(canvas, "image/jpeg", RECOVERY_JPEG_QUALITY) };
+    const drawMs = perfNow() - drawStart;
+    const encodeStart = perfNow();
+    const variantBytes = await canvasToBytes(canvas, "image/jpeg", RECOVERY_JPEG_QUALITY);
+    const encodeMs = perfNow() - encodeStart;
+    console.debug(
+      `[perf-investigation] variant label=rotate-${deg} width=${canvas.width} height=${canvas.height} drawMs=${Math.round(drawMs)} encodeMs=${Math.round(encodeMs)}`,
+    );
+    yield { label: `rotate-${deg}`, bytes: variantBytes };
   }
 
   // Filtered variants (brightness / contrast) and an upscale.
@@ -89,7 +101,15 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     const ctx = canvas.getContext("2d");
     if (!ctx) continue;
     ctx.filter = filter;
+    const drawStart = perfNow();
     ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
-    yield { label, bytes: await canvasToBytes(canvas, "image/jpeg", RECOVERY_JPEG_QUALITY) };
+    const drawMs = perfNow() - drawStart;
+    const encodeStart = perfNow();
+    const variantBytes = await canvasToBytes(canvas, "image/jpeg", RECOVERY_JPEG_QUALITY);
+    const encodeMs = perfNow() - encodeStart;
+    console.debug(
+      `[perf-investigation] variant label=${label} width=${canvas.width} height=${canvas.height} drawMs=${Math.round(drawMs)} encodeMs=${Math.round(encodeMs)}`,
+    );
+    yield { label, bytes: variantBytes };
   }
 };
