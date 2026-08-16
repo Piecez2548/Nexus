@@ -31,7 +31,10 @@ interface PooledWorker {
   // Tesseract's own Worker type (avoids a static import of tesseract.js here
   // so the WASM engine stays out of the bundle until first actually used —
   // same reasoning as slipOcr.ts's dynamic import).
-  worker: { recognize: (image: Blob) => Promise<{ data: { text: string } }>; terminate: () => Promise<unknown> };
+  worker: {
+    recognize: (image: Blob, options?: object, output?: { text: boolean }) => Promise<{ data: { text: string } }>;
+    terminate: () => Promise<unknown>;
+  };
   busy: boolean;
   // TEMPORARY perf-investigation instrumentation (Tesseract bottleneck
   // investigation) -- populated by the `logger` option passed to
@@ -167,9 +170,15 @@ class OcrWorkerPool {
       pooled.recognizeProgressTicks = 0;
 
       const recognizeStart = perfNow();
+      // Only `data.text` is ever read (see ocrRecognizer.ts) -- the default
+      // output also builds `blocks`/`hocr`/`tsv` via their own independent
+      // native-to-JS traversals for nothing. Measured (not assumed): this
+      // codebase's own instrumentation found that cost bounded by
+      // `postTickMs`, averaging ~1.6% of recognizeMs -- a small, safe,
+      // zero-accuracy-risk trim, not a meaningful latency fix on its own.
       const {
         data: { text },
-      } = await pooled.worker.recognize(new Blob([bytes as unknown as BlobPart]));
+      } = await pooled.worker.recognize(new Blob([bytes as unknown as BlobPart]), {}, { text: true });
       const recognizeMs = perfNow() - recognizeStart;
 
       // TEMPORARY perf-investigation instrumentation (Tesseract bottleneck
