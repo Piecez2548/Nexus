@@ -12,12 +12,22 @@ export interface EnhancementResult {
   applied: EnhancementPlan | null;
 }
 
+function perfNow(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
 // Measure mean brightness + contrast (luma std) from a downscaled copy. Browser
 // only (via the shared OffscreenCanvas/DOM-canvas fallback); null off-browser.
 export async function analyzeImage(bytes: Uint8Array): Promise<ImageStats | null> {
   if (typeof createImageBitmap !== "function") return null;
   try {
+    // TEMPORARY perf-investigation instrumentation (OCR bottleneck investigation)
+    // -- this decodes the ORIGINAL, full-resolution bytes just to read a 64x64
+    // downscaled sample; suspected to be a real cost on a 12+ megapixel gallery
+    // photo, same class of bug Fix 1 found in the QR path. Remove once confirmed.
+    const decodeStart = perfNow();
     const bitmap = await createImageBitmap(new Blob([bytes as unknown as BlobPart]));
+    const decodeMs = perfNow() - decodeStart;
     const target = makeCanvas(64, 64);
     if (!target) return null;
     const ctx = target.ctx;
@@ -33,6 +43,9 @@ export async function analyzeImage(bytes: Uint8Array): Promise<ImageStats | null
     }
     const brightness = sum / lumas.length;
     const variance = lumas.reduce((acc, l) => acc + (l - brightness) ** 2, 0) / lumas.length;
+    console.debug(
+      `[perf-investigation] analyzeImage inputBytes=${bytes.length} bitmapWidth=${bitmap.width} bitmapHeight=${bitmap.height} decodeMs=${Math.round(decodeMs)}`,
+    );
     return { brightness, contrast: Math.sqrt(variance) };
   } catch {
     return null;
@@ -75,22 +88,45 @@ export async function enhanceIfNeeded(bytes: Uint8Array): Promise<EnhancementRes
   if (!stats) return { bytes, applied: null };
 
   const plan = planEnhancements(stats);
-  if (!isEnhancementNeeded(plan)) return { bytes, applied: null };
+  if (!isEnhancementNeeded(plan)) {
+    console.debug(`[perf-investigation] enhanceIfNeeded applied=false brightness=${stats.brightness.toFixed(1)} contrast=${stats.contrast.toFixed(1)}`);
+    return { bytes, applied: null };
+  }
 
   try {
+    // TEMPORARY perf-investigation instrumentation (OCR bottleneck
+    // investigation) -- a SECOND full-resolution decode of the same bytes
+    // analyzeImage() already decoded, plus a full-resolution canvasToBytes
+    // encode below (the same PNG-encode operation the QR investigation
+    // measured at ~4-7s/call regardless of resolution). Remove once confirmed.
+    const decodeStart = perfNow();
     const bitmap = await createImageBitmap(new Blob([bytes as unknown as BlobPart]));
+    const decodeMs = perfNow() - decodeStart;
     const target = makeCanvas(bitmap.width, bitmap.height);
     if (!target) return { bytes, applied: null };
     const ctx = target.ctx;
 
+    const drawStart = perfNow();
     ctx.filter = enhancementFilterString(plan);
     ctx.drawImage(bitmap, 0, 0);
+    const drawMs = perfNow() - drawStart;
+
+    let sharpenMs = 0;
     if (plan.sharpen) {
+      const sharpenStart = perfNow();
       ctx.filter = "none";
       sharpen(ctx, bitmap.width, bitmap.height);
+      sharpenMs = perfNow() - sharpenStart;
     }
 
-    return { bytes: await canvasToBytes(target.canvas), applied: plan };
+    const encodeStart = perfNow();
+    const encoded = await canvasToBytes(target.canvas);
+    const encodeMs = perfNow() - encodeStart;
+    console.debug(
+      `[perf-investigation] enhanceIfNeeded applied=true width=${bitmap.width} height=${bitmap.height} decodeMs=${Math.round(decodeMs)} drawMs=${Math.round(drawMs)} sharpen=${plan.sharpen} sharpenMs=${Math.round(sharpenMs)} encodeMs=${Math.round(encodeMs)} outputBytes=${encoded.length}`,
+    );
+
+    return { bytes: encoded, applied: plan };
   } catch {
     return { bytes, applied: null };
   }

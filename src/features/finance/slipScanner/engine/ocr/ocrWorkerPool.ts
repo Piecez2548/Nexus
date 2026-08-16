@@ -1,5 +1,9 @@
 import { resolveConcurrency } from "@/features/finance/slipScanner/queue/scanQueueConfig";
 
+function perfNow(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
 // Memoized so concurrent first-time worker spawns (e.g. several queue lanes
 // all needing a worker at scan start) share one dynamic import instead of
 // each triggering their own -- the runtime would cache the module either
@@ -48,8 +52,16 @@ class OcrWorkerPool {
   }
 
   private async spawnWorker(): Promise<PooledWorker> {
+    // TEMPORARY perf-investigation instrumentation (OCR bottleneck
+    // investigation) -- a worker spawn (WASM engine + "tha+eng" language
+    // data load) is a real, one-time-per-slot cost; distinguishing it from
+    // ordinary queue wait matters since it can only happen for the first
+    // maxSize recognize() calls in an app session. Remove once confirmed.
+    const spawnStart = perfNow();
     const { createWorker } = await loadTesseract();
     const worker = await createWorker("tha+eng");
+    const spawnMs = perfNow() - spawnStart;
+    console.debug(`[perf-investigation] ocrWorkerSpawn spawnMs=${Math.round(spawnMs)} totalCount=${this.totalCount} maxSize=${this.maxSize}`);
     return { worker, busy: true };
   }
 
@@ -58,19 +70,19 @@ class OcrWorkerPool {
   // tick (e.g. every queue lane starting at once) each see an up-to-date
   // totalCount -- the same race-free pattern scanSessionService.ts's
   // seenContent map relies on.
-  private acquire(): Promise<PooledWorker> {
+  private acquire(): { pooled: Promise<PooledWorker>; source: "idle" | "spawn" | "wait" } {
     const free = this.idle.pop();
     if (free) {
       free.busy = true;
-      return Promise.resolve(free);
+      return { pooled: Promise.resolve(free), source: "idle" };
     }
 
     if (this.totalCount < this.maxSize) {
       this.totalCount++;
-      return this.spawnWorker();
+      return { pooled: this.spawnWorker(), source: "spawn" };
     }
 
-    return new Promise((resolve) => this.waiters.push(resolve));
+    return { pooled: new Promise((resolve) => this.waiters.push(resolve)), source: "wait" };
   }
 
   private release(pooled: PooledWorker): void {
@@ -84,11 +96,25 @@ class OcrWorkerPool {
   }
 
   async recognize(bytes: Uint8Array): Promise<string> {
-    const pooled = await this.acquire();
+    const acquireStart = perfNow();
+    const { pooled: pooledPromise, source } = this.acquire();
+    const pooled = await pooledPromise;
+    const acquireMs = perfNow() - acquireStart;
     try {
+      const recognizeStart = perfNow();
       const {
         data: { text },
       } = await pooled.worker.recognize(new Blob([bytes as unknown as BlobPart]));
+      const recognizeMs = perfNow() - recognizeStart;
+      // TEMPORARY perf-investigation instrumentation (OCR bottleneck
+      // investigation) -- acquireMs for source=spawn includes the worker
+      // init cost logged separately above (ocrWorkerSpawn); source=wait is
+      // genuine queue contention (all maxSize workers busy); source=idle
+      // should be ~instant. recognizeMs is the actual Tesseract engine call.
+      // Remove once confirmed.
+      console.debug(
+        `[perf-investigation] ocrRecognize inputBytes=${bytes.length} acquireSource=${source} acquireMs=${Math.round(acquireMs)} recognizeMs=${Math.round(recognizeMs)} idleCount=${this.idle.length} totalCount=${this.totalCount} waitersCount=${this.waiters.length}`,
+      );
       return text;
     } finally {
       this.release(pooled);
