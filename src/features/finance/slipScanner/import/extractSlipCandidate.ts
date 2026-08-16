@@ -81,6 +81,11 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
   const totalStart = perfNow();
   let recoveryMs: number | null = null;
   let ocrMs: number | null = null;
+  // TEMPORARY perf-investigation instrumentation -- which variant (if any)
+  // recovery actually succeeded via, so a real-device run can tell which of
+  // the 6 attempts (rotate-90/180/270, brighten, contrast, upscale) are
+  // worth keeping vs. dead weight, instead of guessing. Remove once decided.
+  let recoveredBy: string | null = null;
 
   const detectStart = perfNow();
   let detection = await detector.detect(input.bytes);
@@ -91,6 +96,7 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
       const recoveryStart = perfNow();
       const recovery = await recover(input.bytes, isCancelled);
       recoveryMs = perfNow() - recoveryStart;
+      recoveredBy = recovery.recoveredBy;
       if (recovery.payload !== null) detection = { hasQr: true, payload: recovery.payload };
     } catch (err) {
       if (err instanceof ScanCancelledError) throw err;
@@ -142,7 +148,7 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
   // relays the first string argument -- an object argument collapses to
   // "[object Object]" in logcat. Everything must be inlined into one string.
   console.debug(
-    `[perf-investigation] extractSlipCandidate assetId=${input.assetId} inputBytes=${input.bytes.length} hasQr=${detection.hasQr} detectMs=${Math.round(detectMs)} recoveryMs=${recoveryMs === null ? "null" : Math.round(recoveryMs)} parseMs=${Math.round(parseMs)} ocrMs=${ocrMs === null ? "null" : Math.round(ocrMs)} totalMs=${Math.round(perfNow() - totalStart)}`,
+    `[perf-investigation] extractSlipCandidate assetId=${input.assetId} inputBytes=${input.bytes.length} hasQr=${detection.hasQr} detectMs=${Math.round(detectMs)} recoveryMs=${recoveryMs === null ? "null" : Math.round(recoveryMs)} recoveredBy=${recoveredBy ?? "n/a"} parseMs=${Math.round(parseMs)} ocrMs=${ocrMs === null ? "null" : Math.round(ocrMs)} totalMs=${Math.round(perfNow() - totalStart)}`,
   );
 
   return buildSlipCandidate({
