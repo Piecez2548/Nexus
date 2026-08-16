@@ -235,7 +235,30 @@ async function pullTable(userId: string, table: SyncTableName): Promise<boolean>
     // get re-pushed on the very next pass, and again every pass after that
     // (since re-pushing an unchanged row just re-sets the watermark to the
     // same value again).
-    const nudged = new Date(new Date(maxAppliedUpdatedAt).getTime() + 1).toISOString();
+    let nudged = new Date(new Date(maxAppliedUpdatedAt).getTime() + 1).toISOString();
+
+    // This nudge is a single per-table watermark, not a per-row marker — it
+    // can't tell "this specific row is now in sync" apart from "everything
+    // with an earlier updatedAt is already pushed". If this device also has
+    // its own local, never-yet-pushed row whose updatedAt happens to be
+    // *earlier* than the row(s) just pulled above (e.g. it was written
+    // moments before the other device's write reached this device mid-pass),
+    // nudging past it would silently exclude it from every future push,
+    // since the cursor only ever advances. Cap the nudge at the oldest such
+    // still-pending row instead — a redundant re-push of an unmodified
+    // pulled row next pass is harmless (see above); silently losing a real
+    // pending push forever is not. Mirrors pushTable's own "no cursor yet"
+    // branch: with no lastPushed at all (this device's very first sync),
+    // every local row is potentially pending, not just ones above a cursor.
+    const pending = lastPushed
+      ? await localTable(table).where("updatedAt").aboveOrEqual(lastPushed).toArray()
+      : await localTable(table).toArray();
+    const pulledSyncIds = new Set(data.map((r) => r.id));
+    for (const row of pending as { syncId?: string; updatedAt?: string }[]) {
+      if (!row.syncId || !row.updatedAt || pulledSyncIds.has(row.syncId)) continue;
+      if (row.updatedAt < nudged) nudged = row.updatedAt;
+    }
+
     if (!lastPushed || nudged > lastPushed) {
       await setSyncState(lastPushedKey, nudged);
     }

@@ -817,4 +817,101 @@ describe("syncEngine", () => {
       .find((p: { id: string; table_name: string }) => p.id === "other-device-tx" && p.table_name === "transactions");
     expect(rePush).toBeUndefined();
   });
+
+  it("still pushes an unrelated not-yet-pushed local row whose updatedAt is earlier than a row just pulled from another device", async () => {
+    // Reproduces a real two-device bug: pulling another device's row nudges
+    // this device's OWN push cursor forward to that row's updatedAt (see the
+    // "does not re-push a row it only ever received via pull" test above,
+    // and pullTable's "nudged" comment) so the pulled row isn't redundantly
+    // re-pushed next pass. But that nudge is a single per-table watermark —
+    // it can't distinguish "this specific row is now in sync" from
+    // "everything with an earlier updatedAt is already pushed". If this
+    // device also has its own local, never-yet-pushed row whose updatedAt
+    // happens to be *earlier* than the row just pulled here — e.g. it was
+    // written moments before the other device's row arrived mid-pass, after
+    // this same pass's own push step for "transactions" already ran but
+    // before this same pass's pull step (the earliest point such a write
+    // could realistically land, same reasoning as the mid-pass-deletion test
+    // above) — the nudge must not silently move the push cursor past it too,
+    // or it would be permanently excluded from every future push (the
+    // cursor only ever advances) with no error ever thrown.
+    let currentTableName: string | undefined;
+
+    mockFrom.mockImplementation(() => {
+      const builder = {
+        select: vi.fn(() => builder),
+        eq: vi.fn((column: string, value: string) => {
+          if (column === "table_name") currentTableName = value;
+          return builder;
+        }),
+        order: vi.fn(() => builder),
+        gte: (...args: unknown[]) => {
+          mockGte(...args);
+          return builder;
+        },
+        upsert: mockUpsert,
+        then: async (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (currentTableName !== "transactions") {
+            resolve({ data: [], error: null });
+            return;
+          }
+
+          await db.transactions.add({
+            title: "Local not-yet-pushed",
+            amount: 42,
+            type: "expense",
+            account: "Cash",
+            date: "2026-07-20",
+            status: "completed",
+            syncId: "local-only-tx",
+            updatedAt: "2026-07-20T11:00:00.000Z",
+          });
+
+          resolve({
+            data: [
+              {
+                id: "other-device-tx",
+                table_name: "transactions",
+                data: {
+                  title: "Coffee",
+                  amount: 100,
+                  type: "expense",
+                  account: "Cash",
+                  date: "2026-07-20",
+                  status: "completed",
+                  syncId: "other-device-tx",
+                  updatedAt: "2026-07-20T12:00:00.000Z",
+                },
+                updated_at: "2026-07-20T12:00:00.000Z",
+                deleted_at: null,
+              },
+            ],
+            error: null,
+          });
+        },
+      };
+
+      return builder;
+    });
+
+    // Pass 1: pushes nothing (transactions table starts empty), then pulls
+    // the other device's row — "local-only-tx" lands in Dexie as a side
+    // effect of that same pull resolving, simulating the mid-pass race.
+    await runFullSync(USER_ID);
+
+    // Pass 2: nothing new from the server this time — isolates whether the
+    // push side alone still picks up the local row.
+    mockUpsert.mockClear();
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({ data: [], error: null }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const pushedLocalRow = mockUpsert.mock.calls
+      .flatMap((call) => call[0])
+      .find((p: { id: string; table_name: string }) => p.id === "local-only-tx" && p.table_name === "transactions");
+    expect(pushedLocalRow).toBeDefined();
+  });
 });
