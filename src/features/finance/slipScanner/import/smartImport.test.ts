@@ -146,20 +146,32 @@ describe("runSmartImport — conflict resolution against existing transactions",
     expect(created).toHaveLength(1);
   });
 
-  it("KNOWN GAP: does not auto-skip a same-payment duplicate when the only missing signal is reference (e.g. a notification-confirmed transaction later re-captured by a gallery scan)", async () => {
+  it("KNOWN LIMIT: a same-payment duplicate with only 3 weak signals available (e.g. a notification-confirmed transaction later re-captured by a gallery scan) is kept, not silently auto-skipped -- by design, not by accident", async () => {
     // Payment Notification Capture confirms a transaction from bank push-
-    // notification text, which rarely carries a parseable reference number
-    // (unlike a full slip photo). If the SAME real payment is later also
-    // captured by a gallery scan of a screenshot/receipt (same amount,
-    // merchant, and minute-level timestamp -- the realistic case, not a
-    // contrived one), the conflict resolver's noisy-OR combination of
-    // amount(0.3) + merchant(0.3) + timestamp(0.4) with NO reference match
-    // only reaches 1-(0.7*0.7*0.6) = 0.706 -- below the auto-skip threshold
-    // -- so this creates a second, duplicate transaction rather than
-    // silently skipping it. This is a real, documented Phase-1 limitation of
-    // Payment Notification Capture (see its task-registry entry), not
-    // something this test expects to be fixed here; it exists so the actual
-    // current behavior is proven in code, not just asserted in a plan.
+    // notification text, which sets neither a time (buildNotificationCandidate.ts
+    // leaves it unset -- no reliably-parseable one in the notification body)
+    // nor a reference (rarely parseable either). The existing transaction
+    // below reflects that real shape exactly, not a contrived one: date-only,
+    // no note. If the SAME real payment is later also captured by a gallery
+    // scan of the physical slip (same amount, merchant, and now -- since
+    // smartDuplicate.ts's timestampsMatch() falls back to same-calendar-day
+    // when either side lacks a time -- a correctly-matching timestamp too),
+    // the noisy-OR combination of amount(0.3) + merchant(0.3) + timestamp(0.4)
+    // reaches 1-(0.7*0.7*0.6) = 0.706. That's well above isLikelyDuplicate's
+    // bare 0.7 default, but conflictResolver.ts's actual auto-skip policy
+    // (defaultResolution) deliberately requires >=0.85 -- "near-certain," not
+    // just "likely" -- before silently discarding an incoming transaction,
+    // specifically because auto-skip has no undo path once the candidate is
+    // dropped. Three weak signals (0.3/0.3/0.4) can mathematically never
+    // reach 0.85 on their own, with or without a reference. This is the
+    // conservative design working as intended, not the gap it looks like at
+    // first glance: the case is still surfaced (kept, not skipped) rather
+    // than silently duplicated *or* silently discarded, leaving the user free
+    // to notice and merge/delete manually. Closing it further would mean
+    // lowering the auto-skip threshold or reweighting signals globally --
+    // changes that would also loosen duplicate detection for every other
+    // caller of this engine (QR/OCR gallery scans included), a materially
+    // bigger and riskier change than this fix's scope.
     const { deps, created } = fakeDeps();
     const withExisting: SmartImportDeps = {
       ...deps,
@@ -170,8 +182,8 @@ describe("runSmartImport — conflict resolution against existing transactions",
           type: "expense",
           account: "Cash",
           date: "2026-08-08",
-          time: "09:15",
-          note: undefined, // no reference -- realistic for a notification-confirmed import
+          time: undefined, // realistic for a notification-confirmed import -- never set
+          note: undefined, // no reference -- also realistic for a notification-confirmed import
           status: "completed",
         },
       ],
@@ -182,7 +194,7 @@ describe("runSmartImport — conflict resolution against existing transactions",
       withExisting,
     );
 
-    expect(result.importedCandidateIds).toEqual(["1"]); // NOT skipped -- a duplicate transaction is created
+    expect(result.importedCandidateIds).toEqual(["1"]); // kept, not skipped -- surfaced for the user to review
     expect(result.skippedDuplicates).toEqual([]);
     expect(created).toHaveLength(1);
   });
