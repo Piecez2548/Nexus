@@ -1,4 +1,5 @@
-import { canvasToBytes, luma, makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
+import { encodeBmp } from "@/features/finance/slipScanner/engine/image/bmpEncoder";
+import { luma, makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
 import { analyzeImage, sharpen } from "@/features/finance/slipScanner/engine/image/imageEnhancer";
 import { enhancementFilterString, isEnhancementNeeded, planEnhancements } from "@/features/finance/slipScanner/engine/image/imageEnhancement";
 import { otsuThreshold } from "@/features/finance/slipScanner/engine/image/otsu";
@@ -21,6 +22,15 @@ import { otsuThreshold } from "@/features/finance/slipScanner/engine/image/otsu"
 // sharpen still apply at the same point in the pipeline (full resolution,
 // before the resize below) as enhanceIfNeeded's own implementation, so the
 // output is pixel-equivalent, not just visually similar.
+//
+// The final encode is BMP (bmpEncoder.ts), not PNG. Real-device testing
+// found OffscreenCanvas.convertToBlob costs a fixed ~4.1s per call
+// regardless of format (PNG and JPEG measured identically) or image
+// size/content -- so switching formats via convertToBlob was a dead end,
+// but Tesseract's own worker-side code accepts BMP directly (it round-trips
+// any BMP input through the bmp-js package before handing it to Leptonica),
+// and an uncompressed BMP's "encode" is just a header write plus a raw byte
+// copy -- no convertToBlob call, and no compression pass to pay for.
 
 const TARGET_SHORT_EDGE = 1200;
 const MAX_UPSCALE = 2;
@@ -86,8 +96,9 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
     const threshold = otsuThreshold(gray);
     const otsuMs = perfNow() - otsuStart;
 
-    // Binarise (value > threshold → white bg, else black text) and write back
-    // in a single pass, rather than a separate threshold loop then a copy loop.
+    // Binarise (value > threshold → white bg, else black text) in place --
+    // no need to write back to the canvas (target.canvas is never read from
+    // again; encodeBmp below reads straight from this ImageData).
     const binarizeStart = perfNow();
     for (let i = 0, p = 0; i < image.data.length; i += 4, p += 1) {
       const v = gray[p]! > threshold ? 255 : 0;
@@ -96,11 +107,10 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
       image.data[i + 2] = v;
       image.data[i + 3] = 255;
     }
-    target.ctx.putImageData(image, 0, 0);
     const binarizeMs = perfNow() - binarizeStart;
 
     const encodeStart = perfNow();
-    const result = await canvasToBytes(target.canvas);
+    const result = encodeBmp(image);
     const encodeMs = perfNow() - encodeStart;
 
     console.debug(
