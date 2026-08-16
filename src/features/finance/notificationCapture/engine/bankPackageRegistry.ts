@@ -8,13 +8,15 @@
 // match.
 //
 // Phase 1 (Payment Notification Capture): SCB, K PLUS, Krungthai NEXT only.
-// Package names are best-effort and NOT yet verified against real installs
-// -- confirm/correct each via `adb shell dumpsys notification --noredact`
-// against the real app before trusting an entry here or adding a new one.
+// SCB Easy and K PLUS confirmed against a real device (`pm list packages`);
+// K PLUS additionally confirmed end-to-end with a real payment. Krungthai
+// NEXT confirmed via `aapt2 dump badging` against the real installed APK
+// (application-label "NEXT") -- the original guess ("com.ktb.next") was
+// wrong; "com.ktb.customer.qr" is a different app (เป๋าตัง/Pao Tang).
 export const BANK_APP_PACKAGES: Readonly<Record<string, string>> = {
   "com.scb.phone": "scb", // SCB Easy
   "com.kasikorn.retail.mbanking.wap": "kbank", // K PLUS
-  "com.ktb.next": "ktb", // Krungthai NEXT
+  "ktbcs.netbank": "ktb", // Krungthai NEXT
 };
 
 export function bankIdForPackage(packageName: string): string | null {

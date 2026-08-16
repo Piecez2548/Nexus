@@ -6,7 +6,7 @@ describe("bankIdForPackage", () => {
   it("resolves a known Phase-1 bank app package name", () => {
     expect(bankIdForPackage("com.scb.phone")).toBe("scb");
     expect(bankIdForPackage("com.kasikorn.retail.mbanking.wap")).toBe("kbank");
-    expect(bankIdForPackage("com.ktb.next")).toBe("ktb");
+    expect(bankIdForPackage("ktbcs.netbank")).toBe("ktb");
   });
 
   it("returns null for an unknown package", () => {
