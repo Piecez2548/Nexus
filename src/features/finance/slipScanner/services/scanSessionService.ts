@@ -50,6 +50,14 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+// TEMPORARY perf-investigation instrumentation (gallery-scan speed
+// investigation, PERF task plan) — same pattern as the existing probes in
+// extractSlipCandidate.ts/NativeMediaProvider.ts/imageDataDecoder.ts/
+// imageVariants.ts. Remove once the current bottleneck is confirmed/fixed.
+function perfNow(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
 // The scan orchestration. Depends only on the MediaProvider interface, the two
 // local repositories, and the concurrent queue — no Capacitor, no plugin — so
 // it stays fully platform-independent. Owns: scan-all, incremental skip,
@@ -154,22 +162,44 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
     const seenContent = new Map<string, string>(); // contentHash -> reserving assetId
     let maxCapturedAt = cursor;
 
+    // TEMPORARY perf-investigation instrumentation (gallery-scan speed
+    // investigation, PERF task plan) — active/peak worker count directly
+    // answers "is the queue actually processing multiple images
+    // concurrently on Android" (Q1/Q2/C in the report), rather than trusting
+    // resolveConcurrency()'s configured number. Remove once confirmed/fixed.
+    let activeWorkers = 0;
+    let peakActiveWorkers = 0;
+
     async function handleAsset(asset: GalleryAssetRef): Promise<void> {
       if (asset.capturedAt && (!maxCapturedAt || asset.capturedAt > maxCapturedAt)) maxCapturedAt = asset.capturedAt;
 
+      const decideStart = perfNow();
       // Consult the cache only for incremental scans; a non-incremental
       // (forced) scan re-processes everything but still records + dedupes.
       const decision = params.options.incremental ? await cache.decide(asset.assetId, asset.capturedAt, versions) : "scan";
+      const decideMs = perfNow() - decideStart;
       if (decision === "skip-unchanged" || decision === "skip-failed") {
         progress.skipped++; // cache hit (unchanged) or a remembered, retries-exhausted failure
+        console.debug(`[perf-investigation] handleAsset assetId=${asset.assetId} skipped=${decision} decideMs=${Math.round(decideMs)}`);
         return;
       }
 
       const estBytes = asset.bytes ?? DEFAULT_IMAGE_BYTES;
+      const budgetWaitStart = perfNow();
       await budget.acquire(estBytes);
+      const budgetWaitMs = perfNow() - budgetWaitStart;
+
+      activeWorkers++;
+      peakActiveWorkers = Math.max(peakActiveWorkers, activeWorkers);
+      const itemStart = perfNow();
       try {
+        const readStart = perfNow();
         const bytes = await params.provider.readBytes(asset);
+        const readMs = perfNow() - readStart;
+
+        const hashStart = perfNow();
         const contentHash = await sha256Hex(bytes);
+        const hashMs = perfNow() - hashStart;
 
         const reservedBy = seenContent.get(contentHash);
         if (reservedBy !== undefined && reservedBy !== asset.assetId) {
@@ -178,15 +208,37 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
         }
         seenContent.set(contentHash, asset.assetId); // reserve synchronously (race-free); idempotent on a retry
 
-        if (await cache.hasContent(contentHash, asset.assetId)) {
+        const hasContentStart = perfNow();
+        const isDup = await cache.hasContent(contentHash, asset.assetId);
+        const hasContentMs = perfNow() - hasContentStart;
+        if (isDup) {
           progress.skipped++; // duplicate content from another asset (dedup preserved)
+          console.debug(
+            `[perf-investigation] handleAsset assetId=${asset.assetId} skipped=duplicate-content decideMs=${Math.round(decideMs)} budgetWaitMs=${Math.round(budgetWaitMs)} readMs=${Math.round(readMs)} hashMs=${Math.round(hashMs)} hasContentMs=${Math.round(hasContentMs)}`,
+          );
           return;
         }
 
+        const processStart = perfNow();
         await processor.process(asset, bytes, contentHash, runId, () => cancelled);
+        const processMs = perfNow() - processStart;
+
+        const recordStart = perfNow();
         await cache.recordScanned({ assetId: asset.assetId, contentHash, lastModified: asset.capturedAt, runId, versions });
+        const recordMs = perfNow() - recordStart;
+
         progress.done++;
+        // Memory sample every 10 completed items (Q16: GC pauses/memory
+        // pressure) -- same performance.memory primitive perf/performanceMonitor.ts
+        // (GS-036) already uses; not wiring in that whole abstraction for a
+        // temporary probe. Chromium/WebView-only; undefined elsewhere.
+        const mem = (performance as unknown as { memory?: { usedJSHeapSize?: number } }).memory;
+        const memMB = progress.done % 10 === 0 && mem?.usedJSHeapSize ? Math.round(mem.usedJSHeapSize / (1024 * 1024)) : null;
+        console.debug(
+          `[perf-investigation] handleAsset assetId=${asset.assetId} activeWorkers=${activeWorkers} peakActiveWorkers=${peakActiveWorkers} decideMs=${Math.round(decideMs)} budgetWaitMs=${Math.round(budgetWaitMs)} readMs=${Math.round(readMs)} hashMs=${Math.round(hashMs)} hasContentMs=${Math.round(hasContentMs)} processMs=${Math.round(processMs)} recordMs=${Math.round(recordMs)} itemTotalMs=${Math.round(perfNow() - itemStart)} usedMemMB=${memMB}`,
+        );
       } finally {
+        activeWorkers--;
         budget.release(estBytes);
       }
     }

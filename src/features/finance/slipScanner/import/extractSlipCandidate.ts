@@ -99,8 +99,10 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     }
   }
 
+  const parseStart = perfNow();
   const emvco = detection.payload !== null ? parseEmvcoPayload(detection.payload) : null;
   let bank = emvco ? identifyBank(emvco) : null;
+  const parseMs = perfNow() - parseStart;
 
   let ocr: OcrSlipFields | null = null;
   const needsOcrFallback = shouldRunOcrFallback({ hasQr: detection.hasQr, emvco });
@@ -140,7 +142,7 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
   // relays the first string argument -- an object argument collapses to
   // "[object Object]" in logcat. Everything must be inlined into one string.
   console.debug(
-    `[perf-investigation] extractSlipCandidate assetId=${input.assetId} inputBytes=${input.bytes.length} hasQr=${detection.hasQr} detectMs=${Math.round(detectMs)} recoveryMs=${recoveryMs === null ? "null" : Math.round(recoveryMs)} ocrMs=${ocrMs === null ? "null" : Math.round(ocrMs)} totalMs=${Math.round(perfNow() - totalStart)}`,
+    `[perf-investigation] extractSlipCandidate assetId=${input.assetId} inputBytes=${input.bytes.length} hasQr=${detection.hasQr} detectMs=${Math.round(detectMs)} recoveryMs=${recoveryMs === null ? "null" : Math.round(recoveryMs)} parseMs=${Math.round(parseMs)} ocrMs=${ocrMs === null ? "null" : Math.round(ocrMs)} totalMs=${Math.round(perfNow() - totalStart)}`,
   );
 
   return buildSlipCandidate({

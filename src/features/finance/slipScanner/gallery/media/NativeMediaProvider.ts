@@ -37,7 +37,16 @@ export class NativeMediaProvider implements MediaProvider {
     let offset = 0;
 
     for (;;) {
+      // TEMPORARY perf-investigation instrumentation (gallery-scan speed
+      // investigation, PERF task plan) — pagination is a suspected but
+      // unmeasured cost (Q11: "is the provider/iterator limiting
+      // throughput"); only ~13 calls total for a 2500-image gallery
+      // (PAGE_SIZE=200), so unlikely to dominate, but confirm rather than
+      // assume. Remove once confirmed/fixed.
+      const pageStart = typeof performance !== "undefined" ? performance.now() : Date.now();
       const { assets } = await NativeGalleryMedia.page({ sinceCursorMs, offset, limit: PAGE_SIZE });
+      const pageMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - pageStart;
+      console.debug(`[perf-investigation] page offset=${offset} count=${assets.length} pageMs=${Math.round(pageMs)}`);
       if (assets.length === 0) return;
 
       for (const asset of assets) {
