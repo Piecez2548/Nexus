@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Download, Upload, Merge, Copy } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { Share } from "@capacitor/share";
 
 import { exportBackup, importBackup } from "@/database/backupService";
 import { dedupeAccountsAndCategories } from "@/features/finance/utils/dedupeAccountsAndCategories";
@@ -62,15 +65,36 @@ export default function DataSettings() {
 
     try {
       const json = await exportBackup();
-      const blob = new Blob([json], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
+      const filename = `nexus-backup-${new Date().toISOString().slice(0, 10)}.json`;
 
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `nexus-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      link.click();
+      if (Capacitor.isNativePlatform()) {
+        // A blob-URL <a download> click is unreliable inside a native
+        // WebView (Android's WebView doesn't reliably wire it up to a real
+        // file save, unlike a desktop/mobile browser tab) — it can silently
+        // no-op with no error to catch, which is exactly what happened here.
+        // Filesystem.writeFile + Share.share is the standard Capacitor
+        // pattern instead: write to the app's private cache (no storage
+        // permission needed), then hand it to the OS share sheet so the
+        // user picks where it actually goes (Files, Drive, email, etc.).
+        const { uri } = await Filesystem.writeFile({
+          path: filename,
+          data: json,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8,
+        });
+        await Share.share({ url: uri, title: filename });
+      } else {
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
 
-      URL.revokeObjectURL(url);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+
+        URL.revokeObjectURL(url);
+      }
+
       setStatus(t("settings.exportSuccess"));
       toast.success(t("settings.exportSuccess"));
     } catch (err) {

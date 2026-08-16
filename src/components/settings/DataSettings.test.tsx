@@ -1,6 +1,24 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+const mockIsNativePlatform = vi.fn();
+const mockWriteFile = vi.fn();
+const mockShare = vi.fn();
+
+vi.mock("@capacitor/core", () => ({
+  Capacitor: { isNativePlatform: () => mockIsNativePlatform() },
+}));
+
+vi.mock("@capacitor/filesystem", () => ({
+  Filesystem: { writeFile: (...args: unknown[]) => mockWriteFile(...args) },
+  Directory: { Cache: "CACHE" },
+  Encoding: { UTF8: "utf8" },
+}));
+
+vi.mock("@capacitor/share", () => ({
+  Share: { share: (...args: unknown[]) => mockShare(...args) },
+}));
 
 import DataSettings from "./DataSettings";
 import { db } from "@/database/db";
@@ -16,6 +34,9 @@ describe("DataSettings", () => {
     useAccountStore.setState({ accounts: [], loading: false, error: null });
     useCategoryStore.setState({ categories: [], loading: false, error: null });
     useTransactionStore.setState({ transactions: [], loading: false, error: null });
+    mockIsNativePlatform.mockReset().mockReturnValue(false);
+    mockWriteFile.mockReset().mockResolvedValue({ uri: "file:///cache/nexus-backup.json" });
+    mockShare.mockReset().mockResolvedValue(undefined);
   });
 
   it("merges duplicate accounts and categories and reports how many were merged", async () => {
@@ -106,5 +127,39 @@ describe("DataSettings", () => {
 
     await waitFor(() => expect(screen.queryByText("Found 1 duplicate group(s)")).not.toBeInTheDocument());
     expect(await db.transactions.count()).toBe(2);
+  });
+
+  it("exports via the OS share sheet on native, instead of a blob-URL download link that silently does nothing there", async () => {
+    mockIsNativePlatform.mockReturnValue(true);
+
+    const user = userEvent.setup();
+    render(<DataSettings />);
+
+    await user.click(screen.getByRole("button", { name: /^Export Backup/ }));
+
+    await waitFor(() => expect(mockWriteFile).toHaveBeenCalled());
+    const [writeArgs] = mockWriteFile.mock.calls[0]!;
+    expect(writeArgs).toMatchObject({ directory: "CACHE", encoding: "utf8" });
+    expect(writeArgs.path).toMatch(/^nexus-backup-\d{4}-\d{2}-\d{2}\.json$/);
+    expect(typeof writeArgs.data).toBe("string");
+    JSON.parse(writeArgs.data); // the written payload is the real backup JSON, not a stub
+
+    expect(mockShare).toHaveBeenCalledWith(
+      expect.objectContaining({ url: "file:///cache/nexus-backup.json" }),
+    );
+    expect(await screen.findByText("Backup file downloaded")).toBeInTheDocument();
+  });
+
+  it("exports via a blob-URL download link on web, never touching Filesystem/Share", async () => {
+    mockIsNativePlatform.mockReturnValue(false);
+
+    const user = userEvent.setup();
+    render(<DataSettings />);
+
+    await user.click(screen.getByRole("button", { name: /^Export Backup/ }));
+
+    expect(await screen.findByText("Backup file downloaded")).toBeInTheDocument();
+    expect(mockWriteFile).not.toHaveBeenCalled();
+    expect(mockShare).not.toHaveBeenCalled();
   });
 });
