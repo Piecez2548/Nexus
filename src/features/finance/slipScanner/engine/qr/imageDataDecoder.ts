@@ -2,6 +2,7 @@ import jsQR from "jsqr";
 
 import { makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
 import type { QrDecoder } from "@/features/finance/slipScanner/engine/qr/qrDecoder";
+import { capLongEdge, MAX_QR_DECODE_LONG_EDGE, shouldResizeOnDecode } from "@/features/finance/slipScanner/engine/qr/qrDecodeResize";
 
 function perfNow(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
@@ -16,25 +17,37 @@ async function toImageData(bytes: Uint8Array): Promise<ImageData | null> {
   if (typeof createImageBitmap !== "function") return null;
 
   // TEMPORARY perf-investigation instrumentation (gallery-scan speed
-  // investigation, PERF task plan) — QR recovery's per-variant cost didn't
-  // drop after switching to JPEG (still 18-52s/image), so the cost must be
-  // here: bitmap decode, canvas draw, or getImageData's GPU->CPU readback
-  // (a well-known slow point on some WebViews). Remove once confirmed/fixed.
+  // investigation, PERF task plan) — real-device data found this decode step
+  // (a real gallery photo is commonly 12+ megapixels) was the dominant cost,
+  // not canvas draw/getImageData (both stayed in the tens-to-low-hundreds of
+  // ms). Fixed below by resizing during decode instead of after. Remove once
+  // confirmed/fixed.
   const bitmapStart = perfNow();
   let bitmap: ImageBitmap;
   try {
-    bitmap = await createImageBitmap(new Blob([bytes as unknown as BlobPart]));
+    const blob = new Blob([bytes as unknown as BlobPart]);
+    // resizeHeight alone (not resizeWidth too) lets the decoder compute the
+    // other axis itself, preserving the source's real aspect ratio and EXIF
+    // orientation exactly -- specifying both axes ourselves would risk
+    // distorting a landscape photo, since we don't know its natural
+    // dimensions ahead of a decode we're specifically trying to avoid doing
+    // at full resolution. This only bounds height; capLongEdge below
+    // corrects width for a landscape source.
+    bitmap = shouldResizeOnDecode(bytes.length)
+      ? await createImageBitmap(blob, { resizeHeight: MAX_QR_DECODE_LONG_EDGE, resizeQuality: "medium" })
+      : await createImageBitmap(blob);
   } catch {
     return null;
   }
   const bitmapMs = perfNow() - bitmapStart;
-  const { width, height } = bitmap;
-  if (width === 0 || height === 0) return null;
+  if (bitmap.width === 0 || bitmap.height === 0) return null;
+
+  const { width, height } = capLongEdge(bitmap.width, bitmap.height);
 
   const target = makeCanvas(width, height);
   if (!target) return null;
   const drawStart = perfNow();
-  target.ctx.drawImage(bitmap, 0, 0);
+  target.ctx.drawImage(bitmap, 0, 0, width, height);
   const drawMs = perfNow() - drawStart;
 
   const getImageDataStart = perfNow();

@@ -1,3 +1,5 @@
+import { capLongEdge, MAX_QR_DECODE_LONG_EDGE, shouldResizeOnDecode } from "@/features/finance/slipScanner/engine/qr/qrDecodeResize";
+
 function perfNow(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
@@ -16,20 +18,22 @@ export type ImageVariantGenerator = (bytes: Uint8Array) => AsyncIterable<ImageVa
 
 // Recovery runs on every image the initial full-resolution decode already
 // failed on — which, for a real gallery, is nearly every photo (only a small
-// fraction are slips). Capping the working size once, up front, keeps every
-// variant bounded without touching the initial full-resolution attempt that
-// successfully reads most real slip QR codes on the first try. 1600px mirrors
-// the same order of magnitude already proven sufficient for reading (finer-
-// grained) Thai slip text in ocrPreprocess.ts's 1200px short-edge target — QR
-// modules are coarser than glyph strokes, so this is generous.
-const MAX_LONG_EDGE = 1600;
-
+// fraction are slips). The working size is capped once, up front (shared with
+// the initial detect pass via qrDecodeResize.ts), so every variant is bounded.
 export const browserImageVariants: ImageVariantGenerator = async function* (bytes) {
   if (typeof createImageBitmap !== "function" || typeof OffscreenCanvas !== "function") return;
 
   let bitmap: ImageBitmap;
   try {
-    bitmap = await createImageBitmap(new Blob([bytes as unknown as BlobPart]));
+    const blob = new Blob([bytes as unknown as BlobPart]);
+    // Resize during decode rather than after (see imageDataDecoder.ts for
+    // the same reasoning) -- the real-device cost lived in materializing a
+    // full-resolution bitmap at all, not in the canvas transforms below,
+    // which real-device instrumentation already showed were cheap (tens of
+    // ms) once the separate encode/decode round trip was eliminated.
+    bitmap = shouldResizeOnDecode(bytes.length)
+      ? await createImageBitmap(blob, { resizeHeight: MAX_QR_DECODE_LONG_EDGE, resizeQuality: "medium" })
+      : await createImageBitmap(blob);
   } catch {
     return;
   }
@@ -37,19 +41,18 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
   let base: CanvasImageSource = bitmap;
   let width = bitmap.width;
   let height = bitmap.height;
-  const longEdge = Math.max(width, height);
-  if (longEdge > MAX_LONG_EDGE) {
-    const downscale = MAX_LONG_EDGE / longEdge;
-    width = Math.round(width * downscale);
-    height = Math.round(height * downscale);
-    const baseCanvas = new OffscreenCanvas(width, height);
+  // The decode-time resize above only bounds height; a landscape source
+  // (width the true long edge) can still exceed the cap -- correct it here,
+  // on the now-small intermediate bitmap rather than the original.
+  const capped = capLongEdge(width, height);
+  if (capped.width !== width || capped.height !== height) {
+    const baseCanvas = new OffscreenCanvas(capped.width, capped.height);
     const baseCtx = baseCanvas.getContext("2d");
     if (baseCtx) {
-      baseCtx.drawImage(bitmap, 0, 0, width, height);
+      baseCtx.drawImage(bitmap, 0, 0, capped.width, capped.height);
       base = baseCanvas;
-    } else {
-      width = bitmap.width;
-      height = bitmap.height;
+      width = capped.width;
+      height = capped.height;
     }
   }
 
