@@ -1,5 +1,4 @@
-import { encodeBmp } from "@/features/finance/slipScanner/engine/image/bmpEncoder";
-import { luma, makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
+import { canvasToBytes, luma, makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
 import { analyzeImage, sharpen } from "@/features/finance/slipScanner/engine/image/imageEnhancer";
 import { enhancementFilterString, isEnhancementNeeded, planEnhancements } from "@/features/finance/slipScanner/engine/image/imageEnhancement";
 import { otsuThreshold } from "@/features/finance/slipScanner/engine/image/otsu";
@@ -23,14 +22,20 @@ import { otsuThreshold } from "@/features/finance/slipScanner/engine/image/otsu"
 // before the resize below) as enhanceIfNeeded's own implementation, so the
 // output is pixel-equivalent, not just visually similar.
 //
-// The final encode is BMP (bmpEncoder.ts), not PNG. Real-device testing
-// found OffscreenCanvas.convertToBlob costs a fixed ~4.1s per call
-// regardless of format (PNG and JPEG measured identically) or image
-// size/content -- so switching formats via convertToBlob was a dead end,
-// but Tesseract's own worker-side code accepts BMP directly (it round-trips
-// any BMP input through the bmp-js package before handing it to Leptonica),
-// and an uncompressed BMP's "encode" is just a header write plus a raw byte
-// copy -- no convertToBlob call, and no compression pass to pay for.
+// The final encode is PNG (canvasToBytes), not BMP. A custom BMP encoder was
+// tried here (its own encode is a fixed header write + raw byte copy, no
+// convertToBlob call, ~170x faster than PNG's encode step in isolation) and
+// initially looked like a clear win -- but a controlled on-device A/B
+// against the same real images found BMP's much larger uncompressed payload
+// (5.7-9.6MB vs PNG's 71-278KB for the same slip) adds real overhead to
+// Tesseract's own recognize() call (specifically toFirstTickMs -- dispatch +
+// transfer + setImage -- not the actual native OCR compute, which measured
+// identical either way), costing more than the encode step saved: net total
+// (encode+recognize) was slower with BMP in 5/6 real-image samples, ~1.2s/
+// image slower on average. Reverted; see the task registry's OCR A/B
+// benchmark entry for the full breakdown. Structured OCR results (amount,
+// merchant, date, time, reference) were byte-identical between formats
+// across every sample, so this revert changes nothing about accuracy.
 
 const TARGET_SHORT_EDGE = 1200;
 const MAX_UPSCALE = 2;
@@ -96,9 +101,9 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
     const threshold = otsuThreshold(gray);
     const otsuMs = perfNow() - otsuStart;
 
-    // Binarise (value > threshold → white bg, else black text) in place --
-    // no need to write back to the canvas (target.canvas is never read from
-    // again; encodeBmp below reads straight from this ImageData).
+    // Binarise (value > threshold → white bg, else black text) in place,
+    // then write back to the canvas -- canvasToBytes below encodes from the
+    // canvas, not raw ImageData.
     const binarizeStart = perfNow();
     for (let i = 0, p = 0; i < image.data.length; i += 4, p += 1) {
       const v = gray[p]! > threshold ? 255 : 0;
@@ -107,10 +112,11 @@ export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
       image.data[i + 2] = v;
       image.data[i + 3] = 255;
     }
+    target.ctx.putImageData(image, 0, 0);
     const binarizeMs = perfNow() - binarizeStart;
 
     const encodeStart = perfNow();
-    const result = encodeBmp(image);
+    const result = await canvasToBytes(target.canvas);
     const encodeMs = perfNow() - encodeStart;
 
     console.debug(
