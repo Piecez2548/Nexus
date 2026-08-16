@@ -16,6 +16,13 @@ const DEFAULT_PLUGINS: readonly BankPlugin[] = [
   { bank: { id: "gsb", code: "030", name: "Government Savings Bank", shortName: "GSB" } },
   { bank: { id: "baac", code: "034", name: "Bank for Agriculture and Agricultural Co-operatives", shortName: "BAAC" } },
   { bank: { id: "promptpay", code: null, name: "PromptPay", shortName: "PromptPay" } },
+  // เป๋าตัง (Pao Tang): Krungthai-operated but a digital wallet app, not a
+  // traditional bank account -- same "rail, not a bank" reasoning as
+  // PromptPay above (code null, unreachable via identifyBankByCode).
+  // Package Notification Capture (Phase 1) needs its own id/label here
+  // rather than mapping its notifications to "Krungthai", since a user
+  // thinks of เป๋าตัง transactions as เป๋าตัง, not their KTB bank account.
+  { bank: { id: "paotang", code: null, name: "เป๋าตัง", shortName: "เป๋าตัง" } },
 ];
 
 // Mutable registry, seeded from the defaults. Kept as a module-level list so

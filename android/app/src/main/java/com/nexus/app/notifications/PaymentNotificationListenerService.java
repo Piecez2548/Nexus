@@ -47,18 +47,19 @@ public class PaymentNotificationListenerService extends NotificationListenerServ
     private static final int MAX_PENDING = 10;
     private static final String CHANNEL_ID = "nexus-payment-capture";
 
-    // Thai banking app package names this service watches for. SCB Easy and
-    // K PLUS confirmed against real installs (`pm list packages`); K PLUS
-    // additionally confirmed end-to-end with a real payment. Krungthai NEXT
-    // confirmed via `aapt2 dump badging` against the real installed APK
-    // (application-label "NEXT", versionName 26.7.1 matching the on-device
-    // App Info screen exactly) -- the original guess ("com.ktb.next") was
-    // wrong; "com.ktb.customer.qr" is a different app (เป๋าตัง/Pao Tang), not
-    // this one.
+    // Thai banking/payment app package names this service watches for. SCB
+    // Easy and K PLUS confirmed against real installs (`pm list packages`);
+    // K PLUS additionally confirmed end-to-end with a real payment. Krungthai
+    // NEXT and เป๋าตัง (Pao Tang) both confirmed via `aapt2 dump badging`
+    // against the real installed APKs (application-labels "NEXT" and
+    // "เป๋าตัง" respectively, versionNames matching the on-device App Info
+    // screens exactly) -- the original Krungthai NEXT guess ("com.ktb.next")
+    // was wrong; "com.ktb.customer.qr" turned out to be เป๋าตัง, not NEXT.
     private static final String[] ALLOWED_PACKAGES = {
         "com.scb.phone", // SCB Easy
         "com.kasikorn.retail.mbanking.wap", // K PLUS
         "ktbcs.netbank", // Krungthai NEXT
+        "com.ktb.customer.qr", // เป๋าตัง (Pao Tang)
     };
 
     @Override

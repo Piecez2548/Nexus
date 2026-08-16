@@ -7,6 +7,7 @@ describe("bankIdForPackage", () => {
     expect(bankIdForPackage("com.scb.phone")).toBe("scb");
     expect(bankIdForPackage("com.kasikorn.retail.mbanking.wap")).toBe("kbank");
     expect(bankIdForPackage("ktbcs.netbank")).toBe("ktb");
+    expect(bankIdForPackage("com.ktb.customer.qr")).toBe("paotang");
   });
 
   it("returns null for an unknown package", () => {

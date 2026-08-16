@@ -771,7 +771,7 @@ export const translations = {
       notificationCaptureTitle: "Payment Notification Capture",
       notificationCaptureDescription: "Get a one-tap prompt to add a transaction right after you pay, without opening the app.",
       notificationCaptureExplain:
-        "Reads payment-confirmation notifications only from the specific banking apps Nexus recognises (SCB, K PLUS, Krungthai NEXT), extracting only the amount and recipient. Nothing is sent anywhere — it stays on this device. Android will show Nexus in its system-wide \"Notification access\" list once granted.",
+        "Reads payment-confirmation notifications only from the specific banking apps Nexus recognises (SCB Easy, K PLUS, Krungthai NEXT, เป๋าตัง), extracting only the amount and recipient. Nothing is sent anywhere — it stays on this device. Android will show Nexus in its system-wide \"Notification access\" list once granted.",
       notificationCaptureOpenSettings: "Open Notification Access Settings",
       notificationCaptureEnable: "Enable payment capture",
       resetAllData: "Reset All Data",
@@ -2785,7 +2785,7 @@ export const translations = {
       notificationCaptureTitle: "จับข้อมูลจากการแจ้งเตือนการจ่ายเงิน",
       notificationCaptureDescription: "รับการแจ้งเตือนให้กดยืนยัน 1 ครั้งเพื่อบันทึกรายการทันทีหลังจ่ายเงิน โดยไม่ต้องเปิดแอป",
       notificationCaptureExplain:
-        "อ่านการแจ้งเตือนยืนยันการจ่ายเงินเฉพาะจากแอปธนาคารที่ Nexus รู้จัก (SCB, K PLUS, Krungthai NEXT) เท่านั้น โดยดึงแค่จำนวนเงินและผู้รับ ไม่มีการส่งข้อมูลไปที่ใดทั้งสิ้น ข้อมูลอยู่บนเครื่องนี้เท่านั้น เมื่ออนุญาตแล้ว Android จะแสดงชื่อ Nexus ในรายการ \"การเข้าถึงการแจ้งเตือน\" ของระบบ",
+        "อ่านการแจ้งเตือนยืนยันการจ่ายเงินเฉพาะจากแอปที่ Nexus รู้จัก (SCB Easy, K PLUS, Krungthai NEXT, เป๋าตัง) เท่านั้น โดยดึงแค่จำนวนเงินและผู้รับ ไม่มีการส่งข้อมูลไปที่ใดทั้งสิ้น ข้อมูลอยู่บนเครื่องนี้เท่านั้น เมื่ออนุญาตแล้ว Android จะแสดงชื่อ Nexus ในรายการ \"การเข้าถึงการแจ้งเตือน\" ของระบบ",
       notificationCaptureOpenSettings: "เปิดการตั้งค่าการเข้าถึงการแจ้งเตือน",
       notificationCaptureEnable: "เปิดใช้งานการจับข้อมูลการจ่ายเงิน",
       resetAllData: "รีเซ็ตข้อมูลทั้งหมด",
