@@ -6,6 +6,7 @@ import {
   type EnhancementPlan,
   type ImageStats,
 } from "@/features/finance/slipScanner/engine/image/imageEnhancement";
+import { shouldResizeOnDecode } from "@/features/finance/slipScanner/engine/qr/qrDecodeResize";
 
 export interface EnhancementResult {
   bytes: Uint8Array; // enhanced bytes, or the originals when no processing was needed / possible
@@ -16,23 +17,34 @@ function perfNow(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
 
+// The stats sample is always drawn into this fixed square regardless of the
+// source's aspect ratio (a coarse brightness/contrast bucket, not a
+// visually-faithful thumbnail) -- so, unlike the QR path, there is no
+// distortion concern in asking the decoder to resize directly to this size.
+const STATS_SAMPLE_SIZE = 64;
+
 // Measure mean brightness + contrast (luma std) from a downscaled copy. Browser
 // only (via the shared OffscreenCanvas/DOM-canvas fallback); null off-browser.
 export async function analyzeImage(bytes: Uint8Array): Promise<ImageStats | null> {
   if (typeof createImageBitmap !== "function") return null;
   try {
-    // TEMPORARY perf-investigation instrumentation (OCR bottleneck investigation)
-    // -- this decodes the ORIGINAL, full-resolution bytes just to read a 64x64
-    // downscaled sample; suspected to be a real cost on a 12+ megapixel gallery
-    // photo, same class of bug Fix 1 found in the QR path. Remove once confirmed.
     const decodeStart = perfNow();
-    const bitmap = await createImageBitmap(new Blob([bytes as unknown as BlobPart]));
+    const blob = new Blob([bytes as unknown as BlobPart]);
+    // Decode straight to the sample size instead of full resolution -- the
+    // real-device OCR investigation found this full-resolution decode cost
+    // ~1s/image on average (up to several seconds on a large gallery photo)
+    // just to read a 64x64 sample, the same class of waste Fix 1 fixed for
+    // the QR path. Reuses that fix's byte-size floor (shouldResizeOnDecode)
+    // so a genuinely small source is never upscaled.
+    const bitmap = shouldResizeOnDecode(bytes.length)
+      ? await createImageBitmap(blob, { resizeWidth: STATS_SAMPLE_SIZE, resizeHeight: STATS_SAMPLE_SIZE, resizeQuality: "medium" })
+      : await createImageBitmap(blob);
     const decodeMs = perfNow() - decodeStart;
-    const target = makeCanvas(64, 64);
+    const target = makeCanvas(STATS_SAMPLE_SIZE, STATS_SAMPLE_SIZE);
     if (!target) return null;
     const ctx = target.ctx;
-    ctx.drawImage(bitmap, 0, 0, 64, 64);
-    const { data } = ctx.getImageData(0, 0, 64, 64);
+    ctx.drawImage(bitmap, 0, 0, STATS_SAMPLE_SIZE, STATS_SAMPLE_SIZE);
+    const { data } = ctx.getImageData(0, 0, STATS_SAMPLE_SIZE, STATS_SAMPLE_SIZE);
 
     let sum = 0;
     const lumas: number[] = [];
@@ -52,7 +64,11 @@ export async function analyzeImage(bytes: Uint8Array): Promise<ImageStats | null
   }
 }
 
-function sharpen(
+// Exported so preprocessForOcr (ocrPreprocess.ts) can apply the same 3x3
+// sharpen convolution as part of its own single canvas pipeline, instead of
+// duplicating this loop or round-tripping through enhanceIfNeeded's
+// standalone encode/decode.
+export function sharpen(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   width: number,
   height: number,
