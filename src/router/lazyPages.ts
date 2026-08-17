@@ -17,5 +17,6 @@ export const Habits = lazy(() => import("@/features/habits/pages/Habits"));
 export const Portfolio = lazy(() => import("@/features/portfolio/pages/Portfolio"));
 export const LifeSchedule = lazy(() => import("@/features/schedule/pages/LifeSchedule"));
 export const Vault = lazy(() => import("@/features/vault/pages/Vault"));
+export const Workouts = lazy(() => import("@/features/workouts/pages/Workouts"));
 export const Settings = lazy(() => import("@/pages/Settings"));
 export const NotFound = lazy(() => import("@/pages/NotFound"));

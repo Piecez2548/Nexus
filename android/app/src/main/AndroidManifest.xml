@@ -58,6 +58,15 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
+    <!-- Workout Tracker: foreground-only GPS route tracking (Running/Cycling/
+         Walking). Standard runtime permission: @capacitor/geolocation's
+         requestPermissions() shows the normal system dialog, no special-access
+         settings flow like Notification Access above. No background location
+         permission requested: tracking only runs while the app is
+         foregrounded (see docs/SECURITY.md's Workout Tracker section). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <!-- Gallery Scanner (GS-005): read gallery images for slip scanning.
          READ_MEDIA_IMAGES = Android 13+ (API 33); READ_MEDIA_VISUAL_USER_SELECTED
          = Android 14+ (API 34+) partial "selected photos" access; the legacy

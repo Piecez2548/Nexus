@@ -6,4 +6,5 @@ export const XP_REWARDS = {
   tradeClosedLoss: 10,
   goalContribution: 10,
   goalCompletedBonus: 50,
+  workoutLogged: 8,
 };

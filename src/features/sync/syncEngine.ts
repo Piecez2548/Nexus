@@ -17,6 +17,8 @@ import { useHabitStore } from "@/features/habits/store/habitStore";
 import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
 import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
 import { useVaultEntryStore } from "@/features/vault/store/vaultEntryStore";
+import { useWorkoutExerciseStore } from "@/features/workouts/store/workoutExerciseStore";
+import { useWorkoutEntryStore } from "@/features/workouts/store/workoutEntryStore";
 
 const SYNCED_TABLES: SyncTableName[] = [
   "transactions",
@@ -34,6 +36,8 @@ const SYNCED_TABLES: SyncTableName[] = [
   "scheduleItems",
   "goalMilestoneEvents",
   "vaultEntries",
+  "workoutExercises",
+  "workoutEntries",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -331,6 +335,8 @@ const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
   scheduleItems: () => useScheduleItemStore.getState().loadItems(),
   goalMilestoneEvents: () => useGoalMilestoneEventStore.getState().loadEvents(),
   vaultEntries: () => useVaultEntryStore.getState().loadEntries(),
+  workoutExercises: () => useWorkoutExerciseStore.getState().loadExercises(),
+  workoutEntries: () => useWorkoutEntryStore.getState().loadEntries(),
 };
 
 // Only reloads (and re-renders) stores whose underlying table actually

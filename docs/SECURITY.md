@@ -101,6 +101,16 @@ A password manager / secure notes / recovery-key store (`src/features/vault/`) �
 - **Syncs like everything else.** Vault entries push/pull through the same generic `synced_records` relay as every other table (see Layer 2/3 above and `syncEngine.test.ts`'s opaque-blob tests) — safe because the content is already ciphertext before the sync engine ever touches it, not because sync treats Vault specially.
 - **Clipboard exposure, stated plainly.** Copying a password/recovery code uses the standard OS clipboard (`navigator.clipboard.writeText`) — like virtually every password manager, this means the secret is briefly available to any other app that reads the clipboard on that device. No auto-clear-after-N-seconds is implemented; a deliberate, documented gap, not an oversight.
 
+## Workout Tracker
+
+A rep/time/calorie logger with an optional GPS route-tracking mode (`src/features/workouts/`) — the app's first feature requesting device location.
+
+- **Foreground-only GPS, by design.** `useGpsTracker.ts` calls `@capacitor/geolocation`'s `watchPosition` only while its owning component is mounted, and explicitly clears the watch on unmount, pause, and stop. No background-location permission (Android's "Allow all the time") is ever requested, no foreground service, no persistent tracking notification — closing the app or navigating away stops recording. This is a deliberate scope cut, not a missing feature: background location is a materially bigger permission ask (subject to its own Play Store policy justification) for a feature that doesn't need it.
+- **Standard runtime permission, not a special grant.** Unlike Payment Notification Capture's "Notification Access" (no in-app request dialog exists for that category), location is a normal Android runtime permission — `Geolocation.requestPermissions()` shows the standard system dialog directly.
+- **Route data syncs like everything else, and is not treated as sensitive.** GPS route points (lat/lng/timestamp) live inline on the `workoutEntries` row and push/pull through the same generic `synced_records` relay as every other table. Unlike Vault, workout data is not always-encrypted — it follows the same opt-in `encryptedRepository` behavior as most of the app (Layer 3): encrypted at rest if the user has turned encryption on, plaintext otherwise. A user who wants their workout routes protected needs to enable that setting like they would for any other table.
+- **Calorie figures are user-set estimates, not derived from any sensor.** `caloriesPerMinute`/`caloriesPerRep`/`caloriesPerKm` are plain numbers the user enters on a catalog exercise; nothing in this feature reads heart rate, weight, or any health sensor. No `HEALTH_CONNECT`/fitness-data permission is requested or needed.
+- **YouTube demo links open externally, never embedded.** "Watch demo" opens a URL via `@capacitor/browser` (system browser on native) or `window.open` on web — no `<iframe>` embed, no YouTube script/SDK loaded into the app's own WebView.
+
 ## Audit Log (`src/features/security/`)
 
 An app-wide, persisted, bounded, metadata-only security audit trail (SEC-002) — viewable in Settings > Security & Sync > Audit Log:

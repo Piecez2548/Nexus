@@ -21,6 +21,7 @@ import type { SlipScanRun, ScanCacheEntry } from "@/features/finance/slipScanner
 import type { ImportHistoryEntry } from "@/features/finance/slipScanner/models/importHistory";
 import type { VaultEntry } from "@/features/vault/types";
 import type { AuditLogRow } from "@/features/security/auditLog";
+import type { WorkoutExercise, WorkoutEntry } from "@/features/workouts/types";
 
 class NexusDatabase extends Dexie {
 
@@ -46,6 +47,8 @@ class NexusDatabase extends Dexie {
   public slipImportHistory;
   public vaultEntries;
   public auditLog;
+  public workoutExercises;
+  public workoutEntries;
 
   constructor() {
     super("NexusDatabase");
@@ -277,6 +280,20 @@ class NexusDatabase extends Dexie {
         "++id,at,type",
     });
 
+    // v20 adds the Workout Tracker (catalog + log, mirrors Category +
+    // Transaction rather than Habit's single-table shape -- see
+    // src/features/workouts/types/index.ts). `workoutEntries` indexes `date`
+    // for cheap "logged on this day" lookups; route points (GPS-tracked
+    // entries) live inline on the row, same pattern as Habit.completedDates.
+    // Additive, no existing data touched.
+    this.version(20).stores({
+      workoutExercises:
+        "++id,syncId,updatedAt",
+
+      workoutEntries:
+        "++id,date,syncId,updatedAt",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -342,6 +359,12 @@ class NexusDatabase extends Dexie {
 
     this.auditLog =
       this.table<AuditLogRow, number>("auditLog");
+
+    this.workoutExercises =
+      this.table<WorkoutExercise, number>("workoutExercises");
+
+    this.workoutEntries =
+      this.table<WorkoutEntry, number>("workoutEntries");
   }
 }
 

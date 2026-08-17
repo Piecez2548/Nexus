@@ -15,7 +15,9 @@ export type SyncTableName =
   | "calendarEvents"
   | "scheduleItems"
   | "goalMilestoneEvents"
-  | "vaultEntries";
+  | "vaultEntries"
+  | "workoutExercises"
+  | "workoutEntries";
 
 export interface Tombstone {
   id?: number;
