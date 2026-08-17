@@ -946,4 +946,45 @@ describe("syncEngine", () => {
       .find((p: { id: string; table_name: string }) => p.id === "local-only-tx" && p.table_name === "transactions");
     expect(pushedLocalRow).toBeDefined();
   });
+
+  it("repairs a push cursor already corrupted by the old nudge bug, exactly once", async () => {
+    // Simulates a device that already has a stuck push:transactions cursor
+    // from before the nudge fix shipped — a local row with a valid syncId
+    // and an updatedAt earlier than the (corrupted) cursor, which the old
+    // pushTable() query (`where("updatedAt").aboveOrEqual(lastPushed)`)
+    // would silently skip forever with no error.
+    await db.syncState.put({ key: "push:transactions", value: "2026-08-01T00:00:00.000Z" });
+    await db.transactions.add({
+      title: "Stuck before the fix",
+      amount: 60,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-20",
+      status: "completed",
+      syncId: "stuck-tx",
+      updatedAt: "2026-07-20T11:00:00.000Z",
+    });
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({ data: [], error: null }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const pushedStuckRow = mockUpsert.mock.calls
+      .flatMap((call) => call[0])
+      .find((p: { id: string; table_name: string }) => p.id === "stuck-tx" && p.table_name === "transactions");
+    expect(pushedStuckRow).toBeDefined();
+
+    // Second pass must not repeat the repair (and thus not re-clear a
+    // legitimately-advanced cursor set by this pass's own successful push).
+    const cursorAfterFirstPass = await db.syncState.get("push:transactions");
+    mockUpsert.mockClear();
+
+    await runFullSync(USER_ID);
+
+    const cursorAfterSecondPass = await db.syncState.get("push:transactions");
+    expect(cursorAfterSecondPass?.value).toBe(cursorAfterFirstPass?.value);
+  });
 });

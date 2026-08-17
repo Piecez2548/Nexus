@@ -314,6 +314,27 @@ async function dedupeSyncedTables(): Promise<Set<SyncTableName>> {
   return changed;
 }
 
+// One-time repair for local push-cursor corruption left behind by a since-
+// fixed pullTable() nudge bug: older builds could nudge a device's own
+// push:<table> cursor past a local row that was never actually pushed,
+// silently excluding it from every sync pass thereafter with no error ever
+// surfaced (see the "still pushes an unrelated not-yet-pushed local row..."
+// test below, which proves the nudge itself no longer does this). This just
+// repairs cursors that were already corrupted by it before that fix shipped.
+// Clearing a push cursor only makes the next pass re-consider every local
+// row for push — re-upserting an already-synced row is a harmless no-op
+// (same data, same updated_at), so this is safe to run unconditionally.
+// Gated by a flag so it only ever runs once per device, not on every pass.
+async function repairStuckPushCursorsOnce() {
+  const flagKey = "migration:clearedPushCursors:v1";
+  if (await getSyncState(flagKey)) return;
+
+  for (const table of SYNCED_TABLES) {
+    await db.syncState.delete(`push:${table}`);
+  }
+  await setSyncState(flagKey, "true");
+}
+
 const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
   transactions: () => useTransactionStore.getState().loadTransactions(),
   accounts: () => useAccountStore.getState().loadAccounts(),
@@ -378,6 +399,8 @@ export async function runFullSync(userId: string): Promise<void> {
       return fallback;
     }
   }
+
+  await attempt(() => repairStuckPushCursorsOnce());
 
   // Also runs before push, not just after pull — a duplicate syncId left
   // over locally (e.g. from two tabs racing, or any other cause) would
