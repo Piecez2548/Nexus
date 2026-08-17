@@ -15,7 +15,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Epic | Total | Completed | Todo | In Progress | Blocked |
 |---|---|---|---|---|---|
 | AI Analytics | 7 | 7 | 0 | 0 | 0 |
-| Slip Scanner (OCR) | 7 | 5 | 2 | 0 | 0 |
+| Slip Scanner (OCR) | 7 | 7 | 0 | 0 | 0 |
 | Vault | 4 | 4 | 0 | 0 | 0 |
 | Finance | 4 | 1 | 3 | 0 | 0 |
 | Security | 4 | 2 | 2 | 0 | 0 |
@@ -26,7 +26,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
 | Platform (PLT) | 20 | 20 | 0 | 0 | 0 |
-| **Total** | **108** | **101** | **7** | **0** | **0** |
+| **Total** | **108** | **103** | **5** | **0** | **0** |
 
 ---
 
@@ -48,17 +48,19 @@ Backing engine + UI all built — see [../docs/AI_ANALYTICS.md](../docs/AI_ANALY
 
 ## Slip Scanner (OCR)
 
-On-device Tesseract.js scanning — see [../docs/MODULES.md](../docs/MODULES.md) (Finance module). Engine, gallery/batch scan, preview, and import exist; bank-selection popup and slip-specific duplicate detection are not yet in the code.
+On-device Tesseract.js scanning — see [../docs/MODULES.md](../docs/MODULES.md) (Finance module). Engine, gallery/batch scan, preview, import, bank selection, and duplicate detection all exist.
 
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
-| OCR-001 | Slip Scanner | Bank Selection Popup | Low | Todo | — |
+| OCR-001 | Slip Scanner | Bank Selection Popup | Low | Completed | — |
 | OCR-002 | Slip Scanner | Gallery Scanner | Medium | Completed | OCR-003 |
 | OCR-003 | Slip Scanner | OCR Engine | High | Completed | — |
 | OCR-004 | Slip Scanner | Slip Validation | Medium | Completed | OCR-003 |
-| OCR-005 | Slip Scanner | Duplicate Detection | Medium | Todo | OCR-003 |
+| OCR-005 | Slip Scanner | Duplicate Detection | Medium | Completed | OCR-003 |
 | OCR-006 | Slip Scanner | Preview | Medium | Completed | OCR-003 |
 | OCR-007 | Slip Scanner | Import | High | Completed | OCR-006 |
+
+> **OCR-001 and OCR-005 corrected from Todo to Completed (2026-08-17) — a documentation gap, not new work.** Both were already fully delivered, just under Gallery Scanner (GS) task ids that this older table was never updated to cross-reference: OCR-001 ("Bank Selection Popup") is exactly `BankSelectionPopup.tsx` (GS-014, Completed in the GS table below) — same title, same requirements (select all/deselect/remember/search/quick-select/estimated count+time), wired into `GalleryScanFlow.tsx`. OCR-005 ("Duplicate Detection") is covered by three layers, not one: `slipDuplicate.ts` (GS-013, exact-match within-batch), `smartDuplicate.ts` (GS-031, graded probability across payload/reference/amount/merchant/timestamp/perceptual-hash — the same engine this session's own timestamp-tolerance fix touched, see the Payment Notification Capture entry), and `smartImport.ts`'s `runSmartImport` checking every new candidate against *existing* database transactions via `conflictResolver.ts` (GS-032) — stronger than the original within-batch-only scope. Verified directly against the code (not assumed) before flipping status, matching this file's own "reflect current implementation state" discipline in both directions: it's wrong to claim an unbuilt feature, and equally wrong to leave a built one marked Todo.
 
 ---
 
