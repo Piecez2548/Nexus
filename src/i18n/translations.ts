@@ -403,6 +403,10 @@ export const translations = {
         durationSec: "{{s}} sec",
         startScan: "Start scan",
         noneSelectedHint: "Select at least one bank",
+        dateRangeLabel: "Date range (optional)",
+        dateFrom: "From",
+        dateTo: "To",
+        dateRangeHint: "Leave blank to scan your whole gallery",
       },
       importPreview: {
         title: "Import preview",
@@ -2576,6 +2580,10 @@ export const translations = {
         durationSec: "{{s}} วินาที",
         startScan: "เริ่มสแกน",
         noneSelectedHint: "เลือกอย่างน้อย 1 ธนาคาร",
+        dateRangeLabel: "ช่วงวันที่ (ไม่บังคับ)",
+        dateFrom: "จากวันที่",
+        dateTo: "ถึงวันที่",
+        dateRangeHint: "เว้นว่างไว้เพื่อสแกนทั้งคลังภาพ",
       },
       importPreview: {
         title: "ตัวอย่างการนำเข้า",

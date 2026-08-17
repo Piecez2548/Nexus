@@ -11,6 +11,14 @@ interface Props {
   onClose: () => void;
   onConfirm: (selectedBankIds: string[]) => void;
   imageCount?: number | null;
+  // Date-range scoping (optional) -- both blank scans the whole gallery,
+  // matching today's default. Kept as controlled props (state lives in
+  // GalleryScanFlow, which also owns the live imageCount fetch) so this
+  // component stays purely presentational, matching its existing convention.
+  dateFrom?: string;
+  dateTo?: string;
+  onDateFromChange?: (value: string) => void;
+  onDateToChange?: (value: string) => void;
 }
 
 function formatDuration(estimate: ScanEstimate, t: TranslateFn): string {
@@ -28,7 +36,16 @@ const pillButton =
 // select-all / deselect-all / quick-select, a remembered selection, and an
 // estimated image count + scan time. All selection logic lives in
 // useBankSelection; this stays presentational. Reuses the shared Drawer.
-export default function BankSelectionPopup({ open, onClose, onConfirm, imageCount = null }: Props) {
+export default function BankSelectionPopup({
+  open,
+  onClose,
+  onConfirm,
+  imageCount = null,
+  dateFrom = "",
+  dateTo = "",
+  onDateFromChange,
+  onDateToChange,
+}: Props) {
   const { t } = useTranslation();
   const selection = useBankSelection(imageCount);
 
@@ -51,6 +68,40 @@ export default function BankSelectionPopup({ open, onClose, onConfirm, imageCoun
             className="w-full rounded-lg border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand-500"
           />
         </div>
+
+        {(onDateFromChange || onDateToChange) && (
+          <div>
+            <p className="mb-2 text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              {t("slipScanner.bankSelect.dateRangeLabel")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <label className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-3 py-2">
+                <span className="text-sm text-zinc-600 dark:text-zinc-500">{t("slipScanner.bankSelect.dateFrom")}</span>
+                <input
+                  type="date"
+                  aria-label={t("slipScanner.bankSelect.dateFrom")}
+                  value={dateFrom}
+                  onChange={(e) => onDateFromChange?.(e.target.value)}
+                  max={dateTo || undefined}
+                  className="w-0 min-w-[8.5rem] bg-transparent outline-none [color-scheme:light] dark:[color-scheme:dark]"
+                />
+              </label>
+
+              <label className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-3 py-2">
+                <span className="text-sm text-zinc-600 dark:text-zinc-500">{t("slipScanner.bankSelect.dateTo")}</span>
+                <input
+                  type="date"
+                  aria-label={t("slipScanner.bankSelect.dateTo")}
+                  value={dateTo}
+                  onChange={(e) => onDateToChange?.(e.target.value)}
+                  min={dateFrom || undefined}
+                  className="w-0 min-w-[8.5rem] bg-transparent outline-none [color-scheme:light] dark:[color-scheme:dark]"
+                />
+              </label>
+            </div>
+            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{t("slipScanner.bankSelect.dateRangeHint")}</p>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={selection.selectAll} className={pillButton}>

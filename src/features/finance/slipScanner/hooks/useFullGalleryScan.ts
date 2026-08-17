@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useGalleryScan } from "@/features/finance/slipScanner/hooks/useGalleryScan";
 import { extractSlipCandidate } from "@/features/finance/slipScanner/import/extractSlipCandidate";
-import type { GalleryAssetRef, ScanStatus } from "@/features/finance/slipScanner/models/scanTypes";
+import type { GalleryAssetRef, ScanOptions, ScanStatus } from "@/features/finance/slipScanner/models/scanTypes";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import { computeScanProgress, type ScanProgressSnapshot } from "@/features/finance/slipScanner/progress/scanProgress";
 import { createSlipExtractionProcessor, type SlipExtractor } from "@/features/finance/slipScanner/services/slipExtractionProcessor";
@@ -13,7 +13,7 @@ export interface UseFullGalleryScan {
   candidates: SlipCandidate[];
   error: string | null;
   scanPickedFiles: (files: File[], incremental?: boolean) => Promise<void>;
-  scanNativeGallery: (incremental?: boolean) => Promise<void>;
+  scanNativeGallery: (incremental?: boolean, dateRange?: ScanOptions["dateRange"]) => Promise<void>;
   pause: () => void;
   resume: () => void;
   cancel: () => void;
@@ -75,9 +75,9 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
   );
 
   const scanNativeGallery = useCallback(
-    async (incremental = true) => {
+    async (incremental = true, dateRange?: ScanOptions["dateRange"]) => {
       beginNewRun();
-      await gallery.scanNativeGallery(incremental, processor);
+      await gallery.scanNativeGallery(incremental, processor, dateRange);
     },
     [gallery, processor],
   );

@@ -53,4 +53,51 @@ describe("BankSelectionPopup", () => {
     expect(screen.getByText("KBank")).toBeInTheDocument();
     expect(screen.queryByText("SCB")).not.toBeInTheDocument();
   });
+
+  it("does not render date-range fields when no date change handler is supplied", () => {
+    render(<BankSelectionPopup open onClose={() => {}} onConfirm={() => {}} />);
+    expect(screen.queryByText("Date range (optional)")).not.toBeInTheDocument();
+  });
+
+  it("renders date-range fields and reports changes when handlers are supplied", async () => {
+    const onDateFromChange = vi.fn();
+    const onDateToChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <BankSelectionPopup
+        open
+        onClose={() => {}}
+        onConfirm={() => {}}
+        dateFrom=""
+        dateTo=""
+        onDateFromChange={onDateFromChange}
+        onDateToChange={onDateToChange}
+      />,
+    );
+
+    expect(screen.getByText("Date range (optional)")).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("From"), "2026-01-15");
+    expect(onDateFromChange).toHaveBeenCalledWith("2026-01-15");
+
+    await user.type(screen.getByLabelText("To"), "2026-02-15");
+    expect(onDateToChange).toHaveBeenCalledWith("2026-02-15");
+  });
+
+  it("constrains the From field's max and the To field's min against each other", () => {
+    render(
+      <BankSelectionPopup
+        open
+        onClose={() => {}}
+        onConfirm={() => {}}
+        dateFrom="2026-01-15"
+        dateTo="2026-02-15"
+        onDateFromChange={() => {}}
+        onDateToChange={() => {}}
+      />,
+    );
+
+    expect(screen.getByLabelText("From")).toHaveAttribute("max", "2026-02-15");
+    expect(screen.getByLabelText("To")).toHaveAttribute("min", "2026-01-15");
+  });
 });

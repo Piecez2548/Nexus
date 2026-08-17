@@ -2,8 +2,9 @@ import { describe, expect, it, beforeEach, vi } from "vitest";
 
 import { db } from "@/database/db";
 import { createScanSession, type ScanSession } from "@/features/finance/slipScanner/services/scanSessionService";
+import { scanRunRepository } from "@/features/finance/slipScanner/repositories/scanRunRepository";
 import type { ScanProcessor } from "@/features/finance/slipScanner/services/scanProcessor";
-import type { MediaProvider } from "@/features/finance/slipScanner/gallery/media/MediaProvider";
+import type { MediaCursorBounds, MediaProvider } from "@/features/finance/slipScanner/gallery/media/MediaProvider";
 import type { GalleryAssetRef } from "@/features/finance/slipScanner/models/scanTypes";
 
 interface FakeAsset {
@@ -22,13 +23,17 @@ class FakeProvider implements MediaProvider {
     this.assets = assets;
   }
 
-  async count(): Promise<number | null> {
-    return this.assets.length;
+  async count(bounds?: MediaCursorBounds): Promise<number | null> {
+    if (!bounds?.since && !bounds?.until) return this.assets.length;
+    let total = 0;
+    for await (const _a of this.enumerate(bounds)) total++;
+    return total;
   }
 
-  async *enumerate(sinceCursor?: string): AsyncGenerator<GalleryAssetRef> {
+  async *enumerate(bounds?: MediaCursorBounds): AsyncGenerator<GalleryAssetRef> {
     for (const a of this.assets) {
-      if (sinceCursor && a.capturedAt <= sinceCursor) continue;
+      if (bounds?.since && a.capturedAt <= bounds.since) continue;
+      if (bounds?.until && a.capturedAt > bounds.until) continue;
       // A small gap so pause/cancel can interleave between images.
       await new Promise((r) => setTimeout(r, 1));
       yield { assetId: a.assetId, capturedAt: a.capturedAt, bytes: a.bytes.length };
@@ -157,6 +162,75 @@ describe("createScanSession", () => {
     const run2 = await createScanSession({ provider: new FakeProvider(assets), options: { source: "fake", incremental: true } }).done;
     expect(run2.done).toBe(0);
     expect(run2.skipped).toBe(2);
+  });
+
+  it("a date range only processes assets inside its bounds", async () => {
+    const assets = [asset("jan", 1, [1]), asset("feb", 2, [2]), asset("mar", 3, [3])];
+    const run = await createScanSession({
+      provider: new FakeProvider(assets),
+      options: {
+        source: "fake",
+        incremental: false,
+        dateRange: { from: "2026-01-15T00:00:00.000Z", to: "2026-02-15T00:00:00.000Z" },
+      },
+    }).done;
+
+    expect(run.done).toBe(1); // only "feb" (Feb 1) falls inside Jan 15 - Feb 15
+    expect(run.total).toBe(1);
+  });
+
+  it("a date-range run is never returned by getResumable(), even while paused", async () => {
+    const items = Array.from({ length: 6 }, (_, i) => asset(`r${i}`, (i % 9) + 1, [i]));
+    let rangedSession: ScanSession;
+    rangedSession = createScanSession({
+      provider: new FakeProvider(items),
+      options: { source: "fake", incremental: true, concurrency: 1, dateRange: { from: "2020-01-01", to: "2030-01-01" } },
+      onProgress: (p) => {
+        if (p.done >= 1) rangedSession.control.pause();
+      },
+    });
+    await until(() => rangedSession.control.status === "paused");
+
+    // The paused run really is sitting in the DB as "paused"...
+    const paused = await db.slipScanRuns.where("status").equals("paused").toArray();
+    expect(paused).toHaveLength(1);
+    expect(paused[0].dateRange).toEqual({ from: "2020-01-01", to: "2030-01-01" });
+
+    // ...but a normal incremental scan must never resume into it -- it's
+    // bounded to a specific historical range, not a valid general watermark.
+    expect(await scanRunRepository.getResumable()).toBeUndefined();
+
+    rangedSession.control.cancel();
+    await rangedSession.done;
+  });
+
+  it("a paused date-range run does not divert a later, unrelated normal incremental scan", async () => {
+    const rangedItems = [asset("old1", 1, [1]), asset("old2", 1, [2])];
+    let rangedSession: ScanSession;
+    rangedSession = createScanSession({
+      provider: new FakeProvider(rangedItems),
+      options: { source: "fake", incremental: true, concurrency: 1, dateRange: { from: "2026-01-01", to: "2026-01-31" } },
+      onProgress: (p) => {
+        if (p.done >= 1) rangedSession.control.pause();
+      },
+    });
+    await until(() => rangedSession.control.status === "paused");
+    // Left paused deliberately -- simulates the app being killed mid-range-scan.
+
+    // A completely normal incremental scan, unrelated to the paused run above.
+    const normalItems = [asset("new1", 5, [9]), asset("new2", 6, [9, 9])];
+    const normalRun = await createScanSession({
+      provider: new FakeProvider(normalItems),
+      options: { source: "fake", incremental: true },
+    }).done;
+
+    // Started fresh (its own new run, both assets processed) rather than
+    // resuming into the paused date-range run's bounded state.
+    expect(normalRun.done).toBe(2);
+    expect(normalRun.dateRange).toBeUndefined();
+
+    rangedSession.control.cancel();
+    await rangedSession.done;
   });
 
   it("cancel stops the scan and marks the run cancelled", async () => {

@@ -22,7 +22,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -124,17 +126,43 @@ public class GalleryMediaPlugin extends Plugin {
 
     // ---- Gallery media enumeration (NativeMediaProvider) ----
 
+    // A small holder since Java has no built-in tuple return -- shared by
+    // count() and page() so the DATE_ADDED range clause stays in sync
+    // between them.
+    private static final class DateRangeSelection {
+        final String selection;
+        final String[] selectionArgs;
+
+        DateRangeSelection(String selection, String[] selectionArgs) {
+            this.selection = selection;
+            this.selectionArgs = selectionArgs;
+        }
+    }
+
+    private static DateRangeSelection buildDateRangeSelection(Long sinceCursorMs, Long untilCursorMs) {
+        List<String> clauses = new ArrayList<>();
+        List<String> args = new ArrayList<>();
+        if (sinceCursorMs != null) {
+            clauses.add(MediaStore.Images.Media.DATE_ADDED + " > ?");
+            args.add(String.valueOf(sinceCursorMs / 1000L));
+        }
+        if (untilCursorMs != null) {
+            clauses.add(MediaStore.Images.Media.DATE_ADDED + " < ?");
+            args.add(String.valueOf(untilCursorMs / 1000L));
+        }
+        if (clauses.isEmpty()) return new DateRangeSelection(null, null);
+        return new DateRangeSelection(String.join(" AND ", clauses), args.toArray(new String[0]));
+    }
+
     @PluginMethod
     public void count(PluginCall call) {
         Long sinceCursorMs = call.getLong("sinceCursorMs");
+        Long untilCursorMs = call.getLong("untilCursorMs");
         execute(() -> {
             try {
-                String selection = null;
-                String[] selectionArgs = null;
-                if (sinceCursorMs != null) {
-                    selection = MediaStore.Images.Media.DATE_ADDED + " > ?";
-                    selectionArgs = new String[] { String.valueOf(sinceCursorMs / 1000L) };
-                }
+                DateRangeSelection range = buildDateRangeSelection(sinceCursorMs, untilCursorMs);
+                String selection = range.selection;
+                String[] selectionArgs = range.selectionArgs;
                 int total = 0;
                 try (
                     Cursor cursor = getContext()
@@ -157,17 +185,15 @@ public class GalleryMediaPlugin extends Plugin {
     @PluginMethod
     public void page(PluginCall call) {
         Long sinceCursorMs = call.getLong("sinceCursorMs");
+        Long untilCursorMs = call.getLong("untilCursorMs");
         int offset = call.getInt("offset", 0);
         int limit = call.getInt("limit", DEFAULT_PAGE_LIMIT);
 
         execute(() -> {
             try {
-                String selection = null;
-                String[] selectionArgs = null;
-                if (sinceCursorMs != null) {
-                    selection = MediaStore.Images.Media.DATE_ADDED + " > ?";
-                    selectionArgs = new String[] { String.valueOf(sinceCursorMs / 1000L) };
-                }
+                DateRangeSelection range = buildDateRangeSelection(sinceCursorMs, untilCursorMs);
+                String selection = range.selection;
+                String[] selectionArgs = range.selectionArgs;
                 String sortOrder = MediaStore.Images.Media.DATE_ADDED + " ASC, " + MediaStore.Images.Media._ID + " ASC";
 
                 // A trailing "LIMIT x OFFSET y" appended to the sort-order string is a

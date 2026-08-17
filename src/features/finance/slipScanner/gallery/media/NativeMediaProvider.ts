@@ -1,16 +1,16 @@
 import { base64ToBytes } from "@/features/encryption/crypto/encryption";
 import { NativeGalleryMedia } from "@/features/finance/slipScanner/gallery/media/nativeGalleryMediaPlugin";
 import type { GalleryAssetRef } from "@/features/finance/slipScanner/models/scanTypes";
-import type { MediaProvider, MediaProviderCapabilities } from "./MediaProvider";
+import type { MediaCursorBounds, MediaProvider, MediaProviderCapabilities } from "./MediaProvider";
 
 // Assets fetched per page() round trip -- bounds one call's response size
 // regardless of how large the on-device gallery is. Exported so tests can
 // build a realistic "full page, so fetch another" fixture without guessing.
 export const PAGE_SIZE = 200;
 
-function cursorToMs(sinceCursor: string | undefined): number | undefined {
-  if (!sinceCursor) return undefined;
-  const ms = Date.parse(sinceCursor);
+function cursorToMs(cursor: string | undefined): number | undefined {
+  if (!cursor) return undefined;
+  const ms = Date.parse(cursor);
   return Number.isNaN(ms) ? undefined : ms;
 }
 
@@ -27,26 +27,21 @@ export class NativeMediaProvider implements MediaProvider {
   readonly id = "native-media";
   readonly capabilities: MediaProviderCapabilities = { canEnumerate: true, needsPermission: true };
 
-  async count(sinceCursor?: string): Promise<number | null> {
-    const { total } = await NativeGalleryMedia.count({ sinceCursorMs: cursorToMs(sinceCursor) });
+  async count(bounds?: MediaCursorBounds): Promise<number | null> {
+    const { total } = await NativeGalleryMedia.count({
+      sinceCursorMs: cursorToMs(bounds?.since),
+      untilCursorMs: cursorToMs(bounds?.until),
+    });
     return total;
   }
 
-  async *enumerate(sinceCursor?: string): AsyncGenerator<GalleryAssetRef> {
-    const sinceCursorMs = cursorToMs(sinceCursor);
+  async *enumerate(bounds?: MediaCursorBounds): AsyncGenerator<GalleryAssetRef> {
+    const sinceCursorMs = cursorToMs(bounds?.since);
+    const untilCursorMs = cursorToMs(bounds?.until);
     let offset = 0;
 
     for (;;) {
-      // TEMPORARY perf-investigation instrumentation (gallery-scan speed
-      // investigation, PERF task plan) — pagination is a suspected but
-      // unmeasured cost (Q11: "is the provider/iterator limiting
-      // throughput"); only ~13 calls total for a 2500-image gallery
-      // (PAGE_SIZE=200), so unlikely to dominate, but confirm rather than
-      // assume. Remove once confirmed/fixed.
-      const pageStart = typeof performance !== "undefined" ? performance.now() : Date.now();
-      const { assets } = await NativeGalleryMedia.page({ sinceCursorMs, offset, limit: PAGE_SIZE });
-      const pageMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - pageStart;
-      console.debug(`[perf-investigation] page offset=${offset} count=${assets.length} pageMs=${Math.round(pageMs)}`);
+      const { assets } = await NativeGalleryMedia.page({ sinceCursorMs, untilCursorMs, offset, limit: PAGE_SIZE });
       if (assets.length === 0) return;
 
       for (const asset of assets) {
@@ -59,28 +54,7 @@ export class NativeMediaProvider implements MediaProvider {
   }
 
   async readBytes(asset: GalleryAssetRef): Promise<Uint8Array> {
-    // TEMPORARY perf-investigation instrumentation (gallery-scan speed
-    // investigation, PERF task plan) — isolates the native plugin round trip
-    // (file read + base64 encode + Capacitor bridge delivery) from the JS-side
-    // base64 decode, since both are suspected costs and "4 concurrent workers"
-    // doesn't parallelize either (Capacitor serializes all plugin calls
-    // through one native HandlerThread + delivers every result via the single
-    // UI thread's evaluateJavascript). Remove once confirmed/fixed.
-    const bridgeStart = typeof performance !== "undefined" ? performance.now() : Date.now();
     const { data } = await NativeGalleryMedia.readBytes({ assetId: asset.assetId });
-    const bridgeMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - bridgeStart;
-
-    const decodeStart = typeof performance !== "undefined" ? performance.now() : Date.now();
-    const bytes = base64ToBytes(data);
-    const decodeMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - decodeStart;
-
-    // NOTE: the WebView console bridge (Capacitor's onConsoleMessage) only
-    // relays the first string argument -- an object argument collapses to
-    // "[object Object]" in logcat. Everything must be inlined into one string.
-    console.debug(
-      `[perf-investigation] readBytes assetId=${asset.assetId} base64Chars=${data.length} bridgeMs=${Math.round(bridgeMs)} decodeMs=${Math.round(decodeMs)} decodedBytes=${bytes.length}`,
-    );
-
-    return bytes;
+    return base64ToBytes(data);
   }
 }

@@ -1,5 +1,5 @@
 import type { GalleryAssetRef } from "@/features/finance/slipScanner/models/scanTypes";
-import type { MediaProvider, MediaProviderCapabilities } from "./MediaProvider";
+import type { MediaCursorBounds, MediaProvider, MediaProviderCapabilities } from "./MediaProvider";
 
 // Web has no OS gallery to enumerate, so the "gallery" is whatever files the
 // user picked via <input type="file" multiple> — passed in here. A stable
@@ -20,11 +20,14 @@ export class WebPickerProvider implements MediaProvider {
     this.files = files;
   }
 
-  async count(): Promise<number | null> {
-    return this.files.length;
+  async count(bounds?: MediaCursorBounds): Promise<number | null> {
+    if (!bounds?.since && !bounds?.until) return this.files.length;
+    let total = 0;
+    for await (const _asset of this.enumerate(bounds)) total++;
+    return total;
   }
 
-  async *enumerate(sinceCursor?: string): AsyncIterable<GalleryAssetRef> {
+  async *enumerate(bounds?: MediaCursorBounds): AsyncIterable<GalleryAssetRef> {
     const assets = this.files
       .map((file) => ({
         assetId: webAssetId(file),
@@ -35,7 +38,8 @@ export class WebPickerProvider implements MediaProvider {
       .sort((a, b) => a.capturedAt.localeCompare(b.capturedAt));
 
     for (const asset of assets) {
-      if (sinceCursor && asset.capturedAt <= sinceCursor) continue;
+      if (bounds?.since && asset.capturedAt <= bounds.since) continue;
+      if (bounds?.until && asset.capturedAt > bounds.until) continue;
       yield asset;
     }
   }

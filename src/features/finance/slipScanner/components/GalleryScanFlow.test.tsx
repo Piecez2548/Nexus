@@ -51,6 +51,17 @@ describe("GalleryScanFlow", () => {
     expect(screen.getByText("Select banks to scan")).toBeInTheDocument();
   });
 
+  it("shows the date-range picker in the scan setup popup, defaulting to blank (whole gallery)", async () => {
+    const user = userEvent.setup();
+    render(<GalleryScanFlow />);
+
+    await user.click(screen.getByRole("button", { name: "Scan Gallery" }));
+
+    expect(screen.getByText("Date range (optional)")).toBeInTheDocument();
+    expect(screen.getByLabelText("From")).toHaveValue("");
+    expect(screen.getByLabelText("To")).toHaveValue("");
+  });
+
   it("drives the full web flow through the real orchestrator: bank confirm -> file pick -> scan progress -> Import Preview -> Smart Import", async () => {
     const user = userEvent.setup();
     render(<GalleryScanFlow extractor={fakeExtractor} />);

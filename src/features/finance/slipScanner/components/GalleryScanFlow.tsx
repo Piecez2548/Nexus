@@ -6,6 +6,8 @@ import ScanProgressDashboard from "@/features/finance/slipScanner/components/Sca
 import { useFullGalleryScan } from "@/features/finance/slipScanner/hooks/useFullGalleryScan";
 import { useSmartImport } from "@/features/finance/slipScanner/hooks/useSmartImport";
 import { isNativeGalleryAvailable } from "@/features/finance/slipScanner/gallery/pickImages";
+import { NativeMediaProvider } from "@/features/finance/slipScanner/gallery/media/NativeMediaProvider";
+import type { ScanOptions } from "@/features/finance/slipScanner/models/scanTypes";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { SlipExtractor } from "@/features/finance/slipScanner/services/slipExtractionProcessor";
 import BankSelectionPopup from "@/features/finance/slipScanner/components/BankSelectionPopup";
@@ -46,8 +48,37 @@ export default function GalleryScanFlow({ extractor }: Props) {
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [selectedBankIds, setSelectedBankIds] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [rangeImageCount, setRangeImageCount] = useState<number | null>(null);
 
   const scan = useFullGalleryScan(extractor);
+
+  // Live "N photos in this range" estimate as the user adjusts the date
+  // fields -- only meaningful on native (the web picker has no gallery to
+  // count ahead of time). A request id guards against an in-flight older
+  // count() resolving after a newer one and clobbering it.
+  useEffect(() => {
+    if (phase !== "banks" || !isNativeGalleryAvailable()) return;
+    if (!dateFrom && !dateTo) {
+      setRangeImageCount(null);
+      return;
+    }
+
+    let cancelled = false;
+    void new NativeMediaProvider()
+      .count({ since: dateFrom || undefined, until: dateTo || undefined })
+      .then((total) => {
+        if (!cancelled) setRangeImageCount(total);
+      })
+      .catch(() => {
+        if (!cancelled) setRangeImageCount(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, dateFrom, dateTo]);
   const smartImport = useSmartImport();
 
   // useScanStore is a module-level singleton, so a freshly mounted consumer
@@ -79,9 +110,16 @@ export default function GalleryScanFlow({ extractor }: Props) {
   async function handleConfirmBanks(bankIds: string[]): Promise<void> {
     setSelectedBankIds(bankIds);
     setPhase("idle"); // close the popup before scanning
+    const dateRange: ScanOptions["dateRange"] =
+      dateFrom || dateTo ? { from: dateFrom || undefined, to: dateTo || undefined } : undefined;
+    // A date range is a one-off request, not a remembered preference (unlike
+    // bank selection) -- clear it once consumed so the next scan defaults
+    // back to the whole gallery.
+    setDateFrom("");
+    setDateTo("");
     if (isNativeGalleryAvailable()) {
       try {
-        await scan.scanNativeGallery();
+        await scan.scanNativeGallery(true, dateRange);
       } catch (err) {
         toast.error(toErrorMessage(err));
       }
@@ -180,7 +218,11 @@ export default function GalleryScanFlow({ extractor }: Props) {
         open={phase === "banks"}
         onClose={() => setPhase("idle")}
         onConfirm={handleConfirmBanks}
-        imageCount={null}
+        imageCount={rangeImageCount}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={setDateFrom}
+        onDateToChange={setDateTo}
       />
 
       {showScanOverlay && (

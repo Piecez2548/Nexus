@@ -4,6 +4,7 @@ import { useScanStore } from "@/features/finance/slipScanner/store/scanStore";
 import { WebPickerProvider } from "@/features/finance/slipScanner/gallery/media/WebPickerProvider";
 import { NativeMediaProvider } from "@/features/finance/slipScanner/gallery/media/NativeMediaProvider";
 import type { ScanProcessor } from "@/features/finance/slipScanner/services/scanProcessor";
+import type { ScanOptions } from "@/features/finance/slipScanner/models/scanTypes";
 
 // UI entry point for the Gallery Scanner. Picks the platform MediaProvider
 // and drives the scan store — the scanner logic stays plugin-agnostic, so
@@ -28,9 +29,12 @@ export function useGalleryScan() {
   );
 
   // Native: full-gallery scan (no assets until the media plugin is wired).
+  // `dateRange` bounds the scan to a user-picked window instead of the whole
+  // gallery -- see ScanOptions.dateRange for why this is never combined with
+  // `incremental` (scanSessionService forces it off internally regardless).
   const scanNativeGallery = useCallback(
-    (incremental = true, processor?: ScanProcessor) =>
-      start(new NativeMediaProvider(), { source: "native-media", incremental }, processor),
+    (incremental = true, processor?: ScanProcessor, dateRange?: ScanOptions["dateRange"]) =>
+      start(new NativeMediaProvider(), { source: "native-media", incremental, dateRange }, processor),
     [start]
   );
 

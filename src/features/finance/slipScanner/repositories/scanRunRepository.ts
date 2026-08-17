@@ -16,9 +16,12 @@ export const scanRunRepository = {
   },
 
   // The one run to resume on launch, if any — a session left running/paused
-  // by a killed app.
+  // by a killed app. Excludes date-range-bounded runs: a paused/interrupted
+  // date-range scan must never be resumed as if it were a normal, unbounded
+  // scan (see SlipScanRun.dateRange's own comment).
   async getResumable(): Promise<SlipScanRun | undefined> {
-    return db.slipScanRuns.where("status").anyOf("running", "paused").last();
+    const candidates = await db.slipScanRuns.where("status").anyOf("running", "paused").toArray();
+    return candidates.filter((r) => !r.dateRange).at(-1);
   },
 
   checkpoint(id: number, patch: Partial<SlipScanRun>): Promise<number> {

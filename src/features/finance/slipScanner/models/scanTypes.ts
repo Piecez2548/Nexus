@@ -25,6 +25,12 @@ export interface ScanProgress {
 export interface ScanOptions {
   source: string; // provider id, e.g. "web-picker" | "native-media"
   incremental: boolean; // skip assets scanned in a previous run (via the cursor)
+  // Bounds the scan to a user-picked date range (ISO "YYYY-MM-DD" or full
+  // timestamp) instead of the whole gallery. When set, scanSessionService
+  // forces this run to be non-incremental regardless of `incremental` above
+  // -- a bounded, one-off range scan is never resumed from/into the shared
+  // incremental cursor (see scanSessionService.ts's own comment on why).
+  dateRange?: { from?: string; to?: string };
   // Optional scan-queue tuning (GS-007); resolved to dynamic/device defaults
   // when omitted.
   concurrency?: number;
@@ -46,6 +52,11 @@ export interface SlipScanRun {
   startedAt: string;
   finishedAt?: string;
   cursor?: string; // last processed asset's capturedAt — resume/incremental watermark
+  // Set only for a date-range-bounded scan. getResumable() excludes any run
+  // with this set -- a paused/interrupted date-range run must never be
+  // picked up as "the" resumable run by a later, differently-scoped normal
+  // scan (its cursor is bounded to the range, not a valid general watermark).
+  dateRange?: { from?: string; to?: string };
   total: number | null;
   done: number;
   skipped: number;

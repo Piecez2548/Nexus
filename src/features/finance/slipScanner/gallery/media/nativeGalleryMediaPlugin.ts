@@ -14,8 +14,8 @@ export interface GalleryMediaAsset {
 // the same string name just returns another differently-typed proxy onto
 // that one native registration.
 export interface NativeGalleryMediaPlugin {
-  count(options: { sinceCursorMs?: number }): Promise<{ total: number }>;
-  page(options: { sinceCursorMs?: number; offset: number; limit: number }): Promise<{ assets: GalleryMediaAsset[] }>;
+  count(options: { sinceCursorMs?: number; untilCursorMs?: number }): Promise<{ total: number }>;
+  page(options: { sinceCursorMs?: number; untilCursorMs?: number; offset: number; limit: number }): Promise<{ assets: GalleryMediaAsset[] }>;
   // `data` is base64 (Capacitor's JSON bridge has no raw binary transport).
   readBytes(options: { assetId: string }): Promise<{ data: string }>;
 }

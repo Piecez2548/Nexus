@@ -30,23 +30,35 @@ beforeEach(() => {
 });
 
 describe("NativeMediaProvider", () => {
-  it("counts through the native plugin, converting an ISO cursor to epoch ms", async () => {
+  it("counts through the native plugin, converting an ISO since-cursor to epoch ms", async () => {
     count.mockResolvedValue({ total: 42 });
     const provider = new NativeMediaProvider();
 
-    const total = await provider.count("2026-01-01T00:00:00.000Z");
+    const total = await provider.count({ since: "2026-01-01T00:00:00.000Z" });
 
     expect(total).toBe(42);
-    expect(count).toHaveBeenCalledWith({ sinceCursorMs: Date.parse("2026-01-01T00:00:00.000Z") });
+    expect(count).toHaveBeenCalledWith({ sinceCursorMs: Date.parse("2026-01-01T00:00:00.000Z"), untilCursorMs: undefined });
   });
 
-  it("counts with no cursor when none is given", async () => {
+  it("counts with no bounds when none are given", async () => {
     count.mockResolvedValue({ total: 10 });
     const provider = new NativeMediaProvider();
 
     await provider.count();
 
-    expect(count).toHaveBeenCalledWith({ sinceCursorMs: undefined });
+    expect(count).toHaveBeenCalledWith({ sinceCursorMs: undefined, untilCursorMs: undefined });
+  });
+
+  it("passes both since and until bounds through to count() for a date-range scan", async () => {
+    count.mockResolvedValue({ total: 7 });
+    const provider = new NativeMediaProvider();
+
+    await provider.count({ since: "2026-01-01T00:00:00.000Z", until: "2026-01-31T00:00:00.000Z" });
+
+    expect(count).toHaveBeenCalledWith({
+      sinceCursorMs: Date.parse("2026-01-01T00:00:00.000Z"),
+      untilCursorMs: Date.parse("2026-01-31T00:00:00.000Z"),
+    });
   });
 
   it("paginates through multiple pages until a short page ends enumeration", async () => {
@@ -65,8 +77,8 @@ describe("NativeMediaProvider", () => {
     expect(seen[seen.length - 1]).toBe("last");
     // First page requested at offset 0; the second (short) page fetched at
     // the offset advanced by the first page's full length.
-    expect(page).toHaveBeenNthCalledWith(1, { sinceCursorMs: undefined, offset: 0, limit: PAGE_SIZE });
-    expect(page).toHaveBeenNthCalledWith(2, { sinceCursorMs: undefined, offset: PAGE_SIZE, limit: PAGE_SIZE });
+    expect(page).toHaveBeenNthCalledWith(1, { sinceCursorMs: undefined, untilCursorMs: undefined, offset: 0, limit: PAGE_SIZE });
+    expect(page).toHaveBeenNthCalledWith(2, { sinceCursorMs: undefined, untilCursorMs: undefined, offset: PAGE_SIZE, limit: PAGE_SIZE });
     expect(page).toHaveBeenCalledTimes(2);
   });
 
@@ -81,16 +93,33 @@ describe("NativeMediaProvider", () => {
     expect(page).toHaveBeenCalledTimes(1);
   });
 
-  it("passes the converted cursor through to page()", async () => {
+  it("passes the converted since cursor through to page()", async () => {
     page.mockResolvedValueOnce({ assets: [] });
     const provider = new NativeMediaProvider();
 
-    for await (const _a of provider.enumerate("2026-02-01T00:00:00.000Z")) {
+    for await (const _a of provider.enumerate({ since: "2026-02-01T00:00:00.000Z" })) {
       // drain
     }
 
     expect(page).toHaveBeenCalledWith({
       sinceCursorMs: Date.parse("2026-02-01T00:00:00.000Z"),
+      untilCursorMs: undefined,
+      offset: 0,
+      limit: PAGE_SIZE,
+    });
+  });
+
+  it("passes both since and until bounds through to page() for a date-range scan", async () => {
+    page.mockResolvedValueOnce({ assets: [] });
+    const provider = new NativeMediaProvider();
+
+    for await (const _a of provider.enumerate({ since: "2026-02-01T00:00:00.000Z", until: "2026-02-28T00:00:00.000Z" })) {
+      // drain
+    }
+
+    expect(page).toHaveBeenCalledWith({
+      sinceCursorMs: Date.parse("2026-02-01T00:00:00.000Z"),
+      untilCursorMs: Date.parse("2026-02-28T00:00:00.000Z"),
       offset: 0,
       limit: PAGE_SIZE,
     });
