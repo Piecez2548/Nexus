@@ -44,9 +44,17 @@ export function candidateToTransaction(candidate: SlipCandidate, options: Candid
 
   const title = candidate.merchant?.trim() || candidate.bankName?.trim() || fallbackTitle;
 
-  const noteParts = [candidate.bankName, candidate.reference].filter(
-    (part): part is string => typeof part === "string" && part.trim() !== "",
-  );
+  // Bank name alone isn't worth a note -- it's already redundant with the
+  // bank badge shown elsewhere (Import Preview, the notification-capture
+  // confirm sheet) and with the title itself, which already falls back to
+  // the bank name when there's no merchant. A note only earns its place
+  // when there's a reference number to go with it (the actual reason this
+  // field exists — reconciling against the bank's own transaction record).
+  const noteParts = candidate.reference
+    ? [candidate.bankName, candidate.reference].filter(
+        (part): part is string => typeof part === "string" && part.trim() !== "",
+      )
+    : [];
 
   // `title` is already merchant → bank → fallback, so it is the right
   // categorisation signal (categorising the fallback title is harmless — it has

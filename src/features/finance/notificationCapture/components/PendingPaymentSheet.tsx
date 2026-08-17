@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Drawer from "@/components/ui/Drawer";
+import { categorize } from "@/features/finance/slipScanner/ai/transactionCategorizer";
 import { useSmartImport } from "@/features/finance/slipScanner/hooks/useSmartImport";
+import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "@/i18n/useTranslation";
 
@@ -11,23 +13,56 @@ import { usePendingNotificationCandidates } from "../hooks/usePendingNotificatio
 // The one-tap "Confirm" surface for Payment Notification Capture -- NOT the
 // full ImportPreview drawer (built for multi-candidate batch review with
 // search/filter/per-row edit; real overkill for "one payment, tap to
-// confirm"). Shows the oldest pending candidate at a time; Confirm hands it,
-// unmodified, to the same Smart Import pipeline every other import path
-// uses -- the actual Dexie write only ever happens from that explicit tap.
+// confirm"). Shows the oldest pending candidate at a time; Confirm hands a
+// (possibly title/category-edited) copy to the same Smart Import pipeline
+// every other import path uses -- the actual Dexie write only ever happens
+// from that explicit tap.
 export default function PendingPaymentSheet() {
   const { candidates, acknowledge } = usePendingNotificationCandidates();
   const { importCandidates } = useSmartImport();
+  const categories = useCategoryStore((s) => s.categories).filter((c) => c.type === "expense");
   const toast = useToast();
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
 
   const candidate = candidates[0];
 
+  // Defaults to exactly what candidateToTransaction would use anyway
+  // (merchant, else bank name) -- editing this is optional, not required.
+  const defaultTitle = candidate?.merchant?.trim() || candidate?.bankName?.trim() || "";
+  const [title, setTitle] = useState(defaultTitle);
+
+  // Only set once the user actually taps a chip -- left unset (undefined),
+  // the normal auto-categorize()-then-resolve logic in
+  // candidateToTransaction.ts runs exactly as it always has. guessedCategory
+  // below is purely for which chip to highlight as the suggestion; it never
+  // overrides anything by itself.
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+
+  // Reset local edits whenever the sheet moves on to a new candidate.
+  useEffect(() => {
+    setTitle(defaultTitle);
+    setSelectedCategory(undefined);
+    // defaultTitle is derived from candidate -- re-running this effect when
+    // candidate?.id changes is the actual intent (a new candidate to edit).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candidate?.id]);
+
+  const guessedCategory = useMemo(() => {
+    if (!title.trim()) return undefined;
+    return categorize(title).category;
+  }, [title]);
+
   async function handleConfirm(): Promise<void> {
     if (!candidate) return;
     setBusy(true);
     try {
-      await importCandidates([candidate], {}, "notification");
+      const edited = {
+        ...candidate,
+        merchant: title.trim() || candidate.merchant,
+        category: selectedCategory,
+      };
+      await importCandidates([edited], {}, "notification");
       await acknowledge(candidate.id);
       toast.success(t("slipScanner.notificationCapture.confirmed"));
     } catch {
@@ -60,13 +95,47 @@ export default function PendingPaymentSheet() {
               <span className="text-sm text-zinc-500 dark:text-zinc-400">{t("slipScanner.notificationCapture.amount")}</span>
               <span className="text-xl font-semibold">฿{candidate.amount?.toLocaleString()}</span>
             </div>
-            {candidate.merchant && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-zinc-500 dark:text-zinc-400">{t("slipScanner.notificationCapture.merchant")}</span>
-                <span className="font-medium">{candidate.merchant}</span>
-              </div>
-            )}
           </div>
+
+          <label className="block text-sm text-zinc-500 dark:text-zinc-400">
+            {t("slipScanner.notificationCapture.nameLabel")}
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={candidate.bankName ?? ""}
+              className="mt-1 w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 text-base text-zinc-900 dark:text-white outline-none focus:border-brand-500"
+            />
+          </label>
+
+          {categories.length > 0 && (
+            <div>
+              <span className="mb-2 block text-sm text-zinc-500 dark:text-zinc-400">
+                {t("slipScanner.notificationCapture.categoryLabel")}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {categories.map((c) => {
+                  const active = (selectedCategory ?? guessedCategory) === c.name;
+                  return (
+                    <button
+                      key={c.id ?? c.name}
+                      type="button"
+                      onClick={() => setSelectedCategory(c.name)}
+                      aria-pressed={active}
+                      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                        active
+                          ? "border-brand-500 bg-brand-500/15 text-brand-600 dark:text-brand-400"
+                          : "border-zinc-300 dark:border-zinc-700 hover:border-brand-500"
+                      }`}
+                    >
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: c.color }} />
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button

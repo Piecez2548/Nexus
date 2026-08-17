@@ -51,6 +51,11 @@ describe("candidateToTransaction", () => {
     expect(candidateToTransaction(candidate({ amount: 50 })).note).toBeUndefined();
   });
 
+  it("omits the note when there is a bank but no reference (e.g. Payment Notification Capture, which rarely has one) -- a bare bank name isn't worth a note on its own", () => {
+    const tx = candidateToTransaction(candidate({ amount: 50, bankName: "KBank" }));
+    expect(tx.note).toBeUndefined();
+  });
+
   it("falls back to the bank name for categorisation too when merchant is an empty string", () => {
     // EMVCo merchant-name tag present but empty ("") is not nullish, so a `??`
     // fallback would keep it and force categorize("") -> "Others". Title and
