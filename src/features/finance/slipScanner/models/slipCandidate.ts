@@ -2,6 +2,7 @@ import { combineConfidence } from "@/features/finance/slipScanner/ai/confidenceE
 import type { BankIdentification } from "@/features/finance/slipScanner/engine/bank/bankTypes";
 import type { EmvcoPayload } from "@/features/finance/slipScanner/engine/emvco/emvcoPayloadParser";
 import type { OcrSlipFields } from "@/features/finance/slipScanner/engine/ocr/slipOcrFields";
+import type { CategoryType } from "@/features/finance/types";
 
 // The unified record the Import Preview lists and Smart Import consumes — one
 // per scanned slip, assembled from the extraction stages (QR/EMVCo GS-010, bank
@@ -38,6 +39,12 @@ export interface SlipCandidate {
   // derived one. Absent from the extraction pipeline itself; the AI/parsing
   // stages never set this field.
   category?: string;
+  // Set explicitly by Payment Notification Capture's confirm sheet, where a
+  // notification can equally be an outgoing payment or incoming money —
+  // unlike a scanned slip, which is always an outgoing payment (see
+  // candidateToTransaction.ts, which defaults to "expense" when this is
+  // absent, matching every other source's existing behavior unchanged).
+  type?: CategoryType;
 }
 
 export interface SlipCandidateInput {

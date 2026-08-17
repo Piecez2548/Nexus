@@ -20,7 +20,7 @@ import { usePendingNotificationCandidates } from "../hooks/usePendingNotificatio
 export default function PendingPaymentSheet() {
   const { candidates, acknowledge } = usePendingNotificationCandidates();
   const { importCandidates } = useSmartImport();
-  const categories = useCategoryStore((s) => s.categories).filter((c) => c.type === "expense");
+  const allCategories = useCategoryStore((s) => s.categories);
   const toast = useToast();
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
@@ -32,6 +32,13 @@ export default function PendingPaymentSheet() {
   const defaultTitle = candidate?.merchant?.trim() || candidate?.bankName?.trim() || "";
   const [title, setTitle] = useState(defaultTitle);
 
+  // A bank notification can equally be an outgoing payment or incoming
+  // money -- unlike a scanned slip, which is always outgoing (see
+  // candidateToTransaction.ts). Defaults to "expense" (this sheet's own
+  // framing, "Payment detected") but is always overridable.
+  const [type, setType] = useState<"income" | "expense">("expense");
+  const categories = allCategories.filter((c) => c.type === type);
+
   // Only set once the user actually taps a chip -- left unset (undefined),
   // the normal auto-categorize()-then-resolve logic in
   // candidateToTransaction.ts runs exactly as it always has. guessedCategory
@@ -42,16 +49,31 @@ export default function PendingPaymentSheet() {
   // Reset local edits whenever the sheet moves on to a new candidate.
   useEffect(() => {
     setTitle(defaultTitle);
+    setType("expense");
     setSelectedCategory(undefined);
     // defaultTitle is derived from candidate -- re-running this effect when
     // candidate?.id changes is the actual intent (a new candidate to edit).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidate?.id]);
 
+  // A category chip picked under one type is almost never valid under the
+  // other (the chip list itself switches to the other type's categories) --
+  // clearing it here avoids sending a stale expense category name alongside
+  // a now-income transaction, or vice versa.
+  function handleTypeChange(next: "income" | "expense") {
+    setType(next);
+    setSelectedCategory(undefined);
+  }
+
+  // The categorizer's keyword rules are expense-oriented -- for an income
+  // candidate its guess would highlight an expense-shaped category name that
+  // doesn't even appear in this income-filtered chip list (see
+  // candidateToTransaction.ts, which applies the same restriction to the
+  // actual import).
   const guessedCategory = useMemo(() => {
-    if (!title.trim()) return undefined;
+    if (type !== "expense" || !title.trim()) return undefined;
     return categorize(title).category;
-  }, [title]);
+  }, [title, type]);
 
   async function handleConfirm(): Promise<void> {
     if (!candidate) return;
@@ -61,6 +83,7 @@ export default function PendingPaymentSheet() {
         ...candidate,
         merchant: title.trim() || candidate.merchant,
         category: selectedCategory,
+        type,
       };
       await importCandidates([edited], {}, "notification");
       await acknowledge(candidate.id);
@@ -94,6 +117,32 @@ export default function PendingPaymentSheet() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-zinc-500 dark:text-zinc-400">{t("slipScanner.notificationCapture.amount")}</span>
               <span className="text-xl font-semibold">฿{candidate.amount?.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div>
+            <span className="mb-2 block text-sm text-zinc-500 dark:text-zinc-400">
+              {t("slipScanner.notificationCapture.typeLabel")}
+            </span>
+            <div className="flex gap-2">
+              {(["expense", "income"] as const).map((option) => {
+                const active = type === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => handleTypeChange(option)}
+                    aria-pressed={active}
+                    className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                      active
+                        ? "border-brand-500 bg-brand-500/15 text-brand-600 dark:text-brand-400"
+                        : "border-zinc-300 dark:border-zinc-700 hover:border-brand-500"
+                    }`}
+                  >
+                    {t(`transactions.${option}`)}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

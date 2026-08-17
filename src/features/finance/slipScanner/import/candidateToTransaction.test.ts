@@ -100,4 +100,29 @@ describe("candidateToTransaction", () => {
     const tx = candidateToTransaction(candidate({ merchant: "Coffee Shop", amount: 20, category: "   " }));
     expect(tx.category).toBe("Food");
   });
+
+  it("defaults to expense when the candidate carries no explicit type (a scanned slip is always an outgoing payment)", () => {
+    const tx = candidateToTransaction(candidate({ amount: 50 }));
+    expect(tx.type).toBe("expense");
+  });
+
+  it("honours an explicit income type (Payment Notification Capture, where a notification can be incoming money)", () => {
+    const tx = candidateToTransaction(candidate({ amount: 500, bankName: "KBank", type: "income" }));
+    expect(tx.type).toBe("income");
+  });
+
+  it("leaves category unset for an income candidate instead of applying the expense-oriented categorize() guess", () => {
+    // "Coffee Shop" would auto-categorize as "Food" for an expense -- an
+    // expense-shaped category name on an income row would be a real bug
+    // (reproduced live: Payment Notification Capture's confirm sheet only
+    // filters its category *chips* by type, so an income transaction left
+    // uncategorized by the user still fell through to this guess).
+    const tx = candidateToTransaction(candidate({ merchant: "Coffee Shop", amount: 500, type: "income" }));
+    expect(tx.category).toBeUndefined();
+  });
+
+  it("still trusts an explicit category override on an income candidate (a user's own chip pick, not a guess)", () => {
+    const tx = candidateToTransaction(candidate({ merchant: "Coffee Shop", amount: 500, type: "income", category: "Salary" }));
+    expect(tx.category).toBe("Salary");
+  });
 });
