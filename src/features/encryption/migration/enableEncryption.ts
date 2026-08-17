@@ -37,6 +37,11 @@ const TABLES_TO_MIGRATE: SyncTableName[] = [
   "calendarEvents",
   "scheduleItems",
   "goalMilestoneEvents",
+  // Always written already-encrypted (see vaultEntryRepository.ts) via the
+  // gate in Vault.tsx, so this normally migrates zero rows -- included for
+  // the same reason every other table is: consistency, and covering the
+  // edge case of a pre-existing row from before that gate existed.
+  "vaultEntries",
 ];
 
 // Must stay in sync with each repository's plaintextKeys option (see the

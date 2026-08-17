@@ -2,7 +2,7 @@
 
 Master registry of all planned and completed Nexus tasks, grouped by Epic. See [README.md](README.md) for conventions and lifecycle.
 
-**Last Updated:** 2026-08-16
+**Last Updated:** 2026-08-17
 
 ## Legend
 
@@ -16,7 +16,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 |---|---|---|---|---|---|
 | AI Analytics | 7 | 7 | 0 | 0 | 0 |
 | Slip Scanner (OCR) | 7 | 5 | 2 | 0 | 0 |
-| Vault | 4 | 0 | 4 | 0 | 0 |
+| Vault | 4 | 4 | 0 | 0 | 0 |
 | Finance | 4 | 1 | 3 | 0 | 0 |
 | Security | 4 | 2 | 2 | 0 | 0 |
 | Core | 3 | 3 | 0 | 0 | 0 |
@@ -26,7 +26,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
 | Platform (PLT) | 20 | 20 | 0 | 0 | 0 |
-| **Total** | **108** | **97** | **11** | **0** | **0** |
+| **Total** | **108** | **101** | **7** | **0** | **0** |
 
 ---
 
@@ -64,14 +64,26 @@ On-device Tesseract.js scanning — see [../docs/MODULES.md](../docs/MODULES.md)
 
 ## Vault
 
-Password / secrets vault — **planned, not started** (see [../docs/ROADMAP.md](../docs/ROADMAP.md)). Would build on the existing client-side encryption primitives (see [../docs/SECURITY.md](../docs/SECURITY.md)).
+Password / secrets vault (`src/features/vault/`) — built on the existing client-side encryption primitives (see [../docs/SECURITY.md](../docs/SECURITY.md)'s new "Vault" section). Delivered as one unified `VaultEntry` model (a `type` discriminator over password/note/recoveryKey) rather than three separate verticals — see the build entry below for why.
 
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
-| VAULT-001 | Vault | Vault Core | High | Todo | — |
-| VAULT-002 | Vault | Password Manager | Medium | Todo | VAULT-001 |
-| VAULT-003 | Vault | Secure Notes | Medium | Todo | VAULT-001 |
-| VAULT-004 | Vault | Recovery Keys | Medium | Todo | VAULT-001 |
+| VAULT-001 | Vault | Vault Core | High | Completed | — |
+| VAULT-002 | Vault | Password Manager | Medium | Completed | VAULT-001 |
+| VAULT-003 | Vault | Secure Notes | Medium | Completed | VAULT-001 |
+| VAULT-004 | Vault | Recovery Keys | Medium | Completed | VAULT-001 |
+
+> **VAULT-001..004, all delivered together (2026-08-17, uncommitted).** No spec existed beyond a one-line roadmap note ("would build on the existing client-side encryption primitives") — scope was designed from that foundation directly, per the user's explicit go-ahead to do so, and reviewed with them via a plan (Plan Mode) before any code was written, given the stakes (a password manager: wrong here means leaked or permanently lost secrets, not just an inconvenience).
+>
+> **Design call**: all four backlog items reduce to the same shape (a titled secret with type-specific fields), so this is one `VaultEntry` table/repository/service/store/page, not three parallel CRUD verticals — recognized as the "don't duplicate business logic" call, not scope-cutting.
+>
+> **The one real gap found and closed**: every existing encrypted table's `createEncryptedRepository.add/update` silently writes *plaintext* if the device-wide `encryptionEnabled` toggle is off (correct for those tables — encryption is optional hardening there; wrong for a password vault). Rather than touching that shared, cross-cutting file, `Vault.tsx` gates the entire page behind `encryptionEnabled === true`, showing the existing `EnableEncryptionForm` instead of a list when it's off — makes "Vault access" and "encryption is on" equivalent by construction, using only already-existing plumbing. `vaultEntryRepository.test.ts` documents this honestly: the repository itself, called directly, still writes plaintext with encryption off (matching every other table's generic behavior) — the guarantee lives in the UI gate, not the repository, and the test says so rather than implying otherwise.
+>
+> **Reused, not rebuilt**: encryption/DEK/KEK/session (`src/features/encryption/`, `appLockStore.ts`) untouched — Vault only consumes `encryptionEnabled` and the transparent `createRepository`/`createEncryptedRepository` wrapping every other table already uses, with `plaintextKeys: []` (unlike `recipientProfiles`/`budgets`, even the entry *title* is sensitive here, so nothing is exempted). Sync required zero new mechanism — `vaultEntries` just joins `SYNCED_TABLES`/`STORE_REFRESHERS`, relying on the sync engine's already-proven opaque-blob handling (extended `syncEngine.test.ts`'s existing contract test to cover `vaultEntries` specifically, not just assume the generic one implies it). UI (list/card/form-in-drawer, search+type filter) mirrors `Habits.tsx`/`HabitCard.tsx`/`HabitForm.tsx` file-for-file. A password generator (`generatePassword.ts`) uses `crypto.getRandomValues`, not `Math.random`.
+>
+> **Verified on the connected device (`10AE9R1ZJY001PY`)**, not just from mocked tests: navigated via safe DOM `element.click()` inside `page.evaluate()` (not Playwright's pointer-emulated `.click()`, which misfired once earlier this session on this real WebView) to create one real entry of each type (password, secure note, recovery key) on an account with encryption already enabled. Confirmed via a direct raw IndexedDB read (bypassing the app entirely) that the stored row for each contained *only* `id`/`syncId`/`updatedAt`/`encryptedContent` — no plaintext title, username, password, or code at all. Confirmed all three displayed correctly (title, masked secret, reveal/copy) and deleted correctly via the real UI, list returning to empty, storage confirmed empty afterward too. **Not independently re-verified this round**: a full lock→re-unlock→decrypt cycle specifically for Vault rows — relying instead on this being the exact same generic DEK/KEK mechanism already proven (repeatedly, across many other tables, elsewhere in this file) rather than asking for a second device unlock in the same session; flagged honestly rather than silently assumed. One real, minor tooling finding from this pass, not a product bug: rapid-fire `window.confirm()` calls from an automated test script can queue multiple native Android `AlertDialog` renders even after each JS promise already resolved via CDP — a real user clicking delete one at a time never hits this, since each dialog is dismissed before the next fires.
+>
+> `tsc -b`, `oxlint`, the full test suite (**2203 tests**, up from 2188 — 19 new: `vaultEntryRepository.test.ts` ×3, `generatePassword.test.ts` ×5, `vaultEntryStore.test.ts` ×4, `Vault.integration.test.tsx` ×6, one new `syncEngine.test.ts` case), and `npm run build` are all clean; `:app:assembleDebug` succeeds and the APK was installed on the connected device for the verification pass above. **Files**: new `src/features/vault/**` (types, repository, service, store, `generatePassword.ts`, `VaultEntryCard.tsx`, `VaultEntryForm.tsx`, `Vault.tsx` + tests); touched `src/database/db.ts` (v18 schema), `src/features/sync/types.ts`/`syncEngine.ts`/`syncEngine.test.ts`, `src/features/encryption/migration/enableEncryption.ts` (`TABLES_TO_MIGRATE`), `src/router/lazyPages.ts`/`router.tsx`, `src/layouts/navItems.ts`, `src/i18n/translations.ts` (EN+TH), `docs/SECURITY.md`. **Not yet committed** — pending the user's go-ahead per this project's "only commit when explicitly asked" convention.
 
 ---
 

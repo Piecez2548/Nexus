@@ -16,6 +16,7 @@ import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
 import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
+import { useVaultEntryStore } from "@/features/vault/store/vaultEntryStore";
 
 const SYNCED_TABLES: SyncTableName[] = [
   "transactions",
@@ -32,6 +33,7 @@ const SYNCED_TABLES: SyncTableName[] = [
   "calendarEvents",
   "scheduleItems",
   "goalMilestoneEvents",
+  "vaultEntries",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -328,6 +330,7 @@ const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
   calendarEvents: async () => {},
   scheduleItems: () => useScheduleItemStore.getState().loadItems(),
   goalMilestoneEvents: () => useGoalMilestoneEventStore.getState().loadEvents(),
+  vaultEntries: () => useVaultEntryStore.getState().loadEntries(),
 };
 
 // Only reloads (and re-renders) stores whose underlying table actually

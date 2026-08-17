@@ -19,6 +19,7 @@ import type { ScheduleItem } from "@/features/schedule/types";
 import type { Tombstone, SyncStateRow } from "@/features/sync/types";
 import type { SlipScanRun, ScanCacheEntry } from "@/features/finance/slipScanner/models/scanTypes";
 import type { ImportHistoryEntry } from "@/features/finance/slipScanner/models/importHistory";
+import type { VaultEntry } from "@/features/vault/types";
 
 class NexusDatabase extends Dexie {
 
@@ -42,6 +43,7 @@ class NexusDatabase extends Dexie {
   public slipScanRuns;
   public slipScanCache;
   public slipImportHistory;
+  public vaultEntries;
 
   constructor() {
     super("NexusDatabase");
@@ -254,6 +256,15 @@ class NexusDatabase extends Dexie {
         "++id,importedAt,status,bank",
     });
 
+    // v18 adds vaultEntries (VAULT-001..004): password manager / secure
+    // notes / recovery keys, one unified entry shape. Always encrypted (see
+    // vaultEntryRepository.ts) — no plaintext-indexed fields, so no field
+    // beyond the standard syncId/updatedAt needs an index. Additive.
+    this.version(18).stores({
+      vaultEntries:
+        "++id,syncId,updatedAt",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -313,6 +324,9 @@ class NexusDatabase extends Dexie {
 
     this.slipImportHistory =
       this.table<ImportHistoryEntry, number>("slipImportHistory");
+
+    this.vaultEntries =
+      this.table<VaultEntry, number>("vaultEntries");
   }
 }
 

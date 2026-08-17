@@ -41,6 +41,7 @@ const USER_ID = "user-123";
 describe("syncEngine", () => {
   beforeEach(async () => {
     await db.transactions.clear();
+    await db.vaultEntries.clear();
     await db.syncTombstones.clear();
     await db.syncState.clear();
     mockUpsert.mockReset().mockResolvedValue({ error: null });
@@ -659,6 +660,37 @@ describe("syncEngine", () => {
       | undefined;
     expect(pulled?.encryptedContent).toEqual(envelope);
     expect(pulled?.title).toBeUndefined();
+  });
+
+  it("syncs vaultEntries through the same generic opaque-blob path as every other table", async () => {
+    // vaultEntries has no Vault-specific sync code (see syncEngine.ts's
+    // SYNCED_TABLES/STORE_REFRESHERS entries) -- this pins that it actually
+    // participates via the same mechanism the test above proves is safe for
+    // encrypted content in general, not just that it's listed in the array.
+    const envelope = { v: 1, iv: "AAAAAAAAAAAAAAAA", ct: "dmF1bHQtc2VjcmV0LWNpcGhlcnRleHQ=" };
+
+    await db.vaultEntries.add({
+      syncId: "vault-enc-1",
+      updatedAt: "2026-08-17T00:00:00.000Z",
+      encryptedContent: envelope,
+    } as never);
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({ data: [], error: null }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    // vaultEntries pushes in its own upsert call, separate from every other
+    // table's -- unlike the "transactions" example above (SYNCED_TABLES'
+    // first entry, always mockUpsert's first call), vaultEntries is pushed
+    // last, so this searches every call rather than assuming calls[0].
+    const push = mockUpsert.mock.calls
+      .flatMap((call) => call[0])
+      .find((p: { table_name: string; id: string }) => p.table_name === "vaultEntries" && p.id === "vault-enc-1");
+    expect(push.data.encryptedContent).toEqual(envelope);
+    expect(push.data.title).toBeUndefined();
   });
 
   it("does not reload any store when a pass pulls no data and dedupes nothing", async () => {

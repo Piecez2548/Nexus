@@ -14,6 +14,7 @@ import {
   Flame,
   Clock,
   Sparkles,
+  KeyRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -45,4 +46,5 @@ export const personalMenus: MenuItem[] = [
   { icon: ListChecks, labelKey: "nav.todo", path: "/todo" },
   { icon: Flame, labelKey: "nav.habits", path: "/habits" },
   { icon: Clock, labelKey: "nav.schedule", path: "/schedule" },
+  { icon: KeyRound, labelKey: "nav.vault", path: "/vault" },
 ];

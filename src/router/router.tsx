@@ -18,6 +18,7 @@ import {
   Habits,
   Portfolio,
   LifeSchedule,
+  Vault,
   Settings,
   NotFound,
 } from "./lazyPages";
@@ -94,6 +95,10 @@ export const router = createBrowserRouter([
       {
         path: "schedule",
         element: <LifeSchedule />,
+      },
+      {
+        path: "vault",
+        element: <Vault />,
       },
       {
         path: "settings",
