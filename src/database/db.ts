@@ -20,6 +20,7 @@ import type { Tombstone, SyncStateRow } from "@/features/sync/types";
 import type { SlipScanRun, ScanCacheEntry } from "@/features/finance/slipScanner/models/scanTypes";
 import type { ImportHistoryEntry } from "@/features/finance/slipScanner/models/importHistory";
 import type { VaultEntry } from "@/features/vault/types";
+import type { AuditLogRow } from "@/features/security/auditLog";
 
 class NexusDatabase extends Dexie {
 
@@ -44,6 +45,7 @@ class NexusDatabase extends Dexie {
   public slipScanCache;
   public slipImportHistory;
   public vaultEntries;
+  public auditLog;
 
   constructor() {
     super("NexusDatabase");
@@ -265,6 +267,16 @@ class NexusDatabase extends Dexie {
         "++id,syncId,updatedAt",
     });
 
+    // v19 adds auditLog (SEC-002): a persisted, device-local, append-only
+    // security audit trail (see src/features/security/auditLog.ts). Deliberately
+    // NOT synced (no syncId) -- diagnostic/operational data local to this
+    // device, like slipScanRuns/slipImportHistory above, not personal content
+    // to carry across devices. Additive.
+    this.version(19).stores({
+      auditLog:
+        "++id,at,type",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -327,6 +339,9 @@ class NexusDatabase extends Dexie {
 
     this.vaultEntries =
       this.table<VaultEntry, number>("vaultEntries");
+
+    this.auditLog =
+      this.table<AuditLogRow, number>("auditLog");
   }
 }
 

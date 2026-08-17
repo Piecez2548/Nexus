@@ -13,6 +13,7 @@ import {
 } from "@/features/encryption/crypto/encryption";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
 import { storeBiometricCredential, deleteBiometricCredential } from "@/features/lock/services/biometricService";
+import { recordAudit } from "@/features/security/auditLog";
 
 const SESSION_KEY = "nexus-session-unlocked";
 const REMEMBER_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -160,6 +161,7 @@ export const useAppLockStore = create<AppLockState>()(
           sessionUnlocked: true,
           rememberUntil: remember ? Date.now() + REMEMBER_DURATION_MS : null,
         });
+        recordAudit("lock", "pin-setup");
       },
 
       async unlock(pin, remember) {
@@ -167,7 +169,13 @@ export const useAppLockStore = create<AppLockState>()(
         if (pinHash === null || salt === null) return false;
 
         const candidate = await hashPin(pin, salt);
-        if (candidate !== pinHash) return false;
+        if (candidate !== pinHash) {
+          // The security-relevant signal an audit log exists for — repeated
+          // failed unlock attempts. Successful unlocks are deliberately not
+          // logged (they'd happen many times a day and add noise, not signal).
+          recordAudit("lock", "unlock-failed");
+          return false;
+        }
 
         if (encryptionEnabled) {
           if (wrappedDek === null || kekSalt === null || kekIterations === null) {
@@ -226,6 +234,7 @@ export const useAppLockStore = create<AppLockState>()(
             kekIterations: PBKDF2_ITERATIONS,
           });
           await resyncBiometricCredential(get, set, newPin);
+          recordAudit("lock", "pin-changed");
           return true;
         }
 
@@ -233,6 +242,7 @@ export const useAppLockStore = create<AppLockState>()(
         const newHash = await hashPin(newPin, newSalt);
         set({ pinHash: newHash, salt: newSalt });
         await resyncBiometricCredential(get, set, newPin);
+        recordAudit("lock", "pin-changed");
         return true;
       },
 
@@ -253,6 +263,7 @@ export const useAppLockStore = create<AppLockState>()(
         writeSessionUnlocked(false);
         useEncryptionSessionStore.getState().clearDek();
         set({ pinHash: null, salt: null, rememberUntil: null, sessionUnlocked: false, biometricEnabled: false });
+        recordAudit("lock", "disabled");
         return true;
       },
 
@@ -336,12 +347,14 @@ export const useAppLockStore = create<AppLockState>()(
 
         await storeBiometricCredential(pin);
         set({ biometricEnabled: true });
+        recordAudit("lock", "biometric-enabled");
         return true;
       },
 
       async disableBiometric() {
         await deleteBiometricCredential();
         set({ biometricEnabled: false });
+        recordAudit("lock", "biometric-disabled");
       },
     }),
     {

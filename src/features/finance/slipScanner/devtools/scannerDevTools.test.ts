@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { clearAuditLog, recordPermissionAudit } from "@/features/finance/slipScanner/security/scanAuditLog";
+import { clearAuditLog, recordPermissionAudit } from "@/features/security/auditLog";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 
 import { buildValidationReport, exportScannerLogs, runInDev } from "./scannerDevTools";

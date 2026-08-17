@@ -1,4 +1,4 @@
-import { getAuditLog } from "@/features/finance/slipScanner/security/scanAuditLog";
+import { getAuditLog } from "@/features/security/auditLog";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import { validateSlipCandidate, type SlipValidationOptions } from "@/features/finance/slipScanner/validation/slipValidation";
 

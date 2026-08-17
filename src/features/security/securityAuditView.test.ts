@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { clearAuditLog, recordAudit, recordPermissionAudit } from "@/features/finance/slipScanner/security/scanAuditLog";
+import { clearAuditLog, recordAudit, recordPermissionAudit } from "@/features/security/auditLog";
 
 import {
   getSecurityEvents,
@@ -8,7 +8,7 @@ import {
   recordSuspiciousAudit,
   recordValidationFailureAudit,
   summarizeSecurityAudit,
-} from "./securityAudit";
+} from "./securityAuditView";
 
 beforeEach(() => clearAuditLog());
 afterEach(() => clearAuditLog());
@@ -29,12 +29,26 @@ describe("security audit recorders", () => {
     expect(getSecurityEvents().map((e) => e.type)).toEqual(["permission"]);
   });
 
-  it("summarises counts by security event type", () => {
+  it("summarises counts by security event type, including the app-wide categories", () => {
     recordPermissionAudit("granted");
     recordDeletionAudit("cache-cleared");
     recordDeletionAudit("thumbnails-revoked");
     recordSuspiciousAudit("possible-replay");
+    recordAudit("auth", "sign-in");
+    recordAudit("vault", "created");
+    recordAudit("vault", "created");
 
-    expect(summarizeSecurityAudit()).toEqual({ permission: 1, import: 0, delete: 2, validation: 0, suspicious: 1 });
+    expect(summarizeSecurityAudit()).toEqual({
+      permission: 1,
+      import: 0,
+      delete: 2,
+      validation: 0,
+      suspicious: 1,
+      auth: 1,
+      encryption: 0,
+      lock: 0,
+      vault: 2,
+      backup: 0,
+    });
   });
 });

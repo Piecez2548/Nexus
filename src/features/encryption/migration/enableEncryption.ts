@@ -14,6 +14,7 @@ import {
   PBKDF2_ITERATIONS,
 } from "@/features/encryption/crypto/encryption";
 import { encryptRow, type EncryptedRow } from "@/database/encryptedRepository";
+import { recordAudit } from "@/features/security/auditLog";
 import type { SyncTableName } from "@/features/sync/types";
 import type { TranslateFn } from "@/i18n/useTranslation";
 
@@ -263,6 +264,7 @@ export async function enableEncryption({ pin, accountPassword, onProgress, trans
     }
 
     onProgress?.({ phase: "done" });
+    recordAudit("encryption", "enabled", { tableCount: TABLES_TO_MIGRATE.length });
 
     // Best-effort — propagating the new ciphertext promptly is nice to
     // have, but a network hiccup right now shouldn't fail the migration

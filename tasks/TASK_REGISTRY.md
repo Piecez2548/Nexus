@@ -18,7 +18,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Slip Scanner (OCR) | 7 | 7 | 0 | 0 | 0 |
 | Vault | 4 | 4 | 0 | 0 | 0 |
 | Finance | 4 | 1 | 3 | 0 | 0 |
-| Security | 4 | 2 | 2 | 0 | 0 |
+| Security | 4 | 3 | 1 | 0 | 0 |
 | Core | 3 | 3 | 0 | 0 | 0 |
 | Testing | 3 | 3 | 0 | 0 | 0 |
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
@@ -26,7 +26,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
 | Platform (PLT) | 20 | 20 | 0 | 0 | 0 |
-| **Total** | **108** | **103** | **5** | **0** | **0** |
+| **Total** | **108** | **104** | **4** | **0** | **0** |
 
 ---
 
@@ -106,14 +106,30 @@ Core transactions/budgets/goals are built; net worth and a first-class subscript
 
 ## Security
 
-Backup/restore built via `backupService`; a permission manager and audit log are not yet in the code — see [../docs/SECURITY.md](../docs/SECURITY.md).
+Backup/restore built via `backupService`; the Audit Log now exists app-wide (`src/features/security/`). A permission manager is not yet in the code — see [../docs/SECURITY.md](../docs/SECURITY.md).
 
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
 | SEC-001 | Security | Permission Manager | Medium | Todo | — |
-| SEC-002 | Security | Audit Log | Medium | Todo | — |
+| SEC-002 | Security | Audit Log | Medium | Completed | — |
 | SEC-003 | Security | Backup | High | Completed | — |
 | SEC-004 | Security | Restore | High | Completed | SEC-003 |
+
+> **SEC-002 delivered (2026-08-17, uncommitted).** Not built from scratch — the Gallery Scanner already had a bounded, injectable-sink audit log (GS-017/GS-038, `scanAuditLog.ts`), but it was scaffolding: unpersisted (an in-memory ring buffer only), never actually wired to any sink, and called from no production code path at all (confirmed by direct grep before writing anything, not assumed from the docs, which had overstated it as already routed to storage). This task made it real and app-wide rather than building a second, parallel log next to a dormant one.
+>
+> **Relocated and widened**: moved to `src/features/security/auditLog.ts` (mechanism unchanged — bounded 200-event in-memory buffer, injectable `AuditSink`), widening its event-type union from the original six scanner categories to also cover `auth`, `encryption`, `lock`, `vault`, `backup`. `securityAudit.ts`'s derived-view helpers moved alongside as `securityAuditView.ts`. Zero production call sites existed before this (only tests referenced the old module), so the move was a clean rename with no behavior to preserve.
+>
+> **Made real**: a new `auditLog` Dexie table (v19, device-local, unsynced — diagnostic data, not personal content to carry cross-device) + `auditLogRepository.ts` + `dexieAuditSink.ts` (bounded independently at 500 persisted rows, larger than the in-memory cap since persistence changes the retention tradeoff), wired to the log's already-existing injectable sink at app bootstrap (`main.tsx`) — one `configureAuditLog({sink: dexieAuditSink})` call activates persistence for every `recordAudit` call anywhere in the app, present or future.
+>
+> **New call sites** (all previously silent, confirmed by grep before adding anything): `authStore.ts` (sign-in/up/out, success/failure only, never the email or password), `enableEncryption.ts`/`reescrowDek.ts` (encryption enabled/re-escrowed), `appLockStore.ts` (PIN setup/changed/disabled, biometric enabled/disabled, and specifically **failed** unlock attempts — successful unlocks are deliberately not logged, since they'd fire many times a day and add noise, not signal, matching the classic audit-log convention of logging failures not routine success), `vaultEntryStore.ts` (created/updated/deleted, entry *type* only, never title/username/password/content), `backupService.ts` (exported/imported/reset). The scanner's own six original event types remain wired at the mechanism level but still have no production call sites — unchanged from before, explicitly out of scope here (a separate future task, noted in `docs/SECURITY.md`'s recommendations).
+>
+> **Real bug found and fixed while wiring backup events, not the original point of this task**: `backupService.ts`'s `exportBackup`/`importBackup`/`resetAllData` never included `vaultEntries` at all — Vault (built earlier this session) was silently excluded from the app's own backup/restore/reset, contradicting an explicit claim in that feature's own plan ("as part of the normal encrypted backup") that was never actually verified. Fixed by adding `vaultEntries` to all three functions' table lists, matching every other table's exact pattern; proven with a new round-trip test (export while encrypted → confirms plaintext in the backup JSON → clear → import → confirms re-encrypted correctly) and a legacy-backup-file compatibility test.
+>
+> Viewer: `AuditLogDrawer.tsx` (search + type filter + clear, mirrors `ImportHistoryDrawer.tsx` file-for-file) reachable from Settings > Security & Sync > Audit Log (`AuditLogSettings.tsx`).
+>
+> **Verified live on the connected device (`10AE9R1ZJY001PY`)**: created and deleted a real Vault entry through the actual UI, then read the raw `auditLog` IndexedDB table directly (bypassing the app) and confirmed exactly two real events — `{type:"vault", action:"created", detail:{entryType:"password"}}` and `{type:"vault", action:"deleted"}` — with no title/username/password anywhere in either. Confirmed the Settings > Audit Log drawer displays both correctly (action, Thai-localized type, timestamp, detail line), then cleared them via the real "Clear Audit Log" button and confirmed the table was genuinely empty afterward, not just visually.
+>
+> `tsc -b`, `oxlint`, the full test suite (**2216 tests**, up from 2203 — net +13: new `auditLog.test.ts`/`securityAuditView.test.ts`/`auditLogRepository.test.ts`/`dexieAuditSink.test.ts`/`AuditLogDrawer.test.tsx` plus audit-specific assertions added to `authStore.test.ts`/`appLockStore.test.ts`/`vaultEntryStore.test.ts`/`backupService.test.ts`, minus the 6 tests removed with the relocated scanner-only files; one pre-existing, previously-documented `TradingDashboard.integration` flake reproduced again this run, confirmed unrelated as before), and `npm run build` are all clean; `:app:assembleDebug` succeeds and the APK was reinstalled + verified live as described above. **Files**: new `src/features/security/**` (core log, view, repository, sink, hook, drawer + tests), `src/components/settings/AuditLogSettings.tsx`; touched `src/database/db.ts` (v19 schema), `src/main.tsx` (bootstrap wiring), `src/database/backupService.ts`(+test) (vaultEntries fix + audit calls), `src/features/sync/store/authStore.ts`(+test), `src/store/appLockStore.ts`(+test), `src/features/encryption/migration/enableEncryption.ts`/`reescrowDek.ts`, `src/features/vault/store/vaultEntryStore.ts`(+test), `src/pages/Settings.tsx`, `src/i18n/translations.ts`, `docs/SECURITY.md`; deleted the four relocated `slipScanner/security/scanAuditLog*`/`securityAudit*` files; updated `src/features/finance/slipScanner/devtools/scannerDevTools.ts`(+test) to import from the new location. **Not yet committed** — pending the user's go-ahead per this project's "only commit when explicitly asked" convention.
 
 ---
 

@@ -25,6 +25,7 @@ describe("backupService", () => {
       db.holdings.clear(),
       db.calendarEvents.clear(),
       db.goalMilestoneEvents.clear(),
+      db.vaultEntries.clear(),
     ]);
     useAppLockStore.setState({ encryptionEnabled: false, wrappedDek: null, kekSalt: null, kekIterations: null });
     useEncryptionSessionStore.getState().clearDek();
@@ -215,6 +216,35 @@ describe("backupService", () => {
     expect(await db.goalMilestoneEvents.count()).toBe(0);
   });
 
+  it("imports a legacy backup file that predates vaultEntries", async () => {
+    const legacyBackup = {
+      version: 1,
+      exportedAt: "2026-08-01T00:00:00.000Z",
+      data: {
+        transactions: [],
+        accounts: [{ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" }],
+        categories: [],
+        trades: [],
+        recipientProfiles: [],
+        merchants: [],
+        budgets: [],
+        goals: [],
+        transactionTemplates: [],
+        todos: [],
+        habits: [],
+        holdings: [],
+        calendarEvents: [],
+        scheduleItems: [],
+        goalMilestoneEvents: [],
+        // vaultEntries deliberately absent
+      },
+    };
+
+    await expect(importBackup(JSON.stringify(legacyBackup), t)).resolves.not.toThrow();
+    expect(await db.accounts.count()).toBe(1);
+    expect(await db.vaultEntries.count()).toBe(0);
+  });
+
   it("rejects a malformed backup without touching existing data", async () => {
     await db.accounts.add({ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" });
 
@@ -240,6 +270,7 @@ describe("backupService", () => {
     await db.holdings.add({ symbol: "AAPL", market: "stocks", quantity: 10, avgCostPrice: 100 } as never);
     await db.calendarEvents.add({ title: "Leftover event", startAt: "2026-07-21T09:00" } as never);
     await db.goalMilestoneEvents.add({ goalSyncId: "abc", goalName: "MacBook", tier: 50, reachedAt: "2026-07-21T00:00:00.000Z" });
+    await db.vaultEntries.add({ type: "note", title: "Leftover note", createdAt: "2026-07-21T00:00:00.000Z" } as never);
 
     await resetAllData();
 
@@ -251,6 +282,7 @@ describe("backupService", () => {
     const holdings = await db.holdings.toArray();
     const calendarEvents = await db.calendarEvents.toArray();
     const goalMilestoneEvents = await db.goalMilestoneEvents.toArray();
+    const vaultEntries = await db.vaultEntries.toArray();
 
     expect(transactions).toHaveLength(0);
     expect(todos).toHaveLength(0);
@@ -258,6 +290,7 @@ describe("backupService", () => {
     expect(holdings).toHaveLength(0);
     expect(calendarEvents).toHaveLength(0);
     expect(goalMilestoneEvents).toHaveLength(0);
+    expect(vaultEntries).toHaveLength(0);
     expect(accounts.length).toBeGreaterThan(0);
     expect(categories.length).toBeGreaterThan(0);
   });
@@ -317,6 +350,40 @@ describe("backupService", () => {
       const { accountRepository } = await import("@/features/finance/repositories/accountRepository");
       const decrypted = await accountRepository.getAll();
       expect(decrypted[0]).toMatchObject({ name: "Cash" });
+    });
+
+    it("includes vaultEntries in the backup and re-encrypts them correctly on import (previously missing entirely)", async () => {
+      const dek = await generateDek();
+      useAppLockStore.setState({ encryptionEnabled: true });
+      useEncryptionSessionStore.getState().setDek(dek);
+
+      const { vaultEntryRepository } = await import("@/features/vault/repositories/vaultEntryRepository");
+      await vaultEntryRepository.add({
+        type: "password",
+        title: "Gmail",
+        username: "me@example.com",
+        password: "correct-horse-battery-staple",
+        createdAt: "2026-08-17T00:00:00.000Z",
+      });
+
+      const json = await exportBackup();
+      const parsed = JSON.parse(json);
+      expect(parsed.data.vaultEntries).toHaveLength(1);
+      // The backup itself is plaintext regardless of encryption being on --
+      // same guarantee as every other table.
+      expect(parsed.data.vaultEntries[0]).toMatchObject({ title: "Gmail", password: "correct-horse-battery-staple" });
+      expect(parsed.data.vaultEntries[0]).not.toHaveProperty("encryptedContent");
+
+      await db.vaultEntries.clear();
+      await importBackup(json, t);
+
+      const rawRows = await db.vaultEntries.toArray();
+      expect(rawRows).toHaveLength(1);
+      expect(rawRows[0]).toHaveProperty("encryptedContent");
+      expect((rawRows[0] as unknown as { title?: string }).title).toBeUndefined();
+
+      const decrypted = await vaultEntryRepository.getAll();
+      expect(decrypted[0]).toMatchObject({ title: "Gmail", password: "correct-horse-battery-staple" });
     });
 
     it("keeps plaintextKeys (e.g. recipientKey) unencrypted after a re-encrypting import", async () => {

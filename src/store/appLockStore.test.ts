@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
 import { generateDek, encryptField, decryptField } from "@/features/encryption/crypto/encryption";
+import { clearAuditLog, getAuditLog } from "@/features/security/auditLog";
 
 const mockStoreBiometricCredential = vi.fn();
 const mockDeleteBiometricCredential = vi.fn();
@@ -37,6 +38,7 @@ describe("appLockStore", () => {
     mockStoreBiometricCredential.mockResolvedValue(undefined);
     mockDeleteBiometricCredential.mockResolvedValue(undefined);
     resetStore();
+    clearAuditLog();
   });
 
   it("is disabled and unlocked by default", () => {
@@ -60,24 +62,33 @@ describe("appLockStore", () => {
     expect(useAppLockStore.getState().isLocked()).toBe(true);
   });
 
-  it("unlock succeeds with the correct PIN", async () => {
+  it("unlock succeeds with the correct PIN and does not add a noisy audit event for the routine case", async () => {
     await useAppLockStore.getState().setupPin("1234", false);
     useAppLockStore.getState().lock();
+    clearAuditLog();
 
     const success = await useAppLockStore.getState().unlock("1234", false);
 
     expect(success).toBe(true);
     expect(useAppLockStore.getState().isLocked()).toBe(false);
+    expect(getAuditLog()).toHaveLength(0);
   });
 
   it("unlock fails with the wrong PIN and stays locked", async () => {
     await useAppLockStore.getState().setupPin("1234", false);
     useAppLockStore.getState().lock();
+    clearAuditLog(); // isolate from setupPin's own "pin-setup" audit event
 
     const success = await useAppLockStore.getState().unlock("0000", false);
 
     expect(success).toBe(false);
     expect(useAppLockStore.getState().isLocked()).toBe(true);
+    // The security-relevant signal an audit log exists for -- a failed
+    // unlock attempt. A successful unlock deliberately records nothing (see
+    // the "unlock succeeds" test above and the source comment in
+    // appLockStore.ts): logging every routine unlock would be noise, not
+    // signal.
+    expect(getAuditLog()).toEqual([expect.objectContaining({ type: "lock", action: "unlock-failed" })]);
   });
 
   it("remembers the unlock across a simulated reload when remember is true", async () => {

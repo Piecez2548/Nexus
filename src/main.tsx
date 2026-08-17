@@ -8,8 +8,15 @@ import "./styles/index.css";
 import { ThemeEffect } from "@/providers/ThemeEffect";
 import { seedDatabase } from "@/database/seed";
 import { initErrorMonitoring } from "@/lib/sentry";
+import { configureAuditLog } from "@/features/security/auditLog";
+import { dexieAuditSink } from "@/features/security/dexieAuditSink";
 
 initErrorMonitoring();
+
+// Wires the audit log's already-existing injectable sink (see auditLog.ts)
+// to real Dexie persistence — every recordAudit() call anywhere in the app,
+// from this point on, survives a reload instead of living only in memory.
+configureAuditLog({ sink: dexieAuditSink });
 
 // Only register the PWA service worker on the actual web target. Inside
 // the Capacitor WebView, a new APK install already delivers fresh code —

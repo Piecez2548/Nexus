@@ -4,6 +4,7 @@ import { useAppLockStore } from "@/store/appLockStore";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
 import { decryptField } from "@/features/encryption/crypto/encryption";
 import { encryptRow, EncryptionLockedError, type EncryptedRow } from "@/database/encryptedRepository";
+import { recordAudit } from "@/features/security/auditLog";
 import type { SyncMeta } from "@/utils/syncMeta";
 import type { TranslateFn } from "@/i18n/useTranslation";
 
@@ -30,6 +31,7 @@ interface NexusBackup {
     calendarEvents?: unknown[];
     scheduleItems?: unknown[];
     goalMilestoneEvents?: unknown[];
+    vaultEntries?: unknown[];
   };
 }
 
@@ -93,6 +95,7 @@ export async function exportBackup(): Promise<string> {
     calendarEvents,
     scheduleItems,
     goalMilestoneEvents,
+    vaultEntries,
   ] = await Promise.all([
     db.transactions.toArray(),
     db.accounts.toArray(),
@@ -109,6 +112,7 @@ export async function exportBackup(): Promise<string> {
     db.calendarEvents.toArray(),
     db.scheduleItems.toArray(),
     db.goalMilestoneEvents.toArray(),
+    db.vaultEntries.toArray(),
   ]);
 
   const backup: NexusBackup = {
@@ -130,9 +134,15 @@ export async function exportBackup(): Promise<string> {
       calendarEvents: await decryptForExport(dek, calendarEvents),
       scheduleItems: await decryptForExport(dek, scheduleItems),
       goalMilestoneEvents: await decryptForExport(dek, goalMilestoneEvents),
+      // Vault entries are always encrypted at write time (see
+      // vaultEntryRepository.ts) whenever they exist at all, so
+      // decryptForExport requires a resident DEK here the same as any other
+      // encrypted table -- there's no plaintext-Vault state to fall back to.
+      vaultEntries: await decryptForExport(dek, vaultEntries),
     },
   };
 
+  recordAudit("backup", "exported");
   return JSON.stringify(backup, null, 2);
 }
 
@@ -166,6 +176,7 @@ function isNexusBackup(value: unknown): value is NexusBackup {
     "calendarEvents",
     "scheduleItems",
     "goalMilestoneEvents",
+    "vaultEntries",
   ];
   return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
 }
@@ -201,6 +212,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     calendarEvents,
     scheduleItems,
     goalMilestoneEvents,
+    vaultEntries,
   ] = await Promise.all([
     encryptForImport(dek, "transactions", data.transactions),
     encryptForImport(dek, "accounts", data.accounts),
@@ -216,6 +228,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     encryptForImport(dek, "calendarEvents", data.calendarEvents ?? []),
     encryptForImport(dek, "scheduleItems", data.scheduleItems ?? []),
     encryptForImport(dek, "goalMilestoneEvents", data.goalMilestoneEvents ?? []),
+    encryptForImport(dek, "vaultEntries", data.vaultEntries ?? []),
   ]);
 
   await db.transaction(
@@ -236,6 +249,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
       db.calendarEvents,
       db.scheduleItems,
       db.goalMilestoneEvents,
+      db.vaultEntries,
     ],
     async () => {
       await Promise.all([
@@ -254,6 +268,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.calendarEvents.clear(),
         db.scheduleItems.clear(),
         db.goalMilestoneEvents.clear(),
+        db.vaultEntries.clear(),
       ]);
 
       await Promise.all([
@@ -272,9 +287,12 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.calendarEvents.bulkAdd(calendarEvents as never[]),
         db.scheduleItems.bulkAdd(scheduleItems as never[]),
         db.goalMilestoneEvents.bulkAdd(goalMilestoneEvents as never[]),
+        db.vaultEntries.bulkAdd(vaultEntries as never[]),
       ]);
     }
   );
+
+  recordAudit("backup", "imported");
 }
 
 export async function resetAllData(): Promise<void> {
@@ -296,6 +314,7 @@ export async function resetAllData(): Promise<void> {
       db.calendarEvents,
       db.scheduleItems,
       db.goalMilestoneEvents,
+      db.vaultEntries,
     ],
     async () => {
       await Promise.all([
@@ -314,9 +333,11 @@ export async function resetAllData(): Promise<void> {
         db.calendarEvents.clear(),
         db.scheduleItems.clear(),
         db.goalMilestoneEvents.clear(),
+        db.vaultEntries.clear(),
       ]);
     }
   );
 
   await seedDatabase();
+  recordAudit("backup", "reset");
 }

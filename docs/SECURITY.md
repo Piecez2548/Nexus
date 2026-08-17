@@ -76,7 +76,7 @@ The scanner is designed to be privacy-preserving and to hold no sensitive financ
 - **On-device only.** QR decoding (jsQR) and OCR (Tesseract) run entirely in the browser/WebView — slip images are never uploaded. (Tesseract's language-model files may be fetched from a CDN like any npm asset, but no user data is transmitted.)
 - **No plaintext financial data persisted.** The scan cache (`slipScanCache`) stores only asset ids, content hashes, and versions; import history (`slipImportHistory`) stores counts/status/duration and a bank id — not slip payloads or amounts as records to mine. Imported transactions live in the normal (optionally-encrypted) `transactions` table via the existing `transactionService`.
 - **Integrity + tamper detection.** EMVCo payloads are checksum-verified (CRC-16, GS-010); the tamper-detection layer (GS-017) flags CRC mismatches and replayed (duplicate) QR slips.
-- **Audit trail.** A bounded, metadata-only audit log records permission changes, imports, deletions, failed validations, and suspicious activity (GS-017/GS-038); it can be routed to encrypted-at-rest storage via an injectable sink.
+- **Audit trail.** Permission changes, imports, deletions, failed validations, and suspicious activity (GS-017/GS-038) all record into the app-wide, persisted Audit Log — see its own section below.
 - **Secure disposal.** Decoded image bytes are zero-filled and thumbnail object-URLs revoked after use (GS-017), so slip pixels don't linger in memory.
 - **AI never mutates data.** The validation/AI layers (GS-019, GS-041) are advisory only — they never modify imported transactions automatically.
 
@@ -101,12 +101,22 @@ A password manager / secure notes / recovery-key store (`src/features/vault/`) �
 - **Syncs like everything else.** Vault entries push/pull through the same generic `synced_records` relay as every other table (see Layer 2/3 above and `syncEngine.test.ts`'s opaque-blob tests) — safe because the content is already ciphertext before the sync engine ever touches it, not because sync treats Vault specially.
 - **Clipboard exposure, stated plainly.** Copying a password/recovery code uses the standard OS clipboard (`navigator.clipboard.writeText`) — like virtually every password manager, this means the secret is briefly available to any other app that reads the clipboard on that device. No auto-clear-after-N-seconds is implemented; a deliberate, documented gap, not an oversight.
 
+## Audit Log (`src/features/security/`)
+
+An app-wide, persisted, bounded, metadata-only security audit trail (SEC-002) — viewable in Settings > Security & Sync > Audit Log:
+
+- **Relocated and widened, not new from scratch.** The mechanism (bounded ring buffer, injectable sink, `recordAudit(type, action, detail)`) previously lived scanner-scoped at `slipScanner/security/scanAuditLog.ts` — it moved to `src/features/security/auditLog.ts` and its event-type union widened from the original six scanner categories (`permission`/`import`/`scan`/`delete`/`validation`/`suspicious`) to also cover `auth`, `encryption`, `lock`, `vault`, and `backup`. No production code called it before this — it was scaffolding with tests but no real callers or persistence.
+- **Now actually persisted.** The injectable sink (designed for exactly this from the start, per the module's own original comment) is wired at app bootstrap (`main.tsx`) to `dexieAuditSink.ts`, which writes every event to a new local-only (unsynced) Dexie table, bounded at 500 rows (oldest trimmed first) — independent of, and larger than, the 200-event in-memory cap, since persistence changes the retention tradeoff.
+- **What's actually recorded today:** sign-in/sign-up/sign-out (success/failure only, never the email or password — `authStore.ts`), encryption enabled/re-escrowed (`enableEncryption.ts`/`reescrowDek.ts`), PIN setup/changed/disabled and biometric enabled/disabled (`appLockStore.ts`), **failed unlock attempts specifically** — the classic audit signal — while routine successful unlocks are deliberately not logged (they'd fire many times a day and add noise, not signal), Vault entry created/updated/deleted (entry *type* only, never title/username/password/content — `vaultEntryStore.ts`), and backup exported/imported/reset (`backupService.ts`). The scanner's own original event types (`permission`/`import`/`scan`/`delete`/`validation`/`suspicious`) are wired at the mechanism level but, as before this change, have no production call sites yet — that remains separate, not-yet-done work.
+- **Read-only, local, and clearable.** The Settings drawer only ever reads and optionally clears the log — nothing in the app queries it to make decisions, so a cleared or disabled log never changes app behavior, only observability.
+
 ## Security Recommendations
 
 - Build the missing "disable encryption" flow, or at minimum document the manual export/reset/re-import workaround clearly in-app.
 - Consider whether the PIN hash's threat model documentation should be surfaced to end users (e.g. in Settings copy), so a user who assumes PIN = "encryption-grade security" isn't misled.
 - Consolidate `PLAINTEXT_KEYS` (see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)) so which fields bypass encryption is defined once, not hand-synchronized across three files — a drift here would be a silent data-exposure bug.
 - If the AI Gateway (`src/ai/`) is ever wired to a real remote LLM provider, an API key must be proxied through a backend rather than embedded client-side — this is already correctly identified as a blocker in the codebase's own design (see [DECISIONS.md](DECISIONS.md)), just flagged here as a hard requirement, not a nice-to-have.
+- Wire the Gallery Scanner's own original audit event types (permission/import/scan/delete/validation/suspicious) into their real call sites — the mechanism and persistence are both real now, but nothing in the scanner actually calls `recordAudit` yet, same as before this Audit Log work.
 
 ## Current Status
 

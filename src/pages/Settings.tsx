@@ -4,6 +4,7 @@ import PreferenceSettings from "@/components/settings/PreferenceSettings";
 import SecuritySettings from "@/components/settings/SecuritySettings";
 import SyncSettings from "@/components/settings/SyncSettings";
 import EncryptionSettings from "@/components/settings/EncryptionSettings";
+import AuditLogSettings from "@/components/settings/AuditLogSettings";
 import DataSettings from "@/components/settings/DataSettings";
 import TransactionDataSettings from "@/components/settings/TransactionDataSettings";
 import ImportHistorySettings from "@/components/settings/ImportHistorySettings";
@@ -29,6 +30,7 @@ export default function Settings() {
         <SecuritySettings />
         <EncryptionSettings />
         <SyncSettings />
+        <AuditLogSettings />
       </SettingsGroup>
 
       <SettingsGroup title={t("settings.groupDataManagement")}>

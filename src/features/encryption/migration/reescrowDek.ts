@@ -8,6 +8,7 @@ import {
   bytesToBase64,
   PBKDF2_ITERATIONS,
 } from "@/features/encryption/crypto/encryption";
+import { recordAudit } from "@/features/security/auditLog";
 import type { TranslateFn } from "@/i18n/useTranslation";
 
 export class ReescrowFailedError extends Error {
@@ -61,4 +62,6 @@ export async function reescrowDek(accountPassword: string, translate: TranslateF
   });
 
   if (error) throw error;
+
+  recordAudit("encryption", "re-escrowed");
 }

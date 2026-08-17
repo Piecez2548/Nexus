@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { clearAuditLog, getAuditLog } from "@/features/security/auditLog";
 
 const mockSignUp = vi.fn();
 const mockSignInWithPassword = vi.fn();
@@ -44,6 +45,7 @@ describe("authStore", () => {
     mockGetSession.mockReset().mockResolvedValue({ data: { session: null } });
     mockOnAuthStateChange.mockReset();
     mockRunFullSync.mockReset().mockResolvedValue(undefined);
+    clearAuditLog();
   });
 
   it("sets the user on successful sign up", async () => {
@@ -96,6 +98,21 @@ describe("authStore", () => {
     expect(useAuthStore.getState().error).toBe("Invalid credentials");
   });
 
+  it("records an auth audit event on sign-in success and failure, never including the email/password", async () => {
+    mockSignInWithPassword.mockResolvedValueOnce({ data: { user: { id: "u1", email: "a@b.com" } }, error: null });
+    await useAuthStore.getState().signIn("a@b.com", "password123");
+
+    mockSignInWithPassword.mockResolvedValueOnce({ data: { user: null }, error: { message: "Invalid credentials" } });
+    await useAuthStore.getState().signIn("a@b.com", "wrong-password");
+
+    const events = getAuditLog().filter((e) => e.type === "auth");
+    expect(events).toHaveLength(2);
+    expect(events[0]).toMatchObject({ action: "sign-in", detail: { success: true } });
+    expect(events[1]).toMatchObject({ action: "sign-in", detail: { success: false } });
+    expect(JSON.stringify(events)).not.toContain("a@b.com");
+    expect(JSON.stringify(events)).not.toContain("password123");
+  });
+
   it("clears the user and last synced time on sign out", async () => {
     useAuthStore.setState({ user: { id: "u1" } as never, lastSyncedAt: "2026-07-21T00:00:00.000Z" });
     mockSignOut.mockResolvedValue({ error: null });
@@ -104,6 +121,7 @@ describe("authStore", () => {
 
     expect(useAuthStore.getState().user).toBeNull();
     expect(useAuthStore.getState().lastSyncedAt).toBeNull();
+    expect(getAuditLog().some((e) => e.type === "auth" && e.action === "sign-out")).toBe(true);
   });
 
   it("runs a full sync and records the timestamp when signed in", async () => {

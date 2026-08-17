@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { vaultEntryService } from "@/features/vault/services/vaultEntryService";
+import { recordAudit } from "@/features/security/auditLog";
 import { initialAsyncState, toErrorMessage } from "@/utils/asyncState";
 import type { VaultEntry } from "@/features/vault/types";
 
@@ -31,18 +32,23 @@ export const useVaultEntryStore = create<VaultEntryState>((set) => ({
 
   async addEntry(entry) {
     await vaultEntryService.create(entry);
+    // Metadata only -- entry type, never the title/username/password/content
+    // itself, matching the audit log's "no secret content" discipline.
+    recordAudit("vault", "created", { entryType: entry.type });
     const entries = await vaultEntryService.list();
     set({ entries });
   },
 
   async updateEntry(id, entry) {
     await vaultEntryService.update(id, entry);
+    recordAudit("vault", "updated", { entryType: entry.type });
     const entries = await vaultEntryService.list();
     set({ entries });
   },
 
   async deleteEntry(id) {
     await vaultEntryService.remove(id);
+    recordAudit("vault", "deleted");
     const entries = await vaultEntryService.list();
     set({ entries });
   },

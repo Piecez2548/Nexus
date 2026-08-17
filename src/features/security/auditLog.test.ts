@@ -2,24 +2,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   clearAuditLog,
-  configureScanAudit,
+  configureAuditLog,
   getAuditLog,
   recordImportAudit,
   recordPermissionAudit,
-  type ScanAuditEvent,
-} from "./scanAuditLog";
+  type AuditEvent,
+} from "./auditLog";
 
 beforeEach(() => {
   clearAuditLog();
-  configureScanAudit({ sink: null, clock: () => 1000 });
+  configureAuditLog({ sink: null, clock: () => 1000 });
 });
 
 afterEach(() => {
   clearAuditLog();
-  configureScanAudit({ sink: null });
+  configureAuditLog({ sink: null });
 });
 
-describe("scanAuditLog", () => {
+describe("auditLog", () => {
   it("records permission and import events with a timestamp and detail", () => {
     recordPermissionAudit("granted", { status: "granted" });
     recordImportAudit("completed", { imported: 3, failed: 1 });
@@ -34,7 +34,7 @@ describe("scanAuditLog", () => {
     const record = vi.fn(() => {
       throw new Error("sink down");
     });
-    configureScanAudit({ sink: { record } });
+    configureAuditLog({ sink: { record } });
 
     expect(() => recordImportAudit("completed")).not.toThrow();
     expect(record).toHaveBeenCalledTimes(1);
@@ -45,6 +45,6 @@ describe("scanAuditLog", () => {
     const log = getAuditLog();
     expect(log).toHaveLength(200);
     // The oldest were dropped; the newest is retained.
-    expect((log[log.length - 1] as ScanAuditEvent).detail).toEqual({ i: 249 });
+    expect((log[log.length - 1] as AuditEvent).detail).toEqual({ i: 249 });
   });
 });

@@ -3,6 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase, isSyncConfigured } from "@/lib/supabaseClient";
 import { runFullSync } from "@/features/sync/syncEngine";
 import { toErrorMessage } from "@/utils/asyncState";
+import { recordAudit } from "@/features/security/auditLog";
 
 interface AuthState {
   user: User | null;
@@ -64,6 +65,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
+      recordAudit("auth", "sign-up", { success: false });
       set({ loading: false, error: error.message });
       return;
     }
@@ -71,10 +73,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // With email confirmation enabled on the Supabase project, signUp
     // succeeds but returns no session until the link is clicked.
     if (!data.session) {
+      recordAudit("auth", "sign-up", { success: true, needsEmailConfirmation: true });
       set({ loading: false, needsEmailConfirmation: true });
       return;
     }
 
+    recordAudit("auth", "sign-up", { success: true });
     set({ loading: false, user: data.user });
   },
 
@@ -85,10 +89,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
+      recordAudit("auth", "sign-in", { success: false });
       set({ loading: false, error: error.message });
       return;
     }
 
+    recordAudit("auth", "sign-in", { success: true });
     set({ loading: false, user: data.user });
   },
 
@@ -96,6 +102,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!supabase) return;
 
     await supabase.auth.signOut();
+    recordAudit("auth", "sign-out");
     set({ user: null, lastSyncedAt: null });
   },
 
