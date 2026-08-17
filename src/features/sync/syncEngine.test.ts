@@ -15,10 +15,22 @@ vi.mock("@/lib/supabaseClient", () => ({
   },
 }));
 
+// Mirrors real Supabase behaviour: a pullTable() query is always scoped to
+// one table via `.eq("table_name", table)`, so a test's fixture rows must
+// only surface for the table they actually name. Tests here only ever
+// verify assertions against "transactions" (or "vaultEntries" for the one
+// opaque-blob test covering it), but SYNCED_TABLES has 17 entries and every
+// one of them pulls once per pass — without this filter, a fixture row
+// meant for one table would leak into every other table's pull too and get
+// written into the wrong Dexie table entirely.
 function selectResultBuilder(resolved: { data: unknown[] | null; error: unknown }) {
+  let tableFilter: string | undefined;
   const builder = {
     select: vi.fn(() => builder),
-    eq: vi.fn(() => builder),
+    eq: vi.fn((column: string, value: string) => {
+      if (column === "table_name") tableFilter = value;
+      return builder;
+    }),
     order: vi.fn(() => builder),
     gt: (...args: unknown[]) => {
       mockGt(...args);
@@ -28,7 +40,13 @@ function selectResultBuilder(resolved: { data: unknown[] | null; error: unknown 
       mockGte(...args);
       return builder;
     },
-    then: (resolve: (value: typeof resolved) => void) => resolve(resolved),
+    then: (resolve: (value: typeof resolved) => void) => {
+      const data =
+        resolved.data === null
+          ? null
+          : resolved.data.filter((row) => (row as { table_name?: string }).table_name === tableFilter);
+      resolve({ ...resolved, data });
+    },
   };
   return builder;
 }
@@ -986,5 +1004,26 @@ describe("syncEngine", () => {
 
     const cursorAfterSecondPass = await db.syncState.get("push:transactions");
     expect(cursorAfterSecondPass?.value).toBe(cursorAfterFirstPass?.value);
+  });
+
+  it("auto-merges name-duplicate categories left by two devices each seeding their own defaults, without a manual button press", async () => {
+    // dedupeSyncedTables() only matches by syncId and can't catch this --
+    // these are two genuinely different syncIds for the same real-world
+    // category ("Food"), the exact scenario dedupeAccountsAndCategories.ts
+    // exists for.
+    await db.categories.clear();
+    const canonicalId = await db.categories.add({ name: "Food", type: "expense", icon: "utensils", color: "#ef4444" });
+    await db.categories.add({ name: "Food", type: "expense", icon: "utensils", color: "#ef4444" });
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({ data: [], error: null }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const categories = await db.categories.toArray();
+    expect(categories).toHaveLength(1);
+    expect(categories[0].id).toBe(canonicalId);
   });
 });

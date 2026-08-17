@@ -1,6 +1,7 @@
 import { db } from "@/database/db";
 import { supabase, isSyncConfigured } from "@/lib/supabaseClient";
 import { withSyncMeta } from "@/utils/syncMeta";
+import { dedupeAccountsAndCategories } from "@/features/finance/utils/dedupeAccountsAndCategories";
 import type { SyncTableName } from "@/features/sync/types";
 
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
@@ -426,6 +427,27 @@ export async function runFullSync(userId: string): Promise<void> {
   (await attemptReturning(() => dedupeSyncedTables(), new Set<SyncTableName>())).forEach((t) =>
     changedTables.add(t)
   );
+
+  // Two devices that each seed their own default accounts/categories before
+  // ever syncing end up with separate name-duplicate records (their own
+  // "Cash", their own "Food") that dedupeSyncedTables() can't catch — it
+  // only matches by syncId, and these are genuinely different syncIds for
+  // the same real-world thing (see dedupeAccountsAndCategories.ts). Runs
+  // after pull, once any such records from another device have actually
+  // landed locally; cheap when there's nothing to merge (a handful of local
+  // reads), and only does real work on the rare pass that finds one.
+  const { accountsMerged, categoriesMerged } = await attemptReturning(
+    () => dedupeAccountsAndCategories(),
+    { accountsMerged: 0, categoriesMerged: 0 }
+  );
+  if (accountsMerged > 0) {
+    changedTables.add("accounts");
+    changedTables.add("transactions");
+  }
+  if (categoriesMerged > 0) {
+    changedTables.add("categories");
+    changedTables.add("transactions");
+  }
 
   await refreshChangedStores(changedTables);
 
