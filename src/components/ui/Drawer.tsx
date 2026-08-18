@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
 import { useTranslation } from "@/i18n/useTranslation";
+import { useModalA11y } from "./useModalA11y";
 
 interface Props {
   open: boolean;
@@ -20,6 +21,9 @@ export default function Drawer({
   children,
 }: Props) {
   const { t } = useTranslation();
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useModalA11y({ open, onClose, containerRef: panelRef });
 
   return (
     <AnimatePresence>
@@ -34,6 +38,10 @@ export default function Drawer({
           />
 
           <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
             className="fixed right-0 top-0 z-50 h-screen w-full max-w-md overflow-y-auto border-l border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-6"
             style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top))" }}
             initial={{ x: 420 }}

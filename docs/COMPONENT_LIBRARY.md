@@ -30,7 +30,7 @@ Shared, cross-feature UI lives under `src/components/` — nothing here is speci
 
 | Component | Props | Purpose | Used by |
 |---|---|---|---|
-| `Drawer` | `open, onClose, children` | Right-side sliding panel, the app's primary "form in a panel" pattern | **17 places** — every feature's add/edit forms |
+| `Drawer` | `open, onClose, children` | Right-side sliding panel, the app's primary "form in a panel" pattern. `role="dialog"`/`aria-modal`, focus moves in on open and returns to the trigger on close, Tab/Shift+Tab trap within the panel, Escape closes it — via the shared `useModalA11y` hook (found missing entirely in the full architecture review; fixed as the review's #2 priority item) | **27 files** (31 JSX usages) — every feature's add/edit forms, re-verified 2026-08-18 |
 | `DropdownPanel` | `open, className?, children` | Bare fade+scale entrance/exit wrapper, no chrome of its own | 4 places (`InfoTooltip`, `GlobalSearch`, `NotificationsMenu`, `UserMenu`) |
 | `InfoTooltip` | `text, align?` (default `"right"`) | Small "i" button toggling a `DropdownPanel` popover, closes on outside click | 2 places (Dashboard cards/charts) |
 | `AuthBackdrop` | `children` | Full-screen gradient-blob shell for sign-in/PIN/recovery gates | 2 places (`AppLockGate`, `AuthGate`) |
@@ -91,4 +91,4 @@ Re-verified 2026-08-18 against `src/components/ui/` directly: still exactly 21 c
 
 ## Future Improvements
 
-Remove or document the intended future use of `FileField.tsx`. No other gaps identified in the shared component library.
+Remove or document the intended future use of `FileField.tsx`. `DropdownPanel` has the same focus-management gap `Drawer` had before the 2026-08-18 architecture review's fix above — no `role="menu"`, no focus handling, no Escape-to-close — tracked as the review's #7 priority item, not yet done (it also has no `onClose` prop today, unlike `Drawer`, so wiring it in needs a small API change first).
