@@ -317,6 +317,11 @@ Complete folder tree of the Nexus repository, generated from `git ls-files` (i.e
 │   │   ├── lazyPages.ts
 │   │   └── router.tsx
 │   ├── store/                        # global (non-per-entity) Zustand stores — see STATE_MANAGEMENT.md
+│   │   ├── appLock/                  # appLockStore's 3 concerns as Zustand slices, composed in appLockStore.ts
+│   │   │   ├── biometricSlice.ts
+│   │   │   ├── encryptionKeySlice.ts
+│   │   │   ├── pinLockSlice.ts
+│   │   │   └── types.ts
 │   │   ├── appLockStore.test.ts
 │   │   ├── appLockStore.ts
 │   │   ├── appSettingsStore.ts

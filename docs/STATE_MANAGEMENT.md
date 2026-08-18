@@ -16,7 +16,7 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `notificationStore` | `dismissedIds: string[]` | `localStorage: nexus-dismissed-notifications` | notifications themselves are computed fresh each render by `useNotifications`, not stored |
 | `languageStore` | `language: "en" \| "th"` (default `"th"`) | `localStorage: nexus-language` | |
 | `appSettingsStore` | `themeMode, currency, dateFormat, numberFormat` | `localStorage: nexus-app-settings` | pure display preferences |
-| `appLockStore` | PIN/lock fields + encryption-at-rest fields (`encryptionEnabled, wrappedDek, kekSalt, kekIterations`) + `biometricEnabled` | `localStorage: nexus-app-lock` (via explicit `partialize`) + `sessionUnlocked` mirrored to `sessionStorage` | writes/clears the in-memory DEK on unlock/lock via `encryptionSessionStore` |
+| `appLockStore` | PIN/lock fields + encryption-at-rest fields (`encryptionEnabled, wrappedDek, kekSalt, kekIterations`) + `biometricEnabled` | `localStorage: nexus-app-lock` (via explicit `partialize`) + `sessionUnlocked` mirrored to `sessionStorage` | writes/clears the in-memory DEK on unlock/lock via `encryptionSessionStore`; internally composed from 3 Zustand slices in `store/appLock/` (`pinLockSlice`, `biometricSlice`, `encryptionKeySlice`) — the exported `useAppLockStore` and its state shape are unchanged, only the internal file split is new |
 | `gamificationStore` | `xp, streak, lastActiveDate` | `localStorage: nexus-gamification` | `addXp()` fires a level-up toast via `toastStore` |
 
 ### Feature stores (`src/features/*/store/*.ts`) — 26 total
