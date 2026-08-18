@@ -14,6 +14,7 @@ import {
   PBKDF2_ITERATIONS,
 } from "@/features/encryption/crypto/encryption";
 import { encryptRow, type EncryptedRow } from "@/database/encryptedRepository";
+import { PLAINTEXT_KEYS } from "@/database/plaintextKeys";
 import { recordAudit } from "@/features/security/auditLog";
 import type { SyncTableName } from "@/features/sync/types";
 import type { TranslateFn } from "@/i18n/useTranslation";
@@ -50,15 +51,6 @@ const TABLES_TO_MIGRATE: SyncTableName[] = [
   "subscriptions",
   "budgetPeriodSnapshots",
 ];
-
-// Must stay in sync with each repository's plaintextKeys option (see the
-// createEncryptedRepository calls in src/features/finance/repositories/*)
-// so a row written by this migration is shaped identically to one written
-// by a normal repository add/update.
-const PLAINTEXT_KEYS: Partial<Record<SyncTableName, string[]>> = {
-  recipientProfiles: ["recipientKey"],
-  budgets: ["category"],
-};
 
 const CHUNK_SIZE = 200;
 const MIGRATION_LOCK_KEY = "encryption:migrationLock";

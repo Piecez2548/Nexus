@@ -4,8 +4,10 @@ import { useAppLockStore } from "@/store/appLockStore";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
 import { decryptField } from "@/features/encryption/crypto/encryption";
 import { encryptRow, EncryptionLockedError, type EncryptedRow } from "@/database/encryptedRepository";
+import { PLAINTEXT_KEYS } from "@/database/plaintextKeys";
 import { recordAudit } from "@/features/security/auditLog";
 import type { SyncMeta } from "@/utils/syncMeta";
+import type { SyncTableName } from "@/features/sync/types";
 import type { TranslateFn } from "@/i18n/useTranslation";
 
 const BACKUP_VERSION = 1;
@@ -41,14 +43,6 @@ interface NexusBackup {
   };
 }
 
-// Mirrors the plaintextKeys each createEncryptedRepository call uses (see
-// encryptedRepository.ts) — must stay in lockstep so a re-imported row is
-// encrypted into the exact same shape a live repository write would produce.
-const PLAINTEXT_KEYS: Record<string, string[]> = {
-  recipientProfiles: ["recipientKey"],
-  budgets: ["category"],
-};
-
 // A backup is always a portable, human-readable, plaintext disaster-recovery
 // artifact — independent of whether encryption-at-rest is enabled on this
 // install. Returns null when encryption is off (nothing to decrypt/encrypt).
@@ -75,7 +69,7 @@ async function decryptForExport(dek: CryptoKey | null, rows: unknown[]): Promise
   );
 }
 
-async function encryptForImport(dek: CryptoKey | null, table: string, rows: unknown[]): Promise<unknown[]> {
+async function encryptForImport(dek: CryptoKey | null, table: SyncTableName, rows: unknown[]): Promise<unknown[]> {
   if (dek === null) return rows;
 
   const plaintextKeys = PLAINTEXT_KEYS[table] ?? [];

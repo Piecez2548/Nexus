@@ -282,4 +282,3 @@ Fully implemented through schema v23. All 21 sync-eligible tables + `merchants` 
 
 - Remove the `calendarEvents` table declaration once no user's data in it still needs preserving.
 - If a "disable encryption" flow is built (see [SECURITY.md](SECURITY.md)), it will need a new migration path symmetric to `enableEncryption.ts`.
-- The `PLAINTEXT_KEYS` mapping (which fields stay unencrypted per table) is currently hand-duplicated in three places (`encryptedRepository` call sites, `backupService.ts`, `enableEncryption.ts`) with no single source of truth — worth consolidating (see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)).

@@ -48,8 +48,9 @@ The app's real internal "API" — every feature module's persistence layer confo
 // src/database/createRepository.ts
 function createRepository<T extends SyncMeta & { id?: number }>(
   table: Table<T, number>,
-  tableName: SyncTableName,
-  options?: { plaintextKeys?: (keyof T)[] }
+  tableName: SyncTableName
+  // plaintextKeys is derived internally from tableName via the single
+  // canonical database/plaintextKeys.ts map — not a caller-supplied option.
 ): {
   getAll: () => Promise<T[]>;
   add: (entity: T) => Promise<number>;

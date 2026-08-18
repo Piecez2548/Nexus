@@ -134,7 +134,6 @@ A single dedicated view of every OS-level permission the app can request (SEC-00
 
 - Build the missing "disable encryption" flow, or at minimum document the manual export/reset/re-import workaround clearly in-app.
 - Consider whether the PIN hash's threat model documentation should be surfaced to end users (e.g. in Settings copy), so a user who assumes PIN = "encryption-grade security" isn't misled.
-- Consolidate `PLAINTEXT_KEYS` (see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)) so which fields bypass encryption is defined once, not hand-synchronized across three files — a drift here would be a silent data-exposure bug.
 - If the AI Gateway (`src/ai/`) is ever wired to a real remote LLM provider, an API key must be proxied through a backend rather than embedded client-side — this is already correctly identified as a blocker in the codebase's own design (see [DECISIONS.md](DECISIONS.md)), just flagged here as a hard requirement, not a nice-to-have.
 - Wire the Gallery Scanner's own original audit event types (permission/import/scan/delete/validation/suspicious) into their real call sites — the mechanism and persistence are both real now, but nothing in the scanner actually calls `recordAudit` yet, same as before this Audit Log work.
 
