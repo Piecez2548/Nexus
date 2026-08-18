@@ -41,6 +41,7 @@ const blankValues: SubscriptionFormData = {
   status: "active",
   icon: "credit-card",
   color: "#dc2626",
+  reminderEnabled: false,
 };
 
 interface Props {
@@ -210,6 +211,11 @@ export default function SubscriptionForm({ subscription, onDone }: Props) {
           className="h-11 w-full cursor-pointer rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-1"
         />
       </FormField>
+
+      <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+        <input type="checkbox" {...register("reminderEnabled")} />
+        {t("subscriptions.reminderEnabledLabel")}
+      </label>
 
       <FormField label={t("subscriptions.noteLabel")} htmlFor="subscription-note">
         <input

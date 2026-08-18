@@ -47,10 +47,15 @@ function parseTime(time: string): { hour: number; minute: number } {
 // The native LocalNotifications plugin only supports one `on:{weekday,...}`
 // schedule per notification id, so a multi-weekday repeat can't be
 // expressed as a single native schedule — the caller fans out into one
-// notification per weekday instead (see scheduleReminder).
-function buildSchedule(frequency: RepeatRule["frequency"], weekday: number, time: string): { on: ScheduleOn } {
-  const { hour, minute } = parseTime(time);
-  if (frequency === "daily") return { on: { hour, minute } };
+// notification per weekday instead (see scheduleReminder). A "once" repeat
+// uses the plugin's separate one-off `at: Date` form instead of `on:`, and
+// carries its own full date/time in repeat.at rather than the request's
+// (unused, in that case) `time` field.
+function buildSchedule(repeat: RepeatRule, weekday: number, time: string | undefined): { on: ScheduleOn } | { at: Date } {
+  if (repeat.frequency === "once") return { at: new Date(repeat.at) };
+
+  const { hour, minute } = parseTime(time!);
+  if (repeat.frequency === "daily") return { on: { hour, minute } };
   return { on: { weekday: toPluginWeekday(weekday), hour, minute } };
 }
 
@@ -82,7 +87,7 @@ export async function scheduleReminder(request: ReminderRequest): Promise<void> 
       title: request.title,
       body: request.body,
       channelId: REMINDER_CHANNEL_ID,
-      schedule: buildSchedule(request.repeat.frequency, weekday, request.time),
+      schedule: buildSchedule(request.repeat, weekday, request.time),
     })),
   });
 }

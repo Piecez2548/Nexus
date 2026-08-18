@@ -19,18 +19,19 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `appLockStore` | PIN/lock fields + encryption-at-rest fields (`encryptionEnabled, wrappedDek, kekSalt, kekIterations`) + `biometricEnabled` | `localStorage: nexus-app-lock` (via explicit `partialize`) + `sessionUnlocked` mirrored to `sessionStorage` | writes/clears the in-memory DEK on unlock/lock via `encryptionSessionStore` |
 | `gamificationStore` | `xp, streak, lastActiveDate` | `localStorage: nexus-gamification` | `addXp()` fires a level-up toast via `toastStore` |
 
-### Feature stores (`src/features/*/store/*.ts`) — 25 total
+### Feature stores (`src/features/*/store/*.ts`) — 26 total
 
 | Store | Entity | Pattern | Key actions |
 |---|---|---|---|
 | `finance/accountStore` | `Account` | fetch-on-mount cache | load, add, update, delete, merge |
 | `finance/budgetStore` | `Budget` | fetch-on-mount cache | load, add, update, delete |
+| `finance/budgetPeriodSnapshotStore` | `BudgetPeriodSnapshot` | fetch-on-mount cache, **read-only** | load only |
 | `finance/categoryStore` | `Category` | fetch-on-mount cache | load, add, update, delete, merge |
 | `finance/goalStore` | `Goal` | fetch-on-mount cache | load, add, update, delete, `contribute` (awards XP, logs milestones) |
 | `finance/goalMilestoneEventStore` | `GoalMilestoneEvent` | fetch-on-mount cache, **read-only** | load only |
 | `finance/netWorthItemStore` | `NetWorthItem` | fetch-on-mount cache | load, add, update, delete (each mutation upserts today's `NetWorthSnapshot`) |
 | `finance/netWorthSnapshotStore` | `NetWorthSnapshot` | fetch-on-mount cache, **read-only** | load only |
-| `finance/subscriptionStore` | `Subscription` | fetch-on-mount cache | load, add, update (incl. status transitions), delete |
+| `finance/subscriptionStore` | `Subscription` | fetch-on-mount cache | load, add, update (incl. status transitions), delete (schedules/cancels an opt-in reminder on add/update/delete, mirroring `habitStore`'s pattern) |
 | `finance/recipientProfileStore` | `RecipientProfile` | fetch-on-mount cache, **no add/update** (server-derived) | load, delete |
 | `finance/transactionStore` | `Transaction` | fetch-on-mount cache | load, add (awards XP), update, delete, toggleFavorite |
 | `finance/transactionTemplateStore` | `TransactionTemplate` | fetch-on-mount cache | load, add, update, delete |

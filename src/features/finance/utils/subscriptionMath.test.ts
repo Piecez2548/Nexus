@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { monthlyEquivalent, resolveNextBillingDate, daysUntil, calculateSubscriptionStats } from "./subscriptionMath";
+import {
+  monthlyEquivalent,
+  resolveNextBillingDate,
+  advanceOneBillingCycle,
+  daysUntil,
+  calculateSubscriptionStats,
+  reminderFireTime,
+} from "./subscriptionMath";
 import type { Subscription } from "@/features/finance/types";
 
 function subscription(overrides: Partial<Subscription> = {}): Subscription {
@@ -70,6 +77,45 @@ describe("resolveNextBillingDate", () => {
 
   it("rolls a daily subscription forward correctly", () => {
     expect(resolveNextBillingDate("2026-08-10", "daily", new Date(2026, 7, 18))).toBe("2026-08-18");
+  });
+});
+
+describe("advanceOneBillingCycle", () => {
+  it("advances a monthly date by exactly one month", () => {
+    expect(advanceOneBillingCycle("2026-08-15", "monthly")).toBe("2026-09-15");
+  });
+
+  it("handles the end-of-month edge case (Jan 31 -> Feb 28)", () => {
+    expect(advanceOneBillingCycle("2026-01-31", "monthly")).toBe("2026-02-28");
+  });
+
+  it("advances a weekly date by 7 days", () => {
+    expect(advanceOneBillingCycle("2026-08-01", "weekly")).toBe("2026-08-08");
+  });
+
+  it("advances a yearly date by one year", () => {
+    expect(advanceOneBillingCycle("2026-08-18", "yearly")).toBe("2027-08-18");
+  });
+
+  it("advances a daily date by one day", () => {
+    expect(advanceOneBillingCycle("2026-08-18", "daily")).toBe("2026-08-19");
+  });
+});
+
+describe("reminderFireTime", () => {
+  it("fires at 09:00 local, one day before the billing date", () => {
+    const at = reminderFireTime("2026-08-20");
+    expect(at.getFullYear()).toBe(2026);
+    expect(at.getMonth()).toBe(7); // August, 0-indexed
+    expect(at.getDate()).toBe(19);
+    expect(at.getHours()).toBe(9);
+    expect(at.getMinutes()).toBe(0);
+  });
+
+  it("handles a month boundary correctly (Mar 1 -> Feb 28/29)", () => {
+    const at = reminderFireTime("2026-03-01");
+    expect(at.getMonth()).toBe(1); // February
+    expect(at.getDate()).toBe(28);
   });
 });
 

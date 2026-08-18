@@ -115,6 +115,29 @@ export interface Budget extends SyncMeta {
   period: BudgetPeriod;
 }
 
+// FIN-001 Budget Improvements. computeBudgetSpend() (budgetStatus.ts) only
+// ever computes against a budget's *current* amount and the *current*
+// period -- once a period ends (or the budget's amount is later edited),
+// that period's true performance becomes unrecoverable/wrong. This is an
+// upsert-by-(budgetSyncId, periodStart) history log, the same pattern as
+// NetWorthSnapshot, not a write-once event log like GoalMilestoneEvent --
+// a period's spend can legitimately be recomputed many times before it
+// ends, and once a new period starts this row is never touched again.
+export type BudgetPeriodSnapshotStatus = "ok" | "near" | "over";
+
+export interface BudgetPeriodSnapshot extends SyncMeta {
+  id?: number;
+  budgetSyncId: string;
+  category: string;
+  period: BudgetPeriod;
+  periodStart: string; // "YYYY-MM-DD" local
+  periodEnd: string; // "YYYY-MM-DD" local, exclusive
+  amount: number;
+  spent: number;
+  status: BudgetPeriodSnapshotStatus;
+  recordedAt: string;
+}
+
 export interface Goal extends SyncMeta {
   id?: number;
   name: string;
@@ -193,11 +216,14 @@ export interface NetWorthSnapshot extends SyncMeta {
 // person explicitly manages -- a status independent of whether a matching
 // transaction exists yet, a next billing date, a note -- so this is its own
 // manually-tracked entity, the same shape/reasoning as NetWorthItem/Holding
-// above. Explicitly does NOT auto-generate transactions when a bill comes
-// due -- this app has no background/scheduled-job mechanism anywhere, and
-// nothing in this task's own definition asks for it; `nextBillingDate` is
-// rolled forward for *display* only (subscriptionMath.ts), never rewritten
-// in storage, so there is nothing to silently duplicate.
+// above. `nextBillingDate` is rolled forward for *display* only
+// (subscriptionMath.ts's resolveNextBillingDate), never rewritten in
+// storage by that path. It IS advanced by an explicit write action --
+// subscriptionTransactionService.generateDueTransactions(), a foreground-
+// only due-check (this app still has no background/scheduled-job
+// mechanism) that creates a Transaction for a due, active, account-having
+// subscription and advances nextBillingDate as the direct, intended side
+// effect of that specific write, exactly once per cycle it processes.
 export type SubscriptionStatus = "active" | "paused" | "cancelled";
 
 export interface Subscription extends SyncMeta {
@@ -222,4 +248,9 @@ export interface Subscription extends SyncMeta {
   icon: string;
   color: string;
   createdAt: string;
+  // Opt-in, default false -- matches Habit.reminderEnabled's own precedent
+  // (not every user wants a notification). Fires once, a fixed 1 day
+  // before nextBillingDate at a fixed 09:00 local time -- a stated
+  // simplification, no per-subscription time-of-day picker.
+  reminderEnabled?: boolean;
 }

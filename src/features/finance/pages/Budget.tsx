@@ -4,10 +4,13 @@ import { Plus } from "lucide-react";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
+import { useBudgetPeriodSnapshotStore } from "@/features/finance/store/budgetPeriodSnapshotStore";
 import { useBudgetProgress } from "@/features/finance/hooks/useBudgetProgress";
 import type { BudgetProgress } from "@/features/finance/hooks/useBudgetProgress";
+import { recordBudgetProgress } from "@/features/finance/services/budgetTrackingService";
 import BudgetTable from "@/features/finance/components/BudgetTable";
 import BudgetForm from "@/features/finance/components/BudgetForm";
+import BudgetHistoryTable from "@/features/finance/components/BudgetHistoryTable";
 import Drawer from "@/components/ui/Drawer";
 import LoadingState from "@/components/ui/LoadingState";
 import ErrorState from "@/components/ui/ErrorState";
@@ -18,6 +21,7 @@ export default function Budget() {
   const { budgets, loading, error, loadBudgets } = useBudgetStore();
   const { loadTransactions } = useTransactionStore();
   const { loadCategories } = useCategoryStore();
+  const { loadSnapshots } = useBudgetPeriodSnapshotStore();
   const progressList = useBudgetProgress();
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -28,7 +32,17 @@ export default function Budget() {
     loadBudgets();
     loadTransactions();
     loadCategories();
-  }, [loadBudgets, loadTransactions, loadCategories]);
+    loadSnapshots();
+  }, [loadBudgets, loadTransactions, loadCategories, loadSnapshots]);
+
+  // Records/upserts this period's snapshot (and fires a toast on a genuine
+  // ok/near/over escalation) whenever computed spend changes -- budget
+  // spend changes on any relevant transaction change, not just a budget
+  // mutation, so this can't hook into budgetStore's own actions.
+  useEffect(() => {
+    if (progressList.length > 0) void recordBudgetProgress(progressList);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recordBudgetProgress is a stable module-level function
+  }, [progressList]);
 
   function handleAdd() {
     setSelectedBudget(null);
@@ -71,6 +85,8 @@ export default function Budget() {
       ) : (
         <BudgetTable progressList={progressList} onEdit={handleEdit} />
       )}
+
+      <BudgetHistoryTable />
 
       <Drawer open={isDrawerOpen} onClose={handleClose}>
         <BudgetForm budget={selectedBudget} onDone={handleClose} />

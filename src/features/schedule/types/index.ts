@@ -1,5 +1,5 @@
 import type { SyncMeta } from "@/utils/syncMeta";
-import type { RepeatRule } from "@/features/reminders/types";
+import type { RecurringRepeatRule } from "@/features/reminders/types";
 
 export type ScheduleReminderOffsetMinutes = 0 | 5 | 10 | 15 | 30;
 
@@ -21,7 +21,7 @@ export interface ScheduleItem extends SyncMeta {
   // Always present — unlike Calendar's optional `recurring`, every
   // schedule item is inherently recurring (it's a daily routine, not a
   // dated event).
-  repeat: RepeatRule;
+  repeat: RecurringRepeatRule;
   // Pause without deleting.
   enabled: boolean;
   reminderEnabled?: boolean;

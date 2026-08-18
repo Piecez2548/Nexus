@@ -37,6 +37,7 @@ interface NexusBackup {
     netWorthItems?: unknown[];
     netWorthSnapshots?: unknown[];
     subscriptions?: unknown[];
+    budgetPeriodSnapshots?: unknown[];
   };
 }
 
@@ -106,6 +107,7 @@ export async function exportBackup(): Promise<string> {
     netWorthItems,
     netWorthSnapshots,
     subscriptions,
+    budgetPeriodSnapshots,
   ] = await Promise.all([
     db.transactions.toArray(),
     db.accounts.toArray(),
@@ -128,6 +130,7 @@ export async function exportBackup(): Promise<string> {
     db.netWorthItems.toArray(),
     db.netWorthSnapshots.toArray(),
     db.subscriptions.toArray(),
+    db.budgetPeriodSnapshots.toArray(),
   ]);
 
   const backup: NexusBackup = {
@@ -159,6 +162,7 @@ export async function exportBackup(): Promise<string> {
       netWorthItems: await decryptForExport(dek, netWorthItems),
       netWorthSnapshots: await decryptForExport(dek, netWorthSnapshots),
       subscriptions: await decryptForExport(dek, subscriptions),
+      budgetPeriodSnapshots: await decryptForExport(dek, budgetPeriodSnapshots),
     },
   };
 
@@ -202,6 +206,7 @@ function isNexusBackup(value: unknown): value is NexusBackup {
     "netWorthItems",
     "netWorthSnapshots",
     "subscriptions",
+    "budgetPeriodSnapshots",
   ];
   return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
 }
@@ -243,6 +248,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     netWorthItems,
     netWorthSnapshots,
     subscriptions,
+    budgetPeriodSnapshots,
   ] = await Promise.all([
     encryptForImport(dek, "transactions", data.transactions),
     encryptForImport(dek, "accounts", data.accounts),
@@ -264,6 +270,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     encryptForImport(dek, "netWorthItems", data.netWorthItems ?? []),
     encryptForImport(dek, "netWorthSnapshots", data.netWorthSnapshots ?? []),
     encryptForImport(dek, "subscriptions", data.subscriptions ?? []),
+    encryptForImport(dek, "budgetPeriodSnapshots", data.budgetPeriodSnapshots ?? []),
   ]);
 
   await db.transaction(
@@ -290,6 +297,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
       db.netWorthItems,
       db.netWorthSnapshots,
       db.subscriptions,
+      db.budgetPeriodSnapshots,
     ],
     async () => {
       await Promise.all([
@@ -314,6 +322,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.netWorthItems.clear(),
         db.netWorthSnapshots.clear(),
         db.subscriptions.clear(),
+        db.budgetPeriodSnapshots.clear(),
       ]);
 
       await Promise.all([
@@ -338,6 +347,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.netWorthItems.bulkAdd(netWorthItems as never[]),
         db.netWorthSnapshots.bulkAdd(netWorthSnapshots as never[]),
         db.subscriptions.bulkAdd(subscriptions as never[]),
+        db.budgetPeriodSnapshots.bulkAdd(budgetPeriodSnapshots as never[]),
       ]);
     }
   );
@@ -370,6 +380,7 @@ export async function resetAllData(): Promise<void> {
       db.netWorthItems,
       db.netWorthSnapshots,
       db.subscriptions,
+      db.budgetPeriodSnapshots,
     ],
     async () => {
       await Promise.all([
@@ -394,6 +405,7 @@ export async function resetAllData(): Promise<void> {
         db.netWorthItems.clear(),
         db.netWorthSnapshots.clear(),
         db.subscriptions.clear(),
+        db.budgetPeriodSnapshots.clear(),
       ]);
     }
   );

@@ -101,6 +101,28 @@ describe("nativeReminderService", () => {
       });
     });
 
+    it("schedules a one-off notification at a specific date/time for a 'once' repeat", async () => {
+      mockIsNativePlatform.mockReturnValue(true);
+
+      await scheduleReminder({
+        namespace: REMINDER_NAMESPACE.subscription,
+        entityId: 5,
+        title: "Netflix",
+        body: "Netflix bills tomorrow",
+        repeat: { frequency: "once", at: "2026-08-19T09:00:00.000Z" },
+      });
+
+      expect(mockSchedule).toHaveBeenCalledWith({
+        notifications: [
+          expect.objectContaining({
+            id: REMINDER_NAMESPACE.subscription * 100_000_000 + 5 * 10 + 0,
+            title: "Netflix",
+            schedule: { at: new Date("2026-08-19T09:00:00.000Z") },
+          }),
+        ],
+      });
+    });
+
     it("creates a max-importance, vibrating reminder channel before scheduling", async () => {
       mockIsNativePlatform.mockReturnValue(true);
 

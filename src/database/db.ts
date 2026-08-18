@@ -12,6 +12,7 @@ import type {
   NetWorthItem,
   NetWorthSnapshot,
   Subscription,
+  BudgetPeriodSnapshot,
 } from "@/features/finance/types";
 import type { Trade } from "@/features/trading/types";
 import type { Todo } from "@/features/todo/types";
@@ -55,6 +56,7 @@ class NexusDatabase extends Dexie {
   public netWorthItems;
   public netWorthSnapshots;
   public subscriptions;
+  public budgetPeriodSnapshots;
 
   constructor() {
     super("NexusDatabase");
@@ -327,6 +329,17 @@ class NexusDatabase extends Dexie {
         "++id,syncId,updatedAt",
     });
 
+    // v23 adds FIN-001 Budget Improvements: budgetPeriodSnapshots, an
+    // upsert-by-(budgetSyncId, periodStart) history log of each budget's
+    // past-period performance -- see src/features/finance/types/index.ts.
+    // Unlike the write-once GoalMilestoneEvent log, a period's spend can be
+    // recomputed many times before it ends, so this mirrors NetWorthSnapshot's
+    // upsert shape instead. Additive, no existing data touched.
+    this.version(23).stores({
+      budgetPeriodSnapshots:
+        "++id,syncId,updatedAt",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -407,6 +420,9 @@ class NexusDatabase extends Dexie {
 
     this.subscriptions =
       this.table<Subscription, number>("subscriptions");
+
+    this.budgetPeriodSnapshots =
+      this.table<BudgetPeriodSnapshot, number>("budgetPeriodSnapshots");
   }
 }
 

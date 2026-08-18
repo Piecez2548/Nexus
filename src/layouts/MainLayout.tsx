@@ -10,6 +10,7 @@ import ToastContainer from "@/components/ui/ToastContainer";
 import CommandPalette from "@/platform/commandPalette/CommandPalette";
 import ScanRecoveryNotice from "@/features/finance/slipScanner/components/ScanRecoveryNotice";
 import PendingPaymentSheet from "@/features/finance/notificationCapture/components/PendingPaymentSheet";
+import SubscriptionDueCheck from "@/features/finance/components/SubscriptionDueCheck";
 import LoadingState from "@/components/ui/LoadingState";
 import { useTranslation } from "@/i18n/useTranslation";
 import { useUIStore } from "@/features/finance/store/uiStore";
@@ -81,6 +82,7 @@ export default function MainLayout() {
       <CommandPalette />
       <ScanRecoveryNotice />
       <PendingPaymentSheet />
+      <SubscriptionDueCheck />
     </div>
   );
 }

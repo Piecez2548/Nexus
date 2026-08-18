@@ -36,7 +36,7 @@ Nexus is a **local-first, feature-first** single-page application. Every domain 
                 │ reads/writes
 ┌───────────────▼─────────────────────────────────────────────┐
 │  src/database/db.ts — one Dexie (IndexedDB) database,          │
-│  27 tables, 22 schema versions                                 │
+│  28 tables, 23 schema versions                                 │
 └─────────────────────────────────────────────────────────────┘
         ▲                                              ▲
         │ optional, opt-in                              │ optional, opt-in
@@ -86,7 +86,7 @@ Every `src/features/<name>/` module owns one domain end-to-end (types, schema, r
 
 - **Local-first, cloud-optional.** The app is fully functional with zero network calls and zero environment configuration. Cloud sync, encryption, and error monitoring all detect their own absence (`isSyncConfigured`, `VITE_SENTRY_DSN` presence) and no-op cleanly rather than requiring setup.
 - **UI never touches Dexie directly.** The store → service → repository chain is the only path to persisted data, which is what lets encryption and sync be added as transparent wrapper layers without touching a single page or component.
-- **Two escape hatches from the generic factories, used deliberately and sparingly.** `createRepository`/`createCrudService` cover the ~18 repositories and ~15 services with the standard shape; anything with real extra logic (merge, delete guards, the recipient-learning write path, read-only reference data) is hand-written instead of forced into the factory. Both factory files document by name which repositories/services opted out and why.
+- **Two escape hatches from the generic factories, used deliberately and sparingly.** `createRepository`/`createCrudService` cover the ~19 repositories and ~16 services with the standard shape; anything with real extra logic (merge, delete guards, the recipient-learning write path, read-only reference data) is hand-written instead of forced into the factory. Both factory files document by name which repositories/services opted out and why.
 - **Comments explain why, not what.** Consistently observed across the codebase (see [CODING_STANDARDS.md](CODING_STANDARDS.md)) — non-obvious design decisions get a comment; self-evident code doesn't.
 - **Additive-only Dexie migrations.** Every `db.version(n).stores({...})` bump to date either adds a new table or changes an index list without destroying existing data; there has been no destructive schema migration in the app's history (see [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)).
 - **i18n is a first-class constraint on validation, not an afterthought.** Zod schemas are factory functions taking a `TranslateFn` (`schema(t)`), re-derived per render language via `useMemo`, so switching language re-localizes validation errors without a remount.

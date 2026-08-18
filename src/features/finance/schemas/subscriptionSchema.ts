@@ -19,6 +19,7 @@ export function subscriptionSchema(t: TranslateFn) {
     note: z.string().optional(),
     icon: z.string().min(1, t("validation.common.iconRequired")),
     color: z.string().min(1, t("validation.common.colorRequired")),
+    reminderEnabled: z.boolean().optional(),
   });
 }
 

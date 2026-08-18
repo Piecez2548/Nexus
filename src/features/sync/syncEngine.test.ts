@@ -19,10 +19,10 @@ vi.mock("@/lib/supabaseClient", () => ({
 // one table via `.eq("table_name", table)`, so a test's fixture rows must
 // only surface for the table they actually name. Tests here only ever
 // verify assertions against "transactions" (or "vaultEntries" for the one
-// opaque-blob test covering it), but SYNCED_TABLES has 17 entries and every
-// one of them pulls once per pass — without this filter, a fixture row
-// meant for one table would leak into every other table's pull too and get
-// written into the wrong Dexie table entirely.
+// opaque-blob test covering it), but every SYNCED_TABLES entry pulls once
+// per pass — without this filter, a fixture row meant for one table would
+// leak into every other table's pull too and get written into the wrong
+// Dexie table entirely.
 function selectResultBuilder(resolved: { data: unknown[] | null; error: unknown }) {
   let tableFilter: string | undefined;
   const builder = {

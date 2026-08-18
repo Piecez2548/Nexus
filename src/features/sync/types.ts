@@ -20,7 +20,8 @@ export type SyncTableName =
   | "workoutEntries"
   | "netWorthItems"
   | "netWorthSnapshots"
-  | "subscriptions";
+  | "subscriptions"
+  | "budgetPeriodSnapshots";
 
 export interface Tombstone {
   id?: number;

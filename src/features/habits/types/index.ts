@@ -1,5 +1,5 @@
 import type { SyncMeta } from "@/utils/syncMeta";
-import type { RepeatRule } from "@/features/reminders/types";
+import type { RecurringRepeatRule } from "@/features/reminders/types";
 
 export type HabitFrequency = "daily" | "weekly";
 
@@ -16,6 +16,6 @@ export interface Habit extends SyncMeta {
   // a reminder only on specific days (e.g. gym Mon/Wed/Fri).
   reminderEnabled?: boolean;
   reminderTime?: string; // "HH:mm", local
-  reminderRepeat?: RepeatRule | null;
+  reminderRepeat?: RecurringRepeatRule | null;
   createdAt: string;
 }

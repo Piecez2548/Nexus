@@ -48,6 +48,7 @@ const TABLES_TO_MIGRATE: SyncTableName[] = [
   "netWorthItems",
   "netWorthSnapshots",
   "subscriptions",
+  "budgetPeriodSnapshots",
 ];
 
 // Must stay in sync with each repository's plaintextKeys option (see the

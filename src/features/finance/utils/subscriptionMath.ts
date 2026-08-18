@@ -1,4 +1,4 @@
-import { addDays, addWeeks, addMonths, addYears } from "date-fns";
+import { addDays, addWeeks, addMonths, addYears, subDays } from "date-fns";
 
 import { MONTHLY_MULTIPLIER } from "@/features/finance/hooks/useSubscriptions";
 import { parseLocalDate, toLocalDateString } from "@/utils/localDate";
@@ -40,30 +40,36 @@ const ADVANCE_BY: Record<RecurringFrequency, (date: Date) => Date> = {
   yearly: (d) => addYears(d, 1),
 };
 
+// The single-step calendar advance shared by resolveNextBillingDate's
+// display-only rolling below and subscriptionTransactionService's explicit
+// write-path advance after generating a transaction for a due cycle --
+// correctly handles edge cases like Jan 31 -> Feb 28 via date-fns, not
+// naive day arithmetic.
+export function advanceOneBillingCycle(date: string, frequency: RecurringFrequency): string {
+  return toLocalDateString(ADVANCE_BY[frequency](parseLocalDate(date)));
+}
+
 // Rolls a subscription's stored nextBillingDate forward to the first
 // occurrence on or after `asOf`, purely for display -- never written back
 // to storage. A subscription due in the past is still legitimately "next
-// due" on its very next natural occurrence (correctly handling calendar
-// edge cases like Jan 31 -> Feb 28 via date-fns's addMonths, not naive day
-// arithmetic), so there's nothing to silently duplicate or drift out of
-// sync by not persisting the roll-forward.
+// due" on its very next natural occurrence, so there's nothing to silently
+// duplicate or drift out of sync by not persisting the roll-forward.
 export function resolveNextBillingDate(
   nextBillingDate: string,
   frequency: RecurringFrequency,
   asOf: Date = new Date()
 ): string {
-  const advance = ADVANCE_BY[frequency];
   const today = toLocalDateString(asOf);
 
-  let date = parseLocalDate(nextBillingDate);
+  let date = nextBillingDate;
   // Bounded to guard against a malformed stored date/frequency looping
   // forever -- 1000 iterations covers over 2 years even at the finest
   // (daily) granularity, far more than this ever needs in practice.
-  for (let i = 0; i < 1000 && toLocalDateString(date) < today; i++) {
-    date = advance(date);
+  for (let i = 0; i < 1000 && date < today; i++) {
+    date = advanceOneBillingCycle(date, frequency);
   }
 
-  return toLocalDateString(date);
+  return date;
 }
 
 // Whole days until the resolved next billing date (negative if somehow
@@ -73,4 +79,13 @@ export function daysUntil(dateString: string, asOf: Date = new Date()): number {
   const target = parseLocalDate(dateString);
   const from = parseLocalDate(toLocalDateString(asOf));
   return Math.round((target.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+// 1 day before nextBillingDate, fixed at 09:00 local -- a stated
+// simplification (see Subscription.reminderEnabled's own comment), no
+// per-subscription time-of-day picker.
+export function reminderFireTime(nextBillingDate: string): Date {
+  const at = subDays(parseLocalDate(nextBillingDate), 1);
+  at.setHours(9, 0, 0, 0);
+  return at;
 }

@@ -64,4 +64,9 @@ describe("subscriptionSchema", () => {
   it("accepts a subscription with no category/account/note at all", () => {
     expect(subscriptionSchema(t).safeParse(valid).success).toBe(true);
   });
+
+  it("accepts reminderEnabled true or omitted", () => {
+    expect(subscriptionSchema(t).safeParse({ ...valid, reminderEnabled: true }).success).toBe(true);
+    expect(subscriptionSchema(t).safeParse(valid).success).toBe(true);
+  });
 });

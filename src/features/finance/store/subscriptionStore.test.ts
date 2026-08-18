@@ -79,6 +79,18 @@ describe("subscriptionStore", () => {
     expect(useSubscriptionStore.getState().subscriptions).toHaveLength(0);
   });
 
+  it("add/update/delete all still work when reminderEnabled is set (native scheduling safely no-ops outside a native platform)", async () => {
+    await useSubscriptionStore.getState().addSubscription(subscription({ reminderEnabled: true, nextBillingDate: "2099-01-01" }));
+    const [sub] = useSubscriptionStore.getState().subscriptions;
+    expect(sub.reminderEnabled).toBe(true);
+
+    await useSubscriptionStore.getState().updateSubscription(sub.id!, { ...sub, nextBillingDate: "2099-02-01" });
+    expect(useSubscriptionStore.getState().subscriptions[0].nextBillingDate).toBe("2099-02-01");
+
+    await useSubscriptionStore.getState().deleteSubscription(sub.id!);
+    expect(useSubscriptionStore.getState().subscriptions).toHaveLength(0);
+  });
+
   it("supports multiple independent subscriptions with the same name (no silent-duplicate blocking beyond normal form re-submit protection)", async () => {
     // Matches this app's existing convention -- Account/Category/Goal/
     // Holding/NetWorthItem all allow same-name entries too; nothing seeds
