@@ -1,6 +1,7 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 import { db } from "@/database/db";
 import { dedupeAccountsAndCategories } from "./dedupeAccountsAndCategories";
+import { transactionRepository } from "@/features/finance/repositories/transactionRepository";
 
 describe("dedupeAccountsAndCategories", () => {
   beforeEach(async () => {
@@ -74,6 +75,57 @@ describe("dedupeAccountsAndCategories", () => {
     const accounts = await db.accounts.toArray();
     expect(accounts).toHaveLength(1);
     expect(accounts[0].id).toBe(canonicalId);
+  });
+
+  it("fetches the transactions table only once even when several duplicate groups need merging (N+1 regression)", async () => {
+    // Two duplicate account groups + one duplicate category group in the
+    // same pass -- previously, each of the 3 resulting merge() calls
+    // independently re-fetched the entire transactions table. Now the
+    // whole pass should read it exactly once and thread the same
+    // (returned, updated) array through every subsequent merge call.
+    await db.accounts.bulkAdd([
+      { name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" },
+      { name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" },
+      { name: "Bank", type: "bank", icon: "landmark", color: "#2563eb" },
+      { name: "Bank", type: "bank", icon: "landmark", color: "#2563eb" },
+    ]);
+    await db.categories.bulkAdd([
+      { name: "Food", type: "expense", icon: "utensils", color: "#ef4444" },
+      { name: "Food", type: "expense", icon: "utensils", color: "#ef4444" },
+    ]);
+    await db.transactions.add({
+      title: "Transfer",
+      amount: 500,
+      type: "transfer",
+      account: "Cash",
+      toAccount: "Bank",
+      date: "2026-07-21",
+      status: "completed",
+    });
+
+    const getAllSpy = vi.spyOn(transactionRepository, "getAll");
+
+    const result = await dedupeAccountsAndCategories();
+
+    expect(result.accountsMerged).toBe(2);
+    expect(result.categoriesMerged).toBe(1);
+    expect(getAllSpy).toHaveBeenCalledTimes(1);
+
+    const [transaction] = await db.transactions.toArray();
+    expect(transaction.account).toBe("Cash");
+    expect(transaction.toAccount).toBe("Bank");
+
+    getAllSpy.mockRestore();
+  });
+
+  it("does not touch the transactions table at all when there are no duplicates to merge", async () => {
+    await db.accounts.bulkAdd([{ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" }]);
+    const getAllSpy = vi.spyOn(transactionRepository, "getAll");
+
+    await dedupeAccountsAndCategories();
+
+    expect(getAllSpy).not.toHaveBeenCalled();
+    getAllSpy.mockRestore();
   });
 
   it("does not merge categories with the same name but different type", async () => {

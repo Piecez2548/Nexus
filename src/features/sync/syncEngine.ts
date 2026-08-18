@@ -65,14 +65,24 @@ async function setSyncState(key: string, value: string) {
 
 // Records created before the sync feature existed have no syncId/updatedAt
 // at all, so they'd otherwise be silently invisible to push/pull. Stamp any
-// stragglers in place before every push — cheap once they're all stamped.
+// stragglers in place before every push. Once a scan finds zero unstamped
+// rows, this table's backfill is genuinely done forever -- every write path
+// already calls withSyncMeta() going forward -- so a flag (mirroring
+// repairStuckPushCursorsOnce()'s exact one-time-migration pattern below)
+// skips the otherwise-permanent, forever-empty full-table scan on every
+// later pass.
 async function backfillSyncMeta(table: SyncTableName) {
+  const flagKey = `backfill:${table}:complete`;
+  if (await getSyncState(flagKey)) return;
+
   const dexieTable = localTable(table);
   const unstamped = await dexieTable.filter((row: { syncId?: string }) => !row.syncId).toArray();
 
   for (const row of unstamped) {
     await dexieTable.put(withSyncMeta(row));
   }
+
+  await setSyncState(flagKey, "true");
 }
 
 async function pushTable(userId: string, table: SyncTableName) {

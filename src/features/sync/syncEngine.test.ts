@@ -98,6 +98,42 @@ describe("syncEngine", () => {
     expect(stored?.updatedAt).toBeTruthy();
   });
 
+  it("marks a table's backfill complete after a pass finds zero unstamped rows, so a later pass doesn't re-scan it", async () => {
+    await db.transactions.add({
+      title: "Old Coffee",
+      amount: 80,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-20",
+      status: "completed",
+    });
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({ data: [], error: null }),
+    }));
+
+    await runFullSync(USER_ID);
+    expect(await db.syncState.get("backfill:transactions:complete")).toMatchObject({ value: "true" });
+
+    // A row added *after* the flag was already set (a raw Dexie add, same
+    // "no syncId at all" shape as the row above) would have been picked up
+    // by the old always-scan behavior -- the flag existing proves the scan
+    // is genuinely skipped now, not just that the first pass worked.
+    const laterLocalId = await db.transactions.add({
+      title: "Later, unrelated row",
+      amount: 20,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-22",
+    });
+
+    await runFullSync(USER_ID);
+
+    const stillUnstamped = await db.transactions.get(laterLocalId);
+    expect(stillUnstamped?.syncId).toBeUndefined();
+  });
+
   it("pushes local transactions with a syncId to Supabase", async () => {
     await db.transactions.add({
       title: "Coffee",
