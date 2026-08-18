@@ -16,6 +16,7 @@ import {
   Sparkles,
   KeyRound,
   Dumbbell,
+  Scale,
   type LucideIcon,
 } from "lucide-react";
 
@@ -33,6 +34,7 @@ export const financeMenus: MenuItem[] = [
   { icon: PiggyBank, labelKey: "nav.budget", path: "/budget" },
   { icon: Target, labelKey: "nav.goals", path: "/goals" },
   { icon: Landmark, labelKey: "nav.accounts", path: "/accounts" },
+  { icon: Scale, labelKey: "nav.netWorth", path: "/net-worth" },
   { icon: Tags, labelKey: "nav.categories", path: "/categories" },
   { icon: Users, labelKey: "nav.recipients", path: "/recipients" },
 ];

@@ -139,3 +139,47 @@ export interface GoalMilestoneEvent extends SyncMeta {
   tier: GoalMilestoneTier;
   reachedAt: string; // ISO timestamp, set once, never updated
 }
+
+// FIN-002 Net Worth. Deliberately NOT auto-derived from Account/Transaction
+// data -- Account carries no balance field at all (name/type/icon/color
+// only; nothing in this app computes a per-account balance anywhere), so
+// there is no existing "account balance" to safely map onto an asset or
+// liability. Modeled as its own manually-tracked entity instead, the same
+// shape as Portfolio's Holding (a user-entered current value, no live price
+// feed). One unified model with a `kind` discriminator rather than two
+// near-identical Asset/Liability verticals, the same call already made for
+// Vault's password/note/recoveryKey shapes.
+export type NetWorthItemKind = "asset" | "liability";
+export type AssetCategory = "cash" | "bank" | "investment" | "property" | "vehicle" | "crypto" | "other";
+export type LiabilityCategory = "creditCard" | "loan" | "mortgage" | "other";
+export type NetWorthCategory = AssetCategory | LiabilityCategory;
+
+export interface NetWorthItem extends SyncMeta {
+  id?: number;
+  kind: NetWorthItemKind;
+  name: string;
+  category: NetWorthCategory;
+  // Always a non-negative magnitude -- `kind` determines whether it adds to
+  // or subtracts from net worth, so the sign is never encoded in the value
+  // itself (a user mistyping a negative number would otherwise silently
+  // flip which side of the ledger it lands on).
+  value: number;
+  icon: string;
+  color: string;
+  note?: string;
+  createdAt: string;
+}
+
+// One row per calendar day, upserted by netWorthTrackingService whenever
+// totals change as a side effect of adding/editing/deleting a NetWorthItem
+// -- mirrors GoalMilestoneEvent's "log what already happened, no backfill"
+// precedent above: history starts from whenever this feature ships, since
+// there is no record of past asset/liability values to reconstruct.
+export interface NetWorthSnapshot extends SyncMeta {
+  id?: number;
+  date: string; // "YYYY-MM-DD" local, via @/utils/localDate -- one row per day
+  totalAssets: number;
+  totalLiabilities: number;
+  netWorth: number;
+  recordedAt: string; // ISO timestamp of when this row was last written
+}

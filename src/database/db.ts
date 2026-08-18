@@ -9,6 +9,8 @@ import type {
   Goal,
   GoalMilestoneEvent,
   TransactionTemplate,
+  NetWorthItem,
+  NetWorthSnapshot,
 } from "@/features/finance/types";
 import type { Trade } from "@/features/trading/types";
 import type { Todo } from "@/features/todo/types";
@@ -49,6 +51,8 @@ class NexusDatabase extends Dexie {
   public auditLog;
   public workoutExercises;
   public workoutEntries;
+  public netWorthItems;
+  public netWorthSnapshots;
 
   constructor() {
     super("NexusDatabase");
@@ -294,6 +298,20 @@ class NexusDatabase extends Dexie {
         "++id,date,syncId,updatedAt",
     });
 
+    // v21 adds Net Worth (FIN-002): netWorthItems (assets/liabilities, one
+    // unified model with a `kind` discriminator -- see
+    // src/features/finance/types/index.ts) and netWorthSnapshots (a
+    // date-keyed history log, one row per calendar day, upserted whenever
+    // totals change -- mirrors goalMilestoneEvents' "log what happened, no
+    // backfill" shape). Additive, no existing data touched.
+    this.version(21).stores({
+      netWorthItems:
+        "++id,syncId,updatedAt",
+
+      netWorthSnapshots:
+        "++id,date,syncId,updatedAt",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -365,6 +383,12 @@ class NexusDatabase extends Dexie {
 
     this.workoutEntries =
       this.table<WorkoutEntry, number>("workoutEntries");
+
+    this.netWorthItems =
+      this.table<NetWorthItem, number>("netWorthItems");
+
+    this.netWorthSnapshots =
+      this.table<NetWorthSnapshot, number>("netWorthSnapshots");
   }
 }
 

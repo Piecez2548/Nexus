@@ -38,6 +38,14 @@ const { generateDek, decryptField } = await import("@/features/encryption/crypto
 
 const t = (key: string) => key;
 
+// Mirrors syncEngine.ts's own (non-exported) SYNCED_TABLES -- kept as a
+// local list rather than importing it since the real one isn't exported,
+// but that means it silently goes stale whenever a new synced table is
+// added (found the hard way: this list was already missing scheduleItems,
+// goalMilestoneEvents, and vaultEntries before workoutExercises/
+// workoutEntries were added here -- clearAllSyncedTables() below only
+// clears what's listed, so a row written to a missing table by one test
+// leaks into every later test in this file).
 const SYNCED_TABLES = [
   "transactions",
   "accounts",
@@ -51,6 +59,13 @@ const SYNCED_TABLES = [
   "habits",
   "holdings",
   "calendarEvents",
+  "scheduleItems",
+  "goalMilestoneEvents",
+  "vaultEntries",
+  "workoutExercises",
+  "workoutEntries",
+  "netWorthItems",
+  "netWorthSnapshots",
 ] as const;
 
 async function clearAllSyncedTables() {
@@ -229,6 +244,37 @@ describe("enableEncryption (full orchestration)", () => {
 
     // The migration lock must be released on success.
     expect(await db.syncState.get("encryption:migrationLock")).toBeUndefined();
+  });
+
+  it("migrates workoutExercises and workoutEntries (previously missing from TABLES_TO_MIGRATE entirely)", async () => {
+    await db.workoutExercises.add({
+      name: "Push-up",
+      category: "strength",
+      icon: "dumbbell",
+      color: "#3b82f6",
+      createdAt: "2026-08-17T00:00:00.000Z",
+      syncId: "we-1",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    } as never);
+    await db.workoutEntries.add({
+      exerciseName: "Push-up",
+      date: "2026-08-17",
+      reps: 10,
+      caloriesBurned: 5,
+      createdAt: "2026-08-17T00:00:00.000Z",
+      syncId: "we-entry-1",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    } as never);
+
+    await enableEncryption({ pin: "1234", accountPassword: "correct-password", translate: t });
+
+    const [exerciseRow] = await db.workoutExercises.toArray();
+    expect(exerciseRow).toHaveProperty("encryptedContent");
+    expect((exerciseRow as unknown as { name?: string }).name).toBeUndefined();
+
+    const [entryRow] = await db.workoutEntries.toArray();
+    expect(entryRow).toHaveProperty("encryptedContent");
+    expect((entryRow as unknown as { exerciseName?: string }).exerciseName).toBeUndefined();
   });
 
   it("rejects a wrong account password up front, without ever escrowing or touching local data", async () => {

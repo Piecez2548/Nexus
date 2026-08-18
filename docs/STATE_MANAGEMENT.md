@@ -1,6 +1,6 @@
 # State Management
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-18
 
 ## Overview
 
@@ -19,7 +19,7 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `appLockStore` | PIN/lock fields + encryption-at-rest fields (`encryptionEnabled, wrappedDek, kekSalt, kekIterations`) + `biometricEnabled` | `localStorage: nexus-app-lock` (via explicit `partialize`) + `sessionUnlocked` mirrored to `sessionStorage` | writes/clears the in-memory DEK on unlock/lock via `encryptionSessionStore` |
 | `gamificationStore` | `xp, streak, lastActiveDate` | `localStorage: nexus-gamification` | `addXp()` fires a level-up toast via `toastStore` |
 
-### Feature stores (`src/features/*/store/*.ts`) — 18 total
+### Feature stores (`src/features/*/store/*.ts`) — 24 total
 
 | Store | Entity | Pattern | Key actions |
 |---|---|---|---|
@@ -28,16 +28,22 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `finance/categoryStore` | `Category` | fetch-on-mount cache | load, add, update, delete, merge |
 | `finance/goalStore` | `Goal` | fetch-on-mount cache | load, add, update, delete, `contribute` (awards XP, logs milestones) |
 | `finance/goalMilestoneEventStore` | `GoalMilestoneEvent` | fetch-on-mount cache, **read-only** | load only |
+| `finance/netWorthItemStore` | `NetWorthItem` | fetch-on-mount cache | load, add, update, delete (each mutation upserts today's `NetWorthSnapshot`) |
+| `finance/netWorthSnapshotStore` | `NetWorthSnapshot` | fetch-on-mount cache, **read-only** | load only |
 | `finance/recipientProfileStore` | `RecipientProfile` | fetch-on-mount cache, **no add/update** (server-derived) | load, delete |
 | `finance/transactionStore` | `Transaction` | fetch-on-mount cache | load, add (awards XP), update, delete, toggleFavorite |
 | `finance/transactionTemplateStore` | `TransactionTemplate` | fetch-on-mount cache | load, add, update, delete |
 | `finance/uiStore` | Transaction drawer UI | pure UI state, no service | open/close drawer, open-with-draft |
+| `finance/notificationCapture/pendingNotificationCandidateStore` | `SlipCandidate` (built from native payment notifications) | **not Dexie-backed** — reads/clears candidates via the native `PaymentNotificationCapture` plugin | refresh (parse + drop unparseable), acknowledge |
 | `trading/tradeStore` | `Trade` | fetch-on-mount cache | load, add/update (awards XP on close), delete |
 | `trading/tradingUIStore` | Trade drawer UI | pure UI state | open/close drawer |
 | `habits/habitStore` | `Habit` | fetch-on-mount cache + reminder scheduling | load, add/update/delete (schedule/cancel native reminders), `checkIn` (idempotent, awards XP) |
 | `portfolio/holdingStore` | `Holding` | fetch-on-mount cache | load, add, update, delete, `updateCurrentPrice` |
 | `schedule/scheduleItemStore` | `ScheduleItem` | fetch-on-mount cache + reminder scheduling | load, add, update, delete |
 | `todo/todoStore` | `Todo` | fetch-on-mount cache | load, add, update, delete, `toggleComplete` (awards XP only on completing) |
+| `vault/vaultEntryStore` | `VaultEntry` | fetch-on-mount cache | load, add, update, delete (each mutation records an audit-log event) |
+| `workouts/workoutExerciseStore` | `WorkoutExercise` | fetch-on-mount cache | load, add, update, delete |
+| `workouts/workoutEntryStore` | `WorkoutEntry` | fetch-on-mount cache | load, add (awards XP), update, delete |
 | `sync/authStore` | Supabase session + sync status | wraps the Supabase Auth SDK directly, not a repo cache | initialize, signUp, signIn, signOut, sync |
 | `encryption/encryptionSessionStore` | In-memory DEK (`CryptoKey`) | ephemeral, deliberately **not** persisted | setDek, clearDek |
 | `dashboard/dashboardPeriodStore` | Period selector UI | pure UI state | setGranularity |
@@ -81,7 +87,7 @@ Any future component mounted directly in `TopBar`/`MainLayout` that needs broad 
 
 ## Current Status
 
-Fully implemented — 6 global stores, 18 feature stores, all following the conventions documented above with no deviations found during a full read of every store file.
+Fully implemented — 6 global stores, 22 feature stores, all following the conventions documented above (`pendingNotificationCandidateStore` is the one exception to the Dexie-backed norm, noted in the table).
 
 ## Future Improvements
 

@@ -32,6 +32,10 @@ interface NexusBackup {
     scheduleItems?: unknown[];
     goalMilestoneEvents?: unknown[];
     vaultEntries?: unknown[];
+    workoutExercises?: unknown[];
+    workoutEntries?: unknown[];
+    netWorthItems?: unknown[];
+    netWorthSnapshots?: unknown[];
   };
 }
 
@@ -96,6 +100,10 @@ export async function exportBackup(): Promise<string> {
     scheduleItems,
     goalMilestoneEvents,
     vaultEntries,
+    workoutExercises,
+    workoutEntries,
+    netWorthItems,
+    netWorthSnapshots,
   ] = await Promise.all([
     db.transactions.toArray(),
     db.accounts.toArray(),
@@ -113,6 +121,10 @@ export async function exportBackup(): Promise<string> {
     db.scheduleItems.toArray(),
     db.goalMilestoneEvents.toArray(),
     db.vaultEntries.toArray(),
+    db.workoutExercises.toArray(),
+    db.workoutEntries.toArray(),
+    db.netWorthItems.toArray(),
+    db.netWorthSnapshots.toArray(),
   ]);
 
   const backup: NexusBackup = {
@@ -139,6 +151,10 @@ export async function exportBackup(): Promise<string> {
       // decryptForExport requires a resident DEK here the same as any other
       // encrypted table -- there's no plaintext-Vault state to fall back to.
       vaultEntries: await decryptForExport(dek, vaultEntries),
+      workoutExercises: await decryptForExport(dek, workoutExercises),
+      workoutEntries: await decryptForExport(dek, workoutEntries),
+      netWorthItems: await decryptForExport(dek, netWorthItems),
+      netWorthSnapshots: await decryptForExport(dek, netWorthSnapshots),
     },
   };
 
@@ -177,6 +193,10 @@ function isNexusBackup(value: unknown): value is NexusBackup {
     "scheduleItems",
     "goalMilestoneEvents",
     "vaultEntries",
+    "workoutExercises",
+    "workoutEntries",
+    "netWorthItems",
+    "netWorthSnapshots",
   ];
   return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
 }
@@ -213,6 +233,10 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     scheduleItems,
     goalMilestoneEvents,
     vaultEntries,
+    workoutExercises,
+    workoutEntries,
+    netWorthItems,
+    netWorthSnapshots,
   ] = await Promise.all([
     encryptForImport(dek, "transactions", data.transactions),
     encryptForImport(dek, "accounts", data.accounts),
@@ -229,6 +253,10 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     encryptForImport(dek, "scheduleItems", data.scheduleItems ?? []),
     encryptForImport(dek, "goalMilestoneEvents", data.goalMilestoneEvents ?? []),
     encryptForImport(dek, "vaultEntries", data.vaultEntries ?? []),
+    encryptForImport(dek, "workoutExercises", data.workoutExercises ?? []),
+    encryptForImport(dek, "workoutEntries", data.workoutEntries ?? []),
+    encryptForImport(dek, "netWorthItems", data.netWorthItems ?? []),
+    encryptForImport(dek, "netWorthSnapshots", data.netWorthSnapshots ?? []),
   ]);
 
   await db.transaction(
@@ -250,6 +278,10 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
       db.scheduleItems,
       db.goalMilestoneEvents,
       db.vaultEntries,
+      db.workoutExercises,
+      db.workoutEntries,
+      db.netWorthItems,
+      db.netWorthSnapshots,
     ],
     async () => {
       await Promise.all([
@@ -269,6 +301,10 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.scheduleItems.clear(),
         db.goalMilestoneEvents.clear(),
         db.vaultEntries.clear(),
+        db.workoutExercises.clear(),
+        db.workoutEntries.clear(),
+        db.netWorthItems.clear(),
+        db.netWorthSnapshots.clear(),
       ]);
 
       await Promise.all([
@@ -288,6 +324,10 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.scheduleItems.bulkAdd(scheduleItems as never[]),
         db.goalMilestoneEvents.bulkAdd(goalMilestoneEvents as never[]),
         db.vaultEntries.bulkAdd(vaultEntries as never[]),
+        db.workoutExercises.bulkAdd(workoutExercises as never[]),
+        db.workoutEntries.bulkAdd(workoutEntries as never[]),
+        db.netWorthItems.bulkAdd(netWorthItems as never[]),
+        db.netWorthSnapshots.bulkAdd(netWorthSnapshots as never[]),
       ]);
     }
   );
@@ -315,6 +355,10 @@ export async function resetAllData(): Promise<void> {
       db.scheduleItems,
       db.goalMilestoneEvents,
       db.vaultEntries,
+      db.workoutExercises,
+      db.workoutEntries,
+      db.netWorthItems,
+      db.netWorthSnapshots,
     ],
     async () => {
       await Promise.all([
@@ -334,6 +378,10 @@ export async function resetAllData(): Promise<void> {
         db.scheduleItems.clear(),
         db.goalMilestoneEvents.clear(),
         db.vaultEntries.clear(),
+        db.workoutExercises.clear(),
+        db.workoutEntries.clear(),
+        db.netWorthItems.clear(),
+        db.netWorthSnapshots.clear(),
       ]);
     }
   );

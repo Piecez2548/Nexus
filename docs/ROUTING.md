@@ -1,6 +1,6 @@
 # Routing
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-18
 
 ## Overview
 
@@ -20,6 +20,7 @@ All routes are children of one root layout route (`path: "/"`, element `<MainLay
 | `/budget` | `Budget` | Finance |
 | `/goals` | `Goals` | Finance |
 | `/accounts` | `Accounts` | Finance |
+| `/net-worth` | `NetWorth` | Finance |
 | `/categories` | `Categories` | Finance |
 | `/recipients` | `RecipientProfiles` | Finance |
 | `/trading` | `TradingDashboard` | Trading |
@@ -28,6 +29,8 @@ All routes are children of one root layout route (`path: "/"`, element `<MainLay
 | `/todo` | `Todo` | Personal |
 | `/habits` | `Habits` | Personal |
 | `/schedule` | `LifeSchedule` | Personal |
+| `/vault` | `Vault` | Personal |
+| `/workouts` | `Workouts` | Personal |
 | `/settings` | `Settings` | (standalone, linked from `UserMenu`/`Sidebar`, not a menu section) |
 | `*` (catch-all) | `NotFound` | — |
 
@@ -38,9 +41,9 @@ All routes are children of one root layout route (`path: "/"`, element `<MainLay
 `src/layouts/navItems.ts` exports three arrays consumed by both the desktop sidebar and the mobile "more" menu:
 
 ```ts
-financeMenus: MenuItem[]   // 9 items — financeDashboard, aiAnalytics, transactions, favorites, budget, goals, accounts, categories, recipients
+financeMenus: MenuItem[]   // 10 items — financeDashboard, aiAnalytics, transactions, favorites, budget, goals, accounts, netWorth, categories, recipients
 tradingMenus: MenuItem[]   // 3 items — tradingDashboard, tradingJournal, portfolio
-personalMenus: MenuItem[]  // 3 items — todo, habits, schedule
+personalMenus: MenuItem[]  // 5 items — todo, habits, schedule, vault, workouts
 ```
 
 `MenuItem = { icon: LucideIcon, labelKey: string, path: string }`.
@@ -66,6 +69,9 @@ personalMenus: MenuItem[]  // 3 items — todo, habits, schedule
 <MobileMoreMenu />
 <TransactionDrawer /> / <TradeDrawer />       (lazy-mounted globally, reachable from any page)
 <ToastContainer />
+<CommandPalette />
+<ScanRecoveryNotice />
+<PendingPaymentSheet />                      (payment-notification-capture confirm sheet, no dedicated route)
 ```
 
 `TransactionDrawer` and `TradeDrawer` are lazy-loaded and only added to the component tree the first time they're actually opened (tracked via local `hasOpened*` state) — deliberately, so their dependency chain (React Hook Form, Zod, the transaction/trade schemas) isn't pulled into the bundle for every page load, only for pages that end up opening one.
@@ -93,7 +99,7 @@ Every route component is lazy-loaded via `React.lazy()` in `src/router/lazyPages
 
 ## Current Status
 
-Fully implemented — 18 routes (17 named + catch-all), all lazy-loaded, all reachable without configuration.
+Fully implemented — 21 routes (20 named + catch-all), all lazy-loaded, all reachable without configuration.
 
 ## Future Improvements
 

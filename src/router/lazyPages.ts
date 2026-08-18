@@ -6,6 +6,7 @@ export const AiAnalytics = lazy(() => import("@/features/finance/aiAnalytics/pag
 export const Transactions = lazy(() => import("@/features/finance/pages/Transactions"));
 export const Favorites = lazy(() => import("@/features/finance/pages/Favorites"));
 export const Accounts = lazy(() => import("@/features/finance/pages/Accounts"));
+export const NetWorth = lazy(() => import("@/features/finance/pages/NetWorth"));
 export const Categories = lazy(() => import("@/features/finance/pages/Categories"));
 export const Budget = lazy(() => import("@/features/finance/pages/Budget"));
 export const Goals = lazy(() => import("@/features/finance/pages/Goals"));

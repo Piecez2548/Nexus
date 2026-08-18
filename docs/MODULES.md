@@ -1,6 +1,6 @@
 # Modules
 
-**Last Updated:** 2026-08-15
+**Last Updated:** 2026-08-18
 
 ## Overview
 
@@ -36,23 +36,23 @@ Every domain lives in `src/features/<name>/` with the same internal shape (see [
 
 **Purpose:** The core money-tracking module — transactions, accounts, categories, budgets, savings goals, recipient/merchant auto-categorization, receipt-slip OCR, and the Gallery Slip Scanner.
 
-**Routes:** `/finance`, `/transactions`, `/favorites`, `/budget`, `/goals`, `/accounts`, `/categories`, `/recipients`.
+**Routes:** `/finance`, `/transactions`, `/favorites`, `/budget`, `/goals`, `/accounts`, `/net-worth`, `/categories`, `/recipients`.
 
-**Features:** 5 transaction types (income/expense/transfer/refund/adjustment) with tags/attachment/time/status/recurring/recipient metadata; account & category CRUD with in-use delete guards and duplicate-merge; recurring budgets with live spend-vs-limit progress; savings goals with milestone events (25/50/75/100% crossing log); a Learning Engine that auto-suggests a category from a transaction's recipient (confidence grows toward 100% with repeated use) or falls back to a seeded merchant lookup by title match; duplicate transaction/account/category detection and merge; Thai+English on-device OCR for receipt slips (Tesseract.js) with regex-based amount/date/recipient parsing, always pre-filling an editable form; a batch **Gallery Slip Scanner** (see below) for importing many slips at once straight into transactions; CSV/PDF/JSON export, CSV import with per-row validation preview.
+**Features:** 5 transaction types (income/expense/transfer/refund/adjustment) with tags/attachment/time/status/recurring/recipient metadata; account & category CRUD with in-use delete guards and duplicate-merge; recurring budgets with live spend-vs-limit progress; savings goals with milestone events (25/50/75/100% crossing log); manually-tracked **Net Worth** (see below) — assets/liabilities and a daily history trend; a Learning Engine that auto-suggests a category from a transaction's recipient (confidence grows toward 100% with repeated use) or falls back to a seeded merchant lookup by title match; duplicate transaction detection; duplicate account/category detection and merge, both manually (`MergeAccountForm`/`MergeCategoryForm` on the Accounts/Categories pages) and now automatically — `src/features/sync/syncEngine.ts` calls `dedupeAccountsAndCategories()` after every pull to fold name-duplicate accounts/categories created independently on two devices before they ever synced (see section 11); Thai+English on-device OCR for receipt slips (Tesseract.js) with regex-based amount/date/recipient parsing, always pre-filling an editable form; a batch **Gallery Slip Scanner** (see below) for importing many slips at once straight into transactions; a **Payment Notification Capture** (see below) for one-tap import straight from a bank app's own payment notification; CSV/PDF/JSON export, CSV import with per-row validation preview.
 
-**Components:** `AccountForm`/`AccountTable`, `BudgetForm`/`BudgetTable`, `CategoryForm`/`CategoryTable`, `GoalCard`/`GoalForm`/`GoalsPreviewPanel`, `InsightsPanel`, `MergeAccountForm`/`MergeCategoryForm`, `MonthlyOverviewPanel`, `QuickAddGrid`, `RecipientProfileTable`/`RecipientSuggestionField`, `RecurringField`, `SlipScanner` (single-slip manual scan), `SubscriptionsSummaryPanel`, `TransactionDrawer`/`TransactionForm`/`TransactionMetaFields`/`TransactionTable`/`TransactionTemplateForm`/`TransactionToolbar`.
+**Components:** `AccountForm`/`AccountTable`, `BudgetForm`/`BudgetTable`, `CategoryForm`/`CategoryTable`, `GoalCard`/`GoalForm`/`GoalsPreviewPanel`, `InsightsPanel`, `MergeAccountForm`/`MergeCategoryForm`, `MonthlyOverviewPanel`, `NetWorthItemForm`/`NetWorthItemSection`/`NetWorthSummaryGrid`/`NetWorthHistoryChart`, `QuickAddGrid`, `RecipientProfileTable`/`RecipientSuggestionField`, `RecurringField`, `SlipScanner` (single-slip manual scan), `SubscriptionsSummaryPanel`, `TransactionDrawer`/`TransactionForm`/`TransactionMetaFields`/`TransactionTable`/`TransactionTemplateForm`/`TransactionToolbar`.
 
-**Services:** `transactionService`, `budgetService`, `goalService`, `transactionTemplateService` (generic `createCrudService`); `accountService` (hand-written — delete guard + merge); `categoryService` (hand-written — delete guard + merge); `recipientProfileService` (hand-written — the Learning Engine's write side, `recordUsage()` upserts confidence-scored profiles); `categorySuggestionService` (the Learning Engine's read side — recipient profile first, merchant-table fallback); `goalMilestoneService` (tier-crossing detection, write-path-only) + `goalMilestoneEventService` (thin CRUD wrapper the former calls into).
+**Services:** `transactionService`, `budgetService`, `goalService`, `transactionTemplateService`, `netWorthItemService`, `netWorthSnapshotService` (generic `createCrudService`); `accountService` (hand-written — delete guard + merge); `categoryService` (hand-written — delete guard + merge); `recipientProfileService` (hand-written — the Learning Engine's write side, `recordUsage()` upserts confidence-scored profiles); `categorySuggestionService` (the Learning Engine's read side — recipient profile first, merchant-table fallback); `goalMilestoneService` (tier-crossing detection, write-path-only) + `goalMilestoneEventService` (thin CRUD wrapper the former calls into); `netWorthTrackingService` (hand-written — upserts today's `NetWorthSnapshot` whenever an item add/update/delete changes the totals, the same "log what happened" role `goalMilestoneService` plays for goals).
 
-**Stores:** `accountStore`, `budgetStore`, `categoryStore`, `goalStore`, `goalMilestoneEventStore`, `recipientProfileStore`, `transactionStore`, `transactionTemplateStore` (all fetch-on-mount caches), `uiStore` (UI-only — transaction drawer open/draft state).
+**Stores:** `accountStore`, `budgetStore`, `categoryStore`, `goalStore`, `goalMilestoneEventStore`, `netWorthItemStore`, `netWorthSnapshotStore`, `recipientProfileStore`, `transactionStore`, `transactionTemplateStore` (all fetch-on-mount caches), `uiStore` (UI-only — transaction drawer open/draft state).
 
-**Database usage:** `transactions`, `accounts`, `categories`, `budgets`, `goals`, `goalMilestoneEvents`, `recipientProfiles`, `merchants` (read-only reference table, no repository mutations), `transactionTemplates`.
+**Database usage:** `transactions`, `accounts`, `categories`, `budgets`, `goals`, `goalMilestoneEvents`, `netWorthItems`, `netWorthSnapshots`, `recipientProfiles`, `merchants` (read-only reference table, no repository mutations), `transactionTemplates`.
 
 **Dependencies:** `src/features/finance/aiAnalytics/` reads this module's stores/analyzers as its primary data source. `src/features/reminders/` is not used here (finance has no reminder integration).
 
 **Current Status:** Fully implemented — every page has real forms (React Hook Form + Zod) and Dexie-backed CRUD.
 
-**Future Plans:** See [ROADMAP.md](ROADMAP.md) — Net Worth tracking and a dedicated Subscription Manager (as first-class entities, beyond the existing duplicate-subscription detection) are explicitly not started.
+**Future Plans:** See [ROADMAP.md](ROADMAP.md) — a dedicated Subscription Manager (as a first-class entity, beyond the existing duplicate-subscription detection) is explicitly not started.
 
 ### Gallery Slip Scanner (`src/features/finance/slipScanner/`)
 
@@ -67,6 +67,30 @@ A separate, ~100-file subsystem within Finance for **batch** slip import — dis
 **Current Status:** Complete (GS epic 50/50) and verified on-device (Android APK installed and tested against real slips, with two follow-up bug-fix/code-review rounds — see [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s "Post-Launch Stabilization"). The 2026-08-15 Slip Intelligence Phases 1-9 closed the confidence-engine, smart-duplicate, conflict-resolver, recovery-system, and category-learning-UI gaps, added a confidence-tier import policy and an Import History screen, and implemented the native `GalleryMediaPlugin.java` MediaStore plugin (compiles, packages; not yet device-validated). Known gaps: the native plugin needs an on-device pass, and `FullGalleryScanPanel` has no nav entry point yet — see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md).
 
 **Future Plans:** Device-validate the native plugin, then wire `FullGalleryScanPanel` into live navigation (likely alongside or replacing the picker button); a deterministic same-batch dedup pass for the orchestrator path. See [ROADMAP.md](ROADMAP.md) and [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md) for full detail (this module has no dedicated architecture doc the way AI Analytics does — the task registry's per-task notes serve that role).
+
+### Payment Notification Capture (`src/features/finance/notificationCapture/`)
+
+Phase 1: reads payment-confirmation notifications from recognized Thai banking apps — SCB Easy, K PLUS, Krungthai NEXT, เป๋าตัง (Pao Tang) — via an always-on native `PaymentNotificationListenerService.java`, and surfaces a one-tap confirm sheet instead of writing a transaction automatically. Shares the `SlipCandidate` model and the Smart Import pipeline with the Gallery Slip Scanner rather than being a separate write path.
+
+**How it works:** `bankPackageRegistry.ts` maps a notification's Android package name to the same bank ids used everywhere else in the slip scanner (a flat, exact lookup — package name is a reliable signal, unlike OCR-text bank matching) for `com.scb.phone`, `com.kasikorn.retail.mbanking.wap`, `ktbcs.netbank`, and `com.ktb.customer.qr`. `notificationTextParser.ts` extracts only amount and counterparty from the notification's title/text/bigText — a currency-anchored regex for amount (more conservative than the slip OCR parser: no bare-decimal fallback, since a 1-2 line notification has far less context to disambiguate a stray number), and a marker-based match (`ไปยัง`/`ให้กับ`/`ให้`/`to`) for counterparty. `buildNotificationCandidate.ts` turns a raw stashed notification into a `SlipCandidate` (bankId/confidence 90 when the package resolves a bank, 70 otherwise), returning `null` (and dropping the candidate) when no amount could be parsed, since an amountless candidate can never import anyway. `pendingNotificationCandidateStore.ts` re-reads whatever the native side has stashed, and `usePendingNotificationCandidates.ts` refreshes on mount and on every app resume (a "warm" tap while the app is already backgrounded doesn't remount anything). `PendingPaymentSheet.tsx` — mounted once at `MainLayout.tsx`, alongside `ScanRecoveryNotice` — shows the oldest pending candidate, lets the user edit the name, pick income/expense type, and pick a category (chips filter to whichever type is currently selected, defaulting to a keyword-categorizer guess for expense only), then a single explicit "Confirm" tap calls `useSmartImport().importCandidates(...)` — the same pipeline every other import path uses — before acknowledging (clearing) the candidate natively. "Dismiss" acknowledges without importing. Native code structurally cannot reach Dexie itself — `PaymentNotificationCapturePlugin.java` only lets JS check/open the OS's special "Notification access" grant (no in-app request dialog exists for this permission category), flip an independent in-app capture toggle, and read/clear stashed notifications; the actual write only ever happens from the user's explicit tap.
+
+**Settings:** `NotificationCaptureSettings.tsx` — native-only (renders nothing on web), shows an "open Notification access settings" button when the OS grant is missing, else an in-app enable/disable toggle.
+
+**Current Status:** Phase 1 shipped for SCB, K PLUS, Krungthai NEXT, เป๋าตัง. Real bank notification text formats were unverified at time of writing for some banks; SCB Easy and K PLUS package names are confirmed against a real device, K PLUS additionally end-to-end with a real payment; Krungthai NEXT and เป๋าตัง confirmed via `aapt2 dump badging` against the installed APKs.
+
+**Future Plans:** On-device verification of the remaining banks' notification text patterns against `notificationTextParser.ts`'s regexes; more banks per [ROADMAP.md](ROADMAP.md)/[../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md).
+
+### Net Worth (`src/features/finance/{repositories,services,store,schemas,utils,hooks,components,pages}/*NetWorth*`, FIN-002)
+
+Manually-tracked assets and liabilities plus a daily net-worth history trend. Deliberately **not** auto-derived from `Account`/`Transaction` data — `Account` carries no balance field at all (just name/type/icon/color; nothing in this app computes a per-account balance anywhere), so there is no existing account balance to safely map onto an asset or liability. Modeled instead as its own manually-maintained entity, the same shape as Portfolio's `Holding` (a user-entered current value, no live price feed, no paid API).
+
+**How it works:** one unified `NetWorthItem` model (`kind: "asset" | "liability"` discriminator, rather than two near-identical parallel verticals — the same call already made for Vault's password/note/recoveryKey shapes) with `{name, category, value, icon, color, note}`; `value` is always a non-negative magnitude, `kind` alone determines whether it adds to or subtracts from the total. `netWorthMath.ts`'s `calculateNetWorthTotals()` is a pure function summing `totalAssets`/`totalLiabilities`/`netWorth` from the item list, used both by `useNetWorthStats()` (the page's live summary) and `netWorthTrackingService.ts`'s `recordSnapshot()`. History is a `NetWorthSnapshot` log — one row per calendar day, upserted (not appended) whenever `netWorthItemStore`'s add/update/delete actions call `recordSnapshot()`, the same write-path role `goalMilestoneService.checkAndLogCrossings()` plays for `goalStore` — mirroring `GoalMilestoneEvent`'s own "log what already happened, no backfill" precedent: history starts from whenever this feature ships.
+
+**UI:** `NetWorth.tsx` — a summary grid (total assets/liabilities/net worth), a Recharts line chart of the snapshot history (mirrors `CashFlowLineChart.tsx`; hidden until at least 2 days of history exist), and two grouped sections (Assets/Liabilities, each with its own subtotal) with edit/delete per item. `NetWorthItemForm.tsx` has an asset/liability toggle (mirrors Payment Notification Capture's income/expense toggle) that switches which category options and icon set are offered, resetting category/icon/color to that kind's defaults on switch.
+
+**Non-goals, stated explicitly:** no live price feeds or paid APIs; no automatic linking to an `Account` record (there is no account balance to link *to*, per the architecture note above); no XP/gamification reward for adding an item (matches Account/Budget/Category's own precedent — only recurring activities grant XP in this app, not one-time setup entries).
+
+**Current Status:** Complete. `tsc -b`/`oxlint`/full test suite/`npm run build` all clean; 27 new tests (calculation, schema validation, repository CRUD/encryption, snapshot upsert, store add/update/delete/persistence). **Not yet verified**: a live authenticated browser click-through — no device was connected and a fresh browser context has no session against this project's real Supabase backend, so the rendered page/kind-toggle/history chart were not visually confirmed on-screen. See [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md)'s FIN-002 entry.
 
 ---
 
@@ -262,7 +286,7 @@ A separate, ~100-file subsystem within Finance for **batch** slip import — dis
 
 **Route:** none (no dedicated page — surfaced via `SyncSettings.tsx` and the sign-in gate wrapping the whole app).
 
-**Features:** email/password sign-up/sign-in (no OAuth, no magic link); a generic push/pull sync engine against one Supabase table (`synced_records`) covering 14 of the app's tables (`merchants` excluded — seed data, not personal); tombstone-based deletion propagation; last-write-wins conflict resolution on a client-embedded timestamp; a malformed-row structural guard on pull; periodic (5s) + `online`-event-triggered sync; graceful no-auth-screen fallback when Supabase env vars are absent, so the app never locks a user out with no configured way in.
+**Features:** email/password sign-up/sign-in (no OAuth, no magic link); a generic push/pull sync engine against one Supabase table (`synced_records`) covering 17 of the app's tables (`merchants` excluded — seed data, not personal); tombstone-based deletion propagation; last-write-wins conflict resolution on a client-embedded timestamp; a malformed-row structural guard on pull; periodic (5s) + `online`-event-triggered sync; graceful no-auth-screen fallback when Supabase env vars are absent, so the app never locks a user out with no configured way in; a one-time, flag-gated self-healing migration (`repairStuckPushCursorsOnce()`) that clears every table's local push cursor to repair a since-fixed bug where an older build's pull-side cursor nudge could silently exclude an unpushed local row from every future sync pass — clearing a push cursor is always safe, since re-upserting an already-synced row is a harmless no-op.
 
 **Components:** `AuthGate` (top-level gate), `LoginScreen`, `SyncProvider` (side-effect-only mount).
 
@@ -270,7 +294,7 @@ A separate, ~100-file subsystem within Finance for **batch** slip import — dis
 
 **Stores:** `authStore` (Supabase session + sync status — not an entity cache, wraps the Supabase Auth SDK directly).
 
-**Database usage:** reads/writes all 14 synced tables generically, plus `syncTombstones` and `syncState` (sync cursor bookkeeping).
+**Database usage:** reads/writes all 17 synced tables generically, plus `syncTombstones` and `syncState` (sync cursor bookkeeping).
 
 **Dependencies:** every entity-owning module (generic, via table name) for what it syncs; `src/features/encryption/` for whether payloads are encrypted before sync.
 
@@ -294,7 +318,7 @@ A separate, ~100-file subsystem within Finance for **batch** slip import — dis
 
 **Stores:** `encryptionSessionStore` (in-memory DEK only, deliberately never persisted).
 
-**Database usage:** reads/rewrites all 14 synced tables during migration; the encryption wrapper itself (`src/database/encryptedRepository.ts`) sits underneath every repository, not owned by this module.
+**Database usage:** reads/rewrites all 17 synced tables during migration (`migration/enableEncryption.ts`'s `TABLES_TO_MIGRATE`) — `vaultEntries` is included (normally migrates zero rows, since Vault always writes already-encrypted, but covers a pre-existing row from before that gate existed); `workoutExercises`/`workoutEntries` were missing from this list entirely when the Workout Tracker shipped (a pre-existing row would have silently stayed plaintext forever after enabling encryption) — found and fixed 2026-08-18. The encryption wrapper itself (`src/database/encryptedRepository.ts`) sits underneath every repository, not owned by this module.
 
 **Dependencies:** `src/features/sync/` (account-password escrow requires a signed-in Supabase user), `src/features/lock/` (the DEK is wrapped under the app-lock PIN for day-to-day unlock).
 
@@ -323,6 +347,86 @@ A separate, ~100-file subsystem within Finance for **batch** slip import — dis
 **Dependencies:** `src/features/encryption/` (unlocking with the PIN also unwraps the session DEK when encryption is enabled).
 
 **Current Status:** Fully implemented, explicitly **not** a real authentication system — see [SECURITY.md](SECURITY.md) for the documented threat-model distinction between the PIN hash (unstretched SHA-256) and the DEK's own key derivation (PBKDF2, 600k iterations).
+
+**Future Plans:** None documented.
+
+---
+
+## 14. Vault (`src/features/vault/`)
+
+**Purpose:** An encrypted password manager, secure notes, and recovery-key store — one unified entry model rather than three separate CRUD verticals.
+
+**Route:** `/vault`.
+
+**Features:** a single `VaultEntry` shape covering all three entry types via a `type: "password" | "note" | "recoveryKey"` discriminator — password entries carry `username`/`password`/`url`, notes carry `content`, recovery keys carry `serviceName`/`code`, and a free-text `note` field is shared by all three (they differ only in which optional fields are populated, since storage/encryption/sync/UI-list concerns are identical across all three); search (by title) + type filter; a reveal/hide toggle and one-tap clipboard copy for the secret field; a `crypto.getRandomValues`-based password generator (`generatePassword.ts`, 20 chars by default, toggleable upper/lower/numbers/symbols charsets — deliberately not `Math.random`, since this generates real secrets).
+
+**The whole page is gated on encryption being enabled.** `Vault.tsx` reads `useAppLockStore((s) => s.encryptionEnabled)`; when it's `false`, the page renders an `EncryptionGate` (an "Enable Encryption" prompt reusing `EnableEncryptionForm` from the Encryption module, or a "sign in first" / "set a PIN first" message if the prerequisites for enabling aren't met yet) instead of the entry list, and `loadEntries()` is never even called. This makes "Vault is usable" and "encryption is on" equivalent by construction — the repository (`vaultEntryRepository.ts`) has no `plaintextKeys` option, unlike `recipientProfiles`/`budgets`, since every field here (including the title) is sensitive, so add/update only ever encrypt for real once the gate has passed.
+
+**Components:** `VaultEntryCard`, `VaultEntryForm`.
+
+**Services:** `vaultEntryService` (generic `createCrudService`).
+
+**Stores:** `vaultEntryStore` (fetch-on-mount cache; `addEntry`/`updateEntry`/`deleteEntry` each call `recordAudit("vault", ...)` with the entry `type` only — title/username/password/content are never written to the audit log, matching the log's "no secret content" discipline — see section 16).
+
+**Database usage:** `vaultEntries`.
+
+**Dependencies:** `src/features/encryption/` (the page gate and the repository's always-encrypt behavior), `src/features/lock/` (`appLockStore.encryptionEnabled`/`isEnabled()`), `src/features/sync/` (`isSyncConfigured`, `authStore.user` — both feed the gate's prerequisite messaging), `src/features/security/` (audit logging).
+
+**Current Status:** Fully implemented.
+
+**Future Plans:** None documented.
+
+---
+
+## 15. Workout Tracker (`src/features/workouts/`)
+
+**Purpose:** An exercise catalog + entry log, a work/rest interval timer, and real GPS route tracking.
+
+**Route:** `/workouts`.
+
+**Features:** two-table model like Category+Transaction, not a single-table shape — a `WorkoutExercise` catalog (name, category, icon/color, optional `caloriesPerMinute`/`caloriesPerRep`/`caloriesPerKm` rate, optional `youtubeUrl`, `gpsTracked` flag) and a `WorkoutEntry` log (denormalized `exerciseName` copy that survives the catalog entry being renamed/deleted, date, reps/rounds or duration or GPS distance+route, `caloriesBurned` computed once at save time and then frozen — never recomputed later even if the catalog exercise's rates change); `computeCaloriesBurned()` (`utils/calorieCalc.ts`) combines whichever calorie bases the exercise defines and the input actually supplies (from reps, from duration, from distance), rounded to a whole number; a "Track with GPS" alternative to manual reps/duration entry for `gpsTracked` exercises (running/cycling/walking-style moves); a Today panel + 14-dot recent-history strip (`utils/todaySummary.ts`, reusing `computeStreak`/`getRecentDates` from `features/habits/utils/streak` despite living under `workouts/`); an explicit-or-auto-built YouTube demo link (`utils/youtubeLink.ts` falls back to a YouTube search query built from the exercise name when no `youtubeUrl` is set — no YouTube Data API integration, no key/quota needed) opened via `utils/openExternal.ts`.
+
+**Timer** (`timer/useIntervalTimer.ts`): a plain reducer-backed hook, not a Zustand store and not Dexie-backed — ephemeral, single-consumer UI state owned entirely by `WorkoutTimerDrawer`. Timestamp-based (`Date.now()`-derived), not a per-tick decrement, so it's immune to drift from a delayed render. Configurable work/rest seconds + total rounds; a zero-configured `restSeconds` skips the rest phase entirely rather than running a zero-length one; cascades through any zero-duration phases in a single tick via a bounded (`guard < 100`) loop rather than waiting for subsequent ticks to catch up; a naturally-completed session and a manual "Stop & Log" both funnel through the same `finish()` → `{ totalElapsedSeconds, roundsCompleted }` shape, which `WorkoutTimerDrawer` turns into a pre-filled `WorkoutEntryForm`.
+
+**GPS tracker** (`gps/useGpsTracker.ts`): also a plain hook, not a store, same ephemeral/single-consumer reasoning as the timer. Foreground-only via `@capacitor/geolocation`'s `watchPosition` — no background-location permission is ever requested, and the watch is cleared both on explicit `stop()`/`reset()` and belt-and-suspenders on unmount. Distance is the Haversine great-circle sum over consecutive route points (`gps/distance.ts`'s `computeRouteDistanceMeters`), used both for the live on-screen distance while tracking and the final `distanceMeters` at stop. `WorkoutRouteMap` renders the route via Leaflet + react-leaflet with OpenStreetMap tiles (no API key) — a `CircleMarker` (SVG-drawn) rather than Leaflet's default pin, avoiding the well-known bundler issue where Leaflet's default marker image assets resolve to broken relative URLs under Vite.
+
+**Components:** `WorkoutExerciseCard`/`WorkoutExerciseForm`, `WorkoutEntryCard`/`WorkoutEntryForm`, `WorkoutTimerDrawer`/`WorkoutTimerRing`, `WorkoutGpsTrackerDrawer`, `WorkoutRouteMap`, `WorkoutTodayPanel`.
+
+**Services:** `workoutExerciseService`, `workoutEntryService` (both generic `createCrudService`).
+
+**Stores:** `workoutExerciseStore`, `workoutEntryStore` (both fetch-on-mount caches; `workoutEntryStore.addEntry` awards XP via `gamificationStore`, `workoutExerciseStore` does not).
+
+**Database usage:** `workoutExercises`, `workoutEntries`.
+
+**Dependencies:** none on other feature modules for its core flow; reuses `features/habits/utils/streak` (generic despite the folder) for its history strip; `@capacitor/geolocation`, `@capacitor/browser`, `leaflet`/`react-leaflet` as direct third-party dependencies.
+
+**Current Status:** Fully implemented.
+
+**Future Plans:** None documented.
+
+---
+
+## 16. Security — Audit Log (`src/features/security/`)
+
+**Purpose:** An app-wide, persisted security audit trail — cross-cutting infrastructure like Encryption (section 12) and Lock (section 13), not a domain feature with its own page.
+
+**Route:** none (no `pages/` — surfaced via `AuditLogSettings.tsx` → `AuditLogDrawer.tsx` in Settings).
+
+**Features:** originally scoped to the Gallery Slip Scanner alone (GS-017/GS-038, six event categories: `permission`, `import`, `scan`, `delete`, `validation`, `suspicious`), widened to also cover `auth`, `encryption`, `lock`, `vault`, and `backup` — 11 `AuditEventType` values total. `auditLog.ts` holds a bounded in-memory ring buffer (`MAX_EVENTS = 200`, oldest dropped first) behind an injectable-sink pattern (`configureAuditLog({ sink })`), so callers (`recordAudit(type, action, detail?)`) don't need to know or care whether/how events are persisted; a throwing sink never breaks the caller. `main.tsx` wires the real sink at startup (`configureAuditLog({ sink: dexieAuditSink })`), so every `recordAudit()` call anywhere in the app survives a reload from that point on. `dexieAuditSink.ts` persists to a separate, independently-bounded cap (`MAX_PERSISTED_EVENTS = 500`, larger than the in-memory cap since persistence changes the retention tradeoff — cheap to keep more once it's not living in every tab's JS heap) — oldest rows past the cap are pruned by `at` after each write. Deliberately records only non-sensitive metadata (counts, statuses, ids, booleans), never secret/financial content, so the trail itself is safe to keep and inspect. `securityAuditView.ts` layers security-specific recorders (`recordDeletionAudit`, `recordValidationFailureAudit`, `recordSuspiciousAudit`) and a `summarizeSecurityAudit()` tally over the in-memory buffer, excluding routine `scan` progress events. `AuditLogDrawer.tsx` (via `useAuditLog.ts`) lists every **persisted** row newest-first with a search (over the action string) + type filter, and a manual "Clear" action.
+
+**Call sites (non-exhaustive, illustrating the widened coverage):** `authStore.ts` — sign-up/sign-in (success and failure)/sign-out; `encryption/migration/enableEncryption.ts` — `"enabled"` on migration completion; `encryption/migration/reescrowDek.ts` — `"re-escrowed"`; `store/appLockStore.ts` — pin-setup, pin-changed, disabled, biometric-enabled/disabled, and **failed** unlock attempts (`"unlock-failed"`) — deliberately not successful unlocks, to avoid noise from routine daily use; `vaultEntryStore.ts` — created/updated/deleted, entry `type` only, never title/username/password/content; `database/backupService.ts` — exported/imported/reset.
+
+**Components:** `AuditLogDrawer` (the Settings-launched viewer).
+
+**Services:** none as a service layer — `auditLog.ts`, `dexieAuditSink.ts`, `securityAuditView.ts` are free functions/modules; `auditLogRepository.ts` is a thin hand-written Dexie wrapper (`add`/`list`/`clear`), not the generic `createRepository` factory, since this is device-local operational state rather than a synced entity (same reasoning as `importHistoryRepository`).
+
+**Stores:** none — `useAuditLog.ts` is a plain hook (`useState`/`useEffect`), not Zustand.
+
+**Database usage:** `auditLog` — local-only, **not** one of the 17 synced tables (see section 11).
+
+**Dependencies/Dependents:** consumed by `sync/store/authStore.ts`, `encryption/migration/enableEncryption.ts` + `reescrowDek.ts`, `store/appLockStore.ts`, `vault/store/vaultEntryStore.ts`, `database/backupService.ts` — every module that writes a security-relevant event calls into this one; this module depends on none of them back.
+
+**Current Status:** Fully implemented.
 
 **Future Plans:** None documented.
 

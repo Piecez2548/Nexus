@@ -26,6 +26,10 @@ describe("backupService", () => {
       db.calendarEvents.clear(),
       db.goalMilestoneEvents.clear(),
       db.vaultEntries.clear(),
+      db.workoutExercises.clear(),
+      db.workoutEntries.clear(),
+      db.netWorthItems.clear(),
+      db.netWorthSnapshots.clear(),
     ]);
     useAppLockStore.setState({ encryptionEnabled: false, wrappedDek: null, kekSalt: null, kekIterations: null });
     useEncryptionSessionStore.getState().clearDek();
@@ -236,13 +240,15 @@ describe("backupService", () => {
         calendarEvents: [],
         scheduleItems: [],
         goalMilestoneEvents: [],
-        // vaultEntries deliberately absent
+        // vaultEntries, workoutExercises, workoutEntries deliberately absent
       },
     };
 
     await expect(importBackup(JSON.stringify(legacyBackup), t)).resolves.not.toThrow();
     expect(await db.accounts.count()).toBe(1);
     expect(await db.vaultEntries.count()).toBe(0);
+    expect(await db.workoutExercises.count()).toBe(0);
+    expect(await db.workoutEntries.count()).toBe(0);
   });
 
   it("rejects a malformed backup without touching existing data", async () => {
@@ -271,6 +277,19 @@ describe("backupService", () => {
     await db.calendarEvents.add({ title: "Leftover event", startAt: "2026-07-21T09:00" } as never);
     await db.goalMilestoneEvents.add({ goalSyncId: "abc", goalName: "MacBook", tier: 50, reachedAt: "2026-07-21T00:00:00.000Z" });
     await db.vaultEntries.add({ type: "note", title: "Leftover note", createdAt: "2026-07-21T00:00:00.000Z" } as never);
+    await db.workoutExercises.add({
+      name: "Leftover exercise",
+      category: "strength",
+      icon: "dumbbell",
+      color: "#3b82f6",
+      createdAt: "2026-07-21T00:00:00.000Z",
+    } as never);
+    await db.workoutEntries.add({
+      exerciseName: "Leftover exercise",
+      date: "2026-07-21",
+      caloriesBurned: 10,
+      createdAt: "2026-07-21T00:00:00.000Z",
+    } as never);
 
     await resetAllData();
 
@@ -283,6 +302,8 @@ describe("backupService", () => {
     const calendarEvents = await db.calendarEvents.toArray();
     const goalMilestoneEvents = await db.goalMilestoneEvents.toArray();
     const vaultEntries = await db.vaultEntries.toArray();
+    const workoutExercises = await db.workoutExercises.toArray();
+    const workoutEntries = await db.workoutEntries.toArray();
 
     expect(transactions).toHaveLength(0);
     expect(todos).toHaveLength(0);
@@ -291,6 +312,8 @@ describe("backupService", () => {
     expect(calendarEvents).toHaveLength(0);
     expect(goalMilestoneEvents).toHaveLength(0);
     expect(vaultEntries).toHaveLength(0);
+    expect(workoutExercises).toHaveLength(0);
+    expect(workoutEntries).toHaveLength(0);
     expect(accounts.length).toBeGreaterThan(0);
     expect(categories.length).toBeGreaterThan(0);
   });
@@ -384,6 +407,61 @@ describe("backupService", () => {
 
       const decrypted = await vaultEntryRepository.getAll();
       expect(decrypted[0]).toMatchObject({ title: "Gmail", password: "correct-horse-battery-staple" });
+    });
+
+    it("includes workoutExercises and workoutEntries in the backup and re-encrypts them correctly on import (previously missing entirely)", async () => {
+      const dek = await generateDek();
+      useAppLockStore.setState({ encryptionEnabled: true });
+      useEncryptionSessionStore.getState().setDek(dek);
+
+      const { workoutExerciseRepository } = await import("@/features/workouts/repositories/workoutExerciseRepository");
+      const { workoutEntryRepository } = await import("@/features/workouts/repositories/workoutEntryRepository");
+      await workoutExerciseRepository.add({
+        name: "Push-up",
+        category: "strength",
+        icon: "dumbbell",
+        color: "#3b82f6",
+        caloriesPerRep: 0.5,
+        createdAt: "2026-08-17T00:00:00.000Z",
+      });
+      await workoutEntryRepository.add({
+        exerciseName: "Push-up",
+        date: "2026-08-17",
+        reps: 10,
+        rounds: 3,
+        caloriesBurned: 15,
+        createdAt: "2026-08-17T00:00:00.000Z",
+      });
+
+      const json = await exportBackup();
+      const parsed = JSON.parse(json);
+      expect(parsed.data.workoutExercises).toHaveLength(1);
+      expect(parsed.data.workoutEntries).toHaveLength(1);
+      // The backup itself is plaintext regardless of encryption being on --
+      // same guarantee as every other table.
+      expect(parsed.data.workoutExercises[0]).toMatchObject({ name: "Push-up" });
+      expect(parsed.data.workoutExercises[0]).not.toHaveProperty("encryptedContent");
+      expect(parsed.data.workoutEntries[0]).toMatchObject({ exerciseName: "Push-up", reps: 10 });
+      expect(parsed.data.workoutEntries[0]).not.toHaveProperty("encryptedContent");
+
+      await db.workoutExercises.clear();
+      await db.workoutEntries.clear();
+      await importBackup(json, t);
+
+      const rawExercises = await db.workoutExercises.toArray();
+      expect(rawExercises).toHaveLength(1);
+      expect(rawExercises[0]).toHaveProperty("encryptedContent");
+      expect((rawExercises[0] as unknown as { name?: string }).name).toBeUndefined();
+
+      const rawEntries = await db.workoutEntries.toArray();
+      expect(rawEntries).toHaveLength(1);
+      expect(rawEntries[0]).toHaveProperty("encryptedContent");
+      expect((rawEntries[0] as unknown as { exerciseName?: string }).exerciseName).toBeUndefined();
+
+      const decryptedExercises = await workoutExerciseRepository.getAll();
+      expect(decryptedExercises[0]).toMatchObject({ name: "Push-up" });
+      const decryptedEntries = await workoutEntryRepository.getAll();
+      expect(decryptedEntries[0]).toMatchObject({ exerciseName: "Push-up", reps: 10 });
     });
 
     it("keeps plaintextKeys (e.g. recipientKey) unencrypted after a re-encrypting import", async () => {

@@ -18,6 +18,7 @@ import {
   Plane,
   Shield,
   MoreHorizontal,
+  House,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -41,6 +42,7 @@ export const ICONS: Record<string, ComponentType<{ size?: number }>> = {
   plane: Plane,
   shield: Shield,
   "more-horizontal": MoreHorizontal,
+  house: House,
 };
 
 export const ACCOUNT_ICON_OPTIONS = [
@@ -66,6 +68,23 @@ export const CATEGORY_ICON_OPTIONS = [
   "zap",
   "plane",
   "shield",
+  "more-horizontal",
+];
+
+export const NET_WORTH_ASSET_ICON_OPTIONS = [
+  "wallet",
+  "landmark",
+  "trending-up",
+  "house",
+  "car",
+  "bitcoin",
+  "more-horizontal",
+];
+
+export const NET_WORTH_LIABILITY_ICON_OPTIONS = [
+  "credit-card",
+  "banknote",
+  "house",
   "more-horizontal",
 ];
 

@@ -20,6 +20,8 @@ import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStor
 import { useVaultEntryStore } from "@/features/vault/store/vaultEntryStore";
 import { useWorkoutExerciseStore } from "@/features/workouts/store/workoutExerciseStore";
 import { useWorkoutEntryStore } from "@/features/workouts/store/workoutEntryStore";
+import { useNetWorthItemStore } from "@/features/finance/store/netWorthItemStore";
+import { useNetWorthSnapshotStore } from "@/features/finance/store/netWorthSnapshotStore";
 
 const SYNCED_TABLES: SyncTableName[] = [
   "transactions",
@@ -39,6 +41,8 @@ const SYNCED_TABLES: SyncTableName[] = [
   "vaultEntries",
   "workoutExercises",
   "workoutEntries",
+  "netWorthItems",
+  "netWorthSnapshots",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -359,6 +363,8 @@ const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
   vaultEntries: () => useVaultEntryStore.getState().loadEntries(),
   workoutExercises: () => useWorkoutExerciseStore.getState().loadExercises(),
   workoutEntries: () => useWorkoutEntryStore.getState().loadEntries(),
+  netWorthItems: () => useNetWorthItemStore.getState().loadItems(),
+  netWorthSnapshots: () => useNetWorthSnapshotStore.getState().loadSnapshots(),
 };
 
 // Only reloads (and re-renders) stores whose underlying table actually
