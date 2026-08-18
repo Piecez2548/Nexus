@@ -60,6 +60,17 @@ describe("recordBudgetProgress", () => {
     expect(rows[0].spent).toBe(2000);
   });
 
+  it("does not create duplicate rows when called concurrently without awaiting between calls (regression: 4 budgets produced 12 rows live on-device before serialization was added)", async () => {
+    await Promise.all([
+      recordBudgetProgress([progress({ spent: 1000 })]),
+      recordBudgetProgress([progress({ spent: 1000 })]),
+      recordBudgetProgress([progress({ spent: 1000 })]),
+    ]);
+
+    const rows = await db.budgetPeriodSnapshots.toArray();
+    expect(rows).toHaveLength(1);
+  });
+
   it("skips a budget with no syncId (not yet persisted)", async () => {
     await recordBudgetProgress([progress({ budget: budget({ syncId: undefined }) })]);
 

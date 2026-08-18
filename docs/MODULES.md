@@ -116,7 +116,7 @@ The core Budget feature (recurring, per-category, live progress) predates this e
 
 **UI:** `BudgetHistoryTable.tsx` — a plain table, not a Recharts chart, since the data is categorical per-period status rather than a continuous numeric series — lists past (non-current-period) snapshot rows below the existing `BudgetTable` on `Budget.tsx`.
 
-**Current Status:** Complete. `tsc -b`/`oxlint`/full test suite/`npm run build` all clean; 9 new tests (`budgetTrackingService.test.ts` — upsert, skip-with-no-syncId, no-toast-on-first-record, escalation toasts, no-re-toast-unchanged, no-toast-on-downgrade, store refresh).
+**Current Status:** Complete, and verified live on a real device. `tsc -b`/`oxlint`/full test suite/`npm run build` all clean; 10 tests (`budgetTrackingService.test.ts` — upsert, skip-with-no-syncId, no-toast-on-first-record, escalation toasts, no-re-toast-unchanged, no-toast-on-downgrade, store refresh, concurrent-calls-don't-duplicate). `recordBudgetProgress()` is serialized through a module-level promise-chain queue — found necessary only through live testing: `Budget.tsx`'s mount fires the recording effect twice (once per settling async store load), and without serialization the second call could read the first call's not-yet-committed write and create a duplicate row instead of updating it. Confirmed live on-device: a fresh app process's first `/budget` visit now produces exactly one row per budget.
 
 ---
 

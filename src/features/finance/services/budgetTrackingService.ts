@@ -20,7 +20,22 @@ function toastTypeFor(status: "near" | "over"): "warning" | "error" {
 // netWorthItemStore's. Upserts one row per (budget, current period) --
 // past-period rows are never touched again once a new period starts,
 // since periodStart moves on to a new value.
-export async function recordBudgetProgress(progressList: BudgetProgress[]): Promise<void> {
+//
+// On mount, Budget.tsx's loadBudgets()/loadTransactions() settle as two
+// separate async store updates, each giving progressList a new reference
+// and re-firing this effect -- serialized via a module-level promise chain
+// so a second call's read-then-write can't race a still-in-flight first
+// call and see the same stale `existing` list, which would create a
+// duplicate row instead of updating the one the first call is about to
+// write (confirmed live: 4 budgets produced 12 rows before this fix).
+let queue: Promise<void> = Promise.resolve();
+
+export function recordBudgetProgress(progressList: BudgetProgress[]): Promise<void> {
+  queue = queue.then(() => recordBudgetProgressUnsafe(progressList));
+  return queue;
+}
+
+async function recordBudgetProgressUnsafe(progressList: BudgetProgress[]): Promise<void> {
   const existing = await budgetPeriodSnapshotService.list();
   let changed = false;
 
