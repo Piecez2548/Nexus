@@ -20,6 +20,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Gallery Slip Scanner: date-range-bounded scanning (pick a from/to date, native MediaStore query scoped to it, live pre-scan count estimate) alongside the existing whole-gallery scan
 - [x] Payment Notification Capture — one-tap transaction entry from a recognized banking app's own payment notification (SCB Easy, K PLUS, Krungthai NEXT, เป๋าตัง), with an editable name/category and an income/expense selector
 - [x] Net Worth (FIN-002) — manually-tracked assets and liabilities (one unified model with an asset/liability discriminator, mirroring Portfolio's Holding — no live price feed), total assets/liabilities/net worth, and a daily historical trend log started from whenever this feature ships
+- [x] Subscription Manager (FIN-004) — independently-managed recurring payments (status, billing frequency, next billing date, category/account, notes), genuinely distinct from the pre-existing duplicate-subscription *detection* logic, which remains a read-only view with no independent lifecycle
 
 ### AI Analytics (rule-based, fully local — see [AI_ANALYTICS.md](AI_ANALYTICS.md) and the Sprint 1 P001–P011 audit)
 - [x] Weighted, explainable Financial Health Score (7 sub-scores)
@@ -80,6 +81,8 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 
 - **Workout Tracker** — an exercise catalog (calorie rate, optional YouTube demo link) and entry log (reps/rounds/duration/distance), a work/rest interval timer with haptic feedback, and real GPS route tracking (foreground-only, Leaflet/OpenStreetMap map, live distance and pace via a Haversine summation over the recorded route). Verified live on-device including a real indoor WiFi-based GPS fix rendering an actual live route on the map.
 
+- **Subscription Manager (FIN-004)** — an independently-managed recurring-payment entity (name/amount/billing frequency/next billing date/status/category/account/note), built alongside — not on top of — the two pre-existing subscription *detectors* (`useSubscriptions.ts`, `behaviorAnalysis.ts`'s `computeSubscriptions()`), which remain unchanged, read-only views derived from transaction history. `nextBillingDate` is stored exactly as entered and only ever rolled forward for display via a `date-fns`-based helper, never rewritten in storage.
+
 - **Sync engine — a second hardening round.** The root cause of a real cross-device data mismatch (a transaction present on one device but never reaching the server) was traced to a subtle push-cursor bug: `pullTable()`'s cursor-advance nudge could push a device's own push cursor past a local, not-yet-pushed row, silently excluding it from every future sync pass with no error ever surfaced. Fixed at the source, plus a one-time, per-device self-healing migration that repairs any cursor already left stuck by the old behavior (safe to run unconditionally — re-pushing an already-synced row is a harmless idempotent upsert). Separately, duplicate account/category records left behind when two devices each seed their own defaults before ever syncing — previously only fixed by manually pressing "Merge Duplicates" in Settings — now merge automatically on every sync pass.
 
 ## Planned
@@ -88,7 +91,6 @@ Items explicitly implied as unfinished by the current architecture, in rough ord
 
 - **AI Gateway integration** — the seam (`AIProvider`, `LocalRuleProvider`) is fully built; wiring a real LLM provider (e.g. Claude) needs a backend proxy first, since an API key cannot safely live in client code. See [SECURITY.md](SECURITY.md), [DECISIONS.md](DECISIONS.md).
 - **"Disable encryption" flow** — explicitly blocked in `appLockStore.ts` today with a comment naming it as future work; only enable/escrow/recover exist.
-- **Subscription Manager as a first-class entity** (renewal dates, reminders) — duplicate-subscription *detection* exists (`spendingAlerts.ts`, the Rule Engine), but nothing manages subscriptions as their own tracked entity yet.
 - **Merchant Database management UI** — `merchants` is currently seed-only, no CRUD exists (`merchantRepository.ts` is read-only by design).
 - **Permission Manager** (SEC-001) — a dedicated screen for reviewing/managing the app's own OS-level permission grants (location, notification access, etc.); today each feature (Workout Tracker's GPS, Payment Notification Capture) requests its own permission inline with no central view.
 - **Deeper Trading analytics** — expectancy, average holding time, strategy comparison, a named Strategy Library, a Playbook, Trade Replay, Watchlist, Economic Calendar.

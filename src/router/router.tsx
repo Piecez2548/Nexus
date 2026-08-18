@@ -9,6 +9,7 @@ import {
   Favorites,
   Accounts,
   NetWorth,
+  Subscriptions,
   Categories,
   Budget,
   Goals,
@@ -69,6 +70,10 @@ export const router = createBrowserRouter([
       {
         path: "net-worth",
         element: <NetWorth />,
+      },
+      {
+        path: "subscriptions",
+        element: <Subscriptions />,
       },
       {
         path: "categories",

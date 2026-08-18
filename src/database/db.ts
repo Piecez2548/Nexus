@@ -11,6 +11,7 @@ import type {
   TransactionTemplate,
   NetWorthItem,
   NetWorthSnapshot,
+  Subscription,
 } from "@/features/finance/types";
 import type { Trade } from "@/features/trading/types";
 import type { Todo } from "@/features/todo/types";
@@ -53,6 +54,7 @@ class NexusDatabase extends Dexie {
   public workoutEntries;
   public netWorthItems;
   public netWorthSnapshots;
+  public subscriptions;
 
   constructor() {
     super("NexusDatabase");
@@ -312,6 +314,19 @@ class NexusDatabase extends Dexie {
         "++id,date,syncId,updatedAt",
     });
 
+    // v22 adds the Subscription Manager (FIN-004): a manually-tracked
+    // entity independent of both existing subscription *detectors* (see
+    // src/features/finance/types/index.ts) -- status/nextBillingDate/note
+    // have no equivalent in a derived view. No per-field index beyond the
+    // standard synced-and-encrypted shape (business-field filtering, e.g.
+    // by status, happens in-memory in the store/hook, matching every other
+    // small entity table's own convention). Additive, no existing data
+    // touched.
+    this.version(22).stores({
+      subscriptions:
+        "++id,syncId,updatedAt",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -389,6 +404,9 @@ class NexusDatabase extends Dexie {
 
     this.netWorthSnapshots =
       this.table<NetWorthSnapshot, number>("netWorthSnapshots");
+
+    this.subscriptions =
+      this.table<Subscription, number>("subscriptions");
   }
 }
 

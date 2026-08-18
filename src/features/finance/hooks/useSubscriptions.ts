@@ -2,7 +2,12 @@ import { useMemo } from "react";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import type { RecurringFrequency, Transaction } from "@/features/finance/types";
 
-export interface Subscription {
+// Named "Detected" (not "Subscription") specifically to avoid colliding
+// with -- and being mistaken for -- the real, independently-tracked
+// `Subscription` domain entity (FIN-004, finance/types/index.ts). This is
+// a purely derived view over existing recurring-flagged transactions, not
+// a managed record: no id, no status, no independent lifecycle.
+export interface DetectedSubscription {
   title: string;
   category?: string;
   frequency: RecurringFrequency;
@@ -11,7 +16,10 @@ export interface Subscription {
   lastDate: string;
 }
 
-const MONTHLY_MULTIPLIER: Record<RecurringFrequency, number> = {
+// Exported so FIN-004's own monthly-equivalent calculation
+// (finance/utils/subscriptionMath.ts) reuses this exact table instead of
+// redefining it a second time.
+export const MONTHLY_MULTIPLIER: Record<RecurringFrequency, number> = {
   daily: 30,
   weekly: 4.345,
   monthly: 1,
@@ -37,7 +45,7 @@ export function useSubscriptions() {
       }
     }
 
-    const subscriptions: Subscription[] = Array.from(latestByTitle.values())
+    const subscriptions: DetectedSubscription[] = Array.from(latestByTitle.values())
       .map((t) => {
         const frequency = t.recurring!.frequency;
         return {

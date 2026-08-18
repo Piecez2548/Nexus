@@ -19,7 +19,8 @@ export type SyncTableName =
   | "workoutExercises"
   | "workoutEntries"
   | "netWorthItems"
-  | "netWorthSnapshots";
+  | "netWorthSnapshots"
+  | "subscriptions";
 
 export interface Tombstone {
   id?: number;

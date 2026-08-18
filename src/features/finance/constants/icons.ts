@@ -88,6 +88,18 @@ export const NET_WORTH_LIABILITY_ICON_OPTIONS = [
   "more-horizontal",
 ];
 
+export const SUBSCRIPTION_ICON_OPTIONS = [
+  "film",
+  "smartphone",
+  "zap",
+  "credit-card",
+  "shopping-bag",
+  "heart-pulse",
+  "graduation-cap",
+  "shield",
+  "more-horizontal",
+];
+
 export function getIcon(key: string): ComponentType<{ size?: number }> {
   return ICONS[key] ?? MoreHorizontal;
 }

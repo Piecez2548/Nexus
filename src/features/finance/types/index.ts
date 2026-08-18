@@ -183,3 +183,43 @@ export interface NetWorthSnapshot extends SyncMeta {
   netWorth: number;
   recordedAt: string; // ISO timestamp of when this row was last written
 }
+
+// FIN-004 Subscription Manager. Deliberately independent of the two
+// existing subscription *detectors* (both purely derived, read-only views:
+// finance/hooks/useSubscriptions.ts collapses Transaction.recurring-flagged
+// expenses into a summary; aiAnalytics/engine/analyzers/behaviorAnalysis.ts's
+// computeSubscriptions() pattern-detects periodic same-title/amount charges
+// directly from transaction history). Neither can represent something a
+// person explicitly manages -- a status independent of whether a matching
+// transaction exists yet, a next billing date, a note -- so this is its own
+// manually-tracked entity, the same shape/reasoning as NetWorthItem/Holding
+// above. Explicitly does NOT auto-generate transactions when a bill comes
+// due -- this app has no background/scheduled-job mechanism anywhere, and
+// nothing in this task's own definition asks for it; `nextBillingDate` is
+// rolled forward for *display* only (subscriptionMath.ts), never rewritten
+// in storage, so there is nothing to silently duplicate.
+export type SubscriptionStatus = "active" | "paused" | "cancelled";
+
+export interface Subscription extends SyncMeta {
+  id?: number;
+  name: string;
+  // Always positive -- a subscription costing nothing at all isn't a real
+  // subscription to track (unlike NetWorthItem.value, which legitimately
+  // allows zero for a paid-off liability).
+  amount: number;
+  // Reuses the same frequency vocabulary as Transaction.recurring instead
+  // of inventing a second one.
+  billingFrequency: RecurringFrequency;
+  nextBillingDate: string; // "YYYY-MM-DD" local, via @/utils/localDate
+  status: SubscriptionStatus;
+  category?: string;
+  // Plain account *name* string, matching Transaction.account's existing
+  // convention (not a foreign key -- Account has no stable id contract
+  // across devices, only syncId, and every other entity in this app that
+  // references "which account" already does it by name the same way).
+  account?: string;
+  note?: string;
+  icon: string;
+  color: string;
+  createdAt: string;
+}

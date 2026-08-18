@@ -47,6 +47,7 @@ const TABLES_TO_MIGRATE: SyncTableName[] = [
   "workoutEntries",
   "netWorthItems",
   "netWorthSnapshots",
+  "subscriptions",
 ];
 
 // Must stay in sync with each repository's plaintextKeys option (see the

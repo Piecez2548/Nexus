@@ -66,6 +66,7 @@ const SYNCED_TABLES = [
   "workoutEntries",
   "netWorthItems",
   "netWorthSnapshots",
+  "subscriptions",
 ] as const;
 
 async function clearAllSyncedTables() {

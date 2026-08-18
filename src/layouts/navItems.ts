@@ -17,6 +17,7 @@ import {
   KeyRound,
   Dumbbell,
   Scale,
+  Repeat,
   type LucideIcon,
 } from "lucide-react";
 
@@ -35,6 +36,7 @@ export const financeMenus: MenuItem[] = [
   { icon: Target, labelKey: "nav.goals", path: "/goals" },
   { icon: Landmark, labelKey: "nav.accounts", path: "/accounts" },
   { icon: Scale, labelKey: "nav.netWorth", path: "/net-worth" },
+  { icon: Repeat, labelKey: "nav.subscriptions", path: "/subscriptions" },
   { icon: Tags, labelKey: "nav.categories", path: "/categories" },
   { icon: Users, labelKey: "nav.recipients", path: "/recipients" },
 ];

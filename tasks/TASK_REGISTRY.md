@@ -18,7 +18,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Slip Scanner (OCR) | 7 | 7 | 0 | 0 | 0 |
 | Vault | 4 | 4 | 0 | 0 | 0 |
 | Workout Tracker | 4 | 4 | 0 | 0 | 0 |
-| Finance | 4 | 2 | 2 | 0 | 0 |
+| Finance | 4 | 3 | 1 | 0 | 0 |
 | Security | 4 | 3 | 1 | 0 | 0 |
 | Core | 3 | 3 | 0 | 0 | 0 |
 | Testing | 3 | 3 | 0 | 0 | 0 |
@@ -27,7 +27,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
 | Platform (PLT) | 20 | 20 | 0 | 0 | 0 |
-| **Total** | **112** | **109** | **3** | **0** | **0** |
+| **Total** | **112** | **110** | **2** | **0** | **0** |
 
 ---
 
@@ -121,16 +121,16 @@ A rep/timer/GPS workout logger (`src/features/workouts/`), Strava-inspired stat-
 
 ## Finance
 
-Core transactions/budgets/goals/net worth are built; a first-class subscription manager is on the roadmap — see [../docs/ROADMAP.md](../docs/ROADMAP.md).
+Core transactions/budgets/goals/net worth/subscriptions are built — see [../docs/ROADMAP.md](../docs/ROADMAP.md).
 
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
 | FIN-001 | Finance | Budget Improvements | Medium | Todo | — |
 | FIN-002 | Finance | Net Worth Improvements | Medium | Completed | — |
 | FIN-003 | Finance | Financial Goals | High | Completed | — |
-| FIN-004 | Finance | Subscription Manager | Medium | Todo | — |
+| FIN-004 | Finance | Subscription Manager | Medium | Completed | — |
 
-> `FIN-004 Subscription Manager` has no base implementation yet — this task covers building the feature, not just improving it. `FIN-001 Budget Improvements` extends an already-shipped Budget feature.
+> `FIN-001 Budget Improvements` extends an already-shipped Budget feature — the only remaining item in this epic.
 
 > **FIN-002 delivered (2026-08-18).** No task file existed beyond the one-line roadmap note ("Net Worth tracking (assets/liabilities, net worth over time) — no assets/liabilities tables exist") — the user provided the detailed requirements directly in the prompt that started this task, following this project's established "design from the architecture + explicit requirements when no separate spec exists" precedent (Vault, Workout Tracker).
 >
@@ -145,6 +145,18 @@ Core transactions/budgets/goals/net worth are built; a first-class subscription 
 > **Explicit non-goals, stated per this project's "don't invent requirements" discipline**: no live price feeds or paid APIs (assets/liabilities are manually valued, same as Holdings); no automatic linking to an `Account` record (there is no account balance to link *to* — see the architecture investigation above; a future task could add this once/if accounts gain a real computed balance); no XP/gamification reward for adding an item (matches Account/Budget/Category's own precedent — only recurring *activities*, not one-time setup entries, grant XP in this app).
 >
 > `tsc -b`, `oxlint`, and the full test suite (**2313 tests, up from 2286** — 27 new: `netWorthMath.test.ts` ×7, `netWorthItemSchema.test.ts` ×8, `netWorthItemRepository.test.ts` ×3, `netWorthTrackingService.test.ts` ×4, `netWorthItemStore.test.ts` ×5) are all clean; the one pre-existing, previously-documented `RecipientLearning.integration` flake reproduced under full-suite parallel-jsdom load, reconfirmed unrelated by passing 2/2 in isolation. `npm run build` succeeds. **Not independently verified this round**: a live authenticated browser click-through (no Android device was connected and a fresh browser context has no session against this project's real, configured Supabase backend, so the actual rendered page, the kind-toggle's category-switching behavior, and the history chart were not visually confirmed on-screen) — flagged honestly rather than assumed from the code and test coverage alone; recommended as the next manual step. **Files**: new `src/features/finance/{repositories,services,store,schemas,utils,hooks,components,pages}/*NetWorth*` (13 files + 5 test files); touched `src/features/finance/types/index.ts` (new types), `src/database/db.ts` (v21 schema), `src/features/sync/types.ts`/`syncEngine.ts`, `src/database/backupService.ts`(+test), `src/features/encryption/migration/enableEncryption.ts`(+test), `src/features/finance/constants/icons.ts`, `src/router/lazyPages.ts`/`router.tsx`, `src/layouts/navItems.ts`, `src/i18n/translations.ts` (EN+TH).
+
+> **Subscription Manager delivered (2026-08-18).** The project already had subscription *detection* logic — the task's own instructions explicitly warned against mistaking it for the manager this task required. Two detectors were confirmed pre-existing and left untouched in behavior: `useSubscriptions.ts` (derives a summary from the latest transaction per unique recurring-expense title) and `behaviorAnalysis.ts`'s `computeSubscriptions()` (pattern-matches ≥2 same-title/category expenses at a regular 25–35-day cadence within 10% amount tolerance, feeding the AI Analytics subscription-related rules). Neither has an independent lifecycle, a status, or notes — both are read-only views recomputed from transaction history on every render.
+>
+> **Architecture investigation, done before any code was written**: confirmed via grep that only `SubscriptionsSummaryPanel.tsx` and its own test imported `useSubscriptions.ts`'s exported `Subscription` interface, so it was safely renamed to `DetectedSubscription` (one file, zero other call sites) to remove the naming collision with the new domain entity — with an explanatory comment left at the rename site. The interface's private `MONTHLY_MULTIPLIER` lookup table was exported (previously private, zero logic change) so the new `subscriptionMath.ts` could reuse it instead of duplicating it.
+>
+> **Design**: one `Subscription` model — `{name, amount, billingFrequency, nextBillingDate, status, category?, account?, note?, icon, color}` — reusing the existing `RecurringFrequency` type for `billingFrequency` rather than inventing a new enum. `status: "active" | "paused" | "cancelled"` is genuinely new, with no direct precedent elsewhere in the app, required directly by the task's own architecture questions. `nextBillingDate` is stored exactly as entered/edited by the user and is **never silently rewritten** — a pure `resolveNextBillingDate()` helper in `subscriptionMath.ts` rolls it forward for *display only*, using `date-fns`'s calendar-aware `addDays/addWeeks/addMonths/addYears` (correctly handling edge cases like Jan 31 + 1 month → Feb 28, unlike naive day-arithmetic). Lives inside `src/features/finance/` alongside Budget/Goal/NetWorthItem (same folder layering), not a new top-level feature module.
+>
+> **Reused, not rebuilt**: `createRepository`/`createCrudService` factories; the existing icon/color picker pattern (`SUBSCRIPTION_ICON_OPTIONS` is a curated subset of the pre-existing shared `ICONS` map — **zero new icons** were needed); `FormField`/`Drawer`/`SummaryCard`/`IconBadge`/`LoadingState`/`ErrorState` shared components; the `schema(t: TranslateFn)` Zod factory pattern; `useAccountStore`/`useCategoryStore` (category options filtered to `type === "expense"` only, matching semantic correctness for a recurring-expense concept). `subscriptions` was added to `SYNCED_TABLES`, `backupService.ts`'s export/import/reset, and `enableEncryption.ts`'s `TABLES_TO_MIGRATE` **from the start** — deliberately closing, not repeating, the exact gap found and fixed for Workout Tracker and proactively avoided again for Net Worth earlier the same day. `enableEncryption.test.ts`'s local `SYNCED_TABLES` list and `backupService.test.ts`'s cleanup `beforeEach` were both updated in the same pass, for the same reason.
+>
+> **Explicit non-goals, stated per this project's "don't invent requirements" discipline**: no automatic transaction generation from a subscription's billing schedule (this app has no background/cron mechanism to drive it, and the task didn't require inventing one); no duplicate-name blocking (matches Account/Category/Goal/Holding/NetWorthItem's own precedent — same-name entries are already allowed everywhere else, and no cross-device-reseed duplicate source applies to Subscription the way it does for Account/Category); no search/filter UI (matches `Goals.tsx`'s precedent at comparable list size); no delete-confirmation dialog (verified via grep that `AccountTable`/`GoalCard`/`NetWorthItemSection` — every comparable existing delete flow — use no `window.confirm()` either, so this matched the real established convention over the task's generic UI checklist bullet).
+>
+> `tsc -b`, `oxlint`, and the full test suite (**2353 tests, up from 2313** — 40 new: `subscriptionMath.test.ts` ×19, `subscriptionSchema.test.ts` ×11, `subscriptionRepository.test.ts` ×5, `subscriptionStore.test.ts` ×6) are all clean; the one pre-existing, previously-documented `RecipientLearning.integration` flake reproduced under full-suite parallel-jsdom load (a `TradingDashboard.integration` flake also reproduced once under load in an earlier full-suite pass this round, confirmed passing 4/4 in isolation and absent from the final clean run — both are the same class of timing-sensitive-under-parallel-jsdom-load flake already documented for this codebase, neither touches any file this task changed). `npm run build` succeeds, with a `Subscriptions-*.js` code-split chunk present in `dist/assets/`. **Manual verification attempted, not completed**: a device (`10AE9R1ZJY001PY`) was connected, its Nexus WebView devtools socket was located and port-forwarded, but the device itself was asleep behind its own OS-level lock screen (fingerprint/PIN) — waking it revealed the lock screen, not the app; bypassing a device's own OS lock screen was out of scope and not attempted, so this is honestly reported as **NOT MANUALLY VALIDATED** rather than inferred from tests/build alone. **Files**: new `src/features/finance/{repositories,services,store,schemas,utils,hooks,components,pages}/*Subscription*` (14 files, 4 with paired tests); touched `src/features/finance/types/index.ts` (new types), `src/database/db.ts` (v22 schema), `src/features/sync/types.ts`/`syncEngine.ts`, `src/database/backupService.ts`(+test), `src/features/encryption/migration/enableEncryption.ts`(+test), `src/features/finance/hooks/useSubscriptions.ts` (rename to `DetectedSubscription`, export `MONTHLY_MULTIPLIER`), `src/features/finance/constants/icons.ts`, `src/router/lazyPages.ts`/`router.tsx`, `src/layouts/navItems.ts`, `src/i18n/translations.ts` (EN+TH).
 
 ---
 
