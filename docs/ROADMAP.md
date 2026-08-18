@@ -54,6 +54,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Client-side AES-GCM encryption-at-rest, PBKDF2 key derivation, account-password-based escrow/recovery
 - [x] Generic push/pull sync engine, tombstone-based deletion propagation, last-write-wins conflict handling, malformed-row guard, self-healing push-cursor repair (a one-time per-device migration that clears any push cursor left stuck by a since-fixed nudge bug)
 - [x] App-wide, persisted Audit Log (auth, encryption, lock, vault, backup events — success/failure, never sensitive content)
+- [x] Permission Manager (SEC-001) — a single dedicated view of every OS-level permission the app requests (Gallery, Location, Local Notifications, Notification Access), with Request/Open Settings actions, replacing scattered inline permission checks
 
 ### Platform & cross-cutting
 - [x] Full Thai/English i18n (validation messages included, via a `TranslateFn`-factory pattern)
@@ -88,6 +89,8 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 
 - **Budget Improvements (FIN-001).** A `BudgetPeriodSnapshot` history log (upserted per budget per period, so a past period's real performance survives the budget's amount being edited later — the live view alone can't tell you that) plus a proactive toast the first time a budget's status genuinely escalates into "near" or "over" its limit. A brand-new snapshot never toasts on its first-ever record, even if already over limit — avoids a flood of toasts the first time this feature runs against pre-existing spending.
 
+- **Permission Manager (SEC-001).** A single dedicated view of every OS-level permission Nexus requests — Gallery/Photos, Location, Local Notifications, and Notification Access — previously each checked/requested inline by its own feature with no central place to review them. Reuses each permission's existing check function rather than reimplementing any of them, normalized onto the Gallery Scanner's own pre-existing 6-value status union. Adds one small new native capability, `AppSettingsPlugin.java`, opening the app's generic system Settings screen — the one in-app recovery path that didn't exist before for a permanently-denied permission (mirrors the existing single-purpose `openAccessSettings()` Notification Access already had).
+
 - **Sync engine — a second hardening round.** The root cause of a real cross-device data mismatch (a transaction present on one device but never reaching the server) was traced to a subtle push-cursor bug: `pullTable()`'s cursor-advance nudge could push a device's own push cursor past a local, not-yet-pushed row, silently excluding it from every future sync pass with no error ever surfaced. Fixed at the source, plus a one-time, per-device self-healing migration that repairs any cursor already left stuck by the old behavior (safe to run unconditionally — re-pushing an already-synced row is a harmless idempotent upsert). Separately, duplicate account/category records left behind when two devices each seed their own defaults before ever syncing — previously only fixed by manually pressing "Merge Duplicates" in Settings — now merge automatically on every sync pass.
 
 ## Planned
@@ -97,7 +100,6 @@ Items explicitly implied as unfinished by the current architecture, in rough ord
 - **AI Gateway integration** — the seam (`AIProvider`, `LocalRuleProvider`) is fully built; wiring a real LLM provider (e.g. Claude) needs a backend proxy first, since an API key cannot safely live in client code. See [SECURITY.md](SECURITY.md), [DECISIONS.md](DECISIONS.md).
 - **"Disable encryption" flow** — explicitly blocked in `appLockStore.ts` today with a comment naming it as future work; only enable/escrow/recover exist.
 - **Merchant Database management UI** — `merchants` is currently seed-only, no CRUD exists (`merchantRepository.ts` is read-only by design).
-- **Permission Manager** (SEC-001) — a dedicated screen for reviewing/managing the app's own OS-level permission grants (location, notification access, etc.); today each feature (Workout Tracker's GPS, Payment Notification Capture) requests its own permission inline with no central view.
 - **Deeper Trading analytics** — expectancy, average holding time, strategy comparison, a named Strategy Library, a Playbook, Trade Replay, Watchlist, Economic Calendar.
 - **Risk Management config** (max daily/weekly loss limits + alerts) for Trading.
 - **Reports module** — no `Reports` page or route exists at all (not even a stub) as of this writing.

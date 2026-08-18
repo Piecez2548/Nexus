@@ -432,7 +432,7 @@ The core Budget feature (recurring, per-category, live progress) predates this e
 
 ---
 
-## 16. Security — Audit Log (`src/features/security/`)
+## 16. Security — Audit Log & Permission Manager (`src/features/security/`)
 
 **Purpose:** An app-wide, persisted security audit trail — cross-cutting infrastructure like Encryption (section 12) and Lock (section 13), not a domain feature with its own page.
 
@@ -455,6 +455,20 @@ The core Budget feature (recurring, per-category, live progress) predates this e
 **Current Status:** Fully implemented.
 
 **Future Plans:** None documented.
+
+### Permission Manager (`src/features/security/permissions/`, SEC-001)
+
+A single dedicated view aggregating every OS-level permission the app requests — previously each feature checked/requested its own permission inline with no shared view (Gallery Slip Scanner, Workout Tracker GPS, reminders, Payment Notification Capture).
+
+**How it works:** `permissionManagerService.ts`'s `listPermissions()` calls into the existing check function for each of four permission surfaces (reused, not reimplemented — `galleryPermissionService.check()`, `Geolocation.checkPermissions()`, `LocalNotifications.checkPermissions()`, `PaymentNotificationCapture.checkAccess()`) and normalizes every result onto the Gallery Scanner's pre-existing 6-value status union (`granted`/`limited`/`prompt`/`denied`/`blocked`/`unavailable`), which already covered every state any of the four can produce. Camera and biometric are deliberately excluded — the app never does live camera capture (only the permission-less OS photo picker), and biometric is a capability check already surfaced in `SecuritySettings.tsx`, not an OS "grant." A plain status check can't distinguish a soft denial from a permanent one on Android — only a request's before/after comparison can — so `"blocked"` only ever appears as the *result* of an attempted request, mirroring `galleryPermissionService.ts`'s own established technique (reused directly for Location and Local Notifications rather than reimplemented).
+
+**New native capability**: `AppSettingsPlugin.java` (`android/app/src/main/java/com/nexus/app/settings/`) — one `open()` method opening this app's generic system Settings screen (`Settings.ACTION_APPLICATION_DETAILS_SETTINGS`), mirroring `PaymentNotificationCapturePlugin.java`'s existing single-purpose `openAccessSettings()`. Nothing generic like this existed before — a blocked Gallery/Location/Local-Notifications permission was otherwise a dead end with no in-app recovery path. Notification Access keeps using its own dedicated Settings screen (a different one); the new generic method is used only for the other three.
+
+**UI:** `PermissionManagerSettings.tsx` (Settings > Security & Sync) opens `PermissionManagerDrawer.tsx` — mirrors `AuditLogSettings.tsx`/`AuditLogDrawer.tsx`'s exact card-opens-drawer shape. Lists all four permissions with a status badge, a one-line "used by" description, and a contextual action (Request / Open Settings / nothing once granted); refreshes on mount and on native app resume, mirroring `NotificationCaptureSettings.tsx`'s exact resume-listener pattern.
+
+**Non-goals:** no permission revocation from within the app (Android provides no API for this — only its own Settings screen can, which "Open Settings" already reaches); no polling/background change detection; no permission history (that's the Audit Log's job, unaffected by this feature).
+
+**Current Status:** Complete.
 
 ---
 

@@ -19,7 +19,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Vault | 4 | 4 | 0 | 0 | 0 |
 | Workout Tracker | 4 | 4 | 0 | 0 | 0 |
 | Finance | 4 | 4 | 0 | 0 | 0 |
-| Security | 4 | 3 | 1 | 0 | 0 |
+| Security | 4 | 4 | 0 | 0 | 0 |
 | Core | 3 | 3 | 0 | 0 | 0 |
 | Testing | 3 | 3 | 0 | 0 | 0 |
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
@@ -27,7 +27,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
 | Platform (PLT) | 20 | 20 | 0 | 0 | 0 |
-| **Total** | **112** | **111** | **1** | **0** | **0** |
+| **Total** | **112** | **112** | **0** | **0** | **0** |
 
 ---
 
@@ -174,11 +174,11 @@ Core transactions/budgets/goals/net worth/subscriptions are built — see [../do
 
 ## Security
 
-Backup/restore built via `backupService`; the Audit Log now exists app-wide (`src/features/security/`). A permission manager is not yet in the code — see [../docs/SECURITY.md](../docs/SECURITY.md).
+Backup/restore built via `backupService`; the Audit Log and Permission Manager both exist app-wide (`src/features/security/`) — see [../docs/SECURITY.md](../docs/SECURITY.md). All four Security epic items are now complete.
 
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
-| SEC-001 | Security | Permission Manager | Medium | Todo | — |
+| SEC-001 | Security | Permission Manager | Medium | Completed | — |
 | SEC-002 | Security | Audit Log | Medium | Completed | — |
 | SEC-003 | Security | Backup | High | Completed | — |
 | SEC-004 | Security | Restore | High | Completed | SEC-003 |
@@ -198,6 +198,20 @@ Backup/restore built via `backupService`; the Audit Log now exists app-wide (`sr
 > **Verified live on the connected device (`10AE9R1ZJY001PY`)**: created and deleted a real Vault entry through the actual UI, then read the raw `auditLog` IndexedDB table directly (bypassing the app) and confirmed exactly two real events — `{type:"vault", action:"created", detail:{entryType:"password"}}` and `{type:"vault", action:"deleted"}` — with no title/username/password anywhere in either. Confirmed the Settings > Audit Log drawer displays both correctly (action, Thai-localized type, timestamp, detail line), then cleared them via the real "Clear Audit Log" button and confirmed the table was genuinely empty afterward, not just visually.
 >
 > `tsc -b`, `oxlint`, the full test suite (**2216 tests**, up from 2203 — net +13: new `auditLog.test.ts`/`securityAuditView.test.ts`/`auditLogRepository.test.ts`/`dexieAuditSink.test.ts`/`AuditLogDrawer.test.tsx` plus audit-specific assertions added to `authStore.test.ts`/`appLockStore.test.ts`/`vaultEntryStore.test.ts`/`backupService.test.ts`, minus the 6 tests removed with the relocated scanner-only files; one pre-existing, previously-documented `TradingDashboard.integration` flake reproduced again this run, confirmed unrelated as before), and `npm run build` are all clean; `:app:assembleDebug` succeeds and the APK was reinstalled + verified live as described above. **Files**: new `src/features/security/**` (core log, view, repository, sink, hook, drawer + tests), `src/components/settings/AuditLogSettings.tsx`; touched `src/database/db.ts` (v19 schema), `src/main.tsx` (bootstrap wiring), `src/database/backupService.ts`(+test) (vaultEntries fix + audit calls), `src/features/sync/store/authStore.ts`(+test), `src/store/appLockStore.ts`(+test), `src/features/encryption/migration/enableEncryption.ts`/`reescrowDek.ts`, `src/features/vault/store/vaultEntryStore.ts`(+test), `src/pages/Settings.tsx`, `src/i18n/translations.ts`, `docs/SECURITY.md`; deleted the four relocated `slipScanner/security/scanAuditLog*`/`securityAudit*` files; updated `src/features/finance/slipScanner/devtools/scannerDevTools.ts`(+test) to import from the new location. **Committed** as `a387f25`.
+
+> **SEC-001 delivered (2026-08-18).** No task file or spec existed beyond one roadmap line — scoped the same way FIN-001/FIN-002/FIN-004 were, reviewed with the user via Plan Mode before writing code. A repo-wide grep confirmed exactly four distinct OS-level permission surfaces, each already checked/requested inline by its own feature with no shared view: Gallery/Photos (Gallery Slip Scanner), Location (Workout Tracker GPS), Local Notifications (Habit/Schedule/Subscription reminders), and Notification Access (Payment Notification Capture, the one special-access grant Android provides no in-app dialog for at all). Camera and biometric were checked and ruled out — the app never does live camera capture (only the permission-less OS photo picker), and biometric is a capability check already surfaced in `SecuritySettings.tsx`, not an OS "grant" in the same sense.
+>
+> **One aggregation service, not four separate UI integrations**: `permissionManagerService.ts`'s `listPermissions()` calls into each permission's *existing* check function (`galleryPermissionService.check()`, `Geolocation.checkPermissions()`, `LocalNotifications.checkPermissions()`, `PaymentNotificationCapture.checkAccess()` — none reimplemented) and normalizes every result onto the Gallery Scanner's own pre-existing 6-value status union (`granted`/`limited`/`prompt`/`denied`/`blocked`/`unavailable`), which already covered every state any of the four can produce. A plain status check can't distinguish a soft denial from a permanent one on Android — only a request's before/after comparison can — so `permissionManagerService.ts` reuses `galleryPermissionService.ts`'s exact established before/after technique for Location and Local Notifications rather than reinventing it.
+>
+> **One genuinely new, minimal native capability, confirmed with the user before writing any native code, not assumed**: no generic "open this app's system Settings screen" mechanism existed anywhere in this codebase — without it, a permanently-denied Gallery/Location/Local-Notifications permission would be a dead end with no in-app recovery, undermining "managing" (not just reviewing) for three of the four permissions. `AppSettingsPlugin.java` (`android/app/src/main/java/com/nexus/app/settings/`) adds one `open()` method firing `Settings.ACTION_APPLICATION_DETAILS_SETTINGS`, mirroring `PaymentNotificationCapturePlugin.java`'s existing single-purpose `openAccessSettings()` exactly; registered in `MainActivity.java` alongside the other two native plugins.
+>
+> **A real, stale-comment bug found and fixed while researching, not the original point of this task**: `galleryPermissionPlugin.ts`'s own code comment claimed the native `GalleryPermissions` plugin was "not installed yet... wired on-device in a later GS task" — false. `GalleryMediaPlugin.java` (built for the Gallery Scanner's media enumeration) is registered under the Capacitor plugin name `"GalleryPermissions"` and has fully working `checkPermissions()`/`requestPermissions()` logic (`@Permission`-annotated, `computePhotosState()` combining full/partial/denied states) — confirmed live: the Permission Manager reads a real "granted" status from it on-device. Comment corrected to reflect reality.
+>
+> **UI**: `PermissionManagerSettings.tsx` → `PermissionManagerDrawer.tsx`, mirroring `AuditLogSettings.tsx`/`AuditLogDrawer.tsx`'s exact card-opens-drawer shape, placed in Settings > Security & Sync right after Audit Log. Lists all four with a status badge, a one-line "used by" description, and a contextual action (Request / Open Settings / nothing once granted); refreshes on mount and native app resume, mirroring `NotificationCaptureSettings.tsx`'s exact pattern.
+>
+> **Non-goals**: no permission revocation from within the app (Android provides no API for this at all — Request and Open Settings are the only two actions the OS actually allows); no polling/background change detection; no permission history (unaffected — that stays the Audit Log's job).
+>
+> `tsc -b`, `oxlint`, and the full test suite (**2393 tests, up from 2380** — 13 new: `permissionManagerService.test.ts` ×8, `PermissionManagerDrawer.test.tsx` ×5) are all clean, with **zero flakes reproduced this run** (not even the usual `RecipientLearning.integration`). `npm run build` succeeds; `:app:assembleDebug` succeeds (the first native/Java change of this task, confirming `AppSettingsPlugin.java` compiles and registers correctly) and the APK was reinstalled via `adb install -r`. **Verified live on the connected device (`10AE9R1ZJY001PY`)**: opened Settings > Permission Manager and confirmed all four permissions render their real on-device status (all "Granted" — Gallery, Location, and Local Notifications had already been granted from earlier Workout Tracker/Habit testing this session, Notification Access from Payment Notification Capture testing), a genuine cross-check that the aggregation reads real native state rather than only being unit-tested. Since every permission was already granted, the UI's own Request/Open Settings buttons had nothing to render — so the new native call was verified directly instead: invoking `window.Capacitor.Plugins.AppSettings.open()` over CDP genuinely navigated the device's foreground activity to `com.android.settings.applications.InstalledAppDetails` (confirmed via `adb shell dumpsys window` and a screenshot showing Nexus's real "App Info" screen, correctly listing "Notifications, Location, and Photos and videos" as its granted permissions — matching the Permission Manager's own findings exactly). **Files**: new `src/features/security/permissions/permissionManagerService.ts`(+test), `src/features/security/permissions/appSettingsPlugin.ts`, `src/features/security/components/PermissionManagerDrawer.tsx`(+test), `src/components/settings/PermissionManagerSettings.tsx`, `android/app/src/main/java/com/nexus/app/settings/AppSettingsPlugin.java`; touched `android/app/src/main/java/com/nexus/app/MainActivity.java` (plugin registration), `src/pages/Settings.tsx`, `src/i18n/translations.ts` (EN+TH), `src/features/finance/slipScanner/gallery/permission/galleryPermissionPlugin.ts` (stale-comment fix), `docs/SECURITY.md`, `docs/MODULES.md`.
 
 ---
 

@@ -5,12 +5,13 @@ import { registerPlugin, type PermissionState } from "@capacitor/core";
 // user-selected partial grant, surfaced by media plugins as "limited".
 export type PhotosPermissionState = PermissionState | "limited";
 
-// Native contract for reading gallery-image permission. Declared here (not
-// installed yet) so the permission manager compiles and degrades gracefully
-// today; a concrete native media plugin is wired on-device in a later GS
-// task. `registerPlugin` returns a proxy that rejects when no native/web
-// implementation is registered — galleryPermissionService catches that and
-// reports "unavailable", so nothing throws before the plugin exists.
+// Native contract for reading gallery-image permission -- backed by
+// GalleryMediaPlugin.java, registered under this exact Capacitor plugin
+// name ("GalleryPermissions", not "GalleryMediaPlugin"; confirmed live via
+// SEC-001's Permission Manager, which reads a real "granted"/"denied" status
+// from it on-device). `registerPlugin` still returns a proxy that rejects on
+// web (no native/web implementation there) -- galleryPermissionService
+// catches that and reports "unavailable", so nothing throws.
 export interface GalleryPermissionsPlugin {
   checkPermissions(): Promise<{ photos: PhotosPermissionState }>;
   requestPermissions(): Promise<{ photos: PhotosPermissionState }>;
