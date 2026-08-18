@@ -1,6 +1,6 @@
 # Project Tree
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-18
 
 ## Overview
 
@@ -218,6 +218,24 @@ Complete folder tree of the Nexus repository, generated from `git ls-files` (i.e
 │   │   │   ├── components/
 │   │   │   ├── constants/
 │   │   │   ├── hooks/
+│   │   │   ├── notificationCapture/ # Payment Notification Capture (Phase 1: SCB, K PLUS, Krungthai NEXT, เป๋าตัง) — see SECURITY.md, MODULES.md
+│   │   │   │   ├── components/
+│   │   │   │   │   └── PendingPaymentSheet.tsx
+│   │   │   │   ├── engine/
+│   │   │   │   │   ├── bankPackageRegistry.test.ts
+│   │   │   │   │   ├── bankPackageRegistry.ts
+│   │   │   │   │   ├── notificationTextParser.test.ts
+│   │   │   │   │   └── notificationTextParser.ts
+│   │   │   │   ├── hooks/
+│   │   │   │   │   └── usePendingNotificationCandidates.ts
+│   │   │   │   ├── models/
+│   │   │   │   │   ├── buildNotificationCandidate.test.ts
+│   │   │   │   │   └── buildNotificationCandidate.ts
+│   │   │   │   ├── native/
+│   │   │   │   │   └── notificationCapturePlugin.ts
+│   │   │   │   └── store/
+│   │   │   │       ├── pendingNotificationCandidateStore.test.ts
+│   │   │   │       └── pendingNotificationCandidateStore.ts
 │   │   │   ├── pages/
 │   │   │   ├── repositories/
 │   │   │   ├── schemas/
@@ -230,9 +248,35 @@ Complete folder tree of the Nexus repository, generated from `git ls-files` (i.e
 │   │   ├── portfolio/
 │   │   ├── reminders/                # shared native-notification infra (habits + schedule only)
 │   │   ├── schedule/                 # "Life Schedule" — replaced calendar/
+│   │   ├── security/                 # app-wide, persisted Audit Log (SEC-002) — see SECURITY.md, MODULES.md
+│   │   │   ├── components/
+│   │   │   │   ├── AuditLogDrawer.test.tsx
+│   │   │   │   └── AuditLogDrawer.tsx
+│   │   │   ├── auditLog.test.ts
+│   │   │   ├── auditLog.ts
+│   │   │   ├── auditLogRepository.test.ts
+│   │   │   ├── auditLogRepository.ts
+│   │   │   ├── dexieAuditSink.test.ts
+│   │   │   ├── dexieAuditSink.ts
+│   │   │   ├── securityAuditView.test.ts
+│   │   │   ├── securityAuditView.ts
+│   │   │   └── useAuditLog.ts
 │   │   ├── sync/                     # see DATABASE_SCHEMA.md, SECURITY.md
 │   │   ├── todo/
-│   │   └── trading/
+│   │   ├── trading/
+│   │   ├── vault/                    # passwords, secure notes, recovery keys; always-encrypted (VAULT-001..004) — see SECURITY.md, MODULES.md
+│   │   └── workouts/                 # Workout Tracker — exercise catalog, interval timer, GPS route tracking — see SECURITY.md, MODULES.md
+│   │       ├── components/
+│   │       ├── constants/
+│   │       ├── gps/
+│   │       ├── pages/
+│   │       ├── repositories/
+│   │       ├── schemas/
+│   │       ├── services/
+│   │       ├── store/
+│   │       ├── timer/
+│   │       ├── types/
+│   │       └── utils/
 │   ├── hooks/                        # cross-cutting hooks
 │   │   ├── useClickOutside.ts
 │   │   ├── useGlobalSearch.test.ts
@@ -327,12 +371,14 @@ Complete folder tree of the Nexus repository, generated from `git ls-files` (i.e
 └── vite.config.ts
 ```
 
-**Note on the `finance/`, `habits/`, `lock/`, `portfolio/`, `reminders/`, `schedule/`, `sync/`, `todo/`, `trading/` subtrees above:** several were collapsed one level for readability where their internal shape is identical to every other feature module (`components/`, `pages/`, `hooks/`, `store/`, `services/`, `repositories/`, `types/`, `schemas/`, `utils/` — see [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md) for the shape and [MODULES.md](MODULES.md) for each module's actual file contents). The `aiAnalytics/` subtree (~250 files) is summarized rather than fully expanded here since [AI_ANALYTICS.md](AI_ANALYTICS.md) documents its exact structure in full depth.
+**Note on the `finance/`, `habits/`, `lock/`, `portfolio/`, `reminders/`, `schedule/`, `sync/`, `todo/`, `trading/`, `vault/` subtrees above:** several were collapsed one level for readability where their internal shape is identical to every other feature module (`components/`, `pages/`, `hooks/`, `store/`, `services/`, `repositories/`, `types/`, `schemas/`, `utils/` — see [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md) for the shape and [MODULES.md](MODULES.md) for each module's actual file contents). `vault/` (added 2026-08-17) follows this same standard shape, so it's collapsed the same way. The `aiAnalytics/` subtree (~250 files) is summarized rather than fully expanded here since [AI_ANALYTICS.md](AI_ANALYTICS.md) documents its exact structure in full depth. `finance/notificationCapture/`, `security/`, and `workouts/` (all added 2026-08-16/17) are shown expanded instead, since none of the three matches the standard shape exactly (`security/` keeps most files flat at its root rather than sorting them into `services/`/`repositories/`/etc.; `workouts/` adds `gps/` and `timer/` subfolders that don't exist in any other module; `notificationCapture/` adds `engine/` and `native/`).
 
 ## Current Status
 
-This tree reflects the repository exactly as of the date above (generated from `git ls-files`, not hand-maintained) — regenerate by re-running the same command if the structure changes materially.
+This tree reflects the repository exactly as of the date above (generated from `git ls-files`, not hand-maintained) — regenerate by re-running the same command if the structure changes materially. Note: `src/features/finance/slipScanner/` (201 tracked files, added 2026-08-07) is **not yet represented** in the tree above — it predates this pass but was out of scope for it; see Future Improvements.
 
 ## Future Improvements
 
 Delete `src/features/calendar/` once a decision is made that no user's `calendarEvents` data still needs preserving (see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)), which would also let `db.ts` drop the `calendarEvents` table declaration entirely.
+
+Add `src/features/finance/slipScanner/` (201 tracked files — Gallery Scanner / QR+OCR slip import) to this tree. It predates this update pass (earliest commit 2026-08-07, before the doc's prior 2026-08-02 baseline) and was never added when this file was last regenerated; it's sizable enough (comparable to `aiAnalytics/`) to warrant the same summarized-rather-than-fully-expanded treatment, likely cross-referencing whatever document already covers it in depth (check [MODULES.md](MODULES.md) / [SECURITY.md](SECURITY.md) first).

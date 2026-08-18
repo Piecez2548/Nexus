@@ -1,6 +1,6 @@
 # Component Library
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-18
 
 ## Overview
 
@@ -86,6 +86,8 @@ Full breakdown in [MODULES.md](MODULES.md) under Sync/Encryption/Lock, and in [S
 ## Current Status
 
 All 21 `ui/` components are implemented and in active use except `FileField.tsx` (built, zero importers — see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)).
+
+Re-verified 2026-08-18 against `src/components/ui/` directly: still exactly 21 components, no additions or removals. The `vault/`, `workouts/`, and `security/` feature modules added since the last pass (see [PROJECT_TREE.md](PROJECT_TREE.md)) each bring their own feature-scoped components (`VaultEntryCard`/`VaultEntryForm`, `WorkoutExerciseCard`/`WorkoutEntryCard`/`WorkoutTimerDrawer`/`WorkoutTimerRing`/`WorkoutGpsTrackerDrawer`/`WorkoutRouteMap`, `AuditLogDrawer`) plus `finance/notificationCapture/`'s `PendingPaymentSheet` — consistent with this doc's existing scope, none of these belong here; they're documented in [MODULES.md](MODULES.md) alongside every other feature's own components (e.g. `TransactionForm.tsx`, `HabitCard.tsx`), not in this shared-`components/`-only file.
 
 ## Future Improvements
 

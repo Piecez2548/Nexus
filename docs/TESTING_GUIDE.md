@@ -1,16 +1,16 @@
 # Testing Guide
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-18
 
 ## Overview
 
-Testing is **extensively implemented already** — unit, integration, and e2e testing all exist as real, enforced parts of the development workflow (CI runs all three on every push/PR to `main`, see `.github/workflows/ci.yml`). This document deliberately does not use "Future Unit/Integration/E2E Testing" framing, since that would misrepresent a codebase that already has **224 unit test files, 22 integration test files, and 18 end-to-end spec files.**
+Testing is **extensively implemented already** — unit, integration, and e2e testing all exist as real, enforced parts of the development workflow (CI runs all three on every push/PR to `main`, see `.github/workflows/ci.yml`). This document deliberately does not use "Future Unit/Integration/E2E Testing" framing, since that would misrepresent a codebase that already has **343 unit test files, 27 integration test files, and 18 end-to-end spec files** — 2,286 individual Vitest test cases across the unit+integration files alone (2,281 passing on the most recent full `npx vitest run`; see Known Test-Infrastructure Flakiness below).
 
 ## Testing Strategy
 
 Three layers, each with a distinct purpose (see [CODING_STANDARDS.md](CODING_STANDARDS.md) for the naming convention that distinguishes them):
 
-1. **Unit tests** (`*.test.ts(x)`) — one function, hook, or store tested in isolation, collaborators mocked via `vi.mock`. The large majority of the suite (224 files) — most heavily concentrated in `src/features/finance/aiAnalytics/engine/` (pure-function calculators/analyzers are naturally unit-test-friendly) and every store/service/repository/schema across every module.
+1. **Unit tests** (`*.test.ts(x)`) — one function, hook, or store tested in isolation, collaborators mocked via `vi.mock`. The large majority of the suite (343 files) — most heavily concentrated in `src/features/finance/aiAnalytics/engine/` (93 files; pure-function calculators/analyzers are naturally unit-test-friendly) and every store/service/repository/schema across every module. (Exception observed in the newest modules: `vault/store/vaultEntryStore.test.ts` and `workouts/store/workoutEntryStore.test.ts` are plain `.test.ts` files but exercise the real Dexie instance directly with no `vi.mock` — functionally integration-style despite the unit-test filename.)
 2. **Integration tests** (`*.integration.test.ts(x)`) — no mocking. Either exercises a store against the real Dexie instance (via `fake-indexeddb`), or renders a full page component with Testing Library and interacts with it as a user would (`Transactions.integration.test.tsx`, `Dashboard.integration.test.tsx`, `RecipientLearning.integration.test.tsx`, etc.).
 3. **End-to-end tests** (Playwright, `e2e/*.spec.ts`) — a real Chromium browser against a real built-and-served app, covering full user flows across page boundaries (navigation, mobile layout, cross-feature flows like "add a transaction, see it reflected on the dashboard").
 
@@ -50,6 +50,8 @@ Used during active development for anything Playwright/Vitest can't easily cover
 ## Known Test-Infrastructure Flakiness
 
 Two integration tests (`TradingDashboard.integration.test.tsx`'s "shows zeroed stats with no trades" and `RecipientLearning.integration.test.tsx`'s "learns a recipient's category...") have been observed to intermittently fail **only** under full-parallel-suite resource contention, never when run in isolation (`npx vitest run <file>`). This is documented here as known pre-existing flakiness, not a regression to chase — re-running the full suite cleanly (with no concurrent file edits in flight) is the correct response if either shows up as a failure.
+
+**2026-08-18 note:** a single full-suite run (`npx vitest run`, 519.90s, 4 files / 5 tests failed out of 370 files / 2,286 tests) reproduced the `RecipientLearning.integration.test.tsx` failure above, plus three failures not on this list: `TradingJournal.integration.test.tsx` (2 tests, `Test timed out in 5000ms`) and `enableEncryption.test.ts` / `EncryptionRecoveryFlow.test.tsx` (1 each). Only one run was performed, so it's unconfirmed whether these three are the same full-suite-contention flakiness or a real regression — re-run each in isolation (`npx vitest run <file>`) to tell them apart before acting either way.
 
 ## Current Status
 

@@ -1,6 +1,6 @@
 # Nexus — Documentation
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-18
 
 ## Overview
 
@@ -20,12 +20,13 @@ This `/docs` folder is the single source of truth for how the codebase is actual
 
 See [MODULES.md](MODULES.md) for the full per-module breakdown and [ROADMAP.md](ROADMAP.md) for what's built vs. planned. At a glance, currently implemented:
 
-- **Finance**: transactions, accounts, categories, budgets, savings goals (with milestone events), recipient profiles with confidence-scored auto-categorization, a seeded merchant lookup, duplicate transaction/account/category merging, CSV/PDF/JSON export and CSV import, on-device Thai+English receipt-slip OCR (Tesseract.js).
+- **Finance**: transactions, accounts, categories, budgets, savings goals (with milestone events), recipient profiles with confidence-scored auto-categorization, a seeded merchant lookup, duplicate transaction/account/category merging (now self-healing — runs automatically on every sync pass, not just on manual request), CSV/PDF/JSON export and CSV import, on-device Thai+English receipt-slip OCR (Tesseract.js) with a full-gallery scanner (date-range-bounded scanning, native Android MediaStore enumeration), and Payment Notification Capture (one-tap transaction entry from a recognized banking app's own payment notification — SCB Easy, K PLUS, Krungthai NEXT, เป๋าตัง — with an income/expense selector).
 - **AI Analytics**: Financial Health Score (weighted, explainable), a ~46-rule Rule Engine, a Behavior Analysis engine (9 detectors + 8 domain analyzers), a Forecast engine (linear projection + an interactive what-if scenario simulator), a Recommendation engine (difficulty/impact/timeline-enriched), an Executive Summary report, and a keyword-classified AI Coach Q&A — see [AI_ANALYTICS.md](AI_ANALYTICS.md).
 - **Trading**: trade journal CRUD with full psychology/session/strategy metadata, a trading dashboard (win rate, profit factor, average RR, max drawdown, equity curve, drawdown chart, R-multiple risk distribution, per-session stats), CSV export, and heuristic (non-AI) market-type detection from a symbol.
 - **Portfolio**: manual holdings tracker with cost basis, user-entered current price, and unrealized P/L.
-- **Productivity**: Todo (priority + due date), Habit Tracker (daily/weekly streaks with a grace period, native reminders), Life Schedule (a recurring daily-routine timeline with drag-to-retime).
-- **Security & Sync**: device-local PIN + biometric app lock, optional Supabase email/password auth, optional client-side AES-GCM encryption-at-rest with PBKDF2 key derivation and account-password-based key escrow/recovery, a generic push/pull sync engine with tombstone-based deletion propagation and last-write-wins conflict handling.
+- **Productivity**: Todo (priority + due date), Habit Tracker (daily/weekly streaks with a grace period, native reminders), Life Schedule (a recurring daily-routine timeline with drag-to-retime), Workout Tracker (exercise catalog, work/rest interval timer with haptic feedback, real GPS route tracking with a live map, YouTube demo-video linking, calorie estimation).
+- **Vault**: an encrypted password manager, secure notes, and recovery-key store — one unified entry model, gated entirely behind encryption being enabled on the device.
+- **Security & Sync**: device-local PIN + biometric app lock, optional Supabase email/password auth, optional client-side AES-GCM encryption-at-rest with PBKDF2 key derivation and account-password-based key escrow/recovery, a generic push/pull sync engine with tombstone-based deletion propagation, last-write-wins conflict handling, and self-healing push-cursor repair, plus an app-wide, persisted Audit Log.
 - **Cross-cutting**: full Thai/English i18n, dark/light/system/mono themes, a gamification layer (XP + levels + streaks), global search across every entity type, a Capacitor Android wrapper.
 
 ## Tech Stack
@@ -39,6 +40,7 @@ See [MODULES.md](MODULES.md) for the full per-module breakdown and [ROADMAP.md](
 | Forms & validation | React Hook Form + Zod 4, with a `schema(t: TranslateFn)` factory pattern for i18n'd errors |
 | Routing | React Router 7 (`createBrowserRouter`, lazy-loaded route components) |
 | Charts | Recharts |
+| Maps | Leaflet + react-leaflet (OpenStreetMap tiles, no API key) |
 | Cloud sync (optional) | Supabase (Postgres + Auth) |
 | Encryption | Browser WebCrypto API (AES-GCM, PBKDF2) |
 | OCR | Tesseract.js (on-device, Thai + English) |
