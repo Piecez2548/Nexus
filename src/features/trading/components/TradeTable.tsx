@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, PlayCircle } from "lucide-react";
 
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTradingUIStore } from "@/features/trading/store/tradingUIStore";
@@ -8,6 +8,8 @@ import { getMarketLabels, getDirectionLabels, getStatusLabels } from "@/features
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import MobileRowCard from "@/components/ui/MobileRowCard";
+import Drawer from "@/components/ui/Drawer";
+import TradeReplayView from "@/features/trading/components/TradeReplayView";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { Trade } from "@/features/trading/types";
 
@@ -19,6 +21,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
   const { trades: storeTrades, deleteTrade } = useTradeStore();
   const { openTradeDrawer } = useTradingUIStore();
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [replayTrade, setReplayTrade] = useState<Trade | null>(null);
   const toast = useToast();
   const { t } = useTranslation();
   const marketLabels = getMarketLabels(t);
@@ -107,6 +110,14 @@ export default function TradeTable({ trades: propTrades }: Props) {
               }
               actions={
                 <>
+                  <button
+                    onClick={() => setReplayTrade(trade)}
+                    aria-label={t("trading.viewReplay", { symbol: trade.symbol })}
+                    className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
+                  >
+                    <PlayCircle size={16} />
+                  </button>
+
                   <button
                     onClick={() => openTradeDrawer(trade)}
                     aria-label={t("common.editName", { name: trade.symbol })}
@@ -202,6 +213,14 @@ export default function TradeTable({ trades: propTrades }: Props) {
                   <td className="px-6 py-4">
                     <div className="flex justify-center gap-3">
                       <button
+                        onClick={() => setReplayTrade(trade)}
+                        aria-label={t("trading.viewReplay", { symbol: trade.symbol })}
+                        className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
+                      >
+                        <PlayCircle size={18} />
+                      </button>
+
+                      <button
                         onClick={() => openTradeDrawer(trade)}
                         aria-label={t("common.editName", { name: trade.symbol })}
                         className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
@@ -225,6 +244,10 @@ export default function TradeTable({ trades: propTrades }: Props) {
         </table>
       </div>
       </div>
+
+      <Drawer open={replayTrade !== null} onClose={() => setReplayTrade(null)}>
+        {replayTrade && <TradeReplayView trade={replayTrade} />}
+      </Drawer>
     </div>
   );
 }

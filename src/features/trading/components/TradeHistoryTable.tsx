@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Image } from "lucide-react";
+import { Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Image, PlayCircle } from "lucide-react";
 
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTradingUIStore } from "@/features/trading/store/tradingUIStore";
@@ -8,6 +8,8 @@ import { getDirectionLabels, getEmotionLabels, getResultLabels } from "@/feature
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import MobileRowCard from "@/components/ui/MobileRowCard";
+import Drawer from "@/components/ui/Drawer";
+import TradeReplayView from "@/features/trading/components/TradeReplayView";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { Trade } from "@/features/trading/types";
 
@@ -45,6 +47,7 @@ export default function TradeHistoryTable({ trades }: Props) {
   const { deleteTrade } = useTradeStore();
   const { openTradeDrawer } = useTradingUIStore();
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [replayTrade, setReplayTrade] = useState<Trade | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("entryDate");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [page, setPage] = useState(1);
@@ -212,6 +215,14 @@ export default function TradeHistoryTable({ trades }: Props) {
             actions={
               <>
                 <button
+                  onClick={() => setReplayTrade(trade)}
+                  aria-label={t("trading.viewReplay", { symbol: trade.symbol })}
+                  className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
+                >
+                  <PlayCircle size={16} />
+                </button>
+
+                <button
                   onClick={() => openTradeDrawer(trade)}
                   aria-label={t("common.editName", { name: trade.symbol })}
                   className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
@@ -330,6 +341,14 @@ export default function TradeHistoryTable({ trades }: Props) {
                 <td className="px-4 py-4">
                   <div className="flex justify-center gap-3">
                     <button
+                      onClick={() => setReplayTrade(trade)}
+                      aria-label={t("trading.viewReplay", { symbol: trade.symbol })}
+                      className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
+                    >
+                      <PlayCircle size={18} />
+                    </button>
+
+                    <button
                       onClick={() => openTradeDrawer(trade)}
                       aria-label={t("common.editName", { name: trade.symbol })}
                       className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
@@ -405,6 +424,10 @@ export default function TradeHistoryTable({ trades }: Props) {
           </button>
         </div>
       </div>
+
+      <Drawer open={replayTrade !== null} onClose={() => setReplayTrade(null)}>
+        {replayTrade && <TradeReplayView trade={replayTrade} />}
+      </Drawer>
     </div>
   );
 }
