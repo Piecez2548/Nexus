@@ -1,6 +1,6 @@
 # Project Architecture
 
-**Last Updated:** 2026-08-19
+**Last Updated:** 2026-08-21
 
 ## Overview
 
@@ -36,7 +36,7 @@ Nexus is a **local-first, feature-first** single-page application. Every domain 
                 │ reads/writes
 ┌───────────────▼─────────────────────────────────────────────┐
 │  src/database/db.ts — one Dexie (IndexedDB) database,          │
-│  29 tables, 24 schema versions                                 │
+│  32 tables, 27 schema versions                                 │
 └─────────────────────────────────────────────────────────────┘
         ▲                                              ▲
         │ optional, opt-in                              │ optional, opt-in

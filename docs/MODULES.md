@@ -1,6 +1,6 @@
 # Modules
 
-**Last Updated:** 2026-08-19
+**Last Updated:** 2026-08-21
 
 ## Overview
 
@@ -150,23 +150,23 @@ The core Budget feature (recurring, per-category, live progress) predates this e
 
 **Purpose:** A trading journal and performance-analytics dashboard.
 
-**Routes:** `/trading` (dashboard), `/trading/journal`.
+**Routes:** `/trading` (dashboard), `/trading/journal`, `/trading/strategies`, `/trading/watchlist`, `/trading/economic-calendar`.
 
-**Features:** full trade CRUD (symbol, market, direction, entry/exit, stop-loss/take-profit, quantity, commission/swap/slippage, strategy/setup/session, before/after psychology fields, mistakes/lessons, notes, screenshots, tags); win rate, profit factor, average RR, max drawdown, today/weekly/monthly P/L; equity curve, drawdown %, daily P/L, and a 6-bucket realized R-multiple risk-distribution chart; per-session (Asian/London/New York/Sydney/overlap) stats; best/worst strategy by cumulative P/L; a performance calendar; heuristic (pattern-matching, not AI) market-type auto-detection from a symbol; CSV export; search/filter by symbol, strategy, direction, result.
+**Features:** full trade CRUD (symbol, market, direction, entry/exit, stop-loss/take-profit, quantity, commission/swap/slippage, strategy/setup/session, before/after psychology fields, mistakes/lessons, notes, screenshots, tags); win rate, profit factor, average RR, max drawdown, expectancy (mean realized R-multiple), average holding time, today/weekly/monthly P/L; equity curve, drawdown %, daily P/L, and a 6-bucket realized R-multiple risk-distribution chart; per-session (Asian/London/New York/Sydney/overlap) stats; best/worst strategy by cumulative P/L plus a full sortable per-strategy comparison table (trade count/win rate/total P/L/profit factor/average RR); a performance calendar; configurable daily/weekly max-loss limits with a breach banner; a read-only Trade Replay timeline (entry → position → exit → reflection) per trade, reusing only fields already on the Trade record — no external chart/price data; a Strategy Library/Playbook (entry/exit rules, risk notes per named strategy, offered back as `<datalist>` suggestions on the trade form's strategy field); a Watchlist (manual `targetPrice`, no live price feed); an Economic Calendar of user-logged events (no external economic-data API) with an upcoming-events Dashboard widget; heuristic (pattern-matching, not AI) market-type auto-detection from a symbol; CSV export; search/filter by symbol, strategy, direction, result.
 
-**Components:** `DailyPnlChart`, `DrawdownChart`, `EquityCurveChart`, `PerformanceCalendar`, `RiskDistributionChart`, `SessionAnalysisPanel`, `StrategyInsights`, `TradeCoreFields`/`TradeDrawer`/`TradeForm`/`TradeHistoryTable`/`TradeMetaFields`/`TradePsychologyFields`/`TradeRiskCalculator`/`TradeRiskFields`/`TradeTable`, `TradingQuickActions`, `TradingSummaryGrid`, `TradingToolbar`.
+**Components:** `DailyPnlChart`, `DrawdownChart`, `EconomicEventForm`/`EconomicEventList`, `EquityCurveChart`, `PerformanceCalendar`, `RiskDistributionChart`, `RiskLimitPanel`, `SessionAnalysisPanel`, `StrategyCard`/`StrategyForm`, `StrategyComparisonTable`, `StrategyInsights`, `TradeCoreFields`/`TradeDrawer`/`TradeForm`/`TradeHistoryTable`/`TradeMetaFields`/`TradePsychologyFields`/`TradeReplayView`/`TradeRiskCalculator`/`TradeRiskFields`/`TradeTable`, `TradingQuickActions`, `TradingSummaryGrid`, `TradingToolbar`, `UpcomingEconomicEvents`, `WatchlistForm`/`WatchlistTable`.
 
-**Services:** `tradeService` (generic `createCrudService`).
+**Services:** `tradeService`, `strategyService`, `watchlistService`, `economicEventService` (all generic `createCrudService`).
 
-**Stores:** `tradeStore` (fetch-on-mount cache; awards XP on trade close via `gamificationStore`), `tradingUIStore` (UI-only — trade drawer state).
+**Stores:** `tradeStore` (fetch-on-mount cache; awards XP on trade close via `gamificationStore`), `tradingUIStore` (UI-only — trade drawer state), `riskConfigStore` (`persist`-backed, local-only daily/weekly loss limits, no Dexie/sync), `strategyStore`, `watchlistStore`, `economicEventStore` (all fetch-on-mount caches, same shape as `tradeStore`).
 
-**Database usage:** `trades`.
+**Database usage:** `trades`, `strategies`, `watchlistItems`, `economicEvents`.
 
 **Dependencies:** none on other feature modules; `dashboard/` and `src/hooks/useGlobalSearch.ts` read this module's store.
 
-**Current Status:** Fully implemented.
+**Current Status:** Fully implemented, including everything under "Deeper Trading analytics" in [ROADMAP.md](ROADMAP.md)'s Planned section (expectancy, average holding time, strategy comparison, Strategy Library, Playbook, Trade Replay, Watchlist, Economic Calendar) and risk-management config with a breach banner.
 
-**Future Plans:** Per [ROADMAP.md](ROADMAP.md) — deeper trade analytics (expectancy, avg holding time, strategy comparison), risk-management config with alerts, a named Strategy Library, a Playbook, Trade Replay, Watchlist, Economic Calendar, and AI News/AI Trade Coach are all **not started**.
+**Future Plans:** AI News/AI Trade Coach remain **not started** — the only items from this module's roadmap entry not yet built.
 
 ---
 

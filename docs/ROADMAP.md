@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last Updated:** 2026-08-19
+**Last Updated:** 2026-08-21
 
 ## Overview
 
@@ -12,6 +12,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Transactions (5 types: income/expense/transfer/refund/adjustment), Accounts, Categories — full CRUD, in-use delete guards, duplicate merge
 - [x] Budgets (recurring, per-category, live progress) and Savings Goals (with a 25/50/75/100% milestone-event log)
 - [x] Recipient-based Learning Engine (confidence-scored auto-categorization) + seeded Merchant Database fallback
+- [x] Merchant Database management UI — full CRUD (previously seed-only/read-only)
 - [x] Recipient Profiles page (view/delete, read-only — profiles are server-derived)
 - [x] Duplicate transaction/account/category detection and merge
 - [x] Thai + English on-device receipt-slip OCR (Tesseract.js) with regex-based parsing
@@ -35,8 +36,13 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 
 ### Trading & Portfolio
 - [x] Trading Journal — full trade CRUD with psychology/session/strategy metadata
-- [x] Trading Dashboard — win rate, profit factor, average RR, max drawdown, equity curve, drawdown chart, R-multiple risk distribution, per-session stats, performance calendar
+- [x] Trading Dashboard — win rate, profit factor, average RR, max drawdown, expectancy, average holding time, equity curve, drawdown chart, R-multiple risk distribution, per-session stats, per-strategy comparison table, performance calendar
 - [x] Heuristic (non-AI) market-type detection, CSV export
+- [x] Risk Management config — configurable daily/weekly max-loss limits with a breach banner
+- [x] Trade Replay — a read-only entry/position/exit/reflection timeline per trade, reusing only fields already recorded on it (no external chart/price data)
+- [x] Strategy Library / Playbook — named strategies with entry/exit rules and risk notes, offered as suggestions on the trade form
+- [x] Watchlist — tracked symbols with a manual target price (no live price feed)
+- [x] Economic Calendar — user-logged trading-relevant events (no external economic-data API), with an upcoming-events Dashboard widget
 - [x] Portfolio — manual holdings tracker with cost basis and unrealized P/L
 
 ### Productivity
@@ -94,15 +100,16 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 
 - **Sync engine — a second hardening round.** The root cause of a real cross-device data mismatch (a transaction present on one device but never reaching the server) was traced to a subtle push-cursor bug: `pullTable()`'s cursor-advance nudge could push a device's own push cursor past a local, not-yet-pushed row, silently excluding it from every future sync pass with no error ever surfaced. Fixed at the source, plus a one-time, per-device self-healing migration that repairs any cursor already left stuck by the old behavior (safe to run unconditionally — re-pushing an already-synced row is a harmless idempotent upsert). Separately, duplicate account/category records left behind when two devices each seed their own defaults before ever syncing — previously only fixed by manually pressing "Merge Duplicates" in Settings — now merge automatically on every sync pass.
 
+- **Merchant Database management (schema v5's table, previously seed-only).** Full CRUD (`merchantService`/`merchantStore`/`MerchantForm`/`MerchantTable`, `/merchants` route) mirroring Category's own entity pattern most closely — deliberately kept local-only/unsynced/unencrypted like the table already was, since it's bundled reference data, not personal content.
+
+- **Deeper Trading analytics.** All eight items from this roadmap's former "Deeper Trading analytics" line, scoped and built in one pass: **Expectancy** and **average holding time** stats (mean realized R-multiple over trades with a stop-loss; mean entry-to-exit span, tolerating missing clock times); a full **Strategy Comparison** table (derived, no new entity); a read-only **Trade Replay** timeline reusing only fields already on a Trade (no external chart/price-history data — this app has none); a **Strategy Library / Playbook** and a **Watchlist** (`targetPrice` is a plain manual number, no live price feed — same precedent as Portfolio's Holdings), each a new synced+encrypted entity (schema v25/v26) following Trade's own `createRepository`/`createCrudService` pattern; and an **Economic Calendar** of user-logged events (schema v27, no external economic-data API), with a compact upcoming-events Dashboard widget — the one new entity that also gets a Dashboard preview, since Strategy Library/Watchlist are reference/management pages reached via nav only, matching Merchant's own precedent. (Risk Management config — daily/weekly max-loss limits with a breach banner — had already shipped separately; this roadmap's Planned section had simply gone stale on that point until now.)
+
 ## Planned
 
 Items explicitly implied as unfinished by the current architecture, in rough order of how directly the existing code already supports them:
 
 - **AI Gateway integration** — the seam (`AIProvider`, `LocalRuleProvider`) is fully built; wiring a real LLM provider (e.g. Claude) needs a backend proxy first, since an API key cannot safely live in client code. See [SECURITY.md](SECURITY.md), [DECISIONS.md](DECISIONS.md).
-- **Merchant Database management UI** — `merchants` is currently seed-only, no CRUD exists (`merchantRepository.ts` is read-only by design).
-- **Deeper Trading analytics** — expectancy, average holding time, strategy comparison, a named Strategy Library, a Playbook, Trade Replay, Watchlist, Economic Calendar.
-- **Risk Management config** (max daily/weekly loss limits + alerts) for Trading.
-- **Reports module** — no `Reports` page or route exists at all (not even a stub) as of this writing.
+- **Reports module** — no `Reports` page or route exists at all (not even a stub) as of this writing. Scoped: a financial-summary export (period income/expense/category breakdown, PDF+CSV) and an AI Analytics report export (Executive Summary + Health Score highlights, PDF), both reusing existing computed data (`useFinancialAnalysis()`) and the existing `jsPDF`/`downloadFile` export infrastructure (`transactionPdf.ts`) rather than new business logic.
 
 ## Future
 
