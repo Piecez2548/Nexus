@@ -11,6 +11,7 @@ import {
   NetWorth,
   Subscriptions,
   Categories,
+  Merchants,
   Budget,
   Goals,
   RecipientProfiles,
@@ -78,6 +79,10 @@ export const router = createBrowserRouter([
       {
         path: "categories",
         element: <Categories />,
+      },
+      {
+        path: "merchants",
+        element: <Merchants />,
       },
       {
         path: "recipients",

@@ -9,6 +9,7 @@ export const Accounts = lazy(() => import("@/features/finance/pages/Accounts"));
 export const NetWorth = lazy(() => import("@/features/finance/pages/NetWorth"));
 export const Subscriptions = lazy(() => import("@/features/finance/pages/Subscriptions"));
 export const Categories = lazy(() => import("@/features/finance/pages/Categories"));
+export const Merchants = lazy(() => import("@/features/finance/pages/Merchants"));
 export const Budget = lazy(() => import("@/features/finance/pages/Budget"));
 export const Goals = lazy(() => import("@/features/finance/pages/Goals"));
 export const RecipientProfiles = lazy(() => import("@/features/finance/pages/RecipientProfiles"));

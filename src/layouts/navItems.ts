@@ -6,6 +6,7 @@ import {
   Target,
   Landmark,
   Tags,
+  Store,
   Users,
   LineChart,
   BookOpen,
@@ -38,6 +39,7 @@ export const financeMenus: MenuItem[] = [
   { icon: Scale, labelKey: "nav.netWorth", path: "/net-worth" },
   { icon: Repeat, labelKey: "nav.subscriptions", path: "/subscriptions" },
   { icon: Tags, labelKey: "nav.categories", path: "/categories" },
+  { icon: Store, labelKey: "nav.merchants", path: "/merchants" },
   { icon: Users, labelKey: "nav.recipients", path: "/recipients" },
 ];
 
