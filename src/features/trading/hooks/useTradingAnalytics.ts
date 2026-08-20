@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
-import { calculatePnl } from "@/features/trading/utils/pnl";
+import { calculatePnl, calculateRealizedRMultiple } from "@/features/trading/utils/pnl";
 import type { Trade, TradingSession } from "@/features/trading/types";
 
 export interface EquityPoint {
@@ -35,25 +35,6 @@ const RISK_BUCKETS: { label: string; min: number; max: number }[] = [
   { label: "1R to 2R", min: 1, max: 2 },
   { label: "> 2R", min: 2, max: Infinity },
 ];
-
-// Realized R-multiple: PnL expressed as a multiple of the dollar amount
-// that was actually at risk (based on the stop-loss distance). Distinct
-// from pnl.ts's calculateRR, which is the *planned* reward:risk ratio of
-// the setup rather than the realized outcome.
-function realizedRMultiple(trade: Trade): number | null {
-  if (trade.stopLoss === undefined) return null;
-
-  const riskPerUnit = Math.abs(trade.entryPrice - trade.stopLoss);
-  if (riskPerUnit === 0) return null;
-
-  const pnl = calculatePnl(trade);
-  if (pnl === null) return null;
-
-  const riskAmount = riskPerUnit * trade.quantity;
-  if (riskAmount === 0) return null;
-
-  return pnl / riskAmount;
-}
 
 function sortByExitDate<T extends { exitDate?: string }>(trades: T[]): T[] {
   return [...trades].sort((a, b) => (a.exitDate ?? "").localeCompare(b.exitDate ?? ""));
@@ -96,7 +77,7 @@ export function useTradingAnalytics() {
       label: bucket.label,
       isPositive: bucket.min >= 0,
       count: closedTrades.filter((t) => {
-        const r = realizedRMultiple(t);
+        const r = calculateRealizedRMultiple(t);
         return r !== null && r >= bucket.min && r < bucket.max;
       }).length,
     }));

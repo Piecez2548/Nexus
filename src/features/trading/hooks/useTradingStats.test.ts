@@ -179,6 +179,52 @@ describe("useTradingStats", () => {
     });
   });
 
+  it("returns null expectancy/averageHoldingMinutes with no qualifying trades", () => {
+    const { result } = renderHook(() => useTradingStats());
+    expect(result.current.expectancy).toBeNull();
+    expect(result.current.averageHoldingMinutes).toBeNull();
+  });
+
+  it("computes expectancy only from closed trades that have a stop loss", () => {
+    seed([
+      // R = (110-100)*10 / (|100-95|*10) = 100/50 = 2
+      {
+        symbol: "AAPL", market: "stocks", direction: "long", status: "closed",
+        entryPrice: 100, exitPrice: 110, quantity: 10, stopLoss: 95,
+        entryDate: "2026-07-01", exitDate: "2026-07-01",
+      },
+      // No stop loss -- excluded from the expectancy average entirely.
+      {
+        symbol: "MSFT", market: "stocks", direction: "long", status: "closed",
+        entryPrice: 100, exitPrice: 200, quantity: 10,
+        entryDate: "2026-07-01", exitDate: "2026-07-01",
+      },
+    ]);
+
+    const { result } = renderHook(() => useTradingStats());
+    expect(result.current.expectancy).toBe(2);
+  });
+
+  it("computes averageHoldingMinutes only from closed trades with an exit date", () => {
+    seed([
+      {
+        symbol: "AAPL", market: "stocks", direction: "long", status: "closed",
+        entryPrice: 100, exitPrice: 110, quantity: 10,
+        entryDate: "2026-07-01", entryTime: "09:00",
+        exitDate: "2026-07-01", exitTime: "11:00", // 120 minutes
+      },
+      {
+        symbol: "MSFT", market: "stocks", direction: "long", status: "closed",
+        entryPrice: 100, exitPrice: 90, quantity: 10,
+        entryDate: "2026-07-01", entryTime: "09:00",
+        exitDate: "2026-07-01", exitTime: "09:30", // 30 minutes
+      },
+    ]);
+
+    const { result } = renderHook(() => useTradingStats());
+    expect(result.current.averageHoldingMinutes).toBe(75); // (120 + 30) / 2
+  });
+
   it("computes max drawdown across a losing streak", () => {
     seed([
       // +200 then -300 then +50 -> peak 200, trough -100, drawdown 300

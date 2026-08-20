@@ -68,6 +68,8 @@ export default function TradingDashboard() {
             averageRR={stats.averageRR}
             maxDrawdown={stats.maxDrawdown}
             openPositions={stats.openPositions}
+            expectancy={stats.expectancy}
+            averageHoldingMinutes={stats.averageHoldingMinutes}
           />
 
           <StrategyInsights

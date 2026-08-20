@@ -6,6 +6,8 @@ import {
   Scale,
   ArrowDownRight,
   Activity,
+  Sigma,
+  Timer,
 } from "lucide-react";
 
 import SummaryCard from "@/components/ui/SummaryCard";
@@ -20,6 +22,8 @@ interface Props {
   averageRR: number;
   maxDrawdown: number;
   openPositions: number;
+  expectancy: number | null;
+  averageHoldingMinutes: number | null;
 }
 
 function formatMoney(value: number): string {
@@ -31,6 +35,22 @@ function formatProfitFactor(value: number): string {
   return value.toFixed(2);
 }
 
+function formatExpectancy(value: number | null): string {
+  if (value === null) return "—";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}R`;
+}
+
+function formatHoldingTime(minutes: number | null): string {
+  if (minutes === null) return "—";
+  const total = Math.round(minutes);
+  const days = Math.floor(total / 1440);
+  const hours = Math.floor((total % 1440) / 60);
+  const mins = total % 60;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+}
+
 export default function TradingSummaryGrid({
   todayPnl,
   weeklyPnl,
@@ -40,6 +60,8 @@ export default function TradingSummaryGrid({
   averageRR,
   maxDrawdown,
   openPositions,
+  expectancy,
+  averageHoldingMinutes,
 }: Props) {
   const { t } = useTranslation();
 
@@ -99,6 +121,20 @@ export default function TradingSummaryGrid({
         value={maxDrawdown.toLocaleString(undefined, { maximumFractionDigits: 2 })}
         color="#dc2626"
         icon={<ArrowDownRight size={22} />}
+      />
+
+      <SummaryCard
+        title={t("trading.expectancy")}
+        value={formatExpectancy(expectancy)}
+        color={expectancy === null || expectancy >= 0 ? "#16a34a" : "#dc2626"}
+        icon={<Sigma size={22} />}
+      />
+
+      <SummaryCard
+        title={t("trading.averageHoldingTime")}
+        value={formatHoldingTime(averageHoldingMinutes)}
+        color="#7c3aed"
+        icon={<Timer size={22} />}
       />
     </div>
   );

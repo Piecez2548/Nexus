@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
-import { calculatePnl, calculateRR } from "@/features/trading/utils/pnl";
+import { calculatePnl, calculateRR, calculateRealizedRMultiple, calculateHoldingMinutes } from "@/features/trading/utils/pnl";
 import { isDateWithinRange, type PeriodRange } from "@/features/finance/utils/periodRange";
 import { toLocalDateString, parseLocalDate } from "@/utils/localDate";
 
@@ -104,6 +104,26 @@ export function useTradingStats(periodRange?: PeriodRange) {
         ? strategyEntries.reduce((a, b) => (b[1] < a[1] ? b : a))[0]
         : null;
 
+    // Expectancy: mean realized R-multiple across closed trades that have a
+    // stop-loss set (a trade without one has no risk baseline to express a
+    // multiple against, so it's excluded rather than treated as 0).
+    const rMultiples = closedTrades
+      .map(calculateRealizedRMultiple)
+      .filter((r): r is number => r !== null);
+    const expectancy =
+      rMultiples.length > 0 ? rMultiples.reduce((sum, v) => sum + v, 0) / rMultiples.length : null;
+
+    // Average holding time: mean minutes-held across closed trades with a
+    // computable span (see calculateHoldingMinutes for the missing-time
+    // default). null, not 0, when no closed trade qualifies.
+    const holdingMinutesValues = closedTrades
+      .map(calculateHoldingMinutes)
+      .filter((m): m is number => m !== null);
+    const averageHoldingMinutes =
+      holdingMinutesValues.length > 0
+        ? holdingMinutesValues.reduce((sum, v) => sum + v, 0) / holdingMinutesValues.length
+        : null;
+
     return {
       todayPnl,
       weeklyPnl,
@@ -116,6 +136,8 @@ export function useTradingStats(periodRange?: PeriodRange) {
       maxDrawdown,
       bestStrategy,
       worstStrategy,
+      expectancy,
+      averageHoldingMinutes,
       openPositions: trades.filter((t) => t.status === "open").length,
       totalClosedTrades: closedTrades.length,
     };
