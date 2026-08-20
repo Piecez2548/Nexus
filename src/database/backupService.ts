@@ -81,6 +81,8 @@ interface NexusBackup {
     netWorthSnapshots?: unknown[];
     subscriptions?: unknown[];
     budgetPeriodSnapshots?: unknown[];
+    strategies?: unknown[];
+    watchlistItems?: unknown[];
   };
 }
 
@@ -143,6 +145,8 @@ export async function exportBackup(): Promise<string> {
     netWorthSnapshots,
     subscriptions,
     budgetPeriodSnapshots,
+    strategies,
+    watchlistItems,
   ] = await Promise.all([
     db.transactions.toArray(),
     db.accounts.toArray(),
@@ -166,6 +170,8 @@ export async function exportBackup(): Promise<string> {
     db.netWorthSnapshots.toArray(),
     db.subscriptions.toArray(),
     db.budgetPeriodSnapshots.toArray(),
+    db.strategies.toArray(),
+    db.watchlistItems.toArray(),
   ]);
 
   const backup: NexusBackup = {
@@ -198,6 +204,8 @@ export async function exportBackup(): Promise<string> {
       netWorthSnapshots: await decryptForExport(dek, netWorthSnapshots),
       subscriptions: await decryptForExport(dek, subscriptions),
       budgetPeriodSnapshots: await decryptForExport(dek, budgetPeriodSnapshots),
+      strategies: await decryptForExport(dek, strategies),
+      watchlistItems: await decryptForExport(dek, watchlistItems),
     },
   };
 
@@ -242,6 +250,8 @@ function isNexusBackup(value: unknown): value is NexusBackup {
     "netWorthSnapshots",
     "subscriptions",
     "budgetPeriodSnapshots",
+    "strategies",
+    "watchlistItems",
   ];
   return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
 }
@@ -284,6 +294,8 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     netWorthSnapshots,
     subscriptions,
     budgetPeriodSnapshots,
+    strategies,
+    watchlistItems,
   ] = await Promise.all([
     encryptForImport(dek, "transactions", data.transactions),
     encryptForImport(dek, "accounts", data.accounts),
@@ -306,6 +318,8 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     encryptForImport(dek, "netWorthSnapshots", data.netWorthSnapshots ?? []),
     encryptForImport(dek, "subscriptions", data.subscriptions ?? []),
     encryptForImport(dek, "budgetPeriodSnapshots", data.budgetPeriodSnapshots ?? []),
+    encryptForImport(dek, "strategies", data.strategies ?? []),
+    encryptForImport(dek, "watchlistItems", data.watchlistItems ?? []),
   ]);
 
   // The plaintext syncIds the backup is about to re-add per table, keyed by
@@ -334,6 +348,8 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     netWorthSnapshots: data.netWorthSnapshots ?? [],
     subscriptions: data.subscriptions ?? [],
     budgetPeriodSnapshots: data.budgetPeriodSnapshots ?? [],
+    strategies: data.strategies ?? [],
+    watchlistItems: data.watchlistItems ?? [],
   };
 
   await db.transaction(
@@ -361,6 +377,8 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
       db.netWorthSnapshots,
       db.subscriptions,
       db.budgetPeriodSnapshots,
+      db.strategies,
+      db.watchlistItems,
       db.syncTombstones,
       db.syncState,
     ],
@@ -403,6 +421,8 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.netWorthSnapshots.clear(),
         db.subscriptions.clear(),
         db.budgetPeriodSnapshots.clear(),
+        db.strategies.clear(),
+        db.watchlistItems.clear(),
       ]);
 
       await Promise.all([
@@ -428,6 +448,8 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.netWorthSnapshots.bulkAdd(netWorthSnapshots as never[]),
         db.subscriptions.bulkAdd(subscriptions as never[]),
         db.budgetPeriodSnapshots.bulkAdd(budgetPeriodSnapshots as never[]),
+        db.strategies.bulkAdd(strategies as never[]),
+        db.watchlistItems.bulkAdd(watchlistItems as never[]),
       ]);
 
       // Same reasoning as resetAllData() -- a very old backup's rows may
@@ -467,6 +489,8 @@ export async function resetAllData(): Promise<void> {
       db.netWorthSnapshots,
       db.subscriptions,
       db.budgetPeriodSnapshots,
+      db.strategies,
+      db.watchlistItems,
       db.syncTombstones,
       db.syncState,
     ],
@@ -504,6 +528,8 @@ export async function resetAllData(): Promise<void> {
         db.netWorthSnapshots.clear(),
         db.subscriptions.clear(),
         db.budgetPeriodSnapshots.clear(),
+        db.strategies.clear(),
+        db.watchlistItems.clear(),
       ]);
 
       // The default accounts/categories seedDatabase() is about to write

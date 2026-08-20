@@ -74,3 +74,29 @@ export interface Trade extends SyncMeta {
   screenshots?: string[];
   tags?: string[];
 }
+
+// A user-authored playbook entry describing one trading strategy: when it
+// applies, the rules for entering/exiting it, and lessons learned. Distinct
+// from Trade.strategy (a free-text label on individual trades) -- this is
+// reference/documentation the user maintains once, not a per-trade field.
+export interface Strategy extends SyncMeta {
+  id?: number;
+  name: string;
+  description?: string;
+  market?: MarketType;
+  entryRules?: string;
+  exitRules?: string;
+  riskManagementNotes?: string;
+  tags?: string[];
+}
+
+// A symbol the user is tracking. No live price of any kind (this app has no
+// price feed, paid or otherwise -- see Holdings' own manual-price precedent)
+// -- targetPrice is a plain number the user compares against themselves.
+export interface WatchlistItem extends SyncMeta {
+  id?: number;
+  symbol: string;
+  market: MarketType;
+  targetPrice?: number;
+  notes?: string;
+}

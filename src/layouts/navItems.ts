@@ -10,6 +10,8 @@ import {
   Users,
   LineChart,
   BookOpen,
+  BookMarked,
+  Eye,
   Briefcase,
   ListChecks,
   Flame,
@@ -47,6 +49,8 @@ export const tradingMenus: MenuItem[] = [
   { icon: LineChart, labelKey: "nav.tradingDashboard", path: "/trading" },
   { icon: BookOpen, labelKey: "nav.tradingJournal", path: "/trading/journal" },
   { icon: Briefcase, labelKey: "nav.portfolio", path: "/trading/portfolio" },
+  { icon: BookMarked, labelKey: "nav.strategies", path: "/trading/strategies" },
+  { icon: Eye, labelKey: "nav.watchlist", path: "/trading/watchlist" },
 ];
 
 export const personalMenus: MenuItem[] = [

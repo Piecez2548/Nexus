@@ -32,6 +32,8 @@ describe("backupService", () => {
       db.netWorthSnapshots.clear(),
       db.subscriptions.clear(),
       db.budgetPeriodSnapshots.clear(),
+      db.strategies.clear(),
+      db.watchlistItems.clear(),
     ]);
     useAppLockStore.setState({ encryptionEnabled: false, wrappedDek: null, kekSalt: null, kekIterations: null });
     useEncryptionSessionStore.getState().clearDek();

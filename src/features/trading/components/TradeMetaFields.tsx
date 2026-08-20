@@ -13,9 +13,13 @@ const inputClassName =
 interface Props {
   control: Control<TradeFormData>;
   register: UseFormRegister<TradeFormData>;
+  // Strategy Library names, offered as suggestions -- not a hard foreign
+  // key, so free text (including names with no matching Strategy entry)
+  // stays valid, and no migration of existing trades is needed.
+  strategyNames?: string[];
 }
 
-export default function TradeMetaFields({ control, register }: Props) {
+export default function TradeMetaFields({ control, register, strategyNames = [] }: Props) {
   const { t } = useTranslation();
 
   return (
@@ -24,10 +28,16 @@ export default function TradeMetaFields({ control, register }: Props) {
         <FormField label={t("trading.strategyLabel")} htmlFor="trade-strategy">
           <input
             id="trade-strategy"
+            list="trade-strategy-suggestions"
             {...register("strategy")}
             placeholder={t("trading.strategyPlaceholder")}
             className={inputClassName}
           />
+          <datalist id="trade-strategy-suggestions">
+            {strategyNames.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
         </FormField>
 
         <FormField label={t("trading.setupLabel")} htmlFor="trade-setup">

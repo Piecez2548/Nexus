@@ -14,7 +14,7 @@ import type {
   Subscription,
   BudgetPeriodSnapshot,
 } from "@/features/finance/types";
-import type { Trade } from "@/features/trading/types";
+import type { Trade, Strategy, WatchlistItem } from "@/features/trading/types";
 import type { Todo } from "@/features/todo/types";
 import type { Habit } from "@/features/habits/types";
 import type { Holding } from "@/features/portfolio/types";
@@ -58,6 +58,8 @@ class NexusDatabase extends Dexie {
   public subscriptions;
   public budgetPeriodSnapshots;
   public slipScanCandidates;
+  public strategies;
+  public watchlistItems;
 
   constructor() {
     super("NexusDatabase");
@@ -354,6 +356,26 @@ class NexusDatabase extends Dexie {
         "++id,runId,assetId",
     });
 
+    // v25 adds the Strategy Library / Playbook: user-authored reference
+    // entries documenting a trading strategy's rules (distinct from
+    // Trade.strategy, a free-text label on individual trades -- see
+    // src/features/trading/types/index.ts). No unique-name constraint --
+    // strategy names may legitimately repeat across variations, so `name`
+    // is a plain index, not `&name`. Additive, no existing data touched.
+    this.version(25).stores({
+      strategies:
+        "++id,syncId,updatedAt",
+    });
+
+    // v26 adds the trading Watchlist: symbols the user is tracking, no live
+    // price of any kind (this app has no price feed, paid or otherwise --
+    // see Holdings' own manual-price precedent). Additive, no existing data
+    // touched.
+    this.version(26).stores({
+      watchlistItems:
+        "++id,symbol,syncId,updatedAt",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -440,6 +462,12 @@ class NexusDatabase extends Dexie {
 
     this.slipScanCandidates =
       this.table<ScanCandidateEntry, number>("slipScanCandidates");
+
+    this.strategies =
+      this.table<Strategy, number>("strategies");
+
+    this.watchlistItems =
+      this.table<WatchlistItem, number>("watchlistItems");
   }
 }
 

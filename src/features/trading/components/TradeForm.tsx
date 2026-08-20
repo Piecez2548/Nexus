@@ -8,6 +8,7 @@ import {
 } from "@/features/trading/schemas/tradeSchema";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTradingUIStore } from "@/features/trading/store/tradingUIStore";
+import { useStrategyStore } from "@/features/trading/store/strategyStore";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import { toLocalDateString } from "@/utils/localDate";
@@ -34,6 +35,7 @@ const blankValues: TradeFormData = {
 export default function TradeForm() {
   const { addTrade, updateTrade } = useTradeStore();
   const { selectedTrade, closeTradeDrawer } = useTradingUIStore();
+  const { strategies, loadStrategies } = useStrategyStore();
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
@@ -57,6 +59,10 @@ export default function TradeForm() {
     reset(selectedTrade ?? blankValues);
     setSubmitError(null);
   }, [selectedTrade, reset]);
+
+  useEffect(() => {
+    loadStrategies();
+  }, [loadStrategies]);
 
   async function onSubmit(data: TradeFormData) {
     setSubmitError(null);
@@ -101,7 +107,7 @@ export default function TradeForm() {
       <TradeCoreFields register={register} watch={watch} setValue={setValue} errors={errors} />
       <TradeRiskFields register={register} />
       <TradeRiskCalculator watch={watch} setValue={setValue} />
-      <TradeMetaFields control={control} register={register} />
+      <TradeMetaFields control={control} register={register} strategyNames={strategies.map((s) => s.name)} />
       <TradePsychologyFields register={register} />
 
       {submitError && (

@@ -24,6 +24,8 @@ import { useNetWorthItemStore } from "@/features/finance/store/netWorthItemStore
 import { useNetWorthSnapshotStore } from "@/features/finance/store/netWorthSnapshotStore";
 import { useSubscriptionStore } from "@/features/finance/store/subscriptionStore";
 import { useBudgetPeriodSnapshotStore } from "@/features/finance/store/budgetPeriodSnapshotStore";
+import { useStrategyStore } from "@/features/trading/store/strategyStore";
+import { useWatchlistStore } from "@/features/trading/store/watchlistStore";
 
 const SYNCED_TABLES: SyncTableName[] = [
   "transactions",
@@ -47,6 +49,8 @@ const SYNCED_TABLES: SyncTableName[] = [
   "netWorthSnapshots",
   "subscriptions",
   "budgetPeriodSnapshots",
+  "strategies",
+  "watchlistItems",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -426,6 +430,8 @@ const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
   netWorthSnapshots: () => useNetWorthSnapshotStore.getState().loadSnapshots(),
   subscriptions: () => useSubscriptionStore.getState().loadSubscriptions(),
   budgetPeriodSnapshots: () => useBudgetPeriodSnapshotStore.getState().loadSnapshots(),
+  strategies: () => useStrategyStore.getState().loadStrategies(),
+  watchlistItems: () => useWatchlistStore.getState().loadWatchlistItems(),
 };
 
 // Only reloads (and re-renders) stores whose underlying table actually

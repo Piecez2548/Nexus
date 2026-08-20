@@ -17,6 +17,8 @@ import {
   RecipientProfiles,
   TradingDashboard,
   TradingJournal,
+  Strategies,
+  Watchlist,
   Todo,
   Habits,
   Portfolio,
@@ -99,6 +101,14 @@ export const router = createBrowserRouter([
       {
         path: "trading/portfolio",
         element: <Portfolio />,
+      },
+      {
+        path: "trading/strategies",
+        element: <Strategies />,
+      },
+      {
+        path: "trading/watchlist",
+        element: <Watchlist />,
       },
       {
         path: "todo",
