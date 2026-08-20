@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useTranslation } from "@/i18n/useTranslation";
 import { useWhatIfScenario } from "@/features/finance/aiAnalytics/hooks/useWhatIfScenario";
+import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
 import type { GoalProgressEntry } from "@/features/finance/aiAnalytics/engine/analyzers/goalAnalyzer";
 import type { SpendingAnalysisResult } from "@/features/finance/aiAnalytics/engine/analyzers/spendingAnalysis";
 import type { SubscriptionEntry } from "@/features/finance/aiAnalytics/engine/analyzers/behaviorAnalysis";
@@ -152,7 +153,13 @@ export default function WhatIfScenarioPanel({ goalProgress, spendingAnalysis, su
               min={1}
               max={100}
               value={reduceFoodPercent}
-              onChange={(e) => setReduceFoodPercent(Number(e.target.value) || 0)}
+              // The min/max attributes above only gate native form-submit
+              // validation, not this onChange -- clamped here too, or a
+              // typed 500 (or a negative number) would compute a "500%
+              // savings" (or negative "savings" styled as a gain) headline
+              // figure, a mathematically impossible reduction of one's own
+              // spending.
+              onChange={(e) => setReduceFoodPercent(clamp(Number(e.target.value) || 0, 0, 100))}
               className="mt-1 w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-2 text-sm outline-none focus:border-brand-500"
             />
           </label>
