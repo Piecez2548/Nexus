@@ -89,4 +89,14 @@ export const createEncryptionKeySlice: StateCreator<AppLockState, [], [], Encryp
       kekIterations,
     });
   },
+
+  detachEncryption() {
+    useEncryptionSessionStore.getState().clearDek();
+    set({
+      encryptionEnabled: false,
+      wrappedDek: null,
+      kekSalt: null,
+      kekIterations: null,
+    });
+  },
 });

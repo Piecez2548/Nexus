@@ -1,6 +1,6 @@
 # Security
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-19
 
 ## Overview
 
@@ -67,7 +67,7 @@ Already implemented: Supabase email/password (see Layer 2). **Not implemented an
 
 ## Future Encryption
 
-Already implemented: enable, escrow, and account-password-based recovery (see Layer 3). **Not implemented:** a "disable encryption" flow — `appLockStore.ts` explicitly blocks turning off the PIN while encryption is enabled, citing the missing disable flow as the reason. This is the most concrete, verified security-related gap in the app today (see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)).
+Already implemented: enable, disable, escrow, and account-password-based recovery (see Layer 3). `disableEncryption()` (SEC-005) decrypts every table and verifies none remain encrypted before clearing the wrapped DEK and flipping `encryptionEnabled` off — only once that's done does `appLockStore.ts`'s `disableLock()` (turning off the PIN itself) stop refusing.
 
 ## Gallery Slip Scanner (GS epic)
 
@@ -132,14 +132,13 @@ A single dedicated view of every OS-level permission the app can request (SEC-00
 
 ## Security Recommendations
 
-- Build the missing "disable encryption" flow, or at minimum document the manual export/reset/re-import workaround clearly in-app.
 - Consider whether the PIN hash's threat model documentation should be surfaced to end users (e.g. in Settings copy), so a user who assumes PIN = "encryption-grade security" isn't misled.
 - If the AI Gateway (`src/ai/`) is ever wired to a real remote LLM provider, an API key must be proxied through a backend rather than embedded client-side — this is already correctly identified as a blocker in the codebase's own design (see [DECISIONS.md](DECISIONS.md)), just flagged here as a hard requirement, not a nice-to-have.
 - Wire the Gallery Scanner's own original audit event types (permission/import/scan/delete/validation/suspicious) into their real call sites — the mechanism and persistence are both real now, but nothing in the scanner actually calls `recordAudit` yet, same as before this Audit Log work.
 
 ## Current Status
 
-All three security layers are fully implemented and independently optional. The one confirmed functional gap is the missing "disable encryption" flow.
+All three security layers are fully implemented and independently optional, including the disable-encryption flow (SEC-005).
 
 ## Future Improvements
 

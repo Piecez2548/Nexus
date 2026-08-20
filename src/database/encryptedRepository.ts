@@ -83,7 +83,11 @@ export async function encryptRow<T extends SyncMeta & { id?: number }>(
 // migrated) or belong to an install that hasn't opted into encryption at
 // all — returned as-is. This tolerance is what makes a mid-migration table
 // (some rows encrypted, some not yet) safe to read from at any point.
-async function decryptRow<T>(dek: CryptoKey, row: EncryptedRow): Promise<T> {
+//
+// Exported for the same reason encryptRow is: so the "Disable Encryption"
+// migration can turn a row back into the exact plain shape a normal
+// repository read would produce, instead of a second copy of this logic.
+export async function decryptRow<T>(dek: CryptoKey, row: EncryptedRow): Promise<T> {
   if (row.encryptedContent === undefined) {
     return row as unknown as T;
   }

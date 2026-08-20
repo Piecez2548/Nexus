@@ -2,7 +2,7 @@
 
 Master registry of all planned and completed Nexus tasks, grouped by Epic. See [README.md](README.md) for conventions and lifecycle.
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-19
 
 ## Legend
 
@@ -19,7 +19,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | Vault | 4 | 4 | 0 | 0 | 0 |
 | Workout Tracker | 4 | 4 | 0 | 0 | 0 |
 | Finance | 4 | 4 | 0 | 0 | 0 |
-| Security | 4 | 4 | 0 | 0 | 0 |
+| Security | 5 | 5 | 0 | 0 | 0 |
 | Core | 3 | 3 | 0 | 0 | 0 |
 | Testing | 3 | 3 | 0 | 0 | 0 |
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
@@ -27,7 +27,7 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
 | Platform (PLT) | 20 | 20 | 0 | 0 | 0 |
-| **Total** | **112** | **112** | **0** | **0** | **0** |
+| **Total** | **113** | **113** | **0** | **0** | **0** |
 
 ---
 
@@ -174,7 +174,7 @@ Core transactions/budgets/goals/net worth/subscriptions are built — see [../do
 
 ## Security
 
-Backup/restore built via `backupService`; the Audit Log and Permission Manager both exist app-wide (`src/features/security/`) — see [../docs/SECURITY.md](../docs/SECURITY.md). All four Security epic items are now complete.
+Backup/restore built via `backupService`; the Audit Log and Permission Manager both exist app-wide (`src/features/security/`) — see [../docs/SECURITY.md](../docs/SECURITY.md). All five Security epic items are now complete.
 
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
@@ -182,6 +182,7 @@ Backup/restore built via `backupService`; the Audit Log and Permission Manager b
 | SEC-002 | Security | Audit Log | Medium | Completed | — |
 | SEC-003 | Security | Backup | High | Completed | — |
 | SEC-004 | Security | Restore | High | Completed | SEC-003 |
+| SEC-005 | Security | Disable Encryption Flow | High | Completed | — |
 
 > **SEC-002 delivered (2026-08-17, `a387f25`).** Not built from scratch — the Gallery Scanner already had a bounded, injectable-sink audit log (GS-017/GS-038, `scanAuditLog.ts`), but it was scaffolding: unpersisted (an in-memory ring buffer only), never actually wired to any sink, and called from no production code path at all (confirmed by direct grep before writing anything, not assumed from the docs, which had overstated it as already routed to storage). This task made it real and app-wide rather than building a second, parallel log next to a dormant one.
 >
@@ -212,6 +213,22 @@ Backup/restore built via `backupService`; the Audit Log and Permission Manager b
 > **Non-goals**: no permission revocation from within the app (Android provides no API for this at all — Request and Open Settings are the only two actions the OS actually allows); no polling/background change detection; no permission history (unaffected — that stays the Audit Log's job).
 >
 > `tsc -b`, `oxlint`, and the full test suite (**2393 tests, up from 2380** — 13 new: `permissionManagerService.test.ts` ×8, `PermissionManagerDrawer.test.tsx` ×5) are all clean, with **zero flakes reproduced this run** (not even the usual `RecipientLearning.integration`). `npm run build` succeeds; `:app:assembleDebug` succeeds (the first native/Java change of this task, confirming `AppSettingsPlugin.java` compiles and registers correctly) and the APK was reinstalled via `adb install -r`. **Verified live on the connected device (`10AE9R1ZJY001PY`)**: opened Settings > Permission Manager and confirmed all four permissions render their real on-device status (all "Granted" — Gallery, Location, and Local Notifications had already been granted from earlier Workout Tracker/Habit testing this session, Notification Access from Payment Notification Capture testing), a genuine cross-check that the aggregation reads real native state rather than only being unit-tested. Since every permission was already granted, the UI's own Request/Open Settings buttons had nothing to render — so the new native call was verified directly instead: invoking `window.Capacitor.Plugins.AppSettings.open()` over CDP genuinely navigated the device's foreground activity to `com.android.settings.applications.InstalledAppDetails` (confirmed via `adb shell dumpsys window` and a screenshot showing Nexus's real "App Info" screen, correctly listing "Notifications, Location, and Photos and videos" as its granted permissions — matching the Permission Manager's own findings exactly). **Files**: new `src/features/security/permissions/permissionManagerService.ts`(+test), `src/features/security/permissions/appSettingsPlugin.ts`, `src/features/security/components/PermissionManagerDrawer.tsx`(+test), `src/components/settings/PermissionManagerSettings.tsx`, `android/app/src/main/java/com/nexus/app/settings/AppSettingsPlugin.java`; touched `android/app/src/main/java/com/nexus/app/MainActivity.java` (plugin registration), `src/pages/Settings.tsx`, `src/i18n/translations.ts` (EN+TH), `src/features/finance/slipScanner/gallery/permission/galleryPermissionPlugin.ts` (stale-comment fix), `docs/SECURITY.md`, `docs/MODULES.md`.
+
+> **SEC-005 delivered (2026-08-19).** Item #5 of the architecture review's Suggested Refactoring Order and `docs/TECHNICAL_DEBT.md`'s top-ranked known issue: `enableEncryption()` could turn encryption-at-rest on with no way back — `disableLock()` refused to run while `encryptionEnabled` was true, pointing at "a separate, not-yet-built flow." Built `disableEncryption()`, the exact inverse migration.
+>
+> **Note on the task ID**: this was requested as "SEC-001," but SEC-001 through SEC-004 are already assigned (Permission Manager, Audit Log, Backup, Restore, all completed) — used SEC-005, the next free ID, rather than overwrite an existing entry.
+>
+> **The one load-bearing design decision**: `enableEncryption()` flips `encryptionEnabled: true` *before* its per-table encrypt loop (safe — an interrupted run just leaves some rows plaintext, already a tolerated mid-migration state). Disable does the *opposite* on purpose: decrypts and verifies every table first, flips `encryptionEnabled` off *last*. Reason: `unwrapDekForUnlock` (`encryptionKeySlice.ts`) never attempts to unwrap a DEK once `encryptionEnabled` is false, no matter what `wrappedDek` still holds — flipping the flag before every row is confirmed plaintext risks a permanent lockout if interrupted mid-way (flag says off, but `wrappedDek` is gone and some rows are still ciphertext, with no path back to the DEK). Flipping it last means every interruption point leaves `encryptionEnabled`/`wrappedDek` untouched and the app fully functional — the user just re-runs `disableEncryption()` to resume. Proven directly by a crash-simulation test (decrypt one table, simulate a stale lock + a cleared in-memory DEK exactly like a real crash, unlock again, resume, confirm both tables end up plaintext) and a round-trip test (disable, confirm plaintext, `enableEncryption()` again with a new PIN, confirm the re-encrypted data decrypts correctly).
+>
+> **Shared, not triplicated**: extracted `enableEncryption.ts`'s private table list/chunk size/migration-lock helpers into a new `migrationShared.ts` (`ENCRYPTABLE_TABLES`, `CHUNK_SIZE`, `MigrationAlreadyInProgressError`, `acquireMigrationLock`/`releaseMigrationLock`), used by both directions — the same lock key means an enable and a disable migration mutually exclude each other, not just themselves. `encryptedRepository.ts`'s private `decryptRow` was exported (mirroring why `encryptRow` already was) so the new migration reuses it instead of writing a third copy of the same decrypt-shape logic.
+>
+> **New store action**: `EncryptionKeySlice.detachEncryption()` (`src/store/appLock/encryptionKeySlice.ts`) — clears the session DEK and every locally wrapped-key field. Called only after every table is verified decrypted. `disableLock()`/`DisableLockForm.tsx` needed zero changes — they already refuse only while `encryptionEnabled` is true, and start working the moment this flow flips it off.
+>
+> **UI**: `DisableEncryptionForm.tsx`, wired into `EncryptionSettings.tsx` as a red "Disable Encryption" trigger shown only when encryption is on (same Drawer pattern as the existing "Update recovery key"). Warns the data becomes plaintext again, that **Vault becomes inaccessible until re-enabled** (confirmed via `Vault.tsx`'s existing `encryptionEnabled` gate — deliberate, unmodified, its data isn't lost, just gated the same way it was before encryption was ever turned on), and that the server-side recovery key is removed. That removal (`user_encryption_keys` row delete) is best-effort/non-blocking — by the point it runs, the operation has already fully succeeded locally, so a network failure there shouldn't surface as an error.
+>
+> `tsc -b`, `oxlint`, and the full test suite (**2422 tests, up from 2404 — net +18**: new `disableEncryption.test.ts` ×13 — including the crash-resume and round-trip tests above, plus a verification-failure test proving a silently-failed write is caught and blocks the flag flip — and `DisableEncryptionForm.test.tsx` ×5) are all clean. `npm run build` succeeds.
+>
+> **Not manually validated live in a browser.** Enabling encryption (a precondition for testing disable) requires signing in via Supabase Sync — this environment has `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` configured, but no test account credentials were available, and creating a real sign-up against it wasn't something to do unilaterally. The automated suite is the correctness evidence instead: it exercises the real production code (`disableEncryption`, `decryptTable`, `detachEncryption`, the shared migration lock) against a real Dexie/IndexedDB test environment end to end, with only the Supabase network calls mocked — including the exact crash/resume and full round-trip (enable → disable → plaintext → enable again → data still readable) scenarios. A live walkthrough is still recommended before this ships to real users.
 
 ---
 

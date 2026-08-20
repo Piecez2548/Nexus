@@ -1,6 +1,6 @@
 # Changelog
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-19
 
 ## Overview
 
@@ -12,7 +12,7 @@ This changelog is reconstructed directly from `git log` (189 commits, `26abcb9` 
 
 ## Timeline
 
-The full commit history spans **2026-07-25 to 2026-08-18**, with the AI Analytics module and several other major features landing on 2026-08-01 alone, and Gallery Scanner/Payment Notification Capture/Vault/Workout Tracker/sync hardening work concentrated in the 2026-08-15 to 2026-08-18 window.
+The full commit history spans **2026-07-25 to 2026-08-19**, with the AI Analytics module and several other major features landing on 2026-08-01 alone, Gallery Scanner/Payment Notification Capture/Vault/Workout Tracker/sync hardening work concentrated in the 2026-08-15 to 2026-08-18 window, and a full architecture review's refactoring order (sync perf, Drawer a11y, appLockStore slices, PLAINTEXT_KEYS, Disable Encryption) worked through on 2026-08-18/19.
 
 ## Major Milestones
 
@@ -174,6 +174,15 @@ A System Architecture Review (Architecture, Performance, Accessibility, Security
 ### Drawer focus management (2026-08-18)
 Second item worked from the full architecture review's priority order: `Drawer.tsx` — the app's single primary modal pattern, 27 files / 31 usages across nearly every feature's add/edit forms — had no focus management at all before this. A new shared `useModalA11y` hook (`src/components/ui/`) adds `role="dialog"`/`aria-modal`, moves focus into the panel on open (its first focusable descendant, falling back to the panel itself), traps Tab/Shift+Tab within it instead of escaping to the page behind, closes on Escape, and returns focus to whatever triggered it once closed. Built dependency-free rather than pulling in a focus-trap library, matching this project's general preference for small hand-rolled solutions to contained problems. Written generically enough that `DropdownPanel` (item #7 on the same priority list, not yet done — it also has no `onClose` prop today) can reuse it directly. 5 new tests covering focus-on-open, focus-trap wrapping in both directions, Escape, and return-focus-on-close; `tsc -b`/`oxlint`/full suite (**2404 tests**)/`npm run build` all clean, with only the pre-existing `TradingDashboard.integration` flake reproducing (confirmed unrelated, passes 4/4 in isolation).
 
+### appLockStore split into PIN/biometric/encryption-key slices (2026-08-19, `120e2da`)
+Third item from the review: `appLockStore.ts` conflated three concerns (PIN lock/session lifecycle, biometric credentials, encryption DEK orchestration) in one 376-line store, flagged as the security-critical file where that conflation costs the most. Split into Zustand slices under `src/store/appLock/` (`pinLockSlice`, `biometricSlice`, `encryptionKeySlice`), composed back into the exact same `useAppLockStore`/`EncryptionStateCorruptedError` public surface — same persist key, same `partialize` shape, zero changes to any of the 39 consumer files or the existing 24-test suite. Cross-cutting flows (`unlock`/`changePin`/`disableLock`/`completeRecovery`) stay in the PIN slice, reaching into the other two via plain exported helpers (`wrapDekForPin`, `unwrapDekForUnlock`, `resyncBiometricCredential`) rather than new public methods. `tsc -b`/`oxlint`/full suite (**2404 tests**, unchanged)/`npm run build` all clean.
+
+### Consolidate PLAINTEXT_KEYS into one source of truth (2026-08-19, `4292cb8`)
+Fourth item: which fields of an encrypted table stayed plaintext was hand-duplicated across `createRepository()` call sites, `backupService.ts`, and `enableEncryption.ts`, each admitting in its own comment that the other two had to be kept in sync manually. Added `src/database/plaintextKeys.ts` as the single canonical map; `createRepository()` now derives `plaintextKeys` from `tableName` automatically instead of accepting it as a per-call-site option, so a conflicting value can no longer be specified anywhere. `tsc -b`/`oxlint`/full suite (**2404 tests**)/`npm run build` all clean.
+
+### Disable Encryption flow — SEC-005 (2026-08-19)
+Fifth item, and `docs/TECHNICAL_DEBT.md`'s top-ranked known issue: encryption-at-rest could be turned on with no way back — `disableLock()` refused to run while `encryptionEnabled` was true, pointing at a "not-yet-built flow." Built `disableEncryption()`, the exact inverse of `enableEncryption()`. The one load-bearing design decision: enable flips `encryptionEnabled: true` *before* its per-table encrypt loop (safe — an interrupted run just leaves rows plaintext, an already-tolerated state); disable does the opposite on purpose, decrypting and verifying every table *before* flipping the flag off, because `unwrapDekForUnlock` never attempts to unwrap a DEK once the flag is false — flipping it early risked a permanent lockout if interrupted mid-way. Proven with a crash-simulation test and a full round-trip test (disable → plaintext → `enableEncryption()` again → data still reads correctly). Extracted `enableEncryption.ts`'s table list/chunk size/migration lock into a new `migrationShared.ts`, shared by both directions so they mutually exclude each other via the same lock; exported `encryptedRepository.ts`'s private `decryptRow` so the new migration reuses it instead of a third copy of the same logic. New `DisableEncryptionForm.tsx`, wired into `EncryptionSettings.tsx`, warning that Vault becomes inaccessible until re-enabled (confirmed via `Vault.tsx`'s existing gate) and that the server-side recovery key is removed (best-effort, non-blocking). 18 new tests (`disableEncryption.test.ts` ×13, `DisableEncryptionForm.test.tsx` ×5); `tsc -b`/`oxlint`/full suite (**2422 tests**)/`npm run build` all clean. Not yet manually validated live in a browser — doing so requires a signed-in Supabase test account, which wasn't available this session; see the SEC-005 entry in [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md).
+
 ## Implemented Features
 
 See [ROADMAP.md](ROADMAP.md)'s "Completed" section for the full current-state feature list across every module, and [MODULES.md](MODULES.md) for per-module detail.
@@ -184,7 +193,7 @@ See [ROADMAP.md](ROADMAP.md)'s "Planned" and "Future" sections. Headline item: w
 
 ## Current Status
 
-This changelog is accurate as of commit `6dde569` (2026-08-18): a sync-engine hardening round (self-healing push cursors, automatic account/category dedup), Workout Tracker, Vault, an app-wide Audit Log, Gallery Scanner date-range scanning, and Payment Notification Capture (Phase 1 through an income/expense type selector) — all landing on top of the 2026-08-15/16 real-device Gallery Scanner verification, live wiring, and speed investigation, the 2026-08-15 Slip Intelligence Phases 1-9 (commit `d092800`), the 2026-08-11 Gallery Slip Scanner post-launch stabilization work (commit `ec75eff`), the 2026-08-08 GS/PLT epic completion, and the 2026-08-07 documentation and AI Analytics quality passes.
+This changelog is accurate as of commit `4292cb8` (2026-08-19), plus the Disable Encryption flow (SEC-005) landing on top of it in this same session. Also on top of: a sync-engine hardening round (self-healing push cursors, automatic account/category dedup), Workout Tracker, Vault, an app-wide Audit Log, Gallery Scanner date-range scanning, and Payment Notification Capture (Phase 1 through an income/expense type selector) — all landing on top of the 2026-08-15/16 real-device Gallery Scanner verification, live wiring, and speed investigation, the 2026-08-15 Slip Intelligence Phases 1-9 (commit `d092800`), the 2026-08-11 Gallery Slip Scanner post-launch stabilization work (commit `ec75eff`), the 2026-08-08 GS/PLT epic completion, and the 2026-08-07 documentation and AI Analytics quality passes.
 
 ## Future Improvements
 

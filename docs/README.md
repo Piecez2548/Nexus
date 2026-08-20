@@ -1,6 +1,6 @@
 # Nexus — Documentation
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-19
 
 ## Overview
 
@@ -121,4 +121,4 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for the full build/release process on each ta
 
 ## Future Roadmap
 
-See [ROADMAP.md](ROADMAP.md) for the full Completed / In Progress / Planned / Future breakdown. Headline planned items: a real backend-driven multi-user architecture is explicitly **not** built (Supabase sync is a client-driven relay, not a backend service layer); the AI Gateway (`src/ai/`) is fully designed but intentionally not wired into any feature, reserved for a future real-LLM integration; there is no "disable encryption" flow yet, only enable/escrow/recover.
+See [ROADMAP.md](ROADMAP.md) for the full Completed / In Progress / Planned / Future breakdown. Headline planned items: a real backend-driven multi-user architecture is explicitly **not** built (Supabase sync is a client-driven relay, not a backend service layer); the AI Gateway (`src/ai/`) is fully designed but intentionally not wired into any feature, reserved for a future real-LLM integration.

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShieldCheck, ShieldAlert, Lock, KeyRound } from "lucide-react";
+import { ShieldCheck, ShieldAlert, ShieldOff, Lock, KeyRound } from "lucide-react";
 
 import { useAppLockStore } from "@/store/appLockStore";
 import { useAuthStore } from "@/features/sync/store/authStore";
@@ -7,6 +7,7 @@ import { isSyncConfigured } from "@/lib/supabaseClient";
 import Drawer from "@/components/ui/Drawer";
 import EnableEncryptionForm from "@/features/encryption/components/EnableEncryptionForm";
 import ReescrowDekForm from "@/features/encryption/components/ReescrowDekForm";
+import DisableEncryptionForm from "@/features/encryption/components/DisableEncryptionForm";
 import { useTranslation } from "@/i18n/useTranslation";
 import SettingsCard from "./SettingsCard";
 
@@ -17,6 +18,7 @@ export default function EncryptionSettings() {
   const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [reescrowOpen, setReescrowOpen] = useState(false);
+  const [disableOpen, setDisableOpen] = useState(false);
 
   return (
     <SettingsCard title={t("settings.encryptionTitle")} description={t("settings.encryptionDescription")}>
@@ -34,6 +36,15 @@ export default function EncryptionSettings() {
           >
             <KeyRound size={14} />
             {t("settings.encryptionReescrowButton")}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setDisableOpen(true)}
+            className="flex items-center gap-2 text-sm text-red-500 hover:underline"
+          >
+            <ShieldOff size={14} />
+            {t("settings.encryptionDisableButton")}
           </button>
         </>
       ) : !isSyncConfigured || !user ? (
@@ -67,6 +78,10 @@ export default function EncryptionSettings() {
 
       <Drawer open={reescrowOpen} onClose={() => setReescrowOpen(false)}>
         <ReescrowDekForm onDone={() => setReescrowOpen(false)} />
+      </Drawer>
+
+      <Drawer open={disableOpen} onClose={() => setDisableOpen(false)}>
+        <DisableEncryptionForm onDone={() => setDisableOpen(false)} />
       </Drawer>
     </SettingsCard>
   );

@@ -1,6 +1,6 @@
 # Technical Debt
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-19
 
 ## Overview
 
@@ -10,7 +10,6 @@ This document lists specific, verified issues found while reading the codebase f
 
 - **`src/features/calendar/` is orphaned.** Contains exactly one file, `types/index.ts`, whose own header comment explains the Calendar feature was retired in favor of Life Schedule, and the type + `calendarEvents` Dexie table are kept only so existing user data isn't destroyed. Confirmed via grep: zero UI/nav/feature code references `CalendarEvent`; only generic, schema-agnostic infrastructure (sync, backup, encryption migration) touches it, and only because those enumerate every table name mechanically. See [MODULES.md](MODULES.md).
 - **`src/components/ui/FileField.tsx` has zero importers.** Confirmed via repo-wide grep — not referenced by any component, page, or test. `MultiFileField.tsx` (its apparent successor, used by `TradeMetaFields.tsx`) appears to have superseded it. Dead code, safe to remove or worth a comment explaining why it's kept.
-- **No "disable encryption" flow exists.** `appLockStore.ts`'s `disableLock()` explicitly refuses to run while `encryptionEnabled` is true, with a comment stating encryption must be disabled first via "a separate, not-yet-built flow." `EncryptionSettings.tsx` has no UI for it either. A user who enables encryption today has no way to turn it back off through the app.
 - **Root `README.md` is still the unmodified Vite template** ("React + TypeScript + Vite... This template provides a minimal setup..."). The real project documentation now lives entirely in `/docs` — worth either replacing the root README with a short pointer to `/docs/README.md`, or leaving it as-is with an explicit note, since right now a first-time visitor to the repo root sees generic scaffolding text instead of what the project actually is.
 - **`package.json` version is still `0.0.0`** (the Vite template default) despite the app being under active, substantial development — see [CHANGELOG.md](CHANGELOG.md).
 - **`transactionCategorizer.ts`'s keyword rules are expense-oriented and don't auto-guess for an income candidate.** Payment Notification Capture can now produce income transactions (a bank notification isn't always an outgoing payment), and `candidateToTransaction.ts` deliberately skips the categorize() guess entirely for `type === "income"` rather than risk assigning an expense-shaped category name to an income row (found and fixed live on-device: leaving an income candidate uncategorized previously fell through to the same guess an expense would get). The safe fix is in place; the gap it leaves is that an income transaction confirmed without the user picking a category chip is left with no category at all, where a smarter income-aware guess (e.g. matching "Salary"/"เงินเดือน") could in principle suggest one.
@@ -37,7 +36,6 @@ This document lists specific, verified issues found while reading the codebase f
 
 ## Potential Risks
 
-- **Data loss risk if a user enables encryption and later needs to disable it** (e.g. to hand off a device, or if the app's encryption code has a bug) — there is currently no supported path back to plaintext short of a full export/reset/re-import cycle via `backupService.exportBackup()`/`resetAllData()`, which is manual and easy to get wrong under pressure.
 - **`translations.ts`'s size is a scaling risk, not a correctness risk today** — if the app adds many more features at the current pace, this file could become unwieldy enough to warrant splitting per-feature, even though the current flat structure with namespaced keys is entirely functional.
 - **Single-branch, direct-to-`main` git workflow** (confirmed: only `main` exists locally and on `origin`, no `.husky` hooks, no `CONTRIBUTING.md` before this sprint) — fine for a solo contributor, but would need a real branch/PR discipline before a second contributor joins, since CI (`ci.yml`) already supports `pull_request` triggers but nothing in the repo enforces using them.
 

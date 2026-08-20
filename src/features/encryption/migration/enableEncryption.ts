@@ -15,46 +15,21 @@ import {
 } from "@/features/encryption/crypto/encryption";
 import { encryptRow, type EncryptedRow } from "@/database/encryptedRepository";
 import { PLAINTEXT_KEYS } from "@/database/plaintextKeys";
+import {
+  ENCRYPTABLE_TABLES,
+  CHUNK_SIZE,
+  MigrationAlreadyInProgressError,
+  acquireMigrationLock,
+  releaseMigrationLock,
+} from "@/features/encryption/migration/migrationShared";
 import { recordAudit } from "@/features/security/auditLog";
 import type { SyncTableName } from "@/features/sync/types";
 import type { TranslateFn } from "@/i18n/useTranslation";
 
-// Mirrors src/features/sync/types.ts's SyncTableName union as an explicit
-// local list, rather than importing syncEngine.ts's private SYNCED_TABLES
-// constant — keeps this migration from requiring any change to the sync
-// engine itself (it needs none — see syncEngine.test.ts's opaque-blob
-// contract test).
-const TABLES_TO_MIGRATE: SyncTableName[] = [
-  "transactions",
-  "accounts",
-  "categories",
-  "recipientProfiles",
-  "budgets",
-  "goals",
-  "transactionTemplates",
-  "trades",
-  "todos",
-  "habits",
-  "holdings",
-  "calendarEvents",
-  "scheduleItems",
-  "goalMilestoneEvents",
-  // Always written already-encrypted (see vaultEntryRepository.ts) via the
-  // gate in Vault.tsx, so this normally migrates zero rows -- included for
-  // the same reason every other table is: consistency, and covering the
-  // edge case of a pre-existing row from before that gate existed.
-  "vaultEntries",
-  "workoutExercises",
-  "workoutEntries",
-  "netWorthItems",
-  "netWorthSnapshots",
-  "subscriptions",
-  "budgetPeriodSnapshots",
-];
-
-const CHUNK_SIZE = 200;
-const MIGRATION_LOCK_KEY = "encryption:migrationLock";
-const MIGRATION_LOCK_STALE_MS = 5 * 60 * 1000;
+// Re-exported so existing consumers (tests included) that import this class
+// from enableEncryption.ts keep working — the actual definition now lives in
+// migrationShared.ts, shared with disableEncryption.ts.
+export { MigrationAlreadyInProgressError };
 
 export type MigrationPhase = "backup" | "escrow" | "encrypting" | "verifying" | "done";
 
@@ -65,30 +40,6 @@ export interface MigrationProgress {
   currentTable?: SyncTableName;
   rowsDone?: number;
   rowsTotal?: number;
-}
-
-export class MigrationAlreadyInProgressError extends Error {
-  constructor() {
-    super("An encryption migration is already in progress");
-    this.name = "MigrationAlreadyInProgressError";
-  }
-}
-
-async function acquireMigrationLock(): Promise<void> {
-  const existing = await db.syncState.get(MIGRATION_LOCK_KEY);
-
-  if (existing) {
-    const timestamp = Number(existing.value.split(":")[1]);
-    if (Number.isFinite(timestamp) && Date.now() - timestamp < MIGRATION_LOCK_STALE_MS) {
-      throw new MigrationAlreadyInProgressError();
-    }
-  }
-
-  await db.syncState.put({ key: MIGRATION_LOCK_KEY, value: `${crypto.randomUUID()}:${Date.now()}` });
-}
-
-async function releaseMigrationLock(): Promise<void> {
-  await db.syncState.delete(MIGRATION_LOCK_KEY);
 }
 
 function downloadPlaintextBackup(json: string): void {
@@ -238,14 +189,14 @@ export async function enableEncryption({ pin, accountPassword, onProgress, trans
       await useAppLockStore.getState().attachEncryption(pin, dek);
     }
 
-    onProgress?.({ phase: "encrypting", tableIndex: 0, tableCount: TABLES_TO_MIGRATE.length });
-    for (let i = 0; i < TABLES_TO_MIGRATE.length; i++) {
-      const table = TABLES_TO_MIGRATE[i];
+    onProgress?.({ phase: "encrypting", tableIndex: 0, tableCount: ENCRYPTABLE_TABLES.length });
+    for (let i = 0; i < ENCRYPTABLE_TABLES.length; i++) {
+      const table = ENCRYPTABLE_TABLES[i];
       await migrateTable(table, dek, (rowsDone, rowsTotal) => {
         onProgress?.({
           phase: "encrypting",
           tableIndex: i,
-          tableCount: TABLES_TO_MIGRATE.length,
+          tableCount: ENCRYPTABLE_TABLES.length,
           currentTable: table,
           rowsDone,
           rowsTotal,
@@ -254,7 +205,7 @@ export async function enableEncryption({ pin, accountPassword, onProgress, trans
     }
 
     onProgress?.({ phase: "verifying" });
-    for (const table of TABLES_TO_MIGRATE) {
+    for (const table of ENCRYPTABLE_TABLES) {
       const ok = await verifyTableMigrated(table);
       if (!ok) {
         throw new Error(translate("settings.encryptionVerificationFailed", { table }));
@@ -262,7 +213,7 @@ export async function enableEncryption({ pin, accountPassword, onProgress, trans
     }
 
     onProgress?.({ phase: "done" });
-    recordAudit("encryption", "enabled", { tableCount: TABLES_TO_MIGRATE.length });
+    recordAudit("encryption", "enabled", { tableCount: ENCRYPTABLE_TABLES.length });
 
     // Best-effort — propagating the new ciphertext promptly is nice to
     // have, but a network hiccup right now shouldn't fail the migration

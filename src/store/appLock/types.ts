@@ -55,6 +55,14 @@ export interface EncryptionKeySlice {
   // generated and escrowed — wraps the given DEK with a PIN-derived KEK
   // and starts requiring it on unlock. Never generates a new DEK itself.
   attachEncryption: (pin: string, dek: CryptoKey) => Promise<void>;
+
+  // Called only by the "Disable Encryption" migration, and only after every
+  // row across every encryptable table has been decrypted back to plaintext
+  // and verified — never before. Clears the session DEK and every locally
+  // wrapped-key field; no PIN/DEK params needed since there's no key
+  // material to derive here, only state to clear (PIN verification for the
+  // whole disable operation already happened before any data was touched).
+  detachEncryption: () => void;
 }
 
 export type AppLockState = PinLockSlice & BiometricSlice & EncryptionKeySlice;

@@ -1,6 +1,6 @@
 # Project Architecture
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-19
 
 ## Overview
 
@@ -109,10 +109,9 @@ If a real backend is introduced in the future, the most natural seam is already 
 
 ## Current Status
 
-Fully implemented: the entire layered architecture described above, for all 15 feature modules, including the optional sync/encryption wrapper layers. See [MODULES.md](MODULES.md) for per-module status and [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) for known gaps (e.g. no "disable encryption" flow, one orphaned `calendar` module retained only for data-safety reasons).
+Fully implemented: the entire layered architecture described above, for all 15 feature modules, including the optional sync/encryption wrapper layers. See [MODULES.md](MODULES.md) for per-module status and [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) for known gaps (e.g. one orphaned `calendar` module retained only for data-safety reasons).
 
 ## Future Improvements
 
 - A real backend/API layer, if multi-user or server-side features are ever required (see "Future Backend Architecture" above).
 - Wiring `src/ai/`'s Gateway into a real LLM provider for a genuinely generative (not rule-based) assistant experience, without needing to change any calling code thanks to the existing interface seam.
-- A "disable encryption" flow (currently explicitly unbuilt — see `appLockStore.ts`'s own comment, cited in [SECURITY.md](SECURITY.md)).

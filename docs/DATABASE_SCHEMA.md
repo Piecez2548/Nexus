@@ -1,6 +1,6 @@
 # Database Schema
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-19
 
 ## Overview
 
@@ -281,4 +281,3 @@ Fully implemented through schema v23. All 21 sync-eligible tables + `merchants` 
 ## Future Improvements
 
 - Remove the `calendarEvents` table declaration once no user's data in it still needs preserving.
-- If a "disable encryption" flow is built (see [SECURITY.md](SECURITY.md)), it will need a new migration path symmetric to `enableEncryption.ts`.

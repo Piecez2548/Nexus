@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-19
 
 ## Overview
 
@@ -55,6 +55,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Generic push/pull sync engine, tombstone-based deletion propagation, last-write-wins conflict handling, malformed-row guard, self-healing push-cursor repair (a one-time per-device migration that clears any push cursor left stuck by a since-fixed nudge bug)
 - [x] App-wide, persisted Audit Log (auth, encryption, lock, vault, backup events — success/failure, never sensitive content)
 - [x] Permission Manager (SEC-001) — a single dedicated view of every OS-level permission the app requests (Gallery, Location, Local Notifications, Notification Access), with Request/Open Settings actions, replacing scattered inline permission checks
+- [x] Disable Encryption flow (SEC-005) — the symmetric inverse of `enableEncryption`: decrypts every table and verifies none remain encrypted before clearing the wrapped DEK, so the app can never be left with data permanently unreadable if interrupted partway through
 
 ### Platform & cross-cutting
 - [x] Full Thai/English i18n (validation messages included, via a `TranslateFn`-factory pattern)
@@ -98,7 +99,6 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 Items explicitly implied as unfinished by the current architecture, in rough order of how directly the existing code already supports them:
 
 - **AI Gateway integration** — the seam (`AIProvider`, `LocalRuleProvider`) is fully built; wiring a real LLM provider (e.g. Claude) needs a backend proxy first, since an API key cannot safely live in client code. See [SECURITY.md](SECURITY.md), [DECISIONS.md](DECISIONS.md).
-- **"Disable encryption" flow** — explicitly blocked in `appLockStore.ts` today with a comment naming it as future work; only enable/escrow/recover exist.
 - **Merchant Database management UI** — `merchants` is currently seed-only, no CRUD exists (`merchantRepository.ts` is read-only by design).
 - **Deeper Trading analytics** — expectancy, average holding time, strategy comparison, a named Strategy Library, a Playbook, Trade Replay, Watchlist, Economic Calendar.
 - **Risk Management config** (max daily/weekly loss limits + alerts) for Trading.

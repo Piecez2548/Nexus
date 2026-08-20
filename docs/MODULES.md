@@ -1,6 +1,6 @@
 # Modules
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-19
 
 ## Overview
 
@@ -336,21 +336,19 @@ The core Budget feature (recurring, per-category, live progress) predates this e
 
 **Route:** none (surfaced via `EncryptionSettings.tsx`).
 
-**Features:** AES-GCM 256-bit encryption of every synced row's business fields into one opaque `encryptedContent` blob (two fields — `recipientProfiles.recipientKey`, `budgets.category` — stay plaintext to preserve their unique-index lookups); a per-user Data Encryption Key (DEK) generated once, held only in memory at runtime; PBKDF2 (600,000 iterations) key derivation from either the device PIN (day-to-day unlock) or the user's Supabase account password (recovery escrow); a full migration flow (`enableEncryption`) that downloads a plaintext backup first, then re-encrypts every row in chunked batches with resumability; a "re-escrow" repair flow for a broken/wrong escrow password; an account-password-based recovery flow for a device that's lost its local PIN; a "catch-up" detector for a device that pulled already-encrypted rows from another device before ever enabling encryption itself.
+**Features:** AES-GCM 256-bit encryption of every synced row's business fields into one opaque `encryptedContent` blob (two fields — `recipientProfiles.recipientKey`, `budgets.category` — stay plaintext to preserve their unique-index lookups); a per-user Data Encryption Key (DEK) generated once, held only in memory at runtime; PBKDF2 (600,000 iterations) key derivation from either the device PIN (day-to-day unlock) or the user's Supabase account password (recovery escrow); a full migration flow (`enableEncryption`) that downloads a plaintext backup first, then re-encrypts every row in chunked batches with resumability; the symmetric inverse (`disableEncryption`) that decrypts every row back to plaintext, verifies none remain encrypted, and only then clears the wrapped DEK — deliberately the opposite flag-flip order from enable, so an interruption can never leave data permanently unreadable; a "re-escrow" repair flow for a broken/wrong escrow password; an account-password-based recovery flow for a device that's lost its local PIN; a "catch-up" detector for a device that pulled already-encrypted rows from another device before ever enabling encryption itself.
 
-**Components:** `EnableEncryptionForm`, `EncryptionRecoveryFlow`, `ReescrowDekForm`.
+**Components:** `EnableEncryptionForm`, `DisableEncryptionForm`, `EncryptionRecoveryFlow`, `ReescrowDekForm`.
 
-**Services:** none as a service layer — `crypto/encryption.ts` (WebCrypto primitives), `migration/enableEncryption.ts`, `migration/reescrowDek.ts`, `recovery/recoverDekFromEscrow.ts`, `catchUp.ts` are all free functions.
+**Services:** none as a service layer — `crypto/encryption.ts` (WebCrypto primitives), `migration/enableEncryption.ts`, `migration/disableEncryption.ts`, `migration/migrationShared.ts` (table list/chunk size/migration lock shared by both directions), `migration/reescrowDek.ts`, `recovery/recoverDekFromEscrow.ts`, `catchUp.ts` are all free functions.
 
 **Stores:** `encryptionSessionStore` (in-memory DEK only, deliberately never persisted).
 
-**Database usage:** reads/rewrites all 17 synced tables during migration (`migration/enableEncryption.ts`'s `TABLES_TO_MIGRATE`) — `vaultEntries` is included (normally migrates zero rows, since Vault always writes already-encrypted, but covers a pre-existing row from before that gate existed); `workoutExercises`/`workoutEntries` were missing from this list entirely when the Workout Tracker shipped (a pre-existing row would have silently stayed plaintext forever after enabling encryption) — found and fixed 2026-08-18. The encryption wrapper itself (`src/database/encryptedRepository.ts`) sits underneath every repository, not owned by this module.
+**Database usage:** reads/rewrites all 17 synced tables during migration (`migration/migrationShared.ts`'s `ENCRYPTABLE_TABLES`, shared by both `enableEncryption` and `disableEncryption`) — `vaultEntries` is included (normally migrates zero rows, since Vault always writes already-encrypted, but covers a pre-existing row from before that gate existed); `workoutExercises`/`workoutEntries` were missing from this list entirely when the Workout Tracker shipped (a pre-existing row would have silently stayed plaintext forever after enabling encryption) — found and fixed 2026-08-18. The encryption wrapper itself (`src/database/encryptedRepository.ts`) sits underneath every repository, not owned by this module.
 
 **Dependencies:** `src/features/sync/` (account-password escrow requires a signed-in Supabase user), `src/features/lock/` (the DEK is wrapped under the app-lock PIN for day-to-day unlock).
 
-**Current Status:** Implemented for enable/escrow/recover. **No "disable encryption" flow exists** — explicitly blocked in `appLockStore.ts` pending that flow being built (see [SECURITY.md](SECURITY.md), [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)).
-
-**Future Plans:** A disable-encryption flow.
+**Current Status:** Implemented for enable/disable/escrow/recover — see SEC-005 in [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md).
 
 ---
 
