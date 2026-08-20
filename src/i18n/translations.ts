@@ -748,6 +748,7 @@ export const translations = {
       riskLimitNoLimit: "No limit",
       riskLimitDailyBreached: "Today's loss ({{loss}}) has reached your max daily loss limit ({{limit}})",
       riskLimitWeeklyBreached: "This week's loss ({{loss}}) has reached your max weekly loss limit ({{limit}})",
+      filterUnknownResult: "Unknown",
     },
     todo: {
       pageTitle: "Todo",
@@ -1000,6 +1001,7 @@ export const translations = {
       unrealizedPnlLabel: "Unrealized P/L",
       noPriceYet: "Enter a current price to see P/L",
       noPriceYetShort: "No price yet",
+      percentNotApplicable: "N/A",
       priceAsOf: "Price as of {{date}}",
       currentPriceInputLabel: "Update current price for {{symbol}}",
       currentPricePlaceholder: "Current price",
@@ -3124,6 +3126,7 @@ export const translations = {
       riskLimitNoLimit: "ไม่จำกัด",
       riskLimitDailyBreached: "ขาดทุนวันนี้ ({{loss}}) ถึงขีดจำกัดขาดทุนสูงสุดต่อวัน ({{limit}}) แล้ว",
       riskLimitWeeklyBreached: "ขาดทุนสัปดาห์นี้ ({{loss}}) ถึงขีดจำกัดขาดทุนสูงสุดต่อสัปดาห์ ({{limit}}) แล้ว",
+      filterUnknownResult: "ไม่ทราบผล",
     },
     todo: {
       pageTitle: "รายการที่ต้องทำ",
@@ -3376,6 +3379,7 @@ export const translations = {
       unrealizedPnlLabel: "กำไร/ขาดทุนที่ยังไม่เกิดขึ้นจริง",
       noPriceYet: "กรอกราคาปัจจุบันเพื่อดูกำไร/ขาดทุน",
       noPriceYetShort: "ยังไม่มีราคา",
+      percentNotApplicable: "ไม่มีข้อมูล",
       priceAsOf: "ราคา ณ วันที่ {{date}}",
       currentPriceInputLabel: "อัปเดตราคาปัจจุบันของ {{symbol}}",
       currentPricePlaceholder: "ราคาปัจจุบัน",

@@ -96,7 +96,11 @@ export default function HoldingCard({ holding, onEdit }: Props) {
             <span className="text-zinc-400 dark:text-zinc-500">{t("portfolio.noPriceYetShort")}</span>
           ) : (
             <span className={valuation.unrealizedPnl >= 0 ? "text-green-500" : "text-red-500"}>
-              {formatMoney(valuation.unrealizedPnl)} ({formatMoney(valuation.unrealizedPnlPercent ?? 0)}%)
+              {formatMoney(valuation.unrealizedPnl)} (
+              {valuation.unrealizedPnlPercent === null
+                ? t("portfolio.percentNotApplicable")
+                : `${formatMoney(valuation.unrealizedPnlPercent)}%`}
+              )
             </span>
           )}
         </div>
