@@ -85,6 +85,27 @@ describe("useGpsTracker", () => {
     expect(mockClearWatch).toHaveBeenCalledWith({ id: "watch-1" });
   });
 
+  it("clamps elapsed time at 0 instead of going negative if the device clock jumps backward mid-session", async () => {
+    // Regression: liveActiveMs computed `now - runStartedAt` with no floor,
+    // so a backward clock jump (DST fallback, manual time change, NTP
+    // resync) could produce a negative totalElapsedSeconds.
+    const { result } = renderHook(() => useGpsTracker());
+    await act(async () => {
+      await result.current.start();
+    });
+
+    act(() => vi.advanceTimersByTime(5_000));
+    act(() => vi.setSystemTime(new Date("2026-08-16T23:00:00.000Z"))); // clock jumps back 1 hour
+
+    let stopResult;
+    await act(async () => {
+      stopResult = await result.current.stop();
+    });
+
+    expect(stopResult!.totalElapsedSeconds).toBe(0);
+    expect(stopResult!.totalElapsedSeconds).not.toBeLessThan(0);
+  });
+
   it("resets back to idle with an empty route", async () => {
     const { result } = renderHook(() => useGpsTracker());
     await act(async () => {

@@ -122,6 +122,26 @@ describe("useIntervalTimer", () => {
     expect(finishResult!.roundsCompleted).toBe(2);
   });
 
+  it("clamps elapsed time at 0 instead of going negative if the device clock jumps backward mid-session", () => {
+    // Regression: liveActiveMs computed `now - runStartedAt` with no floor,
+    // so a backward clock jump (DST fallback, manual time change, NTP
+    // resync) could produce a negative totalElapsedSeconds -- and from
+    // there a negative calorie count on the saved workout entry.
+    const longConfig = { workSeconds: 30, restSeconds: 10, totalRounds: 3 };
+    const { result } = renderHook(() => useIntervalTimer(longConfig));
+    act(() => result.current.start(longConfig));
+
+    act(() => vi.advanceTimersByTime(5_000)); // 5s of real elapsed time banked
+    act(() => vi.setSystemTime(new Date("2026-08-16T23:00:00.000Z"))); // clock jumps back 1 hour
+
+    let finishResult;
+    act(() => {
+      finishResult = result.current.finish();
+    });
+    expect(finishResult!.totalElapsedSeconds).toBe(0);
+    expect(finishResult!.totalElapsedSeconds).not.toBeLessThan(0);
+  });
+
   it("reset returns to idle without producing a summary", () => {
     const { result } = renderHook(() => useIntervalTimer(config));
     act(() => result.current.start(config));

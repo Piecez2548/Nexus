@@ -9,8 +9,13 @@ function idleState(): GpsTrackerState {
   return { status: "idle", route: [], runStartedAt: null, bankedActiveMs: 0 };
 }
 
+// Floored at 0: a monotonic clock isn't available cross-platform here, so a
+// backward jump in the device clock (DST fallback, manual time change, NTP
+// resync) could otherwise produce a negative value that flows into a
+// negative duration and negative calories on the saved workout entry.
 function liveActiveMs(state: GpsTrackerState, now: number): number {
-  return state.bankedActiveMs + (state.status === "tracking" && state.runStartedAt !== null ? now - state.runStartedAt : 0);
+  const elapsed = state.status === "tracking" && state.runStartedAt !== null ? Math.max(0, now - state.runStartedAt) : 0;
+  return state.bankedActiveMs + elapsed;
 }
 
 // Ephemeral hook, not a Zustand store -- same reasoning as useIntervalTimer:

@@ -25,9 +25,14 @@ function idleState(config: TimerConfig): TimerState {
 
 // Timestamp-based, not per-tick decrement -- immune to drift if a render is
 // delayed, since everything derives from Date.now() rather than an
-// accumulated subtraction.
+// accumulated subtraction. The elapsed term is floored at 0: a monotonic
+// clock isn't available cross-platform here, so a backward jump in the
+// device clock (DST fallback, manual time change, NTP resync) could
+// otherwise produce a negative value that flows into a negative duration
+// and negative calories on the saved workout entry.
 export function liveActiveMs(state: TimerState, now: number): number {
-  return state.bankedActiveMs + (state.status === "running" && state.runStartedAt !== null ? now - state.runStartedAt : 0);
+  const elapsed = state.status === "running" && state.runStartedAt !== null ? Math.max(0, now - state.runStartedAt) : 0;
+  return state.bankedActiveMs + elapsed;
 }
 
 export function remainingMs(state: TimerState, now: number): number {
