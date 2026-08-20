@@ -1,5 +1,6 @@
 import { categoryRepository } from "@/features/finance/repositories/categoryRepository";
 import { transactionRepository } from "@/features/finance/repositories/transactionRepository";
+import { budgetRepository } from "@/features/finance/repositories/budgetRepository";
 import { translate } from "@/i18n/useTranslation";
 import type { Category, Transaction } from "../types";
 
@@ -13,10 +14,22 @@ export const categoryService = {
 
   async remove(id: number, categoryName: string) {
     const transactions = await transactionRepository.getAll();
-    const inUse = transactions.some((t) => t.category === categoryName);
+    const inUseByTransaction = transactions.some((t) => t.category === categoryName);
 
-    if (inUse) {
+    if (inUseByTransaction) {
       throw new Error(translate("categories.deleteInUseError"));
+    }
+
+    // A category with zero transactions can still have a Budget scoped to
+    // it (budgets.category has its own unique Dexie index, independent of
+    // whether any spend has happened yet) -- without this check, deleting
+    // it would silently orphan that budget, leaving it referencing a
+    // category name that no longer exists anywhere.
+    const budgets = await budgetRepository.getAll();
+    const inUseByBudget = budgets.some((b) => b.category === categoryName);
+
+    if (inUseByBudget) {
+      throw new Error(translate("categories.deleteInUseByBudgetError"));
     }
 
     await categoryRepository.remove(id);
