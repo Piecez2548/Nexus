@@ -4,7 +4,7 @@ import { Pencil, Trash2, ArrowUp, ArrowDown, ArrowUpDown, Image } from "lucide-r
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTradingUIStore } from "@/features/trading/store/tradingUIStore";
 import { calculatePnl, calculateRR, calculateResult } from "@/features/trading/utils/pnl";
-import { DIRECTION_LABELS, EMOTION_LABELS, RESULT_LABELS } from "@/features/trading/constants/labels";
+import { getDirectionLabels, getEmotionLabels, getResultLabels } from "@/features/trading/constants/labels";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import MobileRowCard from "@/components/ui/MobileRowCard";
@@ -50,6 +50,9 @@ export default function TradeHistoryTable({ trades }: Props) {
   const [page, setPage] = useState(1);
   const toast = useToast();
   const { t } = useTranslation();
+  const directionLabels = getDirectionLabels(t);
+  const emotionLabels = getEmotionLabels(t);
+  const resultLabels = getResultLabels(t);
 
   const rows: Row[] = useMemo(
     () =>
@@ -184,10 +187,10 @@ export default function TradeHistoryTable({ trades }: Props) {
                       : "bg-red-500/15 text-red-400"
                   }`}
                 >
-                  {DIRECTION_LABELS[trade.direction]}
+                  {directionLabels[trade.direction]}
                 </span>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${RESULT_BADGE_CLASS[result]}`}>
-                  {RESULT_LABELS[result]}
+                  {resultLabels[result]}
                 </span>
                 {rr !== null && (
                   <span className="text-xs text-zinc-500 dark:text-zinc-400">{rr.toFixed(2)}R</span>
@@ -269,7 +272,7 @@ export default function TradeHistoryTable({ trades }: Props) {
                         : "bg-red-500/15 text-red-400"
                     }`}
                   >
-                    {DIRECTION_LABELS[trade.direction]}
+                    {directionLabels[trade.direction]}
                   </span>
                 </td>
 
@@ -296,7 +299,7 @@ export default function TradeHistoryTable({ trades }: Props) {
                 <td className="px-4 py-4 text-zinc-700 dark:text-zinc-300">{trade.strategy ?? "-"}</td>
 
                 <td className="px-4 py-4 text-center text-zinc-700 dark:text-zinc-300">
-                  {trade.emotionBefore ? EMOTION_LABELS[trade.emotionBefore] : "-"}
+                  {trade.emotionBefore ? emotionLabels[trade.emotionBefore] : "-"}
                 </td>
 
                 <td className="px-4 py-4 text-center">
@@ -320,7 +323,7 @@ export default function TradeHistoryTable({ trades }: Props) {
 
                 <td className="px-4 py-4 text-center">
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${RESULT_BADGE_CLASS[result]}`}>
-                    {RESULT_LABELS[result]}
+                    {resultLabels[result]}
                   </span>
                 </td>
 

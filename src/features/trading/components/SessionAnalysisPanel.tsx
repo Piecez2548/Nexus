@@ -1,11 +1,12 @@
 import { useTradingAnalytics } from "@/features/trading/hooks/useTradingAnalytics";
-import { SESSION_LABELS } from "@/features/trading/constants/labels";
+import { getSessionLabels } from "@/features/trading/constants/labels";
 import { useTranslation } from "@/i18n/useTranslation";
 
 export default function SessionAnalysisPanel() {
   const { sessionStats } = useTradingAnalytics();
   const sorted = [...sessionStats].sort((a, b) => b.totalPnl - a.totalPnl);
   const { t } = useTranslation();
+  const sessionLabels = getSessionLabels(t);
 
   return (
     <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
@@ -23,7 +24,7 @@ export default function SessionAnalysisPanel() {
               className="flex items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 p-3"
             >
               <div>
-                <p className="font-medium">{SESSION_LABELS[stat.session]}</p>
+                <p className="font-medium">{sessionLabels[stat.session]}</p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   {t("trading.tradesN", { count: stat.tradeCount })} · {t("dashboard.winRate")} {stat.winRate.toFixed(0)}%
                 </p>

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { holdingSchema, type HoldingFormData } from "@/features/portfolio/schemas/holdingSchema";
 import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
-import { MARKET_LABELS } from "@/features/trading/constants/labels";
+import { getMarketLabels } from "@/features/trading/constants/labels";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
@@ -87,7 +87,7 @@ export default function HoldingForm({ holding, onDone }: Props) {
 
       <FormField label={t("portfolio.marketLabel")} htmlFor="holding-market" error={errors.market?.message}>
         <select id="holding-market" {...register("market")} className={inputClassName}>
-          {Object.entries(MARKET_LABELS).map(([value, label]) => (
+          {Object.entries(getMarketLabels(t)).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>

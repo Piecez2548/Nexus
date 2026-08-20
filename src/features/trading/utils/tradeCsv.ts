@@ -1,6 +1,7 @@
 import { rowsToCsv } from "@/utils/csv";
 import { calculatePnl, calculateRR, calculateResult } from "@/features/trading/utils/pnl";
-import { MARKET_LABELS, DIRECTION_LABELS, EMOTION_LABELS, RESULT_LABELS } from "@/features/trading/constants/labels";
+import { getMarketLabels, getDirectionLabels, getEmotionLabels, getResultLabels } from "@/features/trading/constants/labels";
+import { translate } from "@/i18n/useTranslation";
 import type { Trade } from "@/features/trading/types";
 
 const HEADERS = [
@@ -28,6 +29,11 @@ function forceTextForExcel(value: string): string {
 }
 
 export function tradesToCsv(trades: Trade[]): string {
+  const marketLabels = getMarketLabels(translate);
+  const directionLabels = getDirectionLabels(translate);
+  const emotionLabels = getEmotionLabels(translate);
+  const resultLabels = getResultLabels(translate);
+
   const rows = trades.map((t) => {
     const pnl = calculatePnl(t);
     const rr = calculateRR(t);
@@ -35,8 +41,8 @@ export function tradesToCsv(trades: Trade[]): string {
     return [
       forceTextForExcel(t.entryDate),
       t.symbol,
-      MARKET_LABELS[t.market],
-      DIRECTION_LABELS[t.direction],
+      marketLabels[t.market],
+      directionLabels[t.direction],
       String(t.quantity),
       String(t.entryPrice),
       t.exitPrice !== undefined ? String(t.exitPrice) : "",
@@ -44,8 +50,8 @@ export function tradesToCsv(trades: Trade[]): string {
       t.riskPercent !== undefined ? `${t.riskPercent}%` : "",
       rr !== null ? rr.toFixed(2) : "",
       t.strategy ?? "",
-      t.emotionBefore ? EMOTION_LABELS[t.emotionBefore] : "",
-      RESULT_LABELS[calculateResult(t)],
+      t.emotionBefore ? emotionLabels[t.emotionBefore] : "",
+      resultLabels[calculateResult(t)],
     ];
   });
 

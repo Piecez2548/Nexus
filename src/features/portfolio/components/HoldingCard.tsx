@@ -3,7 +3,7 @@ import { Pencil, Trash2, RefreshCw } from "lucide-react";
 
 import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
 import { valuateHolding } from "@/features/portfolio/utils/valuation";
-import { MARKET_LABELS } from "@/features/trading/constants/labels";
+import { getMarketLabels } from "@/features/trading/constants/labels";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -53,7 +53,7 @@ export default function HoldingCard({ holding, onEdit }: Props) {
         <div>
           <h3 className="font-semibold">{holding.symbol}</h3>
           <span className="mt-1 inline-block rounded-full bg-brand-500/15 px-2 py-0.5 text-xs font-semibold text-brand-500">
-            {MARKET_LABELS[holding.market]}
+            {getMarketLabels(t)[holding.market]}
           </span>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
             {holding.quantity.toLocaleString()} @ {holding.avgCostPrice.toLocaleString()}

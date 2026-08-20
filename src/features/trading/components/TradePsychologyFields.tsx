@@ -1,6 +1,6 @@
 import type { UseFormRegister } from "react-hook-form";
 import type { TradeFormData } from "@/features/trading/schemas/tradeSchema";
-import { EMOTION_LABELS } from "@/features/trading/constants/labels";
+import { getEmotionLabels } from "@/features/trading/constants/labels";
 import { numberOrUndefined } from "@/utils/numberField";
 import { emptyToUndefined } from "@/utils/selectField";
 import FormField from "@/components/ui/FormField";
@@ -15,6 +15,7 @@ interface Props {
 
 export default function TradePsychologyFields({ register }: Props) {
   const { t } = useTranslation();
+  const emotionLabels = getEmotionLabels(t);
 
   return (
     <div className="space-y-4 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
@@ -30,7 +31,7 @@ export default function TradePsychologyFields({ register }: Props) {
             className={inputClassName}
           >
             <option value="">—</option>
-            {Object.entries(EMOTION_LABELS).map(([value, label]) => (
+            {Object.entries(emotionLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>
@@ -60,7 +61,7 @@ export default function TradePsychologyFields({ register }: Props) {
             className={inputClassName}
           >
             <option value="">—</option>
-            {Object.entries(EMOTION_LABELS).map(([value, label]) => (
+            {Object.entries(emotionLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>

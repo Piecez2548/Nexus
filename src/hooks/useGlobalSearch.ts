@@ -10,7 +10,7 @@ import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useAccountStore } from "@/features/finance/store/accountStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useRecipientProfileStore } from "@/features/finance/store/recipientProfileStore";
-import { DIRECTION_LABELS, MARKET_LABELS } from "@/features/trading/constants/labels";
+import { getDirectionLabels, getMarketLabels } from "@/features/trading/constants/labels";
 import { getFrequencyLabels } from "@/features/habits/constants/labels";
 import { getPriorityLabels } from "@/features/todo/constants/labels";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -43,6 +43,8 @@ export function useGlobalSearch(query: string): SearchResult[] {
     if (q === "") return [];
 
     const frequencyLabels = getFrequencyLabels(t);
+    const directionLabels = getDirectionLabels(t);
+    const marketLabels = getMarketLabels(t);
     const priorityLabels = getPriorityLabels(t);
 
     const transactionResults: SearchResult[] = transactions
@@ -65,7 +67,7 @@ export function useGlobalSearch(query: string): SearchResult[] {
       .map((tr) => ({
         id: `trade-${tr.id}`,
         label: tr.symbol,
-        sublabel: `${DIRECTION_LABELS[tr.direction]} · ${tr.entryDate}`,
+        sublabel: `${directionLabels[tr.direction]} · ${tr.entryDate}`,
         path: "/trading/journal",
       }));
 
@@ -105,7 +107,7 @@ export function useGlobalSearch(query: string): SearchResult[] {
       .map((h) => ({
         id: `holding-${h.id}`,
         label: h.symbol,
-        sublabel: `${MARKET_LABELS[h.market]} · ${h.quantity}`,
+        sublabel: `${marketLabels[h.market]} · ${h.quantity}`,
         path: "/trading/portfolio",
       }));
 

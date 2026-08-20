@@ -4,7 +4,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTradingUIStore } from "@/features/trading/store/tradingUIStore";
 import { calculatePnl, calculateRR } from "@/features/trading/utils/pnl";
-import { MARKET_LABELS, DIRECTION_LABELS, STATUS_LABELS } from "@/features/trading/constants/labels";
+import { getMarketLabels, getDirectionLabels, getStatusLabels } from "@/features/trading/constants/labels";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import MobileRowCard from "@/components/ui/MobileRowCard";
@@ -21,6 +21,9 @@ export default function TradeTable({ trades: propTrades }: Props) {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const toast = useToast();
   const { t } = useTranslation();
+  const marketLabels = getMarketLabels(t);
+  const directionLabels = getDirectionLabels(t);
+  const statusLabels = getStatusLabels(t);
 
   const trades = propTrades ?? storeTrades;
 
@@ -67,7 +70,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
             <MobileRowCard
               key={trade.id}
               title={trade.symbol}
-              subtitle={MARKET_LABELS[trade.market]}
+              subtitle={marketLabels[trade.market]}
               trailing={
                 <span
                   className={`text-base font-bold ${
@@ -86,7 +89,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                         : "bg-red-500/15 text-red-400"
                     }`}
                   >
-                    {DIRECTION_LABELS[trade.direction]}
+                    {directionLabels[trade.direction]}
                   </span>
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -95,7 +98,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                         : "bg-zinc-200/60 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-300"
                     }`}
                   >
-                    {STATUS_LABELS[trade.status]}
+                    {statusLabels[trade.status]}
                   </span>
                   {rr !== null && (
                     <span className="text-xs text-zinc-500 dark:text-zinc-400">{rr.toFixed(2)}R</span>
@@ -155,7 +158,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                   className="border-b border-zinc-200 dark:border-zinc-800 transition-all duration-200 hover:bg-zinc-100 dark:hover:bg-zinc-800/50"
                 >
                   <td className="px-6 py-4 font-medium">{trade.symbol}</td>
-                  <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400">{MARKET_LABELS[trade.market]}</td>
+                  <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400">{marketLabels[trade.market]}</td>
 
                   <td className="px-6 py-4 text-center">
                     <span
@@ -165,7 +168,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                           : "bg-red-500/15 text-red-400"
                       }`}
                     >
-                      {DIRECTION_LABELS[trade.direction]}
+                      {directionLabels[trade.direction]}
                     </span>
                   </td>
 
@@ -192,7 +195,7 @@ export default function TradeTable({ trades: propTrades }: Props) {
                           : "bg-zinc-200/60 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-300"
                       }`}
                     >
-                      {STATUS_LABELS[trade.status]}
+                      {statusLabels[trade.status]}
                     </span>
                   </td>
 

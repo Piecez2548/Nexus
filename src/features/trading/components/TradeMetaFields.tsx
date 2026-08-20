@@ -1,6 +1,6 @@
 import { Controller, type Control, type UseFormRegister } from "react-hook-form";
 import type { TradeFormData } from "@/features/trading/schemas/tradeSchema";
-import { SESSION_LABELS } from "@/features/trading/constants/labels";
+import { getSessionLabels } from "@/features/trading/constants/labels";
 import { emptyToUndefined } from "@/utils/selectField";
 import FormField from "@/components/ui/FormField";
 import TagsInput from "@/components/ui/TagsInput";
@@ -46,7 +46,7 @@ export default function TradeMetaFields({ control, register }: Props) {
           className={inputClassName}
         >
           <option value="">—</option>
-          {Object.entries(SESSION_LABELS).map(([value, label]) => (
+          {Object.entries(getSessionLabels(t)).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>
