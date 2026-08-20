@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { strategySchema, type StrategyFormData } from "@/features/trading/schemas/strategySchema";
 import { useStrategyStore } from "@/features/trading/store/strategyStore";
 import { getMarketLabels } from "@/features/trading/constants/labels";
+import { emptyToUndefined } from "@/utils/selectField";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import FormField from "@/components/ui/FormField";
@@ -106,7 +107,7 @@ export default function StrategyForm({ strategy, onDone }: Props) {
       </FormField>
 
       <FormField label={t("trading.market")} htmlFor="strategy-market">
-        <select id="strategy-market" {...register("market")} className={inputClassName}>
+        <select id="strategy-market" {...register("market", { setValueAs: emptyToUndefined })} className={inputClassName}>
           <option value="">—</option>
           {Object.entries(marketLabels).map(([value, label]) => (
             <option key={value} value={value}>

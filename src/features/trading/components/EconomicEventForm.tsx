@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { economicEventSchema, type EconomicEventFormData } from "@/features/trading/schemas/economicEventSchema";
 import { useEconomicEventStore } from "@/features/trading/store/economicEventStore";
 import { getImpactLabels } from "@/features/trading/constants/labels";
+import { emptyToUndefined } from "@/utils/selectField";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import { toLocalDateString } from "@/utils/localDate";
@@ -104,7 +105,7 @@ export default function EconomicEventForm({ event, onDone }: Props) {
       </div>
 
       <FormField label={t("economicCalendar.impactLabel")} htmlFor="economic-event-impact">
-        <select id="economic-event-impact" {...register("impact")} className={inputClassName}>
+        <select id="economic-event-impact" {...register("impact", { setValueAs: emptyToUndefined })} className={inputClassName}>
           <option value="">—</option>
           {Object.entries(impactLabels).map(([value, label]) => (
             <option key={value} value={value}>
