@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type {
   UseFormRegister,
   UseFormWatch,
@@ -6,7 +6,7 @@ import type {
   FieldErrors,
 } from "react-hook-form";
 import type { TradeFormData } from "@/features/trading/schemas/tradeSchema";
-import { MARKET_LABELS, DIRECTION_LABELS } from "@/features/trading/constants/labels";
+import { getMarketLabels, getDirectionLabels } from "@/features/trading/constants/labels";
 import { detectMarketFromSymbol } from "@/features/trading/utils/marketDetection";
 import { numberOrUndefined } from "@/utils/numberField";
 import FormField from "@/components/ui/FormField";
@@ -24,13 +24,23 @@ interface Props {
 
 export default function TradeCoreFields({ register, watch, setValue, errors }: Props) {
   const { t } = useTranslation();
+  const marketLabels = getMarketLabels(t);
+  const directionLabels = getDirectionLabels(t);
   const symbol = watch("symbol");
+  // Once the user picks a market themselves, auto-detection must stop
+  // overwriting it -- without this, editing the symbol again afterward
+  // (fixing a typo, appending a broker suffix) silently discarded a manual
+  // correction, contradicting this effect's own "still fully editable"
+  // intent below.
+  const marketManuallySet = useRef(false);
+  const marketField = register("market");
 
   // AI-assisted market detection: pattern-matches the symbol against known
   // broker conventions (e.g. XAUUSD -> CFD, EURUSD -> Forex) instead of
   // requiring the user to pick the market manually. Still fully editable —
   // this only pre-fills the dropdown.
   useEffect(() => {
+    if (marketManuallySet.current) return;
     const detected = detectMarketFromSymbol(symbol ?? "");
     if (detected) setValue("market", detected);
   }, [symbol, setValue]);
@@ -48,8 +58,16 @@ export default function TradeCoreFields({ register, watch, setValue, errors }: P
         </FormField>
 
         <FormField label={t("trading.marketLabel")} htmlFor="trade-market">
-          <select id="trade-market" {...register("market")} className={inputClassName}>
-            {Object.entries(MARKET_LABELS).map(([value, label]) => (
+          <select
+            id="trade-market"
+            {...marketField}
+            onChange={(e) => {
+              marketManuallySet.current = true;
+              void marketField.onChange(e);
+            }}
+            className={inputClassName}
+          >
+            {Object.entries(marketLabels).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>
@@ -60,7 +78,7 @@ export default function TradeCoreFields({ register, watch, setValue, errors }: P
 
       <FormField label={t("trading.direction")} htmlFor="trade-direction">
         <select id="trade-direction" {...register("direction")} className={inputClassName}>
-          {Object.entries(DIRECTION_LABELS).map(([value, label]) => (
+          {Object.entries(directionLabels).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>

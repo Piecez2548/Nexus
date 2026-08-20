@@ -2,8 +2,9 @@ import { Search, RotateCcw, Filter, FileDown } from "lucide-react";
 
 import { tradesToCsv } from "@/features/trading/utils/tradeCsv";
 import { downloadFile } from "@/utils/download";
-import { DIRECTION_LABELS, RESULT_LABELS } from "@/features/trading/constants/labels";
+import { getDirectionLabels, getResultLabels } from "@/features/trading/constants/labels";
 import { useTranslation } from "@/i18n/useTranslation";
+import { toLocalDateString } from "@/utils/localDate";
 import type { Trade } from "@/features/trading/types";
 
 interface Props {
@@ -22,7 +23,10 @@ interface Props {
 
 function handleExport(trades: Trade[]) {
   const csv = tradesToCsv(trades);
-  downloadFile(`nexus-trades-${new Date().toISOString().slice(0, 10)}.csv`, csv, "text/csv;charset=utf-8;");
+  // toLocalDateString, not toISOString().slice(0,10) (UTC) -- the exported
+  // file's data already uses local dates throughout (tradeCsv.ts); the
+  // filename should match, not read as tomorrow/yesterday near midnight.
+  downloadFile(`nexus-trades-${toLocalDateString(new Date())}.csv`, csv, "text/csv;charset=utf-8;");
 }
 
 export default function TradingToolbar({
@@ -36,6 +40,8 @@ export default function TradingToolbar({
   exportTrades,
 }: Props) {
   const { t } = useTranslation();
+  const directionLabels = getDirectionLabels(t);
+  const resultLabels = getResultLabels(t);
 
   return (
     <div className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
@@ -68,7 +74,7 @@ export default function TradingToolbar({
           className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-brand-500"
         >
           <option value="all">{t("trading.allDirections")}</option>
-          {Object.entries(DIRECTION_LABELS).map(([value, label]) => (
+          {Object.entries(directionLabels).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>
@@ -81,9 +87,9 @@ export default function TradingToolbar({
           className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-brand-500"
         >
           <option value="all">{t("trading.allResults")}</option>
-          <option value="open">{RESULT_LABELS.open}</option>
-          <option value="win">{RESULT_LABELS.win}</option>
-          <option value="loss">{RESULT_LABELS.loss}</option>
+          <option value="open">{resultLabels.open}</option>
+          <option value="win">{resultLabels.win}</option>
+          <option value="loss">{resultLabels.loss}</option>
         </select>
 
         <button
