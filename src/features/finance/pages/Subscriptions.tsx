@@ -23,8 +23,8 @@ function sortSubscriptions(subscriptions: Subscription[]): Subscription[] {
     const rankDiff = STATUS_RANK[a.status] - STATUS_RANK[b.status];
     if (rankDiff !== 0) return rankDiff;
 
-    const aDate = resolveNextBillingDate(a.nextBillingDate, a.billingFrequency);
-    const bDate = resolveNextBillingDate(b.nextBillingDate, b.billingFrequency);
+    const aDate = resolveNextBillingDate(a.nextBillingDate, a.billingFrequency, undefined, a.billingAnchorDay);
+    const bDate = resolveNextBillingDate(b.nextBillingDate, b.billingFrequency, undefined, b.billingAnchorDay);
     return aDate.localeCompare(bDate);
   });
 }

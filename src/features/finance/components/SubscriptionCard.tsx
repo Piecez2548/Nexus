@@ -41,7 +41,12 @@ export default function SubscriptionCard({ subscription, onEdit }: Props) {
   const Icon = getIcon(subscription.icon);
   const isDimmed = subscription.status !== "active";
 
-  const resolvedDate = resolveNextBillingDate(subscription.nextBillingDate, subscription.billingFrequency);
+  const resolvedDate = resolveNextBillingDate(
+    subscription.nextBillingDate,
+    subscription.billingFrequency,
+    undefined,
+    subscription.billingAnchorDay,
+  );
   const remainingDays = daysUntil(resolvedDate);
 
   async function handleDelete() {

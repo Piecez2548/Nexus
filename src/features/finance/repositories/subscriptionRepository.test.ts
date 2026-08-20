@@ -85,4 +85,26 @@ describe("subscriptionRepository", () => {
     const all = await subscriptionRepository.getAll();
     expect(all[0].status).toBe("cancelled");
   });
+
+  // BUG-12: billingAnchorDay is a plain field on the same row, so it needs
+  // no repository-specific handling -- this just confirms it round-trips
+  // like every other field, including surviving an update that changes it.
+  it("persists billingAnchorDay across a fresh read and lets it be updated", async () => {
+    const id = await subscriptionRepository.add(sample({ nextBillingDate: "2026-01-31", billingAnchorDay: 31 }));
+
+    let all = await subscriptionRepository.getAll();
+    expect(all[0].billingAnchorDay).toBe(31);
+
+    await subscriptionRepository.update(id, sample({ nextBillingDate: "2026-02-28", billingAnchorDay: 31 }));
+    all = await subscriptionRepository.getAll();
+    expect(all[0].billingAnchorDay).toBe(31);
+    expect(all[0].nextBillingDate).toBe("2026-02-28");
+  });
+
+  it("leaves billingAnchorDay undefined for a subscription added without one (a pre-BUG-12 shaped record)", async () => {
+    await subscriptionRepository.add(sample());
+
+    const all = await subscriptionRepository.getAll();
+    expect(all[0].billingAnchorDay).toBeUndefined();
+  });
 });

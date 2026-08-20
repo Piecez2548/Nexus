@@ -160,6 +160,76 @@ describe("generateDueTransactions", () => {
     expect(callOrder).toEqual(["updateSubscription", "addTransaction"]);
   });
 
+  // Regression (BUG-12): the catch-up loop used to re-derive the billing
+  // day from each cycle's own (possibly already-clamped) nextBillingDate,
+  // permanently rebasing a subscription billed on the 31st down to the
+  // 28th the first time it crossed February and never recovering.
+  describe("billing anchor preservation (BUG-12)", () => {
+    it("threads a single fixed anchor through every catch-up cycle for a subscription with no stored anchor (a legacy record)", async () => {
+      const addTransaction = vi.fn();
+      const updateSubscription = vi.fn();
+
+      const result = await generateDueTransactions(
+        [subscription({ nextBillingDate: "2026-01-31", billingAnchorDay: undefined })],
+        addTransaction,
+        updateSubscription,
+        TODAY
+      );
+
+      // Jan 31 -> Feb 28 -> Mar 31 -> Apr 30 -> May 31 -> Jun 30 -> Jul 31
+      // -> Aug 31 (first occurrence past "today", Aug 18 -- loop stops).
+      expect(result.transactionCount).toBe(7);
+      const dueDates = addTransaction.mock.calls.map((call) => call[0].date);
+      expect(dueDates).toEqual([
+        "2026-01-31",
+        "2026-02-28",
+        "2026-03-31", // recovered the 31st, not stuck at 28
+        "2026-04-30",
+        "2026-05-31",
+        "2026-06-30",
+        "2026-07-31",
+      ]);
+
+      const lastUpdate = updateSubscription.mock.calls.at(-1)![1];
+      expect(lastUpdate.nextBillingDate).toBe("2026-08-31");
+      // Backfilled onto every write, including the first -- a legacy
+      // subscription that passes through this service even once now
+      // permanently remembers its true billing day.
+      expect(updateSubscription.mock.calls.every((call) => call[1].billingAnchorDay === 31)).toBe(true);
+    });
+
+    it("respects an already-stored billingAnchorDay instead of re-deriving it from the current (already-clamped) nextBillingDate", async () => {
+      const addTransaction = vi.fn();
+      const updateSubscription = vi.fn();
+
+      const result = await generateDueTransactions(
+        [subscription({ nextBillingDate: "2026-02-28", billingAnchorDay: 31 })],
+        addTransaction,
+        updateSubscription,
+        TODAY
+      );
+
+      expect(result.transactionCount).toBe(6);
+      const dueDates = addTransaction.mock.calls.map((call) => call[0].date);
+      expect(dueDates).toEqual(["2026-02-28", "2026-03-31", "2026-04-30", "2026-05-31", "2026-06-30", "2026-07-31"]);
+      expect(updateSubscription.mock.calls.every((call) => call[1].billingAnchorDay === 31)).toBe(true);
+    });
+
+    it("backfills billingAnchorDay onto the persisted write even for a trivial single-cycle advance with no clamping involved", async () => {
+      const addTransaction = vi.fn();
+      const updateSubscription = vi.fn();
+
+      await generateDueTransactions(
+        [subscription({ nextBillingDate: "2026-08-01", billingAnchorDay: undefined })],
+        addTransaction,
+        updateSubscription,
+        TODAY
+      );
+
+      expect(updateSubscription).toHaveBeenCalledWith(1, expect.objectContaining({ billingAnchorDay: 1 }));
+    });
+  });
+
   it("is idempotent when re-run against the already-advanced nextBillingDate", async () => {
     const addTransaction = vi.fn();
     const updateSubscription = vi.fn();

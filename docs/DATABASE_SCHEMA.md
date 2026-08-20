@@ -53,7 +53,7 @@ export const db = new NexusDatabase(); // database name: "NexusDatabase"
 | `workoutEntries` | workouts | ✅ | logged sessions; GPS `route` points (if any) stored inline |
 | `netWorthItems` | finance (Net Worth, FIN-002) | ✅ | assets/liabilities, one unified model with a `kind` discriminator — no live price feed, manually valued like `holdings` |
 | `netWorthSnapshots` | finance (Net Worth, FIN-002) | ✅ | write-once-per-day history log (upserted, not appended); one row per calendar day — see `WorkoutEntry`'s `date`-keyed pattern |
-| `subscriptions` | finance (Subscription Manager, FIN-004) | ✅ | independently-managed recurring-payment entity (name/amount/billing frequency/next billing date/status/category/account/note/reminderEnabled) — distinct from the pre-existing subscription *detectors*, which only derive a read-only view from transaction history and manage nothing |
+| `subscriptions` | finance (Subscription Manager, FIN-004) | ✅ | independently-managed recurring-payment entity (name/amount/billing frequency/next billing date/status/category/account/note/reminderEnabled/`billingAnchorDay`) — distinct from the pre-existing subscription *detectors*, which only derive a read-only view from transaction history and manage nothing. `billingAnchorDay` (optional, BUG-12) is the true day-of-month billing lands on, persisted separately from `nextBillingDate` so a month-length clamp (Jan 31 -> Feb 28) doesn't permanently lose the original day |
 | `budgetPeriodSnapshots` | finance (Budget Improvements, FIN-001) | ✅ | upsert-by-(budgetSyncId, periodStart) history log of each budget's past-period performance — survives the budget's `amount` being edited later, unlike the always-live-recomputed current view |
 
 ## Table Schema — version history

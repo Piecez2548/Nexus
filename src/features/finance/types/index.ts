@@ -237,6 +237,17 @@ export interface Subscription extends SyncMeta {
   // of inventing a second one.
   billingFrequency: RecurringFrequency;
   nextBillingDate: string; // "YYYY-MM-DD" local, via @/utils/localDate
+  // The day-of-month billing is meant to land on (BUG-12) -- captured
+  // explicitly whenever nextBillingDate is set/edited, since a month-length
+  // clamp (e.g. Jan 31 -> Feb 28) otherwise loses the original day forever,
+  // permanently rebasing every later cycle down to the clamped one instead
+  // of returning to it once the calendar allows (Mar 31, not Mar 28).
+  // Optional: absent on a subscription created before this field existed --
+  // subscriptionMath.ts's resolveBillingAnchorDay() falls back to
+  // nextBillingDate's own current day for those, the best available
+  // information (see that function's own comment on why an already-drifted
+  // date can't be un-drifted retroactively).
+  billingAnchorDay?: number;
   status: SubscriptionStatus;
   category?: string;
   // Plain account *name* string, matching Transaction.account's existing

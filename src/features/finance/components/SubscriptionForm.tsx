@@ -10,6 +10,7 @@ import { useSubscriptionStore } from "@/features/finance/store/subscriptionStore
 import { useAccountStore } from "@/features/finance/store/accountStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { getIcon, SUBSCRIPTION_ICON_OPTIONS } from "@/features/finance/constants/icons";
+import { anchorDayFromNextBillingDate } from "@/features/finance/utils/subscriptionMath";
 import { toErrorMessage } from "@/utils/asyncState";
 import { toLocalDateString } from "@/utils/localDate";
 import { useToast } from "@/hooks/useToast";
@@ -80,11 +81,22 @@ export default function SubscriptionForm({ subscription, onDone }: Props) {
     setSubmitError(null);
     const isEditing = subscription?.id !== undefined;
 
+    // Only recompute the anchor when nextBillingDate actually changed --
+    // preserves an anchor already correctly tracked through a prior clamped
+    // cycle across an edit that touches only other fields (name, amount,
+    // ...). Recomputing unconditionally here would silently overwrite it
+    // with whatever day the (possibly still-clamped) current
+    // nextBillingDate happens to show -- exactly the loss BUG-12 is about.
+    const billingAnchorDay =
+      subscription && subscription.nextBillingDate === data.nextBillingDate
+        ? subscription.billingAnchorDay
+        : anchorDayFromNextBillingDate(data.nextBillingDate);
+
     try {
       if (subscription?.id !== undefined) {
-        await updateSubscription(subscription.id, { ...subscription, ...data });
+        await updateSubscription(subscription.id, { ...subscription, ...data, billingAnchorDay });
       } else {
-        await addSubscription({ ...data, createdAt: new Date().toISOString() });
+        await addSubscription({ ...data, billingAnchorDay, createdAt: new Date().toISOString() });
       }
 
       onDone();

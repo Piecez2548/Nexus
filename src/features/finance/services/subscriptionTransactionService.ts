@@ -1,4 +1,4 @@
-import { advanceOneBillingCycle } from "@/features/finance/utils/subscriptionMath";
+import { advanceOneBillingCycle, resolveBillingAnchorDay } from "@/features/finance/utils/subscriptionMath";
 import { toLocalDateString } from "@/utils/localDate";
 import { translate } from "@/i18n/useTranslation";
 import type { Subscription, Transaction } from "@/features/finance/types";
@@ -40,10 +40,17 @@ export async function generateDueTransactions(
 
     let nextBillingDate = subscription.nextBillingDate;
     let generatedForThisSubscription = 0;
+    // Resolved once per subscription, from its ORIGINAL (pre-loop) date and
+    // stored anchor -- must stay fixed across every catch-up cycle below
+    // (BUG-12): re-deriving it from an already-clamped nextBillingDate on a
+    // later iteration would silently rebase the anchor down to whatever day
+    // that clamp landed on. Persisting it below also backfills it, for
+    // free, onto any subscription created before this field existed.
+    const anchorDay = resolveBillingAnchorDay(subscription.nextBillingDate, subscription.billingAnchorDay);
 
     while (nextBillingDate <= today && generatedForThisSubscription < MAX_CATCHUP_CYCLES) {
       const dueDate = nextBillingDate;
-      nextBillingDate = advanceOneBillingCycle(nextBillingDate, subscription.billingFrequency);
+      nextBillingDate = advanceOneBillingCycle(nextBillingDate, subscription.billingFrequency, anchorDay);
 
       // Persisted *before* the transaction is created, not after: this pair
       // isn't atomic (updateSubscription's own reminder cancel/reschedule
@@ -54,7 +61,7 @@ export async function generateDueTransactions(
       // every future run, forever. Advancing first means the worst case of
       // a failure here is a missed transaction for this cycle, not a
       // duplicated one.
-      await updateSubscription(subscription.id, { ...subscription, nextBillingDate });
+      await updateSubscription(subscription.id, { ...subscription, nextBillingDate, billingAnchorDay: anchorDay });
 
       await addTransaction({
         title: subscription.name,
