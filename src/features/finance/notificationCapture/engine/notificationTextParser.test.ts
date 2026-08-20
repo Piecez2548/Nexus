@@ -19,6 +19,20 @@ describe("parseNotificationText", () => {
     expect(result.amount).toBe(99);
   });
 
+  it("extracts a whole-number amount with no decimal point at all", () => {
+    // Regression: the amount regex used to require exactly two decimal
+    // digits, so a round amount (a real, plausible bank notification
+    // format) was silently dropped -- the notification never reached the
+    // confirm sheet, with no error surfaced anywhere.
+    const result = parseNotificationText("จ่ายเงินสำเร็จ 500 บาท ไปยัง John Doe");
+    expect(result.amount).toBe(500);
+  });
+
+  it("extracts a whole-number amount with a thousands separator and no decimal point", () => {
+    const result = parseNotificationText("Payment successful ฿1,500 to Jane Smith");
+    expect(result.amount).toBe(1500);
+  });
+
   it("does not extract an unanchored number (conservative -- avoids the 'wrong number' bug class)", () => {
     // A promotional/balance notification with a bare 2-decimal number and no
     // currency marker must not be misread as a transaction amount.

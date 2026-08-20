@@ -15,7 +15,13 @@ export interface ParsedNotification {
   counterparty?: string;
 }
 
-const DECIMAL = "\\d{1,3}(?:,\\d{3})*\\.\\d{2}";
+// The decimal portion is optional -- a bank notification showing a round
+// amount (e.g. "500 บาท" rather than "500.00 บาท") was previously silently
+// dropped entirely (extractAmount returned undefined, so the notification
+// never reached the confirm sheet at all) since this pattern required
+// exactly two decimal digits. The currency anchor requirement below is what
+// keeps this safe against the "bare number" false-positive class.
+const DECIMAL = "\\d{1,3}(?:,\\d{3})*(?:\\.\\d{2})?";
 
 function toAmount(raw: string): number | undefined {
   const amount = Number(raw.replace(/,/g, ""));
