@@ -98,17 +98,62 @@ async function pushTable(userId: string, table: SyncTableName) {
   const toSync = rows.filter((row: { syncId?: string }) => row.syncId);
 
   if (toSync.length > 0) {
-    const payload = toSync.map((row: { syncId?: string; updatedAt?: string }) => ({
-      id: row.syncId,
-      table_name: table,
-      user_id: userId,
-      data: row,
-      updated_at: row.updatedAt,
-      deleted_at: null,
-    }));
+    // A row about to be pushed here can already be tombstoned server-side
+    // by another device that deleted it before this device ever pulled
+    // that deletion — this device's own (stale, unaware) edit pushing with
+    // deleted_at: null unconditionally would silently resurrect it. Scoped
+    // to exactly the syncIds in this pass, not a full-table scan.
+    const { data: existingRemote, error: fetchError } = await supabase!
+      .from("synced_records")
+      .select("id, deleted_at")
+      .eq("user_id", userId)
+      .eq("table_name", table)
+      .in(
+        "id",
+        toSync.map((row: { syncId?: string }) => row.syncId)
+      )
+      .not("deleted_at", "is", null);
+    if (fetchError) throw fetchError;
 
-    const { error } = await supabase!.from("synced_records").upsert(payload, { onConflict: "id,table_name" });
-    if (error) throw error;
+    const serverTombstoneAt = new Map<string, string>(
+      (existingRemote ?? []).map((r: { id: string; deleted_at: string }) => [r.id, r.deleted_at])
+    );
+
+    // Genuinely stale relative to a newer server-side deletion: don't
+    // resurrect it. Equal timestamps keep the deletion — the safer side to
+    // err on for a delete/edit collision at the same instant.
+    const isStale = (row: { syncId?: string; updatedAt?: string }) => {
+      const tombstoneAt = serverTombstoneAt.get(row.syncId!);
+      return tombstoneAt !== undefined && !(row.updatedAt && row.updatedAt > tombstoneAt);
+    };
+
+    const payload = toSync
+      .filter((row: { syncId?: string; updatedAt?: string }) => !isStale(row))
+      .map((row: { syncId?: string; updatedAt?: string }) => ({
+        id: row.syncId,
+        table_name: table,
+        user_id: userId,
+        data: row,
+        updated_at: row.updatedAt,
+        deleted_at: null,
+      }));
+
+    if (payload.length > 0) {
+      const { error } = await supabase!.from("synced_records").upsert(payload, { onConflict: "id,table_name" });
+      if (error) throw error;
+    }
+
+    // A row excluded above as stale must also be removed locally, mirroring
+    // what pullTable already does for a tombstone it discovers — otherwise
+    // this device keeps a local copy it can never successfully push (every
+    // future pass hits this same exclusion again), with no way to reconcile.
+    const staleLocalIds = toSync
+      .filter((row: { syncId?: string; updatedAt?: string }) => isStale(row))
+      .map((row: { id?: number }) => row.id)
+      .filter((id: number | undefined): id is number => id !== undefined);
+    if (staleLocalIds.length > 0) {
+      await localTable(table).bulkDelete(staleLocalIds);
+    }
   }
 
   const newest = rows.reduce(

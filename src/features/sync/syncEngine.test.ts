@@ -23,8 +23,21 @@ vi.mock("@/lib/supabaseClient", () => ({
 // per pass — without this filter, a fixture row meant for one table would
 // leak into every other table's pull too and get written into the wrong
 // Dexie table entirely.
-function selectResultBuilder(resolved: { data: unknown[] | null; error: unknown }) {
+//
+// A `.in(...)` call distinguishes pushTable's own pre-push tombstone-check
+// query (checks whether any syncId about to be pushed is already deleted
+// server-side) from a normal pullTable query — the two are structurally
+// different queries against the same `synced_records` table, and every
+// test's fixture `resolved` data describes the *pull* shape only. Defaults
+// to "no existing tombstone found" so all of the many tests that don't care
+// about this new query keep passing unchanged; only tests specifically
+// covering the resurrection race pass a real tombstoneCheck fixture.
+function selectResultBuilder(
+  resolved: { data: unknown[] | null; error: unknown },
+  tombstoneCheck: { data: unknown[] | null; error: unknown } = { data: [], error: null }
+) {
   let tableFilter: string | undefined;
+  let isTombstoneCheckQuery = false;
   const builder = {
     select: vi.fn(() => builder),
     eq: vi.fn((column: string, value: string) => {
@@ -32,6 +45,11 @@ function selectResultBuilder(resolved: { data: unknown[] | null; error: unknown 
       return builder;
     }),
     order: vi.fn(() => builder),
+    in: vi.fn(() => {
+      isTombstoneCheckQuery = true;
+      return builder;
+    }),
+    not: vi.fn(() => builder),
     gt: (...args: unknown[]) => {
       mockGt(...args);
       return builder;
@@ -40,7 +58,11 @@ function selectResultBuilder(resolved: { data: unknown[] | null; error: unknown 
       mockGte(...args);
       return builder;
     },
-    then: (resolve: (value: typeof resolved) => void) => {
+    then: (resolve: (value: { data: unknown[] | null; error: unknown }) => void) => {
+      if (isTombstoneCheckQuery) {
+        resolve(tombstoneCheck);
+        return;
+      }
       const data =
         resolved.data === null
           ? null
@@ -367,6 +389,7 @@ describe("syncEngine", () => {
 
     mockFrom.mockImplementation(() => {
       let currentTableName: string | undefined;
+      let isInQuery = false;
 
       const builder = {
         select: vi.fn(() => builder),
@@ -375,12 +398,25 @@ describe("syncEngine", () => {
           return builder;
         }),
         order: vi.fn(() => builder),
+        in: vi.fn(() => {
+          isInQuery = true;
+          return builder;
+        }),
+        not: vi.fn(() => builder),
         gte: (...args: unknown[]) => {
           mockGte(...args);
           return builder;
         },
         upsert: mockUpsert,
         then: async (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          // pushTable's own pre-push tombstone-check query (see
+          // selectResultBuilder's comment above) -- always "no existing
+          // tombstone found" here, this test isn't about that race.
+          if (isInQuery) {
+            resolve({ data: [], error: null });
+            return;
+          }
+
           if (currentTableName !== "habits") {
             resolve({ data: [], error: null });
             return;
@@ -420,6 +456,81 @@ describe("syncEngine", () => {
 
     const stored = await db.habits.toArray();
     expect(stored.find((h) => h.syncId === "deleted-mid-pass")).toBeUndefined();
+  });
+
+  it("does not resurrect a row already deleted by another device that this device hasn't pulled yet", async () => {
+    // Regression: pushTable used to hardcode deleted_at: null on every
+    // pushed row unconditionally. Device A deletes a row and its tombstone
+    // reaches the server; before Device B (this device) ever pulls that
+    // deletion, B independently edits its own stale local copy and pushes
+    // it — the old code would silently clobber A's tombstone with B's
+    // stale edit, resurrecting the row on both devices' next pull.
+    await db.transactions.add({
+      title: "Edited on device B, unaware it was deleted on device A",
+      amount: 100,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+      syncId: "deleted-on-a",
+      updatedAt: "2026-07-21T10:00:00.000Z", // before A's deletion
+    });
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder(
+        { data: [], error: null },
+        {
+          data: [{ id: "deleted-on-a", deleted_at: "2026-07-21T11:00:00.000Z" }], // A's deletion, after B's edit
+          error: null,
+        }
+      ),
+    }));
+
+    await runFullSync(USER_ID);
+
+    // Must never have pushed a live (deleted_at: null) row for this syncId.
+    const resurrectingPush = mockUpsert.mock.calls
+      .flatMap((call) => call[0])
+      .find((p: { id: string; deleted_at: string | null }) => p.id === "deleted-on-a" && p.deleted_at === null);
+    expect(resurrectingPush).toBeUndefined();
+
+    // The stale local copy is removed too, mirroring what pullTable already
+    // does for a tombstone it discovers -- otherwise this row could never
+    // successfully push on any future pass either.
+    const stored = await db.transactions.toArray();
+    expect(stored.find((t) => t.syncId === "deleted-on-a")).toBeUndefined();
+  });
+
+  it("still pushes a local edit that is genuinely newer than an existing server-side tombstone (an intentional undelete)", async () => {
+    await db.transactions.add({
+      title: "Re-added after the deletion",
+      amount: 100,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+      syncId: "undeleted",
+      updatedAt: "2026-07-21T12:00:00.000Z", // after the tombstone below
+    });
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder(
+        { data: [], error: null },
+        { data: [{ id: "undeleted", deleted_at: "2026-07-21T11:00:00.000Z" }], error: null }
+      ),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const push = mockUpsert.mock.calls
+      .flatMap((call) => call[0])
+      .find((p: { id: string; table_name: string }) => p.id === "undeleted" && p.table_name === "transactions");
+    expect(push).toMatchObject({ deleted_at: null });
+
+    const stored = await db.transactions.toArray();
+    expect(stored.find((t) => t.syncId === "undeleted")).toBeDefined();
   });
 
   it("uses an inclusive (>=) pull cursor so a row sharing the last-seen updatedAt isn't silently skipped forever", async () => {
@@ -776,6 +887,7 @@ describe("syncEngine", () => {
 
     mockFrom.mockImplementation(() => {
       let currentTableName: string | undefined;
+      let isInQuery = false;
 
       const builder = {
         select: vi.fn(() => builder),
@@ -784,12 +896,22 @@ describe("syncEngine", () => {
           return builder;
         }),
         order: vi.fn(() => builder),
+        in: vi.fn(() => {
+          isInQuery = true;
+          return builder;
+        }),
+        not: vi.fn(() => builder),
         gte: (...args: unknown[]) => {
           mockGte(...args);
           return builder;
         },
         upsert: mockUpsert,
         then: (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (isInQuery) {
+            resolve({ data: [], error: null });
+            return;
+          }
+
           if (currentTableName !== "habits") {
             resolve({ data: [], error: null });
             return;
@@ -842,6 +964,8 @@ describe("syncEngine", () => {
     let currentTableName: string | undefined;
 
     mockFrom.mockImplementation(() => {
+      let isInQuery = false;
+
       const builder = {
         select: vi.fn(() => builder),
         eq: vi.fn((column: string, value: string) => {
@@ -849,12 +973,22 @@ describe("syncEngine", () => {
           return builder;
         }),
         order: vi.fn(() => builder),
+        in: vi.fn(() => {
+          isInQuery = true;
+          return builder;
+        }),
+        not: vi.fn(() => builder),
         gte: (...args: unknown[]) => {
           mockGte(...args);
           return builder;
         },
         upsert: mockUpsert,
         then: (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (isInQuery) {
+            resolve({ data: [], error: null });
+            return;
+          }
+
           if (currentTableName !== "transactions") {
             resolve({ data: [], error: null });
             return;
@@ -924,6 +1058,8 @@ describe("syncEngine", () => {
     let currentTableName: string | undefined;
 
     mockFrom.mockImplementation(() => {
+      let isInQuery = false;
+
       const builder = {
         select: vi.fn(() => builder),
         eq: vi.fn((column: string, value: string) => {
@@ -931,12 +1067,22 @@ describe("syncEngine", () => {
           return builder;
         }),
         order: vi.fn(() => builder),
+        in: vi.fn(() => {
+          isInQuery = true;
+          return builder;
+        }),
+        not: vi.fn(() => builder),
         gte: (...args: unknown[]) => {
           mockGte(...args);
           return builder;
         },
         upsert: mockUpsert,
         then: async (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (isInQuery) {
+            resolve({ data: [], error: null });
+            return;
+          }
+
           if (currentTableName !== "transactions") {
             resolve({ data: [], error: null });
             return;
