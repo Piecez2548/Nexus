@@ -62,20 +62,12 @@ export async function runConcurrentQueue<T>(params: ConcurrentQueueParams<T>): P
     }
   }
 
-  async function worker(laneId: number): Promise<void> {
+  async function worker(): Promise<void> {
     for (;;) {
       await params.waitWhilePaused();
       if (params.isCancelled() || exhausted) return;
 
-      // TEMPORARY perf-investigation instrumentation (gallery-scan speed
-      // investigation, PERF task plan) — directly measures whether pull()
-      // itself (the shared async-iterator chain) is a hidden serialization
-      // point (Q10/Q11), independent of anything inside the handler. Remove
-      // once confirmed/fixed.
-      const pullStart = typeof performance !== "undefined" ? performance.now() : Date.now();
       const next = await pull();
-      const pullMs = (typeof performance !== "undefined" ? performance.now() : Date.now()) - pullStart;
-      console.debug(`[perf-investigation] queuePull lane=${laneId} pullMs=${Math.round(pullMs)} done=${next.done}`);
       if (next.done) {
         exhausted = true;
         return;
@@ -90,6 +82,6 @@ export async function runConcurrentQueue<T>(params: ConcurrentQueueParams<T>): P
     }
   }
 
-  const lanes = Array.from({ length: Math.max(1, params.concurrency) }, (_, laneId) => worker(laneId));
+  const lanes = Array.from({ length: Math.max(1, params.concurrency) }, () => worker());
   await Promise.all(lanes);
 }

@@ -1,9 +1,5 @@
 import { capLongEdge, MAX_QR_DECODE_LONG_EDGE, shouldResizeOnDecode } from "@/features/finance/slipScanner/engine/qr/qrDecodeResize";
 
-function perfNow(): number {
-  return typeof performance !== "undefined" ? performance.now() : Date.now();
-}
-
 export interface ImageVariant {
   label: string;
   imageData: ImageData;
@@ -62,23 +58,14 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     const canvas = new OffscreenCanvas(swap ? height : width, swap ? width : height);
     const ctx = canvas.getContext("2d");
     if (!ctx) continue;
-    const drawStart = perfNow();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((deg * Math.PI) / 180);
     ctx.drawImage(base, -width / 2, -height / 2);
-    const drawMs = perfNow() - drawStart;
-    // TEMPORARY perf-investigation instrumentation (gallery-scan speed
-    // investigation, PERF task plan) — confirms the fix: real-device data
-    // showed canvasToBytes's encode step alone cost ~4-7s/variant regardless
-    // of format, so variants now read pixels straight off the canvas
-    // (getImageData) instead of encoding to bytes and immediately decoding
-    // them back. Remove once confirmed on-device.
-    const readStart = perfNow();
+    // Reads pixels straight off the canvas (getImageData) instead of
+    // encoding to bytes and immediately decoding them back -- canvasToBytes's
+    // encode step alone cost ~4-7s/variant regardless of format on real
+    // devices, for a round trip this recovery path doesn't need at all.
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const getImageDataMs = perfNow() - readStart;
-    console.debug(
-      `[perf-investigation] variant label=rotate-${deg} width=${canvas.width} height=${canvas.height} drawMs=${Math.round(drawMs)} getImageDataMs=${Math.round(getImageDataMs)}`,
-    );
     yield { label: `rotate-${deg}`, imageData };
   }
 
@@ -93,15 +80,8 @@ export const browserImageVariants: ImageVariantGenerator = async function* (byte
     const ctx = canvas.getContext("2d");
     if (!ctx) continue;
     ctx.filter = filter;
-    const drawStart = perfNow();
     ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
-    const drawMs = perfNow() - drawStart;
-    const readStart = perfNow();
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const getImageDataMs = perfNow() - readStart;
-    console.debug(
-      `[perf-investigation] variant label=${label} width=${canvas.width} height=${canvas.height} drawMs=${Math.round(drawMs)} getImageDataMs=${Math.round(getImageDataMs)}`,
-    );
     yield { label, imageData };
   }
 };

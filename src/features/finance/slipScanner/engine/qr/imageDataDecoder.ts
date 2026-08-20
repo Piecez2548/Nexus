@@ -4,10 +4,6 @@ import { makeCanvas } from "@/features/finance/slipScanner/engine/image/canvas";
 import type { QrDecoder } from "@/features/finance/slipScanner/engine/qr/qrDecoder";
 import { capLongEdge, MAX_QR_DECODE_LONG_EDGE, shouldResizeOnDecode } from "@/features/finance/slipScanner/engine/qr/qrDecodeResize";
 
-function perfNow(): number {
-  return typeof performance !== "undefined" ? performance.now() : Date.now();
-}
-
 // Decode image bytes to pixels for jsQR, via the shared OffscreenCanvas/DOM
 // <canvas> fallback (some Android WebViews don't expose OffscreenCanvas, which
 // silently broke on-device QR decoding — everything fell through to OCR). jsQR
@@ -16,13 +12,6 @@ function perfNow(): number {
 async function toImageData(bytes: Uint8Array): Promise<ImageData | null> {
   if (typeof createImageBitmap !== "function") return null;
 
-  // TEMPORARY perf-investigation instrumentation (gallery-scan speed
-  // investigation, PERF task plan) — real-device data found this decode step
-  // (a real gallery photo is commonly 12+ megapixels) was the dominant cost,
-  // not canvas draw/getImageData (both stayed in the tens-to-low-hundreds of
-  // ms). Fixed below by resizing during decode instead of after. Remove once
-  // confirmed/fixed.
-  const bitmapStart = perfNow();
   let bitmap: ImageBitmap;
   try {
     const blob = new Blob([bytes as unknown as BlobPart]);
@@ -39,26 +28,15 @@ async function toImageData(bytes: Uint8Array): Promise<ImageData | null> {
   } catch {
     return null;
   }
-  const bitmapMs = perfNow() - bitmapStart;
   if (bitmap.width === 0 || bitmap.height === 0) return null;
 
   const { width, height } = capLongEdge(bitmap.width, bitmap.height);
 
   const target = makeCanvas(width, height);
   if (!target) return null;
-  const drawStart = perfNow();
   target.ctx.drawImage(bitmap, 0, 0, width, height);
-  const drawMs = perfNow() - drawStart;
 
-  const getImageDataStart = perfNow();
-  const image = target.ctx.getImageData(0, 0, width, height);
-  const getImageDataMs = perfNow() - getImageDataStart;
-
-  console.debug(
-    `[perf-investigation] toImageData bytes=${bytes.length} width=${width} height=${height} bitmapMs=${Math.round(bitmapMs)} drawMs=${Math.round(drawMs)} getImageDataMs=${Math.round(getImageDataMs)}`,
-  );
-
-  return image;
+  return target.ctx.getImageData(0, 0, width, height);
 }
 
 export const imageDataQrDecoder: QrDecoder = {
@@ -66,10 +44,7 @@ export const imageDataQrDecoder: QrDecoder = {
     try {
       const image = await toImageData(bytes);
       if (!image) return null;
-      const jsQrStart = perfNow();
-      const result = jsQR(image.data, image.width, image.height)?.data ?? null;
-      console.debug(`[perf-investigation] jsQR width=${image.width} height=${image.height} jsQrMs=${Math.round(perfNow() - jsQrStart)} found=${result !== null}`);
-      return result;
+      return jsQR(image.data, image.width, image.height)?.data ?? null;
     } catch {
       return null;
     }

@@ -61,10 +61,6 @@ export class ScanCancelledError extends Error {
 // slip-verification QR, not an EMVCo payment QR, so the bank name on the slip
 // is the reliable signal — this also covers a clean, CRC-valid EMVCo payload
 // from a bank rail the identifier has no GUID/plugin match for).
-function perfNow(): number {
-  return typeof performance !== "undefined" ? performance.now() : Date.now();
-}
-
 export async function extractSlipCandidate(input: ExtractSlipInput): Promise<SlipCandidate> {
   const detector = input.detector ?? defaultQrDetector;
   const recognizer = input.recognizer ?? tesseractOcrRecognizer;
@@ -73,30 +69,11 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
   // recovery skips straight to transformed variants.
   const recover = input.recover ?? ((bytes: Uint8Array, cancelled: () => boolean) => recoverQr(bytes, { skipOriginal: true, isCancelled: cancelled }));
 
-  // TEMPORARY perf-investigation instrumentation (gallery-scan speed
-  // investigation, PERF task plan) — per-stage timing so a real-device run
-  // shows exactly where the ~15-20s/image cost lives (QR detect vs recovery
-  // vs OCR) instead of guessing. Remove once the root cause is confirmed and
-  // fixed. Search "perf-investigation" to find every temporary probe.
-  const totalStart = perfNow();
-  let recoveryMs: number | null = null;
-  let ocrMs: number | null = null;
-  // TEMPORARY perf-investigation instrumentation -- which variant (if any)
-  // recovery actually succeeded via, so a real-device run can tell which of
-  // the 6 attempts (rotate-90/180/270, brighten, contrast, upscale) are
-  // worth keeping vs. dead weight, instead of guessing. Remove once decided.
-  let recoveredBy: string | null = null;
-
-  const detectStart = perfNow();
   let detection = await detector.detect(input.bytes);
-  const detectMs = perfNow() - detectStart;
   if (!detection.hasQr) {
     if (isCancelled()) throw new ScanCancelledError();
     try {
-      const recoveryStart = perfNow();
       const recovery = await recover(input.bytes, isCancelled);
-      recoveryMs = perfNow() - recoveryStart;
-      recoveredBy = recovery.recoveredBy;
       if (recovery.payload !== null) detection = { hasQr: true, payload: recovery.payload };
     } catch (err) {
       if (err instanceof ScanCancelledError) throw err;
@@ -105,24 +82,18 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     }
   }
 
-  const parseStart = perfNow();
   const emvco = detection.payload !== null ? parseEmvcoPayload(detection.payload) : null;
   let bank = emvco ? identifyBank(emvco) : null;
-  const parseMs = perfNow() - parseStart;
 
   let ocr: OcrSlipFields | null = null;
   const needsOcrFallback = shouldRunOcrFallback({ hasQr: detection.hasQr, emvco });
   const skipForNoQr = input.skipOcrWhenNoQr === true && !detection.hasQr;
-  console.debug(
-    `[perf-investigation] ocrGate assetId=${input.assetId} skipOcrWhenNoQr=${input.skipOcrWhenNoQr} hasQr=${detection.hasQr} needsOcrFallback=${needsOcrFallback} bank=${bank} skipForNoQr=${skipForNoQr}`,
-  );
   if ((needsOcrFallback || !bank) && !skipForNoQr) {
     // OCR is the one stage that, once started, can't be interrupted (Tesseract
     // exposes no mid-recognize cancellation) -- this is the last checkpoint
     // that can still skip it entirely rather than start a call that will run
     // to completion regardless.
     if (isCancelled()) throw new ScanCancelledError();
-    const ocrStart = perfNow();
     try {
       const result = await runOcrFallback(input.bytes, recognizer);
       // Keep the OCR fields even when OCR ran only to resolve the bank: a
@@ -141,15 +112,7 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
       // lost to an uncaught rejection that could also leave a pooled worker
       // in an inconsistent state for the next image.
     }
-    ocrMs = perfNow() - ocrStart;
   }
-
-  // NOTE: the WebView console bridge (Capacitor's onConsoleMessage) only
-  // relays the first string argument -- an object argument collapses to
-  // "[object Object]" in logcat. Everything must be inlined into one string.
-  console.debug(
-    `[perf-investigation] extractSlipCandidate assetId=${input.assetId} inputBytes=${input.bytes.length} hasQr=${detection.hasQr} detectMs=${Math.round(detectMs)} recoveryMs=${recoveryMs === null ? "null" : Math.round(recoveryMs)} recoveredBy=${recoveredBy ?? "n/a"} parseMs=${Math.round(parseMs)} ocrMs=${ocrMs === null ? "null" : Math.round(ocrMs)} totalMs=${Math.round(perfNow() - totalStart)}`,
-  );
 
   return buildSlipCandidate({
     assetId: input.assetId,

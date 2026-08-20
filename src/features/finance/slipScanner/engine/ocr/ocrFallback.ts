@@ -3,10 +3,6 @@ import { preprocessForOcr } from "@/features/finance/slipScanner/engine/image/oc
 import { tesseractOcrRecognizer, type OcrTextRecognizer } from "@/features/finance/slipScanner/engine/ocr/ocrRecognizer";
 import { extractOcrSlipFields, type OcrSlipFields } from "@/features/finance/slipScanner/engine/ocr/slipOcrFields";
 
-function perfNow(): number {
-  return typeof performance !== "undefined" ? performance.now() : Date.now();
-}
-
 // The QR stage's outcome for one slip: whether a QR was found, and the parsed
 // EMVCo payload if it decoded to one.
 export interface QrOutcome {
@@ -40,25 +36,9 @@ export async function runOcrFallback(
   bytes: Uint8Array,
   recognizer: OcrTextRecognizer = tesseractOcrRecognizer,
 ): Promise<OcrFallbackResult> {
-  const preprocessStart = perfNow();
   const prepared = await preprocessForOcr(bytes);
-  const preprocessMs = perfNow() - preprocessStart;
-
-  const recognizeStart = perfNow();
   const text = await recognizer.recognize(prepared);
-  const recognizeMs = perfNow() - recognizeStart;
-
-  const parseStart = perfNow();
   const fields = extractOcrSlipFields(text);
-  const parseMs = perfNow() - parseStart;
-
-  // TEMPORARY perf-investigation instrumentation (OCR bottleneck
-  // investigation) -- the top-level split callers (extractSlipCandidate.ts)
-  // already time as one "ocrMs" block; this breaks that block down into
-  // preprocess vs the recognizer call vs field parsing. Remove once confirmed.
-  console.debug(
-    `[perf-investigation] runOcrFallback inputBytes=${bytes.length} preparedBytes=${prepared.length} preprocessMs=${Math.round(preprocessMs)} recognizeMs=${Math.round(recognizeMs)} parseMs=${Math.round(parseMs)} textLength=${text.length}`,
-  );
 
   return { ...fields, text };
 }
