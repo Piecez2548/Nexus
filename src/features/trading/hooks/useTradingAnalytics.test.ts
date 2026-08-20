@@ -129,4 +129,50 @@ describe("useTradingAnalytics", () => {
     const { result } = renderHook(() => useTradingAnalytics());
     expect(result.current.sessionStats).toHaveLength(0);
   });
+
+  it("returns empty strategyComparison with no trades", () => {
+    const { result } = renderHook(() => useTradingAnalytics());
+    expect(result.current.strategyComparison).toHaveLength(0);
+  });
+
+  it("groups closed trades by strategy, computing per-group win rate/pnl/profit factor", () => {
+    seed([
+      { ...baseTrade, strategy: "Breakout", exitPrice: 110, exitDate: "2026-07-01" }, // +100
+      { ...baseTrade, strategy: "Breakout", exitPrice: 90, exitDate: "2026-07-02" }, // -100
+      { ...baseTrade, strategy: "Reversal", exitPrice: 120, exitDate: "2026-07-03" }, // +200
+    ]);
+
+    const { result } = renderHook(() => useTradingAnalytics());
+    const breakout = result.current.strategyComparison.find((r) => r.strategy === "Breakout")!;
+    const reversal = result.current.strategyComparison.find((r) => r.strategy === "Reversal")!;
+
+    expect(breakout.tradeCount).toBe(2);
+    expect(breakout.winRate).toBe(50);
+    expect(breakout.totalPnl).toBe(0);
+    expect(breakout.profitFactor).toBe(1); // grossProfit 100 / grossLoss 100
+
+    expect(reversal.tradeCount).toBe(1);
+    expect(reversal.winRate).toBe(100);
+    expect(reversal.totalPnl).toBe(200);
+    expect(reversal.profitFactor).toBe(Infinity); // no losses
+  });
+
+  it("groups trades with no strategy under 'Unspecified'", () => {
+    seed([{ ...baseTrade, exitPrice: 110, exitDate: "2026-07-01" }]);
+
+    const { result } = renderHook(() => useTradingAnalytics());
+    expect(result.current.strategyComparison).toEqual([
+      expect.objectContaining({ strategy: "Unspecified", tradeCount: 1 }),
+    ]);
+  });
+
+  it("sorts strategyComparison by totalPnl descending", () => {
+    seed([
+      { ...baseTrade, strategy: "Low", exitPrice: 105, exitDate: "2026-07-01" }, // +50
+      { ...baseTrade, strategy: "High", exitPrice: 150, exitDate: "2026-07-02" }, // +500
+    ]);
+
+    const { result } = renderHook(() => useTradingAnalytics());
+    expect(result.current.strategyComparison.map((r) => r.strategy)).toEqual(["High", "Low"]);
+  });
 });

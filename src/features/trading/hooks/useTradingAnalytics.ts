@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
-import { calculatePnl, calculateRealizedRMultiple } from "@/features/trading/utils/pnl";
+import { calculatePnl, calculateRR, calculateRealizedRMultiple } from "@/features/trading/utils/pnl";
 import type { Trade, TradingSession } from "@/features/trading/types";
 
 export interface EquityPoint {
@@ -25,6 +25,15 @@ export interface SessionStat {
   tradeCount: number;
   winRate: number;
   totalPnl: number;
+}
+
+export interface StrategyComparisonRow {
+  strategy: string;
+  tradeCount: number;
+  winRate: number;
+  totalPnl: number;
+  profitFactor: number;
+  averageRR: number;
 }
 
 const RISK_BUCKETS: { label: string; min: number; max: number }[] = [
@@ -100,6 +109,38 @@ export function useTradingAnalytics() {
       totalPnl: data.pnl,
     }));
 
-    return { equityCurve, dailyPnl, riskDistribution, sessionStats };
+    // Strategy comparison: same "Unspecified" grouping convention
+    // useTradingStats.ts's bestStrategy/worstStrategy uses, but keeping the
+    // full per-group trade set instead of collapsing straight to a sum, so
+    // win rate/profit factor/average RR can also be computed per group.
+    const byStrategy = new Map<string, Trade[]>();
+    for (const t of closedTrades) {
+      const key = t.strategy?.trim() || "Unspecified";
+      const list = byStrategy.get(key) ?? [];
+      list.push(t);
+      byStrategy.set(key, list);
+    }
+
+    const strategyComparison: StrategyComparisonRow[] = Array.from(byStrategy.entries())
+      .map(([strategy, strategyTrades]) => {
+        const pnls = strategyTrades.map((t) => calculatePnl(t) ?? 0);
+        const wins = pnls.filter((p) => p > 0);
+        const losses = pnls.filter((p) => p < 0);
+        const grossProfit = wins.reduce((sum, p) => sum + p, 0);
+        const grossLoss = Math.abs(losses.reduce((sum, p) => sum + p, 0));
+        const rrValues = strategyTrades.map(calculateRR).filter((rr): rr is number => rr !== null);
+
+        return {
+          strategy,
+          tradeCount: strategyTrades.length,
+          winRate: strategyTrades.length > 0 ? (wins.length / strategyTrades.length) * 100 : 0,
+          totalPnl: pnls.reduce((sum, p) => sum + p, 0),
+          profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0,
+          averageRR: rrValues.length > 0 ? rrValues.reduce((sum, v) => sum + v, 0) / rrValues.length : 0,
+        };
+      })
+      .sort((a, b) => b.totalPnl - a.totalPnl);
+
+    return { equityCurve, dailyPnl, riskDistribution, sessionStats, strategyComparison };
   }, [trades]);
 }

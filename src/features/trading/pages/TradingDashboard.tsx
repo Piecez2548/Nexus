@@ -9,6 +9,7 @@ import { useTradingStats } from "@/features/trading/hooks/useTradingStats";
 import TradingSummaryGrid from "@/features/trading/components/TradingSummaryGrid";
 import RiskLimitPanel from "@/features/trading/components/RiskLimitPanel";
 import StrategyInsights from "@/features/trading/components/StrategyInsights";
+import StrategyComparisonTable from "@/features/trading/components/StrategyComparisonTable";
 import EquityCurveChart from "@/features/trading/components/EquityCurveChart";
 import DrawdownChart from "@/features/trading/components/DrawdownChart";
 import DailyPnlChart from "@/features/trading/components/DailyPnlChart";
@@ -76,6 +77,8 @@ export default function TradingDashboard() {
             bestStrategy={stats.bestStrategy}
             worstStrategy={stats.worstStrategy}
           />
+
+          <StrategyComparisonTable />
 
           <div className="grid gap-6 xl:grid-cols-2">
             <EquityCurveChart />

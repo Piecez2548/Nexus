@@ -47,10 +47,15 @@ describe("TradingDashboard (real data flow)", () => {
 
     render(<TradingDashboard />, { wrapper: MemoryRouter });
 
-    const table = await screen.findByRole("table");
+    // Two tables render now that StrategyComparisonTable also renders one --
+    // find the recent-trades table specifically (the one listing symbols).
+    const tables = await screen.findAllByRole("table");
+    const table = tables.find((t) => within(t).queryByText("AAPL"))!;
     expect(within(table).getByText("AAPL")).toBeInTheDocument();
     expect(within(table).getByText("MSFT")).toBeInTheDocument();
-    expect(screen.getByText("100.0%")).toBeInTheDocument(); // win rate: 1/1 closed trades won
+    // "100.0%" appears both as the overall win rate and (with a single closed
+    // trade) the Breakout group's win rate in StrategyComparisonTable.
+    expect(screen.getAllByText("100.0%").length).toBeGreaterThan(0);
 
     // "Breakout" appears both in the recent-trades row and the best-strategy card.
     expect(screen.getAllByText("Breakout").length).toBeGreaterThanOrEqual(2);
