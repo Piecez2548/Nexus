@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 
 import { useTradingStats } from "./useTradingStats";
@@ -116,6 +116,67 @@ describe("useTradingStats", () => {
     const { result } = renderHook(() => useTradingStats());
     expect(result.current.bestStrategy).toBe("Breakout");
     expect(result.current.worstStrategy).toBe("Reversal");
+  });
+
+  // Regression: weeklyPnl/monthlyPnl used to parse trade.exitDate via
+  // `new Date("YYYY-MM-DD")`, which parses as UTC midnight -- in any
+  // non-UTC-positive timezone (this suite runs in Asia/Bangkok, UTC+7),
+  // that's *earlier* than the locally-constructed cutoff, so a trade that
+  // exited exactly on the boundary day was silently excluded.
+  describe("weeklyPnl/monthlyPnl timezone-safe boundary handling (P2 finding)", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("includes a trade that exited exactly 7 days ago in weeklyPnl", () => {
+      // "Now" pinned late in the local day -- this is exactly where the old
+      // UTC-midnight-parsed comparison drifted the farthest.
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 7, 20, 23, 0, 0)); // Aug 20 2026, 23:00 local
+
+      seed([
+        {
+          symbol: "AAPL", market: "stocks", direction: "long", status: "closed",
+          entryPrice: 100, exitPrice: 150, quantity: 1,
+          entryDate: "2026-08-13", exitDate: "2026-08-13", // exactly 7 days before "today"
+        },
+      ]);
+
+      const { result } = renderHook(() => useTradingStats());
+      expect(result.current.weeklyPnl).toBe(50);
+    });
+
+    it("includes a trade that exited exactly 30 days ago in monthlyPnl", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 7, 20, 23, 0, 0)); // Aug 20 2026, 23:00 local
+
+      seed([
+        {
+          symbol: "AAPL", market: "stocks", direction: "long", status: "closed",
+          entryPrice: 100, exitPrice: 175, quantity: 1,
+          entryDate: "2026-07-21", exitDate: "2026-07-21", // exactly 30 days before "today"
+        },
+      ]);
+
+      const { result } = renderHook(() => useTradingStats());
+      expect(result.current.monthlyPnl).toBe(75);
+    });
+
+    it("excludes a trade that exited 8 days ago from weeklyPnl", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 7, 20, 23, 0, 0));
+
+      seed([
+        {
+          symbol: "AAPL", market: "stocks", direction: "long", status: "closed",
+          entryPrice: 100, exitPrice: 999, quantity: 1,
+          entryDate: "2026-08-12", exitDate: "2026-08-12", // 8 days before "today"
+        },
+      ]);
+
+      const { result } = renderHook(() => useTradingStats());
+      expect(result.current.weeklyPnl).toBe(0);
+    });
   });
 
   it("computes max drawdown across a losing streak", () => {

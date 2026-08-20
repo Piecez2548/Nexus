@@ -2,10 +2,14 @@ import { useMemo } from "react";
 import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { calculatePnl, calculateRR } from "@/features/trading/utils/pnl";
 import { isDateWithinRange, type PeriodRange } from "@/features/finance/utils/periodRange";
-import { toLocalDateString } from "@/utils/localDate";
+import { toLocalDateString, parseLocalDate } from "@/utils/localDate";
 
+// Local midnight N days ago -- normalized to the start of that calendar day
+// (not "now"'s clock time) so a trade exiting on exactly the boundary day is
+// consistently included regardless of what time of day "now" happens to be.
 function daysAgo(days: number): Date {
   const date = new Date();
+  date.setHours(0, 0, 0, 0);
   date.setDate(date.getDate() - days);
   return date;
 }
@@ -33,7 +37,12 @@ export function useTradingStats(periodRange?: PeriodRange) {
         .filter(({ trade }) => {
           if (!trade.exitDate) return false;
           if (start === null) return trade.exitDate === today;
-          return new Date(trade.exitDate) >= start;
+          // parseLocalDate, not `new Date(trade.exitDate)` -- the latter
+          // parses a "YYYY-MM-DD" string as UTC midnight, which drifts
+          // across a day boundary relative to `start` (locally-constructed)
+          // in any non-UTC timezone, incorrectly excluding a trade that
+          // exited exactly on the boundary day. See utils/localDate.ts.
+          return parseLocalDate(trade.exitDate) >= start;
         })
         .reduce((sum, { pnl }) => sum + pnl, 0);
 
