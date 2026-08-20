@@ -63,7 +63,11 @@ function referenceFromNote(note: string | undefined): string | undefined {
   return note.slice(sepIndex + 3).trim() || undefined;
 }
 
-function transactionSignals(transaction: Transaction): DuplicateSignals {
+// Exported so other importers (e.g. CSV import, see
+// transactionCsvImportService.ts) can compare against the same signal shape
+// without duplicating this note-parsing logic -- "what counts as a
+// duplicate" stays one definition across every import path in the app.
+export function transactionSignals(transaction: Transaction): DuplicateSignals {
   return {
     reference: referenceFromNote(transaction.note),
     amount: transaction.amount,

@@ -3,6 +3,8 @@ import { Upload } from "lucide-react";
 
 import { parseTransactionsCsv } from "@/features/finance/utils/transactionCsv";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
+import { transactionService } from "@/features/finance/services/transactionService";
+import { importTransactionsCsv } from "@/features/finance/services/transactionCsvImportService";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { ParsedTransactionsCsv } from "@/features/finance/utils/transactionCsv";
@@ -16,6 +18,7 @@ export default function ImportTransactionsPanel() {
   const [fileName, setFileName] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [importedCount, setImportedCount] = useState<number | null>(null);
+  const [skippedDuplicateCount, setSkippedDuplicateCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   function handleSelectClick() {
@@ -29,6 +32,7 @@ export default function ImportTransactionsPanel() {
 
     setError(null);
     setImportedCount(null);
+    setSkippedDuplicateCount(0);
     setFileName(file.name);
 
     try {
@@ -47,11 +51,13 @@ export default function ImportTransactionsPanel() {
     setError(null);
 
     try {
-      for (const transaction of parsed.valid) {
-        await addTransaction(transaction);
-      }
+      const result = await importTransactionsCsv(parsed.valid, {
+        listTransactions: () => transactionService.list(),
+        addTransaction,
+      });
 
-      setImportedCount(parsed.valid.length);
+      setImportedCount(result.importedCount);
+      setSkippedDuplicateCount(result.skippedDuplicateCount);
       setParsed(null);
       setFileName(null);
     } catch (err) {
@@ -118,7 +124,10 @@ export default function ImportTransactionsPanel() {
       )}
 
       {importedCount !== null && (
-        <p className="mt-3 text-sm text-green-500">{t("settings.importedCountSuccess", { count: importedCount })}</p>
+        <p className="mt-3 text-sm text-green-500">
+          {t("settings.importedCountSuccess", { count: importedCount })}
+          {skippedDuplicateCount > 0 && t("settings.skippedDuplicateRows", { count: skippedDuplicateCount })}
+        </p>
       )}
 
       {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
