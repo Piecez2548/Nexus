@@ -8,7 +8,7 @@
 import { daysBetween } from "@/features/finance/aiAnalytics/engine/forecast/predictors/periodForecastCalculator";
 import { AVERAGE_DAYS_PER_MONTH, addDays } from "@/features/finance/aiAnalytics/engine/forecast/calculators/mathUtils";
 import { clamp } from "@/features/finance/aiAnalytics/engine/shared/mathUtils";
-import { toLocalDateString } from "@/utils/localDate";
+import { toLocalDateString, parseLocalDate } from "@/utils/localDate";
 import type { Goal, GoalMilestoneEvent } from "@/features/finance/types";
 import type { GoalForecastEntry } from "@/features/finance/aiAnalytics/engine/forecast/types";
 
@@ -46,7 +46,13 @@ export function estimateGoalForecast(goal: Goal, events: GoalMilestoneEvent[], n
   const expectedCompletionDateObj = paceKnown && pace! > 0 && !isComplete ? addDays(now, Math.ceil(remainingAmount / pace!)) : null;
   const expectedCompletionDate = expectedCompletionDateObj ? toLocalDateString(expectedCompletionDateObj) : null;
 
-  const deadlineDate = goal.deadline ? new Date(goal.deadline) : null;
+  // parseLocalDate, not `new Date(goal.deadline)` -- the latter parses a
+  // "YYYY-MM-DD" string as UTC midnight, which reads back one calendar day
+  // early in any negative-UTC-offset timezone (the Americas), understating
+  // daysUntilDeadline and skewing every field derived from it below. The
+  // sibling analyzer computing this same field (goalAnalyzer.ts's
+  // daysUntil()) already uses parseLocalDate for exactly this reason.
+  const deadlineDate = goal.deadline ? parseLocalDate(goal.deadline) : null;
   const daysUntilDeadline = deadlineDate ? daysBetween(now, deadlineDate) : null;
 
   // Pure arithmetic: always computable given a deadline still ahead of us

@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterEach, vi } from "vitest";
 import { estimateGoalForecast, estimateGoalForecasts } from "./goalForecastEstimator";
+import { AVERAGE_DAYS_PER_MONTH } from "@/features/finance/aiAnalytics/engine/forecast/calculators/mathUtils";
 import type { Goal, GoalMilestoneEvent } from "@/features/finance/types";
 
 const now = new Date(2026, 6, 15);
@@ -74,6 +75,37 @@ describe("estimateGoalForecast", () => {
     // ...but projectedDelayDays is still computed from pace alone, and should be positive (late).
     expect(result.projectedDelayDays).not.toBeNull();
     expect(result.projectedDelayDays!).toBeGreaterThan(0);
+  });
+
+  // Regression (P2, found in a Full System Verification pass): deadlineDate
+  // used to parse `goal.deadline` via `new Date(string)`, which reads a
+  // "YYYY-MM-DD" string as UTC midnight -- in any negative-UTC-offset
+  // timezone (all of the Americas), that lands on the *previous* local
+  // calendar day, understating daysUntilDeadline by one and skewing every
+  // field derived from it. This test suite's default env (this session runs
+  // in Asia/Bangkok, a positive offset) doesn't happen to expose that
+  // direction of drift, so the timezone is explicitly stubbed to reproduce
+  // the actual failure condition rather than relying on the ambient one.
+  describe("deadline timezone-safe parsing (P2 finding)", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("treats a deadline as the same local calendar date the user picked, even in a negative-UTC-offset timezone", () => {
+      vi.stubEnv("TZ", "America/New_York");
+      const localNow = new Date(2026, 6, 10); // July 10, local (constructed after the TZ stub)
+
+      const result = estimateGoalForecast(
+        goal({ targetAmount: 1000, currentAmount: 500, deadline: "2026-07-15" }), // exactly 5 local-calendar days after localNow
+        [],
+        localNow,
+      );
+
+      // remaining=500, daysUntilDeadline must be exactly 5 -- with the old
+      // UTC-midnight parse, this timezone reads "2026-07-15" back as the
+      // 14th, giving 4 days instead and a visibly different (wrong) figure.
+      expect(result.requiredMonthlyContribution).toBeCloseTo((500 / 5) * AVERAGE_DAYS_PER_MONTH, 5);
+    });
   });
 
   it("estimateGoalForecasts maps over every goal", () => {
