@@ -57,13 +57,49 @@ export function getCurrentAndNext(items: ScheduleItem[], now: Date = new Date())
     const start = toMinutes(item.startTime);
     // An item with no explicit endTime runs until the next item starts (or
     // midnight if it's the last one) — endTime is only ever needed to
-    // deliberately leave a gap, never just to make "current" work.
+    // deliberately leave a gap, never just to make "current" work. Only an
+    // *explicit* endTime can ever be earlier than start (e.g. "22:00"-"06:00"
+    // for an overnight item like Sleep) -- the implicit derivations above
+    // can't produce that, so `wraps` is unambiguous.
     const followingItem = todayActive[i + 1];
-    const end = item.endTime != null ? toMinutes(item.endTime) : followingItem ? toMinutes(followingItem.startTime) : MINUTES_PER_DAY;
+    const rawEnd = item.endTime != null ? toMinutes(item.endTime) : followingItem ? toMinutes(followingItem.startTime) : MINUTES_PER_DAY;
+    // Strict `<`, not `<=` — end === start is a zero-length window (never
+    // current, handled correctly by the plain `nowMinutes < end` check
+    // below), not an overnight one; treating it as wrapping would make the
+    // item current for almost the entire day instead of never.
+    const wraps = item.endTime != null && rawEnd < start;
+    const end = wraps ? MINUTES_PER_DAY : rawEnd;
 
     if (nowMinutes >= start && nowMinutes < end) {
       current = item;
-      currentProgress = ((nowMinutes - start) / (end - start)) * 100;
+      const totalSpan = wraps ? MINUTES_PER_DAY - start + rawEnd : end - start;
+      currentProgress = ((nowMinutes - start) / totalSpan) * 100;
+      break;
+    }
+  }
+
+  // The early-morning half of an overnight item that started *yesterday*
+  // (by calendar date) and wraps past midnight into today -- e.g. a daily
+  // "Sleep" item "22:00"-"06:00" is only in `activeItemsOn(items, now)`
+  // above if it's active *today*, but at 02:00 the session actually in
+  // progress is yesterday's occurrence. Without this, such an item could
+  // never be detected as current at any time of day: the loop above only
+  // ever sees the pre-midnight half, and this half alone covers the rest.
+  if (current === null) {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    for (const item of activeItemsOn(items, yesterday)) {
+      if (item.endTime == null) continue;
+      const start = toMinutes(item.startTime);
+      const end = toMinutes(item.endTime);
+      // `>=`, not `>` — end === start is a zero-length window, not an
+      // overnight one (see the matching guard in the loop above).
+      if (end >= start || nowMinutes >= end) continue;
+
+      current = item;
+      const totalSpan = MINUTES_PER_DAY - start + end;
+      currentProgress = ((MINUTES_PER_DAY - start + nowMinutes) / totalSpan) * 100;
       break;
     }
   }

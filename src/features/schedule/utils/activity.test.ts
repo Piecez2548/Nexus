@@ -140,4 +140,87 @@ describe("getCurrentAndNext", () => {
     expect(result.current).toBeNull();
     expect(result.next).toBeNull();
   });
+
+  describe("overnight items (endTime earlier than startTime)", () => {
+    // Regression: an item like "Sleep" 22:00-06:00 was never detected as
+    // current at any time of day -- the unwrapped `nowMinutes >= start &&
+    // nowMinutes < end` check is unsatisfiable once start > end numerically.
+
+    it("is current during the evening half, before midnight", () => {
+      const sleep = item({ id: 1, title: "Sleep", startTime: "22:00", endTime: "06:00" });
+      const result = getCurrentAndNext([sleep], at("23:00"));
+      expect(result.current?.title).toBe("Sleep");
+    });
+
+    it("is current during the early-morning half, after midnight", () => {
+      const sleep = item({ id: 1, title: "Sleep", startTime: "22:00", endTime: "06:00" });
+      const result = getCurrentAndNext([sleep], at("02:00"));
+      expect(result.current?.title).toBe("Sleep");
+    });
+
+    it("is not current once the early-morning half has ended", () => {
+      const sleep = item({ id: 1, title: "Sleep", startTime: "22:00", endTime: "06:00" });
+      const result = getCurrentAndNext([sleep], at("07:00"));
+      expect(result.current).toBeNull();
+    });
+
+    it("is not current before the evening half has started", () => {
+      const sleep = item({ id: 1, title: "Sleep", startTime: "22:00", endTime: "06:00" });
+      const result = getCurrentAndNext([sleep], at("21:00"));
+      expect(result.current).toBeNull();
+    });
+
+    it("computes elapsed progress correctly across the midnight boundary (evening half)", () => {
+      // 22:00-06:00 is an 8-hour (480min) span; 23:00 is 1 hour (60min) in.
+      const sleep = item({ id: 1, startTime: "22:00", endTime: "06:00" });
+      const result = getCurrentAndNext([sleep], at("23:00"));
+      expect(result.currentProgress).toBeCloseTo((60 / 480) * 100);
+    });
+
+    it("computes elapsed progress correctly across the midnight boundary (early-morning half)", () => {
+      // 22:00-06:00 is an 8-hour (480min) span; 02:00 is 4 hours (240min) in
+      // (2 hours to midnight + 2 hours past it).
+      const sleep = item({ id: 1, startTime: "22:00", endTime: "06:00" });
+      const result = getCurrentAndNext([sleep], at("02:00"));
+      expect(result.currentProgress).toBeCloseTo((240 / 480) * 100);
+    });
+
+    it("checks yesterday's weekday, not today's, for the early-morning half of a weekly item", () => {
+      // 2026-07-28 is Tuesday; a Monday-only overnight item's early-morning
+      // half spills into Tuesday, and must still be found there.
+      const mondayNight = item({
+        id: 1,
+        title: "Monday Night Shift",
+        startTime: "22:00",
+        endTime: "06:00",
+        repeat: { frequency: "weekly", weekdays: [1] },
+      });
+      const result = getCurrentAndNext([mondayNight], at("02:00"));
+      expect(result.current?.title).toBe("Monday Night Shift");
+    });
+
+    it("does not misfire the early-morning half for a weekly item not active yesterday", () => {
+      // Same shape, but scoped to Wednesday instead of Monday -- yesterday
+      // (Monday) doesn't qualify, so nothing should be current.
+      const wednesdayNight = item({
+        id: 1,
+        title: "Wednesday Night Shift",
+        startTime: "22:00",
+        endTime: "06:00",
+        repeat: { frequency: "weekly", weekdays: [3] },
+      });
+      const result = getCurrentAndNext([wednesdayNight], at("02:00"));
+      expect(result.current).toBeNull();
+    });
+
+    it("a normal (non-overnight) item's endTime equal to its startTime is not treated as wrapping", () => {
+      // Guards the `wraps` predicate's boundary: end === start is a
+      // zero-length window, not an overnight one -- must not become "wraps
+      // until midnight then to the same time," which would make it current
+      // almost the entire day.
+      const zeroLength = item({ id: 1, startTime: "10:00", endTime: "10:00" });
+      const result = getCurrentAndNext([zeroLength], at("10:00"));
+      expect(result.current).toBeNull();
+    });
+  });
 });

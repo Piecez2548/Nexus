@@ -21,7 +21,15 @@ describe("LifeSchedule page", () => {
     await user.type(screen.getByLabelText("Start time"), "07:00");
     await user.click(screen.getByRole("button", { name: "Save" }));
 
-    await waitFor(() => expect(screen.getAllByText("Morning workout")).toHaveLength(1));
+    // Scoped to the timeline's own row, not a bare text-content count across
+    // the whole page: by design, a single always-active item's title also
+    // shows in CurrentActivityCard's "current" and/or "next" sections (see
+    // NextActivityLine's own comment) -- how many extra times, and where,
+    // genuinely depends on the real wall-clock time this suite happens to
+    // run at, since this test doesn't pin one. The "Edit {title}" button is
+    // unique to the timeline row regardless of what CurrentActivityCard
+    // shows, so this assertion is correct at any time of day.
+    await waitFor(() => expect(screen.getByRole("button", { name: "Edit Morning workout" })).toBeInTheDocument());
   });
 
   it("edits a schedule item from the timeline", async () => {
@@ -44,8 +52,12 @@ describe("LifeSchedule page", () => {
     await user.type(titleInput, "New title");
     await user.click(screen.getByRole("button", { name: "Save" }));
 
-    await waitFor(() => expect(screen.getByText("New title")).toBeInTheDocument());
-    expect(screen.queryByText("Old title")).not.toBeInTheDocument();
+    // Scoped to the timeline row for the same reason as the "creates a new
+    // schedule item" test above -- getByText("New title") would throw on
+    // finding multiple matches whenever the edited item is also current/next
+    // in CurrentActivityCard at the real time this suite happens to run.
+    await waitFor(() => expect(screen.getByRole("button", { name: "Edit New title" })).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: "Edit Old title" })).not.toBeInTheDocument();
   });
 
   it("deletes a schedule item", async () => {
