@@ -132,7 +132,18 @@ export function createEncryptedRepository<T extends SyncMeta & { id?: number }>(
 
   async function update(id: number, entity: T): Promise<number> {
     const withId = { ...entity, id };
-    if (!isEncryptionEnabled()) return table.put(withId);
+
+    if (!isEncryptionEnabled()) {
+      // Same tolerance as getAll()/decryptOptional(): the local flag alone
+      // doesn't mean this specific row is plaintext -- it could already be
+      // an encrypted row synced down from another device. Writing a plain
+      // put() over one would silently strip its encryptedContent and
+      // downgrade it to plaintext.
+      const existing = await table.get(id);
+      if (existing === undefined || !anyRowEncrypted([existing])) {
+        return table.put(withId);
+      }
+    }
 
     const dek = requireSessionDek();
     const encrypted = await encryptRow(dek, withId, plaintextKeys);

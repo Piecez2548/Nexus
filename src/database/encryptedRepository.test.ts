@@ -135,6 +135,41 @@ describe("encryptedRepository", () => {
     expect(rows).toEqual([sample({ id, syncId: "tx-from-other-device" })]);
   });
 
+  describe("update", () => {
+    // Regression: update() only ever checked the local encryptionEnabled
+    // flag, unlike getAll()/decryptOptional() which also check the row's
+    // own shape. A row synced down already-encrypted from another device,
+    // updated on this device before it's ever run enable/recovery locally,
+    // would silently downgrade to plaintext -- table.put() writing the
+    // plain fields straight over the existing encryptedContent.
+    it("keeps re-encrypting a row synced from another device, even though this device's own encryptionEnabled flag is still false", async () => {
+      const id = await db.transactions.add({
+        syncId: "tx-from-other-device",
+        updatedAt: "2026-07-25T00:00:00.000Z",
+        encryptedContent: { v: 1, iv: "AAAAAAAAAAAAAAAA", ct: "c3VwZXItc2VjcmV0" },
+      } as never);
+
+      expect(useAppLockStore.getState().encryptionEnabled).toBe(false);
+      await expect(repo.update(id, sample({ id }))).rejects.toThrow(EncryptionLockedError);
+
+      // Must not have been silently downgraded to plaintext by a table.put()
+      // that ran before the throw -- the original encrypted row survives.
+      const stored = await db.transactions.get(id);
+      expect(stored).toHaveProperty("encryptedContent");
+      expect((stored as unknown as { title?: string }).title).toBeUndefined();
+    });
+
+    it("stays a plain put() for a genuinely plaintext row when encryption is disabled", async () => {
+      const id = await repo.add(sample());
+
+      await repo.update(id, sample({ id, title: "Updated" }));
+
+      const stored = await db.transactions.get(id);
+      expect(stored).not.toHaveProperty("encryptedContent");
+      expect((stored as unknown as { title: string }).title).toBe("Updated");
+    });
+  });
+
   describe("decryptOptional", () => {
     it("passes a plaintext row through unchanged when encryption is disabled", async () => {
       const id = await repo.add(sample());
