@@ -90,6 +90,12 @@ export default function TradingToolbar({
           <option value="open">{resultLabels.open}</option>
           <option value="win">{resultLabels.win}</option>
           <option value="loss">{resultLabels.loss}</option>
+          {/* calculateResult() can return "unknown" for a closed trade with
+              no exit price recorded (only reachable via imported/legacy
+              data -- the form itself can't produce that state) -- without
+              this option such a trade could only ever be found under "All
+              Results", never isolated on its own. */}
+          <option value="unknown">{t("trading.filterUnknownResult")}</option>
         </select>
 
         <button

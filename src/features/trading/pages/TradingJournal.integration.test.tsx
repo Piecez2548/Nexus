@@ -183,6 +183,48 @@ describe("TradingJournal page (add / edit / delete flow)", () => {
     expect(within(table).getByText("MSFT")).toBeInTheDocument();
   });
 
+  // Regression: calculateResult() can return "unknown" for a closed trade
+  // with no exit price recorded (only reachable via imported/legacy data,
+  // never through the form itself) -- the result filter previously had no
+  // way to isolate such a trade, only "All Results".
+  it("filters the table down to a trade whose result is unknown (a closed trade missing its exit price)", async () => {
+    await db.trades.bulkAdd([
+      {
+        symbol: "AAPL",
+        market: "stocks",
+        direction: "long",
+        status: "closed",
+        entryPrice: 100,
+        exitPrice: 120,
+        quantity: 10,
+        entryDate: "2026-07-20",
+        exitDate: "2026-07-20",
+      },
+      {
+        // Legacy/imported shape: closed with no exitPrice at all.
+        symbol: "MSFT",
+        market: "stocks",
+        direction: "long",
+        status: "closed",
+        entryPrice: 300,
+        quantity: 5,
+        entryDate: "2026-07-21",
+      },
+    ]);
+
+    const user = userEvent.setup();
+    renderJournalPage();
+
+    const table = await screen.findByRole("table");
+    expect(within(table).getByText("AAPL")).toBeInTheDocument();
+    expect(within(table).getByText("MSFT")).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByDisplayValue("All Results"), "unknown");
+
+    expect(within(table).getByText("MSFT")).toBeInTheDocument();
+    expect(within(table).queryByText("AAPL")).not.toBeInTheDocument();
+  });
+
   it("sorts the table when a column header is clicked", async () => {
     await db.trades.bulkAdd([
       {
