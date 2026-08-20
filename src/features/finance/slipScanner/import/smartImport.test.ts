@@ -207,6 +207,50 @@ describe("runSmartImport — conflict resolution against existing transactions",
     expect(result.skippedDuplicates).toEqual([]);
     expect(created).toHaveLength(1);
   });
+
+  // Regression: two candidates in the same batch describing the same
+  // real-world slip (e.g. a photo and a screenshot of it) used to both get
+  // imported, because existingSignals was only ever fetched once up front
+  // and never updated as the batch itself created transactions.
+  it("skips a same-batch candidate that is a near-certain duplicate of one already imported earlier in this batch", async () => {
+    const { deps, created } = fakeDeps();
+    const withListTransactions: SmartImportDeps = { ...deps, listTransactions: async () => [] };
+
+    const twin = {
+      amount: 250,
+      merchant: "Coffee Shop",
+      bankName: "KBank",
+      reference: "REF999",
+      date: "2026-08-08",
+      time: "09:15",
+    };
+    const result = await runSmartImport(
+      [candidate({ id: "1", ...twin }), candidate({ id: "2", ...twin })],
+      withListTransactions,
+    );
+
+    expect(result.importedCandidateIds).toEqual(["1"]);
+    expect(result.skippedDuplicates).toEqual([{ candidateId: "2", error: "duplicate-of-existing" }]);
+    expect(result.failed).toEqual([]);
+    expect(created).toHaveLength(1);
+  });
+
+  it("still imports both same-batch twins when listTransactions is not provided (unchanged prior behavior)", async () => {
+    const { deps, created } = fakeDeps();
+    const twin = {
+      amount: 250,
+      merchant: "Coffee Shop",
+      bankName: "KBank",
+      reference: "REF999",
+      date: "2026-08-08",
+      time: "09:15",
+    };
+    const result = await runSmartImport([candidate({ id: "1", ...twin }), candidate({ id: "2", ...twin })], deps);
+
+    expect(result.importedCandidateIds).toEqual(["1", "2"]);
+    expect(result.skippedDuplicates).toEqual([]);
+    expect(created).toHaveLength(2);
+  });
 });
 
 describe("rollbackImport", () => {

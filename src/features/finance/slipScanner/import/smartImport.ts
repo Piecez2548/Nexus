@@ -105,7 +105,13 @@ export async function runSmartImport(
   let done = 0;
 
   // Fetched once per batch, not per candidate — existing transactions rarely
-  // change mid-import and this keeps the conflict check to one query.
+  // change mid-import and this keeps the conflict check to one query. Only
+  // when the caller opts in at all (listTransactions provided) — omitting
+  // it means no conflict checking of any kind, an explicit, tested contract
+  // (see "does not check for conflicts at all when listTransactions is not
+  // provided" below) that must stay true even after this same batch starts
+  // importing successfully.
+  const conflictCheckEnabled = deps.listTransactions !== undefined;
   const existing = (await deps.listTransactions?.()) ?? [];
   const existingSignals = existing.map(transactionSignals);
 
@@ -152,9 +158,20 @@ export async function runSmartImport(
     }
 
     try {
-      const id = await deps.createTransaction(map(candidate));
+      const transaction = map(candidate);
+      const id = await deps.createTransaction(transaction);
       importedIds.push(id);
       importedCandidateIds.push(candidate.id);
+      // Same-batch duplicate guard: without this, two candidates in one
+      // batch describing the same real-world slip (e.g. a photo and a
+      // screenshot of it) only ever get checked against the pre-existing
+      // snapshot fetched above, never against each other. Gated behind
+      // conflictCheckEnabled so a caller that omits listTransactions keeps
+      // its documented "no conflict checking at all" contract intact.
+      if (conflictCheckEnabled) {
+        existing.push({ ...transaction, id });
+        existingSignals.push(transactionSignals(transaction));
+      }
     } catch (err) {
       failed.push({ candidateId: candidate.id, error: toErrorMessage(err) });
     }
