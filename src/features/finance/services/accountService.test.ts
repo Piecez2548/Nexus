@@ -2,6 +2,71 @@ import { describe, expect, it, beforeEach } from "vitest";
 import { db } from "@/database/db";
 import { accountService } from "./accountService";
 
+// Regression: update() only ever wrote the account's own row -- unlike
+// remove() (delete-guard) and merge() (explicit reassignment), a plain
+// rename via the Edit form had no cascade at all. Every transaction still
+// holding the old account name would silently disappear from that
+// account's filtered views/balance the moment the name changed.
+describe("accountService.update (rename cascade)", () => {
+  beforeEach(async () => {
+    await db.accounts.clear();
+    await db.transactions.clear();
+  });
+
+  it("reassigns every transaction's account field when the account is renamed", async () => {
+    const id = await db.accounts.add({ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" });
+    const txId = await db.transactions.add({
+      title: "Coffee",
+      amount: 50,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+    });
+
+    await accountService.update(id, { id, name: "Wallet", type: "cash", icon: "wallet", color: "#16a34a" });
+
+    const tx = await db.transactions.get(txId);
+    expect((tx as unknown as { account: string }).account).toBe("Wallet");
+  });
+
+  it("also reassigns transfer transactions' toAccount field", async () => {
+    const id = await db.accounts.add({ name: "Bank", type: "bank", icon: "landmark", color: "#3b82f6" });
+    await db.accounts.add({ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" });
+    const txId = await db.transactions.add({
+      title: "Transfer",
+      amount: 100,
+      type: "transfer",
+      account: "Cash",
+      toAccount: "Bank",
+      date: "2026-07-21",
+      status: "completed",
+    });
+
+    await accountService.update(id, { id, name: "Savings", type: "bank", icon: "landmark", color: "#3b82f6" });
+
+    const tx = await db.transactions.get(txId);
+    expect((tx as unknown as { toAccount: string }).toAccount).toBe("Savings");
+  });
+
+  it("does not touch transactions when the account is updated without renaming it", async () => {
+    const id = await db.accounts.add({ name: "Cash", type: "cash", icon: "wallet", color: "#16a34a" });
+    const txId = await db.transactions.add({
+      title: "Coffee",
+      amount: 50,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+    });
+
+    await accountService.update(id, { id, name: "Cash", type: "cash", icon: "landmark", color: "#3b82f6" });
+
+    const tx = await db.transactions.get(txId);
+    expect((tx as unknown as { account: string }).account).toBe("Cash");
+  });
+});
+
 // Basic single-merge behavior (the manual "Merge Duplicates" UI's only use
 // case) is already covered end-to-end via dedupeAccountsAndCategories.test.ts
 // and the real Settings flow. These tests cover only the newer part of the

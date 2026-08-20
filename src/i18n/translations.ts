@@ -364,6 +364,7 @@ export const translations = {
       mergedSuccess: "Categories merged",
       deleteInUseError: "Can't delete a category with existing transactions — try merging it instead",
       deleteInUseByBudgetError: "Can't delete a category with a budget assigned to it — remove or reassign the budget first",
+      renameBudgetCollisionError: "Can't rename to a category that already has its own budget",
     },
     budget: {
       pageTitle: "Budget",
@@ -2677,6 +2678,7 @@ export const translations = {
       mergedSuccess: "รวมหมวดหมู่เรียบร้อย",
       deleteInUseError: "ไม่สามารถลบหมวดหมู่ที่มีรายการอยู่ได้ ลองรวมหมวดหมู่แทน",
       deleteInUseByBudgetError: "ไม่สามารถลบหมวดหมู่ที่มีงบประมาณกำหนดไว้ได้ กรุณาลบหรือย้ายงบประมาณก่อน",
+      renameBudgetCollisionError: "ไม่สามารถเปลี่ยนชื่อเป็นหมวดหมู่ที่มีงบประมาณของตัวเองอยู่แล้วได้",
     },
     budget: {
       pageTitle: "งบประมาณ",

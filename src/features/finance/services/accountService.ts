@@ -8,8 +8,37 @@ export const accountService = {
 
   create: (account: Account) => accountRepository.add(account),
 
-  update: (id: number, account: Account) =>
-    accountRepository.update(id, account),
+  // Transactions reference an account by its plain name string, not an id
+  // (see docs/DATABASE_SCHEMA.md) -- remove() and merge() both already
+  // account for this (a delete-guard, and an explicit reassignment cascade,
+  // respectively), but a plain rename via this Edit form previously had
+  // none: every transaction still holding the old name would silently
+  // disappear from that account's filtered views and balance the moment
+  // the name changed. Reuses merge()'s exact reassignment logic (same
+  // order: transactions first, then the account's own row last, matching
+  // merge()'s established non-atomic sequencing for this exact class of
+  // rename-cascade operation) whenever the name actually changes.
+  async update(id: number, account: Account) {
+    const existing = (await accountRepository.getAll()).find((a) => a.id === id);
+
+    if (existing !== undefined && existing.name !== account.name) {
+      const transactions = await transactionRepository.getAll();
+      await Promise.all(
+        transactions
+          .filter((t) => t.account === existing.name || t.toAccount === existing.name)
+          .map((t) => {
+            const next: Transaction = {
+              ...t,
+              account: t.account === existing.name ? account.name : t.account,
+              toAccount: t.toAccount === existing.name ? account.name : t.toAccount,
+            };
+            return next.id !== undefined ? transactionRepository.update(next.id, next) : undefined;
+          })
+      );
+    }
+
+    return accountRepository.update(id, account);
+  },
 
   async remove(id: number, accountName: string) {
     const transactions = await transactionRepository.getAll();

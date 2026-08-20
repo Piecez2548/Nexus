@@ -9,8 +9,45 @@ export const categoryService = {
 
   create: (category: Category) => categoryRepository.add(category),
 
-  update: (id: number, category: Category) =>
-    categoryRepository.update(id, category),
+  // Both transactions and budgets reference a category by its plain name
+  // string, not an id (same convention as accountService.update() -- see
+  // that comment for the full reasoning). remove() already guards against
+  // both references; a plain rename via this Edit form previously cascaded
+  // into neither, silently orphaning any transaction or budget still
+  // holding the old name the moment it changed.
+  async update(id: number, category: Category) {
+    const existing = (await categoryRepository.getAll()).find((c) => c.id === id);
+
+    if (existing !== undefined && existing.name !== category.name) {
+      // budgets.category is a `&`-unique Dexie index (one budget per
+      // category) -- renaming into a name that already has its own budget
+      // would throw a constraint error partway through the cascade below,
+      // leaving transactions already renamed but the category/budget not
+      // yet updated. Checked and refused upfront, before any write, so this
+      // never leaves a partially-renamed state.
+      const budgets = await budgetRepository.getAll();
+      const budgetToRename = budgets.find((b) => b.category === existing.name);
+      if (budgetToRename && budgets.some((b) => b.category === category.name)) {
+        throw new Error(translate("categories.renameBudgetCollisionError"));
+      }
+
+      const transactions = await transactionRepository.getAll();
+      await Promise.all(
+        transactions
+          .filter((t) => t.category === existing.name)
+          .map((t) => {
+            const next: Transaction = { ...t, category: category.name };
+            return next.id !== undefined ? transactionRepository.update(next.id, next) : undefined;
+          })
+      );
+
+      if (budgetToRename?.id !== undefined) {
+        await budgetRepository.update(budgetToRename.id, { ...budgetToRename, category: category.name });
+      }
+    }
+
+    return categoryRepository.update(id, category);
+  },
 
   async remove(id: number, categoryName: string) {
     const transactions = await transactionRepository.getAll();
