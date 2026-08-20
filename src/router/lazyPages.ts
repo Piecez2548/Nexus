@@ -17,6 +17,7 @@ export const TradingDashboard = lazy(() => import("@/features/trading/pages/Trad
 export const TradingJournal = lazy(() => import("@/features/trading/pages/TradingJournal"));
 export const Strategies = lazy(() => import("@/features/trading/pages/Strategies"));
 export const Watchlist = lazy(() => import("@/features/trading/pages/Watchlist"));
+export const EconomicCalendar = lazy(() => import("@/features/trading/pages/EconomicCalendar"));
 export const Todo = lazy(() => import("@/features/todo/pages/Todo"));
 export const Habits = lazy(() => import("@/features/habits/pages/Habits"));
 export const Portfolio = lazy(() => import("@/features/portfolio/pages/Portfolio"));

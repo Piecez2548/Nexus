@@ -83,6 +83,7 @@ interface NexusBackup {
     budgetPeriodSnapshots?: unknown[];
     strategies?: unknown[];
     watchlistItems?: unknown[];
+    economicEvents?: unknown[];
   };
 }
 
@@ -147,6 +148,7 @@ export async function exportBackup(): Promise<string> {
     budgetPeriodSnapshots,
     strategies,
     watchlistItems,
+    economicEvents,
   ] = await Promise.all([
     db.transactions.toArray(),
     db.accounts.toArray(),
@@ -172,6 +174,7 @@ export async function exportBackup(): Promise<string> {
     db.budgetPeriodSnapshots.toArray(),
     db.strategies.toArray(),
     db.watchlistItems.toArray(),
+    db.economicEvents.toArray(),
   ]);
 
   const backup: NexusBackup = {
@@ -206,6 +209,7 @@ export async function exportBackup(): Promise<string> {
       budgetPeriodSnapshots: await decryptForExport(dek, budgetPeriodSnapshots),
       strategies: await decryptForExport(dek, strategies),
       watchlistItems: await decryptForExport(dek, watchlistItems),
+      economicEvents: await decryptForExport(dek, economicEvents),
     },
   };
 
@@ -252,6 +256,7 @@ function isNexusBackup(value: unknown): value is NexusBackup {
     "budgetPeriodSnapshots",
     "strategies",
     "watchlistItems",
+    "economicEvents",
   ];
   return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
 }
@@ -296,6 +301,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     budgetPeriodSnapshots,
     strategies,
     watchlistItems,
+    economicEvents,
   ] = await Promise.all([
     encryptForImport(dek, "transactions", data.transactions),
     encryptForImport(dek, "accounts", data.accounts),
@@ -320,6 +326,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     encryptForImport(dek, "budgetPeriodSnapshots", data.budgetPeriodSnapshots ?? []),
     encryptForImport(dek, "strategies", data.strategies ?? []),
     encryptForImport(dek, "watchlistItems", data.watchlistItems ?? []),
+    encryptForImport(dek, "economicEvents", data.economicEvents ?? []),
   ]);
 
   // The plaintext syncIds the backup is about to re-add per table, keyed by
@@ -350,6 +357,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     budgetPeriodSnapshots: data.budgetPeriodSnapshots ?? [],
     strategies: data.strategies ?? [],
     watchlistItems: data.watchlistItems ?? [],
+    economicEvents: data.economicEvents ?? [],
   };
 
   await db.transaction(
@@ -379,6 +387,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
       db.budgetPeriodSnapshots,
       db.strategies,
       db.watchlistItems,
+      db.economicEvents,
       db.syncTombstones,
       db.syncState,
     ],
@@ -423,6 +432,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.budgetPeriodSnapshots.clear(),
         db.strategies.clear(),
         db.watchlistItems.clear(),
+        db.economicEvents.clear(),
       ]);
 
       await Promise.all([
@@ -450,6 +460,7 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
         db.budgetPeriodSnapshots.bulkAdd(budgetPeriodSnapshots as never[]),
         db.strategies.bulkAdd(strategies as never[]),
         db.watchlistItems.bulkAdd(watchlistItems as never[]),
+        db.economicEvents.bulkAdd(economicEvents as never[]),
       ]);
 
       // Same reasoning as resetAllData() -- a very old backup's rows may
@@ -491,6 +502,7 @@ export async function resetAllData(): Promise<void> {
       db.budgetPeriodSnapshots,
       db.strategies,
       db.watchlistItems,
+      db.economicEvents,
       db.syncTombstones,
       db.syncState,
     ],
@@ -530,6 +542,7 @@ export async function resetAllData(): Promise<void> {
         db.budgetPeriodSnapshots.clear(),
         db.strategies.clear(),
         db.watchlistItems.clear(),
+        db.economicEvents.clear(),
       ]);
 
       // The default accounts/categories seedDatabase() is about to write

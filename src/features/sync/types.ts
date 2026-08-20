@@ -23,7 +23,8 @@ export type SyncTableName =
   | "subscriptions"
   | "budgetPeriodSnapshots"
   | "strategies"
-  | "watchlistItems";
+  | "watchlistItems"
+  | "economicEvents";
 
 export interface Tombstone {
   id?: number;

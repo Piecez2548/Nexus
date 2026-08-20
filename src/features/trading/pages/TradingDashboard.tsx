@@ -17,6 +17,7 @@ import RiskDistributionChart from "@/features/trading/components/RiskDistributio
 import SessionAnalysisPanel from "@/features/trading/components/SessionAnalysisPanel";
 import PerformanceCalendar from "@/features/trading/components/PerformanceCalendar";
 import TradingQuickActions from "@/features/trading/components/TradingQuickActions";
+import UpcomingEconomicEvents from "@/features/trading/components/UpcomingEconomicEvents";
 import TradeTable from "@/features/trading/components/TradeTable";
 import LoadingState from "@/components/ui/LoadingState";
 import ErrorState from "@/components/ui/ErrorState";
@@ -101,10 +102,13 @@ export default function TradingDashboard() {
               <TradeTable trades={recentTrades} />
             </div>
 
-            <TradingQuickActions
-              onAddTrade={() => openTradeDrawer()}
-              onViewJournal={() => navigate("/trading/journal")}
-            />
+            <div className="space-y-6">
+              <TradingQuickActions
+                onAddTrade={() => openTradeDrawer()}
+                onViewJournal={() => navigate("/trading/journal")}
+              />
+              <UpcomingEconomicEvents />
+            </div>
           </div>
         </>
       )}

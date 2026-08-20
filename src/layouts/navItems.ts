@@ -12,6 +12,7 @@ import {
   BookOpen,
   BookMarked,
   Eye,
+  CalendarClock,
   Briefcase,
   ListChecks,
   Flame,
@@ -51,6 +52,7 @@ export const tradingMenus: MenuItem[] = [
   { icon: Briefcase, labelKey: "nav.portfolio", path: "/trading/portfolio" },
   { icon: BookMarked, labelKey: "nav.strategies", path: "/trading/strategies" },
   { icon: Eye, labelKey: "nav.watchlist", path: "/trading/watchlist" },
+  { icon: CalendarClock, labelKey: "nav.economicCalendar", path: "/trading/economic-calendar" },
 ];
 
 export const personalMenus: MenuItem[] = [

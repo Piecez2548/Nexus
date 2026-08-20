@@ -34,6 +34,7 @@ describe("backupService", () => {
       db.budgetPeriodSnapshots.clear(),
       db.strategies.clear(),
       db.watchlistItems.clear(),
+      db.economicEvents.clear(),
     ]);
     useAppLockStore.setState({ encryptionEnabled: false, wrappedDek: null, kekSalt: null, kekIterations: null });
     useEncryptionSessionStore.getState().clearDek();

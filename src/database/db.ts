@@ -14,7 +14,7 @@ import type {
   Subscription,
   BudgetPeriodSnapshot,
 } from "@/features/finance/types";
-import type { Trade, Strategy, WatchlistItem } from "@/features/trading/types";
+import type { Trade, Strategy, WatchlistItem, EconomicEvent } from "@/features/trading/types";
 import type { Todo } from "@/features/todo/types";
 import type { Habit } from "@/features/habits/types";
 import type { Holding } from "@/features/portfolio/types";
@@ -60,6 +60,7 @@ class NexusDatabase extends Dexie {
   public slipScanCandidates;
   public strategies;
   public watchlistItems;
+  public economicEvents;
 
   constructor() {
     super("NexusDatabase");
@@ -376,6 +377,16 @@ class NexusDatabase extends Dexie {
         "++id,symbol,syncId,updatedAt",
     });
 
+    // v27 adds the trading Economic Calendar: events the user logs
+    // themselves (no external economic-data API -- this app has no
+    // paid-API dependency anywhere). `eventDate` indexed for chronological
+    // "upcoming events" queries, mirroring workoutEntries' `date` index.
+    // Additive, no existing data touched.
+    this.version(27).stores({
+      economicEvents:
+        "++id,eventDate,syncId,updatedAt",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -468,6 +479,9 @@ class NexusDatabase extends Dexie {
 
     this.watchlistItems =
       this.table<WatchlistItem, number>("watchlistItems");
+
+    this.economicEvents =
+      this.table<EconomicEvent, number>("economicEvents");
   }
 }
 

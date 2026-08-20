@@ -100,3 +100,16 @@ export interface WatchlistItem extends SyncMeta {
   targetPrice?: number;
   notes?: string;
 }
+
+export type EconomicEventImpact = "low" | "medium" | "high";
+
+// A trading-relevant event the user logs themselves -- no external
+// economic-calendar API (this app has no paid-API dependency anywhere).
+export interface EconomicEvent extends SyncMeta {
+  id?: number;
+  title: string;
+  eventDate: string; // "YYYY-MM-DD", local
+  eventTime?: string; // "HH:mm", optional
+  impact?: EconomicEventImpact;
+  notes?: string;
+}

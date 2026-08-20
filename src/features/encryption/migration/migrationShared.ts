@@ -35,6 +35,7 @@ export const ENCRYPTABLE_TABLES: SyncTableName[] = [
   "budgetPeriodSnapshots",
   "strategies",
   "watchlistItems",
+  "economicEvents",
 ];
 
 export const CHUNK_SIZE = 200;

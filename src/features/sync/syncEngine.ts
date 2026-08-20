@@ -26,6 +26,7 @@ import { useSubscriptionStore } from "@/features/finance/store/subscriptionStore
 import { useBudgetPeriodSnapshotStore } from "@/features/finance/store/budgetPeriodSnapshotStore";
 import { useStrategyStore } from "@/features/trading/store/strategyStore";
 import { useWatchlistStore } from "@/features/trading/store/watchlistStore";
+import { useEconomicEventStore } from "@/features/trading/store/economicEventStore";
 
 const SYNCED_TABLES: SyncTableName[] = [
   "transactions",
@@ -51,6 +52,7 @@ const SYNCED_TABLES: SyncTableName[] = [
   "budgetPeriodSnapshots",
   "strategies",
   "watchlistItems",
+  "economicEvents",
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -432,6 +434,7 @@ const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
   budgetPeriodSnapshots: () => useBudgetPeriodSnapshotStore.getState().loadSnapshots(),
   strategies: () => useStrategyStore.getState().loadStrategies(),
   watchlistItems: () => useWatchlistStore.getState().loadWatchlistItems(),
+  economicEvents: () => useEconomicEventStore.getState().loadEconomicEvents(),
 };
 
 // Only reloads (and re-renders) stores whose underlying table actually

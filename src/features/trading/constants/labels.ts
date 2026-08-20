@@ -5,6 +5,7 @@ import type {
   TradeEmotion,
   TradeResult,
   TradeStatus,
+  EconomicEventImpact,
 } from "@/features/trading/types";
 
 type Translate = (key: string) => string;
@@ -71,5 +72,13 @@ export function getStatusLabels(t: Translate): Record<TradeStatus, string> {
   return {
     open: t("trading.statusOpen"),
     closed: t("trading.statusClosed"),
+  };
+}
+
+export function getImpactLabels(t: Translate): Record<EconomicEventImpact, string> {
+  return {
+    low: t("trading.impactLow"),
+    medium: t("trading.impactMedium"),
+    high: t("trading.impactHigh"),
   };
 }

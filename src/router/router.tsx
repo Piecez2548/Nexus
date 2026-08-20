@@ -19,6 +19,7 @@ import {
   TradingJournal,
   Strategies,
   Watchlist,
+  EconomicCalendar,
   Todo,
   Habits,
   Portfolio,
@@ -109,6 +110,10 @@ export const router = createBrowserRouter([
       {
         path: "trading/watchlist",
         element: <Watchlist />,
+      },
+      {
+        path: "trading/economic-calendar",
+        element: <EconomicCalendar />,
       },
       {
         path: "todo",
