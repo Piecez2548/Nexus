@@ -320,6 +320,137 @@ describe("backupService", () => {
     expect(categories.length).toBeGreaterThan(0);
   });
 
+  // Regression: resetAllData() used a bare .clear() on every table, never
+  // calling recordTombstone() -- "Reset All Data" promises a permanent,
+  // irreversible deletion (see its own confirm-dialog copy), but the data
+  // silently survived on the server and every other signed-in device.
+  it("resetAllData tombstones every previously-synced row so the deletion propagates to sync", async () => {
+    await db.syncTombstones.clear();
+    await db.syncState.clear();
+    await db.transactions.add({
+      title: "Synced expense",
+      amount: 100,
+      type: "expense",
+      category: "Food",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+      syncId: "tx-to-be-reset",
+      updatedAt: "2026-07-21T00:00:00.000Z",
+    });
+    // A row with no syncId at all (never synced) has nothing to propagate --
+    // recordTombstone() itself is a no-op for it, confirmed here too.
+    await db.transactions.add({
+      title: "Never synced",
+      amount: 20,
+      type: "expense",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+    });
+
+    await resetAllData();
+
+    const tombstones = await db.syncTombstones.toArray();
+    expect(tombstones.find((t) => t.syncId === "tx-to-be-reset")).toMatchObject({ table: "transactions" });
+    expect(tombstones).toHaveLength(1); // only the synced row, not the never-synced one
+  });
+
+  // Regression: my own earlier fix (commit 20175c3) gated the sync engine's
+  // per-table backfill scan behind a permanent one-time flag -- but
+  // resetAllData() never cleared it, so on a device that had already
+  // synced, the freshly reseeded default accounts/categories (written via
+  // seedDatabase()'s raw bulkAdd, no syncId) would never get stamped or
+  // reach any other device again, silently, forever.
+  it("resetAllData clears every table's backfill-complete flag so reseeded defaults can sync again", async () => {
+    await db.syncState.put({ key: "backfill:accounts:complete", value: "true" });
+    await db.syncState.put({ key: "backfill:categories:complete", value: "true" });
+
+    await resetAllData();
+
+    expect(await db.syncState.get("backfill:accounts:complete")).toBeUndefined();
+    expect(await db.syncState.get("backfill:categories:complete")).toBeUndefined();
+  });
+
+  // Regression: importBackup() also used a bare .clear() with no
+  // tombstoning -- a row present locally before the import but absent from
+  // the backup being imported over it (a genuine removal, e.g. importing an
+  // older snapshot) would silently survive on the server/other devices too.
+  it("importBackup tombstones a row that existed locally but is absent from the imported backup", async () => {
+    await db.syncTombstones.clear();
+    await db.accounts.add({
+      name: "Not in the backup",
+      type: "cash",
+      icon: "wallet",
+      color: "#16a34a",
+      syncId: "removed-by-import",
+      updatedAt: "2026-07-21T00:00:00.000Z",
+    });
+
+    const backup = {
+      version: 1,
+      exportedAt: "2026-07-22T00:00:00.000Z",
+      data: {
+        transactions: [],
+        accounts: [],
+        categories: [],
+        trades: [],
+        recipientProfiles: [],
+        merchants: [],
+        budgets: [],
+        goals: [],
+      },
+    };
+
+    await importBackup(JSON.stringify(backup), t);
+
+    const tombstones = await db.syncTombstones.toArray();
+    expect(tombstones.find((tomb) => tomb.syncId === "removed-by-import")).toMatchObject({ table: "accounts" });
+  });
+
+  it("importBackup does NOT tombstone a row being replaced by the same syncId in the incoming backup", async () => {
+    await db.syncTombstones.clear();
+    await db.accounts.add({
+      name: "Old name",
+      type: "cash",
+      icon: "wallet",
+      color: "#16a34a",
+      syncId: "kept-across-import",
+      updatedAt: "2026-07-21T00:00:00.000Z",
+    });
+
+    const backup = {
+      version: 1,
+      exportedAt: "2026-07-22T00:00:00.000Z",
+      data: {
+        transactions: [],
+        accounts: [
+          {
+            name: "Updated name",
+            type: "cash",
+            icon: "wallet",
+            color: "#16a34a",
+            syncId: "kept-across-import",
+            updatedAt: "2026-07-22T00:00:00.000Z",
+          },
+        ],
+        categories: [],
+        trades: [],
+        recipientProfiles: [],
+        merchants: [],
+        budgets: [],
+        goals: [],
+      },
+    };
+
+    await importBackup(JSON.stringify(backup), t);
+
+    const tombstones = await db.syncTombstones.toArray();
+    expect(tombstones.find((tomb) => tomb.syncId === "kept-across-import")).toBeUndefined();
+    const accounts = await db.accounts.toArray();
+    expect(accounts[0].name).toBe("Updated name");
+  });
+
   describe("encryption compatibility", () => {
     it("exports fully decrypted, human-readable data even when encryption is enabled", async () => {
       const dek = await generateDek();
