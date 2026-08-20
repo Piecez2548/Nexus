@@ -35,7 +35,13 @@ function evaluate(context: RuleContext): RecommendationDraft[] {
     if (!bigSpend) continue;
 
     recommendations.push({
-      id: `large-spending-after-salary-${salary.date}`,
+      // Keyed by the salary transaction's own id, not just its date -- two
+      // salary/payroll-keyword income transactions on the same calendar
+      // date (e.g. two income sources both paid on the 1st) used to
+      // collide on a date-only id, producing two recommendation drafts
+      // that shared one id. This id is used directly as a React list key
+      // (RecommendationsSection.tsx, TopRecommendationsList.tsx).
+      id: `large-spending-after-salary-${salary.date}-${salary.id}`,
       key: "largeSpendingAfterSalary",
       priority: "information",
       estimatedMonthlySavings: 0,
