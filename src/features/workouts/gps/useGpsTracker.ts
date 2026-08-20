@@ -9,6 +9,12 @@ function idleState(): GpsTrackerState {
   return { status: "idle", route: [], runStartedAt: null, bankedActiveMs: 0 };
 }
 
+// A position reading this imprecise (radius, in meters) is common indoors,
+// in an urban canyon, or with a weak signal, and is not a real movement --
+// appending it to the route would permanently and silently inflate the
+// live/final distance with no way to correct it after the fact.
+const MAX_ACCEPTABLE_ACCURACY_METERS = 50;
+
 // Floored at 0: a monotonic clock isn't available cross-platform here, so a
 // backward jump in the device clock (DST fallback, manual time change, NTP
 // resync) could otherwise produce a negative value that flows into a
@@ -48,6 +54,8 @@ export function useGpsTracker() {
 
     const id = await Geolocation.watchPosition({ enableHighAccuracy: true }, (position, err) => {
       if (err || !position) return;
+      if (position.coords.accuracy > MAX_ACCEPTABLE_ACCURACY_METERS) return;
+
       const point: GeoPoint = { lat: position.coords.latitude, lng: position.coords.longitude, t: Date.now() };
       // Only appends while actually tracking -- a position callback that
       // fires just after pause() must not add a point, mirroring the

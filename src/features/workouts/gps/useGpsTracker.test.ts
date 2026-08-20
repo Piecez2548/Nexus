@@ -15,8 +15,8 @@ vi.mock("@capacitor/geolocation", () => ({
 
 import { useGpsTracker } from "./useGpsTracker";
 
-function fakePosition(lat: number, lng: number) {
-  return { coords: { latitude: lat, longitude: lng }, timestamp: Date.now() };
+function fakePosition(lat: number, lng: number, accuracy = 10) {
+  return { coords: { latitude: lat, longitude: lng, accuracy }, timestamp: Date.now() };
 }
 
 describe("useGpsTracker", () => {
@@ -49,6 +49,23 @@ describe("useGpsTracker", () => {
     act(() => positionCallback(fakePosition(13.75, 100.5)));
 
     expect(result.current.state.route).toHaveLength(1);
+  });
+
+  it("does not append a point with poor accuracy (common indoors or with a weak signal)", async () => {
+    // Regression: a single degraded fix (accuracy in meters of radius
+    // uncertainty, routinely hundreds of meters indoors) used to be
+    // appended unconditionally, permanently inflating the recorded route
+    // and distance with no way to correct it after the fact.
+    const { result } = renderHook(() => useGpsTracker());
+    await act(async () => {
+      await result.current.start();
+    });
+
+    act(() => positionCallback(fakePosition(13.75, 100.5, 10))); // good fix, kept
+    act(() => positionCallback(fakePosition(13.76, 100.51, 200))); // poor fix, dropped
+    act(() => positionCallback(fakePosition(13.751, 100.501, 45))); // borderline-good, kept
+
+    expect(result.current.state.route).toHaveLength(2);
   });
 
   it("does not append a point that arrives after pause -- mirrors the interval timer's pause semantics", async () => {
