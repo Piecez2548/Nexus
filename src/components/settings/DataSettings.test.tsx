@@ -85,12 +85,64 @@ describe("DataSettings", () => {
     expect(screen.getByText("Kept (oldest)")).toBeInTheDocument();
     expect(screen.getByText("1 duplicate(s) will be removed")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Merge" }));
+    await user.click(screen.getByRole("button", { name: "Merge 1 selected" }));
 
     expect(await screen.findByText("Removed 1 duplicate transactions")).toBeInTheDocument();
     expect(await db.transactions.count()).toBe(2);
     const titles = (await db.transactions.toArray()).map((t) => t.title).sort();
     expect(titles).toEqual(["Lunch", "Unrelated"]);
+  });
+
+  // Regression (BUG-10): the merge previously acted on every detected group
+  // at once with no way to exclude one. The matching key requires every
+  // field to match exactly, but that's still not proof two transactions are
+  // really the same event -- e.g. two separately-bought ฿35 coffees on the
+  // same day with no `time` set. A false-positive group used to have no way
+  // to be kept out of the deletion short of cancelling the whole review.
+  it("excludes a deselected group from the merge, leaving its transactions untouched", async () => {
+    await db.transactions.bulkAdd([
+      { title: "Lunch", amount: 100, type: "expense", category: "Food", account: "Cash", date: "2026-07-21", status: "completed" },
+      { title: "Lunch", amount: 100, type: "expense", category: "Food", account: "Cash", date: "2026-07-21", status: "completed" },
+      { title: "Coffee", amount: 35, type: "expense", category: "Food", account: "Cash", date: "2026-07-21", status: "completed" },
+      { title: "Coffee", amount: 35, type: "expense", category: "Food", account: "Cash", date: "2026-07-21", status: "completed" },
+    ]);
+
+    const user = userEvent.setup();
+    render(<DataSettings />);
+    await waitFor(() => expect(useTransactionStore.getState().transactions).toHaveLength(4));
+
+    await user.click(screen.getByRole("button", { name: /^Merge Duplicate Transactions/ }));
+    expect(await screen.findByText("Found 2 duplicate group(s)")).toBeInTheDocument();
+    // Every group starts selected -- unchanged behavior for a user who
+    // doesn't touch anything.
+    expect(screen.getByRole("button", { name: "Merge 2 selected" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: /Coffee/ }));
+    await user.click(await screen.findByRole("button", { name: "Merge 1 selected" }));
+
+    expect(await screen.findByText("Removed 1 duplicate transactions")).toBeInTheDocument();
+    const remaining = await db.transactions.toArray();
+    expect(remaining.filter((t) => t.title === "Coffee")).toHaveLength(2); // untouched
+    expect(remaining.filter((t) => t.title === "Lunch")).toHaveLength(1); // merged
+  });
+
+  it("disables the merge button once every group has been deselected", async () => {
+    await db.transactions.bulkAdd([
+      { title: "Lunch", amount: 100, type: "expense", category: "Food", account: "Cash", date: "2026-07-21", status: "completed" },
+      { title: "Lunch", amount: 100, type: "expense", category: "Food", account: "Cash", date: "2026-07-21", status: "completed" },
+    ]);
+
+    const user = userEvent.setup();
+    render(<DataSettings />);
+    await waitFor(() => expect(useTransactionStore.getState().transactions).toHaveLength(2));
+
+    await user.click(screen.getByRole("button", { name: /^Merge Duplicate Transactions/ }));
+    expect(await screen.findByText("Found 1 duplicate group(s)")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("checkbox", { name: /Lunch/ }));
+
+    expect(await screen.findByRole("button", { name: "Merge 0 selected" })).toBeDisabled();
+    expect(await db.transactions.count()).toBe(2);
   });
 
   it("does not open the preview and reports nothing found when there are no duplicate transactions", async () => {

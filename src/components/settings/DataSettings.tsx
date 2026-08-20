@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Download, Upload, Merge, Copy } from "lucide-react";
+import { Check, Download, Upload, Merge, Copy } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
@@ -49,6 +49,15 @@ export default function DataSettings() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [duplicatePreview, setDuplicatePreview] = useState<TransactionDuplicateGroup[] | null>(null);
+  // Groups the user has unchecked in the preview -- excluded from the merge.
+  // The matching key is an exact match on every content field (see
+  // dedupeTransactions.ts), which is strict, but not infallible: two
+  // genuinely separate transactions with no `time` set (common for manual
+  // entries) can still collide -- e.g. two identical ฿35 coffees bought
+  // separately on the same day. Without a per-group opt-out, confirming
+  // ever merged every detected group at once, with no way to keep a real
+  // false positive out of the deletion.
+  const [excludedGroupKeys, setExcludedGroupKeys] = useState<Set<string>>(new Set());
   const toast = useToast();
   const { loadAccounts } = useAccountStore();
   const { loadCategories } = useCategoryStore();
@@ -169,16 +178,28 @@ export default function DataSettings() {
       return;
     }
 
+    setExcludedGroupKeys(new Set());
     setDuplicatePreview(groups);
   }
 
+  function toggleGroupExcluded(key: string) {
+    setExcludedGroupKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  const selectedGroups = (duplicatePreview ?? []).filter((g) => !excludedGroupKeys.has(g.key));
+
   async function handleConfirmMergeTransactions() {
-    if (!duplicatePreview) return;
+    if (selectedGroups.length === 0) return;
 
     setBusy(true);
 
     try {
-      const removed = await mergeTransactionDuplicates(duplicatePreview);
+      const removed = await mergeTransactionDuplicates(selectedGroups);
       await loadTransactions();
       setDuplicatePreview(null);
 
@@ -250,22 +271,44 @@ export default function DataSettings() {
             </h2>
 
             <div className="max-h-[60vh] space-y-3 overflow-y-auto">
-              {duplicatePreview.map((group) => (
-                <div key={group.key} className="rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{group.keep.title}</span>
-                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                      ฿{group.keep.amount.toLocaleString()}
+              {duplicatePreview.map((group) => {
+                const checked = !excludedGroupKeys.has(group.key);
+                return (
+                  <label
+                    key={group.key}
+                    className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4"
+                  >
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
+                        checked ? "border-brand-500 bg-brand-500 text-white" : "border-zinc-300 dark:border-zinc-600"
+                      }`}
+                    >
+                      {checked && <Check size={14} />}
                     </span>
-                  </div>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleGroupExcluded(group.key)}
+                      className="sr-only"
+                    />
 
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{group.keep.date}</p>
-                  <p className="mt-1 text-xs text-green-500">{t("settings.transactionDuplicateKeepNote")}</p>
-                  <p className="text-xs text-red-500">
-                    {t("settings.transactionDuplicateRemoveCount", { count: group.remove.length })}
-                  </p>
-                </div>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{group.keep.title}</span>
+                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                          ฿{group.keep.amount.toLocaleString()}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">{group.keep.date}</p>
+                      <p className="mt-1 text-xs text-green-500">{t("settings.transactionDuplicateKeepNote")}</p>
+                      <p className="text-xs text-red-500">
+                        {t("settings.transactionDuplicateRemoveCount", { count: group.remove.length })}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
 
             <div className="flex gap-3">
@@ -281,10 +324,10 @@ export default function DataSettings() {
               <button
                 type="button"
                 onClick={handleConfirmMergeTransactions}
-                disabled={busy}
+                disabled={busy || selectedGroups.length === 0}
                 className="flex-1 rounded-xl bg-brand-600 py-2.5 font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {t("settings.confirmMergeTransactions")}
+                {t("settings.confirmMergeTransactions", { count: selectedGroups.length })}
               </button>
             </div>
           </div>
