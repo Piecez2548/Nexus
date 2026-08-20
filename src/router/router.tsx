@@ -15,6 +15,7 @@ import {
   Budget,
   Goals,
   RecipientProfiles,
+  Reports,
   TradingDashboard,
   TradingJournal,
   Strategies,
@@ -90,6 +91,10 @@ export const router = createBrowserRouter([
       {
         path: "recipients",
         element: <RecipientProfiles />,
+      },
+      {
+        path: "reports",
+        element: <Reports />,
       },
       {
         path: "trading",

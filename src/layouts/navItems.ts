@@ -22,6 +22,7 @@ import {
   Dumbbell,
   Scale,
   Repeat,
+  FileBarChart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -44,6 +45,7 @@ export const financeMenus: MenuItem[] = [
   { icon: Tags, labelKey: "nav.categories", path: "/categories" },
   { icon: Store, labelKey: "nav.merchants", path: "/merchants" },
   { icon: Users, labelKey: "nav.recipients", path: "/recipients" },
+  { icon: FileBarChart, labelKey: "nav.reports", path: "/reports" },
 ];
 
 export const tradingMenus: MenuItem[] = [
