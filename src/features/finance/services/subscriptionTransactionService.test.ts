@@ -127,6 +127,39 @@ describe("generateDueTransactions", () => {
     expect(addTransaction).not.toHaveBeenCalled();
   });
 
+  // Regression: nextBillingDate used to be advanced+persisted *after*
+  // creating the transaction. updateSubscription() isn't atomic with its
+  // own DB write (its real implementation cancels/reschedules a native
+  // reminder first, which can fail independently) -- a failure there used
+  // to leave a transaction already created but nextBillingDate still stuck
+  // on the same due cycle, recreating the same transaction again on every
+  // future run. Persisting first means a failure here costs a missed
+  // transaction, never a duplicated one.
+  it("does not create a transaction for a cycle whose nextBillingDate advance failed to persist", async () => {
+    const addTransaction = vi.fn();
+    const updateSubscription = vi.fn().mockRejectedValue(new Error("native reminder-cancel failed"));
+
+    await expect(
+      generateDueTransactions([subscription({ nextBillingDate: "2026-08-18" })], addTransaction, updateSubscription, TODAY)
+    ).rejects.toThrow("native reminder-cancel failed");
+
+    expect(addTransaction).not.toHaveBeenCalled();
+  });
+
+  it("persists the advanced nextBillingDate before creating the cycle's transaction", async () => {
+    const callOrder: string[] = [];
+    const addTransaction = vi.fn(async () => {
+      callOrder.push("addTransaction");
+    });
+    const updateSubscription = vi.fn(async () => {
+      callOrder.push("updateSubscription");
+    });
+
+    await generateDueTransactions([subscription({ nextBillingDate: "2026-08-18" })], addTransaction, updateSubscription, TODAY);
+
+    expect(callOrder).toEqual(["updateSubscription", "addTransaction"]);
+  });
+
   it("is idempotent when re-run against the already-advanced nextBillingDate", async () => {
     const addTransaction = vi.fn();
     const updateSubscription = vi.fn();
