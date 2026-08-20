@@ -4,7 +4,7 @@
 
 ## Overview
 
-Nexus's only source of truth is a single Dexie (IndexedDB) database, `NexusDatabase`, defined in `src/database/db.ts`. It is currently at **schema version 23**, reached through 23 `db.version(n).stores({...})` calls. All are additive with one narrow exception: v16 dropped the `slipScannedAssets` table outright (`slipScannedAssets: null`), but per that version's own comment this table was "rebuildable, unreleased" — i.e. never shipped to a real user before being superseded by `slipScanCache` — so no version has ever destroyed or rewritten existing user data. An optional Postgres schema (`supabase/schema.sql`) exists purely as a generic sync relay, never queried for display.
+Nexus's only source of truth is a single Dexie (IndexedDB) database, `NexusDatabase`, defined in `src/database/db.ts`. It is currently at **schema version 24**, reached through 23 `db.version(n).stores({...})` calls. All are additive with one narrow exception: v16 dropped the `slipScannedAssets` table outright (`slipScannedAssets: null`), but per that version's own comment this table was "rebuildable, unreleased" — i.e. never shipped to a real user before being superseded by `slipScanCache` — so no version has ever destroyed or rewritten existing user data. An optional Postgres schema (`supabase/schema.sql`) exists purely as a generic sync relay, never queried for display.
 
 ## Dexie Database
 
@@ -17,13 +17,14 @@ class NexusDatabase extends Dexie {
   slipScanRuns; slipScanCache; slipImportHistory;
   vaultEntries; auditLog; workoutExercises; workoutEntries;
   netWorthItems; netWorthSnapshots; subscriptions; budgetPeriodSnapshots;
+  slipScanCandidates;
 }
 export const db = new NexusDatabase(); // database name: "NexusDatabase"
 ```
 
 ## IndexedDB Tables
 
-28 tables total. `SyncMeta` = `{syncId?, updatedAt?, deletedAt?}`, mixed into every synced entity by `withSyncMeta()` (`src/utils/syncMeta.ts`) — see [API_INTERFACES.md](API_INTERFACES.md). "Synced?" reflects `SyncTableName` in `src/features/sync/types.ts`, the single source of truth for what the sync engine touches.
+29 tables total. `SyncMeta` = `{syncId?, updatedAt?, deletedAt?}`, mixed into every synced entity by `withSyncMeta()` (`src/utils/syncMeta.ts`) — see [API_INTERFACES.md](API_INTERFACES.md). "Synced?" reflects `SyncTableName` in `src/features/sync/types.ts`, the single source of truth for what the sync engine touches.
 
 | Table | Owning module | Synced? | Notes |
 |---|---|---|---|
@@ -55,6 +56,7 @@ export const db = new NexusDatabase(); // database name: "NexusDatabase"
 | `netWorthSnapshots` | finance (Net Worth, FIN-002) | ✅ | write-once-per-day history log (upserted, not appended); one row per calendar day — see `WorkoutEntry`'s `date`-keyed pattern |
 | `subscriptions` | finance (Subscription Manager, FIN-004) | ✅ | independently-managed recurring-payment entity (name/amount/billing frequency/next billing date/status/category/account/note/reminderEnabled/`billingAnchorDay`) — distinct from the pre-existing subscription *detectors*, which only derive a read-only view from transaction history and manage nothing. `billingAnchorDay` (optional, BUG-12) is the true day-of-month billing lands on, persisted separately from `nextBillingDate` so a month-length clamp (Jan 31 -> Feb 28) doesn't permanently lose the original day |
 | `budgetPeriodSnapshots` | finance (Budget Improvements, FIN-001) | ✅ | upsert-by-(budgetSyncId, periodStart) history log of each budget's past-period performance — survives the budget's `amount` being edited later, unlike the always-live-recomputed current view |
+| `slipScanCandidates` | finance (`slipScanner`, BUG-12 stabilization pass) | ❌ | device-local, persists each extracted slip candidate the moment it's produced during a gallery scan — closes a gap where an interrupted scan (app kill, crash, reload) lost work a resume could never re-extract, since the asset was already marked "scanned" in `slipScanCache`. `thumbnailUrl` is deliberately dropped before persisting (a blob: object URL, meaningless once the document that created it is gone) |
 
 ## Table Schema — version history
 
@@ -186,6 +188,12 @@ subscriptions: "++id,syncId,updatedAt"
 // (not a write-once log like goalMilestoneEvents), since a period's spend
 // can legitimately be recomputed many times before it ends. Additive.
 budgetPeriodSnapshots: "++id,syncId,updatedAt"
+
+// v24 — slipScanCandidates (BUG-12 stabilization pass): persists each
+// extracted slip candidate as soon as it's produced, mirroring
+// slipScanCache's per-asset persistence. Device-local, not synced (no
+// syncId), like slipScanRuns/slipScanCache. Additive.
+slipScanCandidates: "++id,runId,assetId"
 ```
 
 ## Indexes
@@ -203,6 +211,7 @@ A handful of device-local tables outside the sync/encryption system keep their o
 - `auditLog`: `at`, `type` — Audit Log drawer's search/type-filter.
 - `workoutEntries`: `date` — "logged on this day" lookups.
 - `netWorthSnapshots`: `date` — finding/upserting today's row.
+- `slipScanCandidates`: `runId` (which scan produced it, for resume-time lookup and clearing once resolved), `assetId`.
 
 `vaultEntries`, `workoutExercises`, `netWorthItems`, `subscriptions`, and `budgetPeriodSnapshots` index only `id`/`syncId`/`updatedAt` — the standard synced-and-encrypted pattern, no per-field index needed. `netWorthItems.kind` (`"asset" | "liability"`), `subscriptions.status` (`"active" | "paused" | "cancelled"`), and `budgetPeriodSnapshots`' upsert-by-key lookup (`budgetSyncId` + `periodStart`) are all deliberately *not* indexed — each list is small enough that grouping/sorting/matching by those fields happens in-memory in the store/service/page, matching this app's own established convention above (business-field filtering happens in memory, not via Dexie indexes).
 
@@ -239,7 +248,7 @@ No other table is seeded.
 
 `exportBackup()` produces a plaintext JSON document (`{version: 1, exportedAt, data: {...22 table arrays...}}`) regardless of whether local encryption is enabled — decrypting every row first, since a backup is meant as a portable, human-readable disaster-recovery artifact. `importBackup(json, translate)` validates structure, re-encrypts rows to match the current device's encryption state, then replaces all 22 tables in one Dexie transaction (`clear()` + `bulkAdd()`); `resetAllData()` clears the same 22 and reseeds. See [SECURITY.md](SECURITY.md) for what this means for backup-file sensitivity.
 
-The 22 tables are: `transactions`, `accounts`, `categories`, `trades`, `recipientProfiles`, `merchants`, `budgets`, `goals`, `transactionTemplates`, `todos`, `habits`, `holdings`, `calendarEvents`, `scheduleItems`, `goalMilestoneEvents`, `vaultEntries`, `workoutExercises`, `workoutEntries`, `netWorthItems`, `netWorthSnapshots`, `subscriptions`, `budgetPeriodSnapshots`. (`workoutExercises`/`workoutEntries` were initially missed when the Workout Tracker (v20) shipped, silently excluding them from backup/restore/reset — found and fixed 2026-08-18, the same day `netWorthItems`/`netWorthSnapshots`/`subscriptions`/`budgetPeriodSnapshots` were each added to this list from the start to avoid repeating that exact gap.) This excludes only the device-local operational tables (`syncTombstones`/`syncState`/`slipScanRuns`/`slipScanCache`/`slipImportHistory`/`auditLog`), which are diagnostic/bookkeeping data, not personal content a backup needs to carry.
+The 22 tables are: `transactions`, `accounts`, `categories`, `trades`, `recipientProfiles`, `merchants`, `budgets`, `goals`, `transactionTemplates`, `todos`, `habits`, `holdings`, `calendarEvents`, `scheduleItems`, `goalMilestoneEvents`, `vaultEntries`, `workoutExercises`, `workoutEntries`, `netWorthItems`, `netWorthSnapshots`, `subscriptions`, `budgetPeriodSnapshots`. (`workoutExercises`/`workoutEntries` were initially missed when the Workout Tracker (v20) shipped, silently excluding them from backup/restore/reset — found and fixed 2026-08-18, the same day `netWorthItems`/`netWorthSnapshots`/`subscriptions`/`budgetPeriodSnapshots` were each added to this list from the start to avoid repeating that exact gap.) This excludes only the device-local operational tables (`syncTombstones`/`syncState`/`slipScanRuns`/`slipScanCache`/`slipImportHistory`/`auditLog`/`slipScanCandidates`), which are diagnostic/bookkeeping/in-progress-scan data, not personal content a backup needs to carry.
 
 ## Future PostgreSQL Schema
 
@@ -276,7 +285,7 @@ One generic `synced_records` row per (entity, table) holds the entity's data as 
 
 ## Current Status
 
-Fully implemented through schema v23. All 21 sync-eligible tables + `merchants` + the 6 device-local operational tables (`syncTombstones`, `syncState`, `slipScanRuns`, `slipScanCache`, `slipImportHistory`, `auditLog`) are live and in use except `calendarEvents` (orphaned, see above). Encryption and sync are both optional, additive layers on top of this schema, not separate schemas.
+Fully implemented through schema v24. All 21 sync-eligible tables + `merchants` + the 7 device-local operational tables (`syncTombstones`, `syncState`, `slipScanRuns`, `slipScanCache`, `slipImportHistory`, `auditLog`, `slipScanCandidates`) are live and in use except `calendarEvents` (orphaned, see above). Encryption and sync are both optional, additive layers on top of this schema, not separate schemas.
 
 ## Future Improvements
 

@@ -89,7 +89,7 @@ Any future component mounted directly in `TopBar`/`MainLayout` that needs broad 
 
 ## Current Status
 
-Fully implemented — 6 global stores, 22 feature stores, all following the conventions documented above (`pendingNotificationCandidateStore` is the one exception to the Dexie-backed norm, noted in the table).
+Fully implemented — 6 global stores, 26 feature stores, all following the conventions documented above (`pendingNotificationCandidateStore` is the one exception to the Dexie-backed norm, noted in the table).
 
 ## Future Improvements
 

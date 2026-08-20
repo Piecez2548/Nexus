@@ -36,7 +36,7 @@ Nexus is a **local-first, feature-first** single-page application. Every domain 
                 │ reads/writes
 ┌───────────────▼─────────────────────────────────────────────┐
 │  src/database/db.ts — one Dexie (IndexedDB) database,          │
-│  28 tables, 23 schema versions                                 │
+│  29 tables, 24 schema versions                                 │
 └─────────────────────────────────────────────────────────────┘
         ▲                                              ▲
         │ optional, opt-in                              │ optional, opt-in
