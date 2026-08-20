@@ -2,6 +2,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useGalleryScan } from "@/features/finance/slipScanner/hooks/useGalleryScan";
 import { extractSlipCandidate } from "@/features/finance/slipScanner/import/extractSlipCandidate";
+import { scanCandidateRepository } from "@/features/finance/slipScanner/repositories/scanCandidateRepository";
+import { scanRunRepository } from "@/features/finance/slipScanner/repositories/scanRunRepository";
 import type { GalleryAssetRef, ScanOptions, ScanStatus } from "@/features/finance/slipScanner/models/scanTypes";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import { computeScanProgress, type ScanProgressSnapshot } from "@/features/finance/slipScanner/progress/scanProgress";
@@ -49,8 +51,20 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
   const [candidates, setCandidates] = useState<SlipCandidate[]>([]);
   const [counts, setCounts] = useState({ qrDetected: 0, ocrProcessed: 0 });
   const startedAtRef = useRef(Date.now());
+  // The scan run these `candidates` belong to, so reset() knows what to clear
+  // from slipScanCandidates (BUG-05 fix). Set both up front, when a resumable
+  // run is found (see beginNewRun below), and from the processor callback
+  // (which always knows the real runId, including for a brand-new run whose
+  // id isn't known until scanSessionService creates it).
+  const runIdRef = useRef<number | null>(null);
 
-  const onCandidate = useCallback((_asset: GalleryAssetRef, candidate: SlipCandidate) => {
+  const onCandidate = useCallback(async (_asset: GalleryAssetRef, candidate: SlipCandidate, runId: number) => {
+    runIdRef.current = runId;
+    // Awaited (not fire-and-forget): the processor awaits onCandidate before
+    // scanSessionService marks the asset "scanned" in slipScanCache, so this
+    // write must land first -- otherwise a kill in the gap between the two
+    // would still lose the candidate while its asset looks already handled.
+    await scanCandidateRepository.add(runId, candidate);
     setCandidates((prev) => [...prev, candidate]);
     setCounts((prev) => ({
       qrDetected: prev.qrDetected + (candidate.source === "qr" ? 1 : 0),
@@ -60,15 +74,33 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
 
   const processor = useMemo(() => createSlipExtractionProcessor(onCandidate, extractor), [onCandidate, extractor]);
 
-  function beginNewRun(): void {
-    setCandidates([]);
-    setCounts({ qrDetected: 0, ocrProcessed: 0 });
+  // Seeds from any candidates left over from an interrupted run (app kill,
+  // crash, reload) instead of always starting empty -- the counterpart to
+  // scanSessionService's own resume-by-cursor logic, which would otherwise
+  // silently skip re-extracting those same assets (already marked "scanned"
+  // in slipScanCache) and lose them for good. Only a normal incremental,
+  // non-date-range scan is ever resumed (mirrors scanSessionService's own
+  // `resumeAllowed`), so a bounded picker/date-range scan always starts clean.
+  async function beginNewRun(resumeEligible: boolean): Promise<void> {
+    const resumable = resumeEligible ? await scanRunRepository.getResumable() : undefined;
+    if (resumable?.id !== undefined) {
+      runIdRef.current = resumable.id;
+      const leftover = await scanCandidateRepository.listByRun(resumable.id);
+      setCandidates(leftover);
+      const qrDetected = leftover.filter((c) => c.source === "qr").length;
+      const ocrProcessed = leftover.filter((c) => c.source === "ocr").length;
+      setCounts({ qrDetected, ocrProcessed });
+    } else {
+      runIdRef.current = null;
+      setCandidates([]);
+      setCounts({ qrDetected: 0, ocrProcessed: 0 });
+    }
     startedAtRef.current = Date.now();
   }
 
   const scanPickedFiles = useCallback(
     async (files: File[], incremental = false) => {
-      beginNewRun();
+      await beginNewRun(incremental); // picker flow never sets a dateRange
       await gallery.scanPickedFiles(files, incremental, processor);
     },
     [gallery, processor],
@@ -76,7 +108,7 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
 
   const scanNativeGallery = useCallback(
     async (incremental = true, dateRange?: ScanOptions["dateRange"]) => {
-      beginNewRun();
+      await beginNewRun(incremental && !dateRange);
       await gallery.scanNativeGallery(incremental, processor, dateRange);
     },
     [gallery, processor],
@@ -95,7 +127,13 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
       )
     : null;
 
+  // Called after a successful import and when the user discards the preview
+  // outright -- both cases already treat every current candidate as resolved
+  // (imported or explicitly dismissed), so their persisted copies are cleared
+  // too, not just the in-memory list.
   function reset(): void {
+    if (runIdRef.current !== null) void scanCandidateRepository.clearRun(runIdRef.current);
+    runIdRef.current = null;
     setCandidates([]);
     setCounts({ qrDetected: 0, ocrProcessed: 0 });
   }

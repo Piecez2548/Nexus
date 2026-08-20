@@ -3,6 +3,8 @@
 // plugin, so the scanner logic stays platform-independent (native gallery
 // enumeration is integrated later behind MediaProvider without touching this).
 
+import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
+
 export type ScanStatus = "idle" | "running" | "paused" | "completed" | "cancelled" | "error";
 
 // A single gallery image, as surfaced by any MediaProvider. `assetId` is the
@@ -82,4 +84,19 @@ export interface ScanCacheEntry {
   parserVersion: string; // Parser Version
   failedAttempts: number; // cross-run failure count for the retry policy
   runId: number;
+}
+
+// One extracted slip candidate, persisted as soon as it's produced (BUG-05
+// fix). Without this, a candidate lived only in transient React state: an
+// interrupted scan (app kill, crash, reload) lost it permanently, and worse,
+// a resume would skip re-extracting its asset entirely, since ScanCacheEntry
+// already marks that asset "scanned". `thumbnailUrl` is deliberately never
+// persisted here -- it's a blob: object URL, meaningless once the document
+// that created it is gone; a restored candidate simply renders without one
+// (ImportPreview already falls back gracefully when it's absent).
+export interface ScanCandidateEntry {
+  id?: number;
+  runId: number;
+  assetId: string;
+  candidate: Omit<SlipCandidate, "thumbnailUrl">;
 }

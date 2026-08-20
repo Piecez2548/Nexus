@@ -21,7 +21,7 @@ import type { Holding } from "@/features/portfolio/types";
 import type { CalendarEvent } from "@/features/calendar/types";
 import type { ScheduleItem } from "@/features/schedule/types";
 import type { Tombstone, SyncStateRow } from "@/features/sync/types";
-import type { SlipScanRun, ScanCacheEntry } from "@/features/finance/slipScanner/models/scanTypes";
+import type { SlipScanRun, ScanCacheEntry, ScanCandidateEntry } from "@/features/finance/slipScanner/models/scanTypes";
 import type { ImportHistoryEntry } from "@/features/finance/slipScanner/models/importHistory";
 import type { VaultEntry } from "@/features/vault/types";
 import type { AuditLogRow } from "@/features/security/auditLog";
@@ -57,6 +57,7 @@ class NexusDatabase extends Dexie {
   public netWorthSnapshots;
   public subscriptions;
   public budgetPeriodSnapshots;
+  public slipScanCandidates;
 
   constructor() {
     super("NexusDatabase");
@@ -340,6 +341,19 @@ class NexusDatabase extends Dexie {
         "++id,syncId,updatedAt",
     });
 
+    // v24 adds slipScanCandidates (BUG-05 fix): persists each extracted slip
+    // candidate as soon as it's produced, mirroring slipScanCache's per-asset
+    // persistence. Without this, a candidate extracted by an interrupted scan
+    // (app kill, crash, reload) was held only in transient React state and
+    // permanently lost -- while the asset itself was already marked "scanned"
+    // in slipScanCache, so a resume would skip re-extracting it too. Device-
+    // local, not synced (no syncId), like slipScanRuns/slipScanCache. Additive,
+    // no existing data touched.
+    this.version(24).stores({
+      slipScanCandidates:
+        "++id,runId,assetId",
+    });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -423,6 +437,9 @@ class NexusDatabase extends Dexie {
 
     this.budgetPeriodSnapshots =
       this.table<BudgetPeriodSnapshot, number>("budgetPeriodSnapshots");
+
+    this.slipScanCandidates =
+      this.table<ScanCandidateEntry, number>("slipScanCandidates");
   }
 }
 

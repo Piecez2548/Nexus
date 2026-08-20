@@ -14,15 +14,16 @@ export type SlipExtractor = (input: ExtractSlipInput) => Promise<SlipCandidate>;
 // -> bank identify -> OCR fallback) exists to fill it. What `onCandidate` does
 // with the result — store it, queue it for review, import it — is deliberately
 // the caller's decision, not this processor's; it stays a pure adapter between
-// the scan queue and extraction.
+// the scan queue and extraction. `runId` is passed through so a caller can
+// persist the candidate against the scan run it came from (BUG-05 fix).
 export function createSlipExtractionProcessor(
-  onCandidate: (asset: GalleryAssetRef, candidate: SlipCandidate) => void | Promise<void>,
+  onCandidate: (asset: GalleryAssetRef, candidate: SlipCandidate, runId: number) => void | Promise<void>,
   extractor: SlipExtractor = extractSlipCandidate,
 ): ScanProcessor {
   return {
-    async process(asset: GalleryAssetRef, bytes: Uint8Array, _contentHash: string, _runId: number, isCancelled: () => boolean): Promise<void> {
+    async process(asset: GalleryAssetRef, bytes: Uint8Array, _contentHash: string, runId: number, isCancelled: () => boolean): Promise<void> {
       const candidate = await extractor({ assetId: asset.assetId, bytes, isCancelled });
-      await onCandidate(asset, candidate);
+      await onCandidate(asset, candidate, runId);
     },
   };
 }
