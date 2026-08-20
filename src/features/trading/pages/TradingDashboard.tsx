@@ -7,6 +7,7 @@ import { useTradingUIStore } from "@/features/trading/store/tradingUIStore";
 import { useTradingStats } from "@/features/trading/hooks/useTradingStats";
 
 import TradingSummaryGrid from "@/features/trading/components/TradingSummaryGrid";
+import RiskLimitPanel from "@/features/trading/components/RiskLimitPanel";
 import StrategyInsights from "@/features/trading/components/StrategyInsights";
 import EquityCurveChart from "@/features/trading/components/EquityCurveChart";
 import DrawdownChart from "@/features/trading/components/DrawdownChart";
@@ -56,6 +57,8 @@ export default function TradingDashboard() {
         <LoadingState label={t("trading.loadingData")} />
       ) : (
         <>
+          <RiskLimitPanel todayPnl={stats.todayPnl} weeklyPnl={stats.weeklyPnl} />
+
           <TradingSummaryGrid
             todayPnl={stats.todayPnl}
             weeklyPnl={stats.weeklyPnl}
