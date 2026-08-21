@@ -4,6 +4,7 @@ import { useAuthStore } from "@/features/sync/store/authStore";
 import { isSyncConfigured } from "@/lib/supabaseClient";
 import LoginScreen from "@/features/sync/components/LoginScreen";
 import MfaChallengeScreen from "@/features/sync/components/MfaChallengeScreen";
+import EmailVerificationScreen from "@/features/sync/components/EmailVerificationScreen";
 import AuthBackdrop from "@/components/ui/AuthBackdrop";
 
 interface Props {
@@ -18,6 +19,7 @@ export default function AuthGate({ children }: Props) {
   const user = useAuthStore((s) => s.user);
   const sessionChecked = useAuthStore((s) => s.sessionChecked);
   const mfaPending = useAuthStore((s) => s.mfaPending);
+  const emailVerificationPending = useAuthStore((s) => s.emailVerificationPending);
 
   useEffect(() => {
     useAuthStore.getState().initialize();
@@ -39,6 +41,14 @@ export default function AuthGate({ children }: Props) {
     return (
       <AuthBackdrop>
         <MfaChallengeScreen />
+      </AuthBackdrop>
+    );
+  }
+
+  if (!user && emailVerificationPending) {
+    return (
+      <AuthBackdrop>
+        <EmailVerificationScreen />
       </AuthBackdrop>
     );
   }

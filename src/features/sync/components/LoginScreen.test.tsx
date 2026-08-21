@@ -36,6 +36,9 @@ describe("LoginScreen", () => {
       mfaPending: false,
       mfaFactorId: null,
       mfaError: null,
+      emailVerificationPending: false,
+      pendingVerificationEmail: null,
+      emailVerificationError: null,
     });
     mockSignUp.mockReset();
     mockSignInWithPassword.mockReset();

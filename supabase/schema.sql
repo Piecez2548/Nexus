@@ -1,6 +1,11 @@
 -- Nexus cloud sync schema.
 -- Run this once in the Supabase SQL Editor (Project > SQL Editor > New query).
 --
+-- Dashboard-only setup this file can't do for you: Authentication > Email
+-- Templates > "Confirm signup" must include the {{ .Token }} variable, or
+-- sign-up emails will only carry a confirmation link, not the 6-digit OTP
+-- code the app's sign-up flow asks the user to enter.
+--
 -- One generic table holds every synced entity type as a JSON payload,
 -- keyed by (id, table_name). The client always reads/writes local
 -- IndexedDB first — this table exists purely to relay changes between a

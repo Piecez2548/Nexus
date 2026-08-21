@@ -10,6 +10,8 @@ const mockRunFullSync = vi.fn();
 const mockListFactors = vi.fn();
 const mockChallengeAndVerify = vi.fn();
 const mockRedeemBackupCode = vi.fn();
+const mockVerifyOtp = vi.fn();
+const mockResend = vi.fn();
 
 vi.mock("@/lib/supabaseClient", () => ({
   isSyncConfigured: true,
@@ -20,6 +22,8 @@ vi.mock("@/lib/supabaseClient", () => ({
       signOut: (...args: unknown[]) => mockSignOut(...args),
       getSession: (...args: unknown[]) => mockGetSession(...args),
       onAuthStateChange: (...args: unknown[]) => mockOnAuthStateChange(...args),
+      verifyOtp: (...args: unknown[]) => mockVerifyOtp(...args),
+      resend: (...args: unknown[]) => mockResend(...args),
       mfa: {
         listFactors: (...args: unknown[]) => mockListFactors(...args),
         challengeAndVerify: (...args: unknown[]) => mockChallengeAndVerify(...args),
@@ -52,6 +56,9 @@ describe("authStore", () => {
       mfaPending: false,
       mfaFactorId: null,
       mfaError: null,
+      emailVerificationPending: false,
+      pendingVerificationEmail: null,
+      emailVerificationError: null,
     });
     mockSignUp.mockReset();
     mockSignInWithPassword.mockReset();
@@ -62,6 +69,8 @@ describe("authStore", () => {
     mockListFactors.mockReset().mockResolvedValue({ data: { totp: [] }, error: null });
     mockChallengeAndVerify.mockReset();
     mockRedeemBackupCode.mockReset();
+    mockVerifyOtp.mockReset();
+    mockResend.mockReset();
     sessionStorage.clear();
     clearAuditLog();
   });
@@ -79,9 +88,9 @@ describe("authStore", () => {
     expect(useAuthStore.getState().needsEmailConfirmation).toBe(false);
   });
 
-  it("flags needsEmailConfirmation when sign up succeeds without an active session", async () => {
+  it("flags needsEmailConfirmation and emailVerificationPending when sign up succeeds without an active session", async () => {
     mockSignUp.mockResolvedValue({
-      data: { user: { id: "u1", email: "a@b.com" }, session: null },
+      data: { user: { id: "u1", email: "a@b.com", identities: [{ id: "i1" }] }, session: null },
       error: null,
     });
 
@@ -89,6 +98,22 @@ describe("authStore", () => {
 
     expect(useAuthStore.getState().user).toBeNull();
     expect(useAuthStore.getState().needsEmailConfirmation).toBe(true);
+    expect(useAuthStore.getState().emailVerificationPending).toBe(true);
+    expect(useAuthStore.getState().pendingVerificationEmail).toBe("a@b.com");
+  });
+
+  it("rejects sign up with a duplicate-account error when Supabase returns an empty identities array", async () => {
+    mockSignUp.mockResolvedValue({
+      data: { user: { id: "fake-id", email: "a@b.com", identities: [] }, session: null },
+      error: null,
+    });
+
+    await useAuthStore.getState().signUp("a@b.com", "password123");
+
+    expect(useAuthStore.getState().user).toBeNull();
+    expect(useAuthStore.getState().error).toBe("An account with this email already exists");
+    expect(useAuthStore.getState().emailVerificationPending).toBe(false);
+    expect(useAuthStore.getState().needsEmailConfirmation).toBe(false);
   });
 
   it("sets an error message on sign up failure without setting a user", async () => {
@@ -323,6 +348,70 @@ describe("authStore", () => {
       expect(useAuthStore.getState().user).toBeNull();
       expect(useAuthStore.getState().mfaPending).toBe(true);
       expect(useAuthStore.getState().sessionChecked).toBe(true);
+    });
+  });
+
+  describe("Email verification (OTP sign-up)", () => {
+    it("verifyEmailOtp grants access and clears all pending/error state on a correct code", async () => {
+      useAuthStore.setState({ emailVerificationPending: true, pendingVerificationEmail: "a@b.com", needsEmailConfirmation: true });
+      mockVerifyOtp.mockResolvedValue({ data: { user: { id: "u1", email: "a@b.com" } }, error: null });
+
+      await useAuthStore.getState().verifyEmailOtp("123456");
+
+      expect(mockVerifyOtp).toHaveBeenCalledWith({ email: "a@b.com", token: "123456", type: "signup" });
+      expect(useAuthStore.getState().user).toMatchObject({ id: "u1" });
+      expect(useAuthStore.getState().emailVerificationPending).toBe(false);
+      expect(useAuthStore.getState().pendingVerificationEmail).toBeNull();
+      expect(useAuthStore.getState().needsEmailConfirmation).toBe(false);
+      expect(getAuditLog().some((e) => e.action === "email-verify" && e.detail?.success === true)).toBe(true);
+    });
+
+    it("verifyEmailOtp keeps pending state and sets emailVerificationError on an incorrect code", async () => {
+      useAuthStore.setState({ emailVerificationPending: true, pendingVerificationEmail: "a@b.com" });
+      mockVerifyOtp.mockResolvedValue({ data: { user: null }, error: { message: "Token has expired or is invalid" } });
+
+      await useAuthStore.getState().verifyEmailOtp("000000");
+
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(useAuthStore.getState().emailVerificationPending).toBe(true);
+      expect(useAuthStore.getState().emailVerificationError).toBe("Token has expired or is invalid");
+      expect(getAuditLog().some((e) => e.action === "email-verify" && e.detail?.success === false)).toBe(true);
+    });
+
+    it("resendEmailVerification clears a prior error on success", async () => {
+      useAuthStore.setState({ pendingVerificationEmail: "a@b.com", emailVerificationError: "stale error" });
+      mockResend.mockResolvedValue({ data: {}, error: null });
+
+      await useAuthStore.getState().resendEmailVerification();
+
+      expect(mockResend).toHaveBeenCalledWith({ type: "signup", email: "a@b.com" });
+      expect(useAuthStore.getState().emailVerificationError).toBeNull();
+    });
+
+    it("resendEmailVerification surfaces a rate-limit or other error from Supabase", async () => {
+      useAuthStore.setState({ pendingVerificationEmail: "a@b.com" });
+      mockResend.mockResolvedValue({ data: null, error: { message: "For security purposes, wait before retrying" } });
+
+      await useAuthStore.getState().resendEmailVerification();
+
+      expect(useAuthStore.getState().emailVerificationError).toBe("For security purposes, wait before retrying");
+    });
+
+    it("cancelEmailVerification resets all pending state without signing out", () => {
+      useAuthStore.setState({
+        emailVerificationPending: true,
+        pendingVerificationEmail: "a@b.com",
+        emailVerificationError: "some error",
+        needsEmailConfirmation: true,
+      });
+
+      useAuthStore.getState().cancelEmailVerification();
+
+      expect(useAuthStore.getState().emailVerificationPending).toBe(false);
+      expect(useAuthStore.getState().pendingVerificationEmail).toBeNull();
+      expect(useAuthStore.getState().emailVerificationError).toBeNull();
+      expect(useAuthStore.getState().needsEmailConfirmation).toBe(false);
+      expect(mockSignOut).not.toHaveBeenCalled();
     });
   });
 });

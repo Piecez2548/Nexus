@@ -14,9 +14,11 @@ Layer 1 — App Lock (device-local, optional)
   Threat model: someone glancing at / picking up an unlocked device
 
 Layer 2 — Cloud sync authentication (optional, requires Supabase configured)
-  Supabase email/password, with optional TOTP two-factor authentication and
-  one-time backup codes — no OAuth, no magic link
-  Threat model: unauthorized access to a user's synced cloud data
+  Supabase email/password with mandatory OTP email verification at sign-up,
+  optional TOTP two-factor authentication, and one-time backup codes — no
+  OAuth, no magic link
+  Threat model: unauthorized access to a user's synced cloud data, and
+  duplicate/unverified accounts being created against a real email address
 
 Layer 3 — Encryption-at-rest (optional, requires Layer 1 + Layer 2)
   Client-side AES-GCM, PBKDF2-derived keys (600,000 iterations)
@@ -34,6 +36,8 @@ These are independent and stackable — a user can run fully local with no lock,
 ## Layer 2 — Cloud Sync Authentication (`src/features/sync/`)
 
 - **Email/password** — confirmed via `LoginScreen.tsx`: no OAuth/social login, no magic link. Minimum password length: 6 characters.
+- **OTP email verification at sign-up.** `signUp()` no longer completes with a clickable confirmation link — the account stays unusable until the emailed 6-digit code is entered on `EmailVerificationScreen.tsx` (shown by `AuthGate.tsx` in place of `LoginScreen` while `authStore.ts`'s `emailVerificationPending` is true), verified via Supabase Auth's own `auth.verifyOtp({ email, token, type: "signup" })` — no new backend, same "Supabase Auth already is the backend" pattern as TOTP below. Requires the Supabase Dashboard's "Confirm signup" email template to include `{{ .Token }}` (see [DEPLOYMENT.md](DEPLOYMENT.md)) — a Dashboard-only setting this repo cannot configure.
+  - **Duplicate-email detection:** `signUp()` against an email that already belongs to a confirmed account doesn't return a distinguishing error — Supabase's documented anti-enumeration behavior returns a "successful" response with an **empty `identities` array** instead. `authStore.ts` treats `identities?.length === 0` as "account already exists" and surfaces that as an error instead of proceeding to the OTP step, closing off the "same email, multiple accounts" gap this feature was built to fix.
 - **Fully optional and gracefully absent:** `AuthGate.tsx` renders the app with **no login screen at all** if Supabase env vars aren't configured (`isSyncConfigured === false`) — a deliberate choice so the app "never locks anyone out with no way in" when sync isn't set up.
 - **Access control:** Postgres Row-Level Security (`auth.uid() = user_id`) on `synced_records`, `user_encryption_keys`, and `mfa_backup_codes` — the only access-control mechanism; there is no application-level authorization layer beyond it.
 - **Optional TOTP two-factor authentication**, using Supabase Auth's native MFA API directly (`supabase.auth.mfa.*`) — no new backend, since Supabase Auth already is the backend. Enrollment (`EnrollMfaForm.tsx`) shows a QR code and setup secret from `auth.mfa.enroll()`, confirmed via `auth.mfa.challengeAndVerify()`; the same primitive verifies a code at sign-in (`MfaChallengeScreen.tsx`, shown by `AuthGate.tsx` in place of `LoginScreen` whenever a password step succeeds but the account has a verified factor this browser session hasn't satisfied yet). Successful verification also promotes the Supabase session itself to `aal2` and — per Supabase's own documented behavior — signs out every other session on the account.
@@ -67,7 +71,7 @@ There are two distinct "passwords" in this app, handled differently:
 
 ## Future Authentication
 
-Already implemented: Supabase email/password, TOTP two-factor authentication, and backup codes (see Layer 2). **Not implemented and not currently planned:** OAuth/social sign-in, magic links, or any multi-user/role-based access model — see [ROADMAP.md](ROADMAP.md).
+Already implemented: Supabase email/password with OTP email verification at sign-up, TOTP two-factor authentication, and backup codes (see Layer 2). **Not implemented and not currently planned:** OAuth/social sign-in, magic links, or any multi-user/role-based access model — see [ROADMAP.md](ROADMAP.md).
 
 ## Future Encryption
 

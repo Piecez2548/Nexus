@@ -40,6 +40,9 @@ describe("AuthGate (sync configured)", () => {
       mfaPending: false,
       mfaFactorId: null,
       mfaError: null,
+      emailVerificationPending: false,
+      pendingVerificationEmail: null,
+      emailVerificationError: null,
     });
     mockGetSession.mockReset();
     mockOnAuthStateChange.mockReset();
@@ -96,6 +99,21 @@ describe("AuthGate (sync configured)", () => {
     );
 
     expect(await screen.findByText("Verify it's you")).toBeInTheDocument();
+    expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
+    expect(screen.queryByText("Welcome back")).not.toBeInTheDocument();
+  });
+
+  it("shows the email verification screen, not protected content or the login form, when a sign-up is pending confirmation", async () => {
+    mockGetSession.mockResolvedValue({ data: { session: null } });
+    useAuthStore.setState({ emailVerificationPending: true, pendingVerificationEmail: "a@b.com" });
+
+    render(
+      <AuthGate>
+        <p>Protected content</p>
+      </AuthGate>
+    );
+
+    expect(await screen.findByText("Verify your email")).toBeInTheDocument();
     expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
     expect(screen.queryByText("Welcome back")).not.toBeInTheDocument();
   });

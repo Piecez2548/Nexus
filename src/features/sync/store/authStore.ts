@@ -31,6 +31,14 @@ interface AuthState {
   mfaFactorId: string | null;
   mfaError: string | null;
 
+  // A signUp() succeeded but Supabase won't issue a session until the
+  // emailed OTP code is entered. `needsEmailConfirmation` stays alongside
+  // this for SyncSettings.tsx's own independent (and in production
+  // unreachable, since AuthGate already gates the whole app) sign-up form.
+  emailVerificationPending: boolean;
+  pendingVerificationEmail: string | null;
+  emailVerificationError: string | null;
+
   initialize: () => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -39,6 +47,9 @@ interface AuthState {
   verifyMfaCode: (code: string) => Promise<void>;
   verifyBackupCode: (code: string) => Promise<void>;
   cancelMfaChallenge: () => Promise<void>;
+  verifyEmailOtp: (code: string) => Promise<void>;
+  resendEmailVerification: () => Promise<void>;
+  cancelEmailVerification: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -53,6 +64,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   mfaPending: false,
   mfaFactorId: null,
   mfaError: null,
+  emailVerificationPending: false,
+  pendingVerificationEmail: null,
+  emailVerificationError: null,
 
   async initialize() {
     if (get().initialized) return;
@@ -97,11 +111,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
+    // Supabase's anti-enumeration behavior: signUp() against an email that
+    // already belongs to a CONFIRMED account returns a "successful"
+    // response with an empty identities array instead of a distinguishing
+    // error, so client code is expected to detect duplicates this way.
+    if (data.user && data.user.identities?.length === 0) {
+      recordAudit("auth", "sign-up", { success: false, duplicateEmail: true });
+      set({ loading: false, error: "An account with this email already exists" });
+      return;
+    }
+
     // With email confirmation enabled on the Supabase project, signUp
-    // succeeds but returns no session until the link is clicked.
+    // succeeds but returns no session until the emailed OTP code is entered.
     if (!data.session) {
       recordAudit("auth", "sign-up", { success: true, needsEmailConfirmation: true });
-      set({ loading: false, needsEmailConfirmation: true });
+      set({
+        loading: false,
+        needsEmailConfirmation: true,
+        emailVerificationPending: true,
+        pendingVerificationEmail: email,
+      });
       return;
     }
 
@@ -210,5 +239,62 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // returns cleanly to the plain sign-in form.
     await supabase.auth.signOut();
     set({ mfaPending: false, mfaFactorId: null, mfaError: null });
+  },
+
+  async verifyEmailOtp(code) {
+    const { pendingVerificationEmail } = get();
+    if (!supabase || !pendingVerificationEmail) return;
+
+    set({ loading: true, emailVerificationError: null });
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: pendingVerificationEmail,
+      token: code,
+      type: "signup",
+    });
+
+    if (error || !data.user) {
+      recordAudit("auth", "email-verify", { success: false });
+      set({ loading: false, emailVerificationError: error?.message ?? "Invalid or expired code" });
+      return;
+    }
+
+    // Routed through the same gate as every other place this store can
+    // grant `user` -- a brand-new account can't already have a verified MFA
+    // factor, so this is always a pass-through today, but it keeps "user is
+    // only ever set via resolveMfaAccess" true everywhere, not just almost
+    // everywhere.
+    const access = await resolveMfaAccess(data.user);
+    recordAudit("auth", "email-verify", { success: true });
+    set({
+      loading: false,
+      user: access.user,
+      mfaPending: access.mfaPending,
+      mfaFactorId: access.mfaFactorId,
+      needsEmailConfirmation: false,
+      emailVerificationPending: false,
+      pendingVerificationEmail: null,
+      emailVerificationError: null,
+    });
+  },
+
+  async resendEmailVerification() {
+    const { pendingVerificationEmail } = get();
+    if (!supabase || !pendingVerificationEmail) return;
+
+    set({ emailVerificationError: null });
+    const { error } = await supabase.auth.resend({ type: "signup", email: pendingVerificationEmail });
+    if (error) set({ emailVerificationError: error.message });
+  },
+
+  cancelEmailVerification() {
+    // No active Supabase session exists yet at this point -- signUp() never
+    // established one when confirmation is pending, so this is just a
+    // state reset back to the plain sign-in form.
+    set({
+      needsEmailConfirmation: false,
+      emailVerificationPending: false,
+      pendingVerificationEmail: null,
+      emailVerificationError: null,
+    });
   },
 }));

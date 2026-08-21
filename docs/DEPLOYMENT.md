@@ -67,6 +67,8 @@ Both Supabase variables must be set together for sync to activate (`isSyncConfig
 
 **Server-side environment (Supabase project, not this repo):** `supabase/schema.sql` must be run once in the target Supabase project's SQL Editor to create the `synced_records` and `user_encryption_keys` tables + RLS policies before sync/encryption will function against that project — see [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md).
 
+**Dashboard-only, no SQL involved:** the Authentication → Email Templates → "Confirm signup" template must include the `{{ .Token }}` variable, or sign-up emails will only ever contain a confirmation link, not the 6-digit OTP code the app's email-verification screen asks for. This is a Supabase Dashboard setting, not something `schema.sql` or this repo can configure.
+
 ## Future Backend Deployment
 
 **Not applicable — no backend exists to deploy.** Supabase is a managed third-party service, configured via the environment variables above, not deployed from this repository. If a real application backend is ever built (see [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)'s "Future Backend Architecture" and [DECISIONS.md](DECISIONS.md)), it would need its own deployment pipeline, entirely separate from the three client targets documented above.
