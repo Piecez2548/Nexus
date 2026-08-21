@@ -8,6 +8,14 @@ afterEach(() => {
 
 describe("loadAiGatewayConfig", () => {
   it("defaults to the local-rule provider with the default timeout when nothing is configured", () => {
+    // Explicitly stubbed, not just relying on ambient env -- a developer's
+    // own .env.local (e.g. VITE_AI_PROVIDER=claude, set for local AI Coach
+    // testing) must never change what "nothing is configured" means here.
+    vi.stubEnv("VITE_AI_PROVIDER", "");
+    vi.stubEnv("VITE_AI_API_KEY", "");
+    vi.stubEnv("VITE_AI_ENDPOINT", "");
+    vi.stubEnv("VITE_AI_MODEL", "");
+
     const config = loadAiGatewayConfig();
     expect(config.providerName).toBe("local-rule");
     expect(config.timeoutMs).toBe(DEFAULT_TIMEOUT_MS);
