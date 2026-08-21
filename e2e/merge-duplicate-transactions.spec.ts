@@ -23,7 +23,7 @@ test.describe("Merge Duplicate Transactions", () => {
     await expect(page.getByText("Kept (oldest)")).toBeVisible();
     await expect(page.getByText("1 duplicate(s) will be removed")).toBeVisible();
 
-    await page.getByRole("button", { name: "Merge", exact: true }).click();
+    await page.getByRole("button", { name: "Merge 1 selected" }).click();
     await expect(page.getByText("Removed 1 duplicate transactions").first()).toBeVisible();
 
     await page.goto("/transactions");

@@ -19,7 +19,7 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `appLockStore` | PIN/lock fields + encryption-at-rest fields (`encryptionEnabled, wrappedDek, kekSalt, kekIterations`) + `biometricEnabled` | `localStorage: nexus-app-lock` (via explicit `partialize`) + `sessionUnlocked` mirrored to `sessionStorage` | writes/clears the in-memory DEK on unlock/lock via `encryptionSessionStore`; internally composed from 3 Zustand slices in `store/appLock/` (`pinLockSlice`, `biometricSlice`, `encryptionKeySlice`) — the exported `useAppLockStore` and its state shape are unchanged, only the internal file split is new |
 | `gamificationStore` | `xp, streak, lastActiveDate` | `localStorage: nexus-gamification` | `addXp()` fires a level-up toast via `toastStore` |
 
-### Feature stores (`src/features/*/store/*.ts`) — 26 total
+### Feature stores (`src/features/*/store/*.ts`) — 37 total
 
 | Store | Entity | Pattern | Key actions |
 |---|---|---|---|
@@ -29,6 +29,7 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `finance/categoryStore` | `Category` | fetch-on-mount cache | load, add, update, delete, merge |
 | `finance/goalStore` | `Goal` | fetch-on-mount cache | load, add, update, delete, `contribute` (awards XP, logs milestones) |
 | `finance/goalMilestoneEventStore` | `GoalMilestoneEvent` | fetch-on-mount cache, **read-only** | load only |
+| `finance/merchantStore` | `Merchant` | fetch-on-mount cache | load, add, update, delete |
 | `finance/netWorthItemStore` | `NetWorthItem` | fetch-on-mount cache | load, add, update, delete (each mutation upserts today's `NetWorthSnapshot`) |
 | `finance/netWorthSnapshotStore` | `NetWorthSnapshot` | fetch-on-mount cache, **read-only** | load only |
 | `finance/subscriptionStore` | `Subscription` | fetch-on-mount cache | load, add, update (incl. status transitions), delete (schedules/cancels an opt-in reminder on add/update/delete, mirroring `habitStore`'s pattern) |
@@ -37,8 +38,18 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `finance/transactionTemplateStore` | `TransactionTemplate` | fetch-on-mount cache | load, add, update, delete |
 | `finance/uiStore` | Transaction drawer UI | pure UI state, no service | open/close drawer, open-with-draft |
 | `finance/notificationCapture/pendingNotificationCandidateStore` | `SlipCandidate` (built from native payment notifications) | **not Dexie-backed** — reads/clears candidates via the native `PaymentNotificationCapture` plugin | refresh (parse + drop unparseable), acknowledge |
+| `finance/slipScanner/bankSelectionStore` | pre-scan bank selection | `persist` to `localStorage`, **not Dexie-backed** | setSelectedBankIds, reset — remembers the user's bank picks across sessions ("remember previous selection") |
+| `finance/slipScanner/categoryLearningStore` | slip category corrections (GS-043/GS-045), keyed by normalized merchant/title | `persist` to `localStorage`, **not Dexie-backed** | learn, asMap, reset — local-only, no cloud AI |
+| `finance/slipScanner/learningStore` | Smart Learning Engine corrections — merchant name / OCR text / bank naming (GS-045) | `persist` to `localStorage`, **not Dexie-backed** | learnMerchant, learnOcr, learnBankName, reset |
+| `finance/slipScanner/scanScheduleStore` | scan-schedule config + last-completed-scan time | `persist` to `localStorage`, **not Dexie-backed** | setConfig, markScanned, reset — gates the battery-aware scan scheduler's interval check |
+| `finance/slipScanner/scanStore` | active gallery-scan session status/progress | ephemeral — the live `ScanSession` control handle is held in a module-level variable outside the store, only status/progress are rendered state | start, pause, resume, cancel |
+| `finance/slipScanner/scannerAnalyticsStore` | cumulative scanner run counters (aggregate only, no slip content) | `persist` to `localStorage`, **not Dexie-backed** | recordRun (folds via a pure `mergeRun`), reset |
 | `trading/tradeStore` | `Trade` | fetch-on-mount cache | load, add/update (awards XP on close), delete |
 | `trading/tradingUIStore` | Trade drawer UI | pure UI state | open/close drawer |
+| `trading/riskConfigStore` | daily/weekly max-loss limits | `persist` to `localStorage`, **not Dexie-backed** — trading-specific, kept separate from `appSettingsStore` | setMaxDailyLossLimit, setMaxWeeklyLossLimit (`null` = no limit set, distinct from `0`) |
+| `trading/strategyStore` | `Strategy` | fetch-on-mount cache | load, add, update, delete |
+| `trading/watchlistStore` | `WatchlistItem` | fetch-on-mount cache | load, add, update, delete |
+| `trading/economicEventStore` | `EconomicEvent` | fetch-on-mount cache | load, add, update, delete |
 | `habits/habitStore` | `Habit` | fetch-on-mount cache + reminder scheduling | load, add/update/delete (schedule/cancel native reminders), `checkIn` (idempotent, awards XP) |
 | `portfolio/holdingStore` | `Holding` | fetch-on-mount cache | load, add, update, delete, `updateCurrentPrice` |
 | `schedule/scheduleItemStore` | `ScheduleItem` | fetch-on-mount cache + reminder scheduling | load, add, update, delete |
@@ -49,6 +60,8 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `sync/authStore` | Supabase session + sync status | wraps the Supabase Auth SDK directly, not a repo cache | initialize, signUp, signIn, signOut, sync |
 | `encryption/encryptionSessionStore` | In-memory DEK (`CryptoKey`) | ephemeral, deliberately **not** persisted | setDek, clearDek |
 | `dashboard/dashboardPeriodStore` | Period selector UI | pure UI state | setGranularity |
+
+`executive/` (EXEC-001) has no store — see the note below the table.
 
 `src/features/executive/` (EXEC-001) deliberately owns **no store of its own** — it has no entity and no Dexie table, so there is nothing to cache. Its `hooks/useExecutiveDashboard.ts` is a plain orchestration hook that reads the feature stores listed above directly (todo/habit/schedule/goal/goalMilestoneEvent/workoutEntry) plus the outputs of `useBudgetProgress`/`useNetWorthStats`/`useTradingStats`, and hands the combined result to pure functions in `executive/engine/` — the same "derive, don't duplicate" rule every other read-only view in this app already follows.
 
@@ -91,7 +104,7 @@ Any future component mounted directly in `TopBar`/`MainLayout` that needs broad 
 
 ## Current Status
 
-Fully implemented — 6 global stores, 26 feature stores, all following the conventions documented above (`pendingNotificationCandidateStore` is the one exception to the Dexie-backed norm, noted in the table).
+Fully implemented — 6 global stores, 37 feature stores, all following the conventions documented above. Most Dexie-backed entity stores follow the fetch-on-mount-cache pattern; the exceptions are `pendingNotificationCandidateStore` (reads from a native plugin, not Dexie) and the `localStorage`-`persist`ed, **not** Dexie-backed device-local config stores — `slipScanner/bankSelectionStore`, `slipScanner/categoryLearningStore`, `slipScanner/learningStore`, `slipScanner/scanScheduleStore`, `slipScanner/scannerAnalyticsStore`, and `trading/riskConfigStore` — plus `slipScanner/scanStore`, which holds ephemeral in-progress scan state that isn't persisted at all.
 
 ## Future Improvements
 
