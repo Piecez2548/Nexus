@@ -4,7 +4,7 @@
 
 ## Overview
 
-Every domain lives in `src/features/<name>/` with the same internal shape (see [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)). This document covers all 15 feature-module folders that exist in the repo today, in the order they appear in the codebase. AI Analytics is summarized here and documented in full depth in [AI_ANALYTICS.md](AI_ANALYTICS.md); shared UI is documented in [COMPONENT_LIBRARY.md](COMPONENT_LIBRARY.md).
+Every domain lives in `src/features/<name>/` with the same internal shape (see [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)). This document covers all 16 feature-module folders that exist in the repo today, in the order they appear in the codebase. AI Analytics is summarized here and documented in full depth in [AI_ANALYTICS.md](AI_ANALYTICS.md); shared UI is documented in [COMPONENT_LIBRARY.md](COMPONENT_LIBRARY.md).
 
 ---
 
@@ -472,13 +472,39 @@ A single dedicated view aggregating every OS-level permission the app requests �
 
 ---
 
+## 17. Executive (`src/features/executive/`)
+
+**Purpose:** A middle layer above every other module — not a domain of its own, no entity, no source of truth. Reads Todo/Habit/Schedule/Goal/Finance/Trading/Workout data through their own existing stores/hooks and turns it into one deterministic, explainable, prioritized view (EXEC-001).
+
+**Route:** `/executive`.
+
+**Features:** today's current/next schedule item; a ranked "Top Priorities" list (overdue todos, at-risk habits, at-risk/deadline-soon goals), each item paired with a plain-language reason (e.g. "3 days overdue," "5-day streak at risk"); an Overdue list; a Goals snapshot (progress bars, at-risk highlighted); Finance/Health/Trading snapshot cards; an Executive Summary panel (workload level — light/moderate/high, a plain threshold over the real priority-item count — top priority, overdue count, at-risk-goals count). No AI/LLM anywhere: every score is a sum of small, named, capped signals, and the summary panel is always labeled "Executive Summary," never "AI says."
+
+**Components:** `TodayScheduleSection`, `PrioritySection`, `OverdueSection`, `GoalsSnapshotSection`, `FinanceSnapshotSection`, `HealthSnapshotSection`, `TradingSnapshotSection`, `ExecutiveSummaryPanel`, composed by `pages/ExecutiveDashboard.tsx`.
+
+**Engine (pure, hook-free, independently tested):** `buildExecutiveContext()` assembles the domain snapshot from already-existing pure functions (`analyzeGoals`, `getCurrentAndNext`, `computeStreak`/`isCompletedToday`, `getLoggedDates`) plus pre-computed Finance/Trading inputs handed in as plain data. `calculateExecutivePriorities()` scores and ranks todo/habit/goal items with an explicit deterministic tie-break (score desc → category → id) rather than relying on sort stability. `buildExecutiveSummary()` derives the workload level and headline stats from the context + ranked priorities.
+
+**Services:** none — this module owns no entity, so there is nothing to persist.
+
+**Stores:** none of its own. `hooks/useExecutiveDashboard.ts` is the orchestration layer: reads `todoStore`/`habitStore`/`scheduleItemStore`/`goalStore`/`goalMilestoneEventStore`/`workoutEntryStore` directly, and calls `useBudgetProgress()`/`useNetWorthStats()`/`useTradingStats()` (existing hooks in Finance/Trading) for the Finance/Trading snapshot inputs — the only way to reuse `useTradingStats`'s math, since it has no standalone exported pure function. Since none of those three hooks trigger their own store load, this hook also explicitly loads `transactionStore`/`budgetStore`/`netWorthItemStore`/`tradeStore` itself; landing on `/executive` directly, without having first visited `/finance` or `/trading` that session, would otherwise silently render a zeroed-out Finance/Trading snapshot.
+
+**Database usage:** none directly, and no new table — every field is read live through the stores/hooks above.
+
+**Dependencies:** todo, habits, schedule, finance (goals, budget, net worth), trading (stats), workouts (read-only, for aggregation only — this module writes nothing back into any of them).
+
+**Current Status:** Fully implemented (EXEC-001).
+
+**Future Plans:** None documented beyond what's built — no chatbot, no background/autonomous agent, no external AI provider; any of those would be a new, separately-scoped task.
+
+---
+
 ## Shared / cross-cutting (not `features/`)
 
 Briefly, since these support every module above rather than owning a domain: `src/components/` (shared UI, see [COMPONENT_LIBRARY.md](COMPONENT_LIBRARY.md)), `src/database/` (Dexie + factories, see [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)), `src/store/` (global stores, see [STATE_MANAGEMENT.md](STATE_MANAGEMENT.md)), `src/layouts/` + `src/router/` (see [ROUTING.md](ROUTING.md)), `src/i18n/` (Thai/English translation dictionary), `src/ai/` (the parked AI Gateway, see [AI_ANALYTICS.md](AI_ANALYTICS.md)), `src/lib/` (Supabase + Sentry client setup, see [DEPLOYMENT.md](DEPLOYMENT.md)).
 
 ## Current Status
 
-15 feature modules exist; 14 are actively developed and fully implemented for their current scope, 1 (`calendar/`) is intentionally orphaned/dead. See each module section above for specifics.
+16 feature modules exist; 15 are actively developed and fully implemented for their current scope, 1 (`calendar/`) is intentionally orphaned/dead. See each module section above for specifics.
 
 ## Future Improvements
 

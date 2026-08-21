@@ -23,6 +23,7 @@ import {
   Scale,
   Repeat,
   FileBarChart,
+  LayoutGrid,
   type LucideIcon,
 } from "lucide-react";
 
@@ -58,6 +59,7 @@ export const tradingMenus: MenuItem[] = [
 ];
 
 export const personalMenus: MenuItem[] = [
+  { icon: LayoutGrid, labelKey: "nav.executive", path: "/executive" },
   { icon: ListChecks, labelKey: "nav.todo", path: "/todo" },
   { icon: Flame, labelKey: "nav.habits", path: "/habits" },
   { icon: Clock, labelKey: "nav.schedule", path: "/schedule" },

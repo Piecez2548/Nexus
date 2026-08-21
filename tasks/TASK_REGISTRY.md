@@ -27,7 +27,8 @@ Master registry of all planned and completed Nexus tasks, grouped by Epic. See [
 | UX | 2 | 2 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
 | Platform (PLT) | 20 | 20 | 0 | 0 | 0 |
-| **Total** | **113** | **113** | **0** | **0** | **0** |
+| Executive | 1 | 1 | 0 | 0 | 0 |
+| **Total** | **114** | **114** | **0** | **0** | **0** |
 
 ---
 
@@ -292,6 +293,32 @@ AI Analytics user-experience fixes.
 | UX-002 | UX | Harden AI Analytics Retry & Error Handling | Medium | Completed | UX-001 |
 
 > UX-002 fixed the synchronous-engine-throw hang (a sync throw now surfaces as an error state instead of leaving the page on `loading`) and made retry re-fetch the finance data before re-analysing. Remaining: surfacing store-level data-load errors as their own `ErrorState` — they currently fall through to the empty state — which is not yet a registered task.
+
+---
+
+## Executive
+
+A new middle layer above the existing modules (`src/features/executive/`) — reads Todo/Habit/Schedule/Goal/Finance/Trading/Workout data through existing stores and hooks and turns it into one prioritized, explainable view. No new source of truth, no AI/LLM, no background agent.
+
+| Task ID | Epic | Title | Priority | Status | Dependencies |
+|---|---|---|---|---|---|
+| EXEC-001 | Executive | AI Executive Dashboard Foundation | High | Completed | — |
+
+> **EXEC-001 delivered (2026-08-21).** Scope came directly from the user's own detailed spec (25 hard rules), the strictest of which: no new Dexie table, no duplicate business logic, no LLM/randomness anywhere in the scoring, reuse every existing repository/store/service/hook rather than re-deriving their math.
+>
+> **Architecture investigation, done before any code was written**: `src/features/dashboard/` already implements the "aggregate many modules into one view" pattern (6 preview panels + a rule-based `computeDailySummary()`), which reframed this task from "build an aggregator" into "build a deeper, explainable priority engine as its own page," reusing that page's card/empty-state conventions rather than rewriting it. Confirmed via `docs/MODULES.md` and full-text search that no "Quest" or "Study" module exists — nothing was fabricated for the dashboard mock.
+>
+> **Domain model — derived, not stored.** `buildExecutiveContext()` (`src/features/executive/engine/`) is a pure function with no hooks, fed by `analyzeGoals()`, `getCurrentAndNext()`, `computeStreak()`/`isCompletedToday()`, and `getLoggedDates()` — all pre-existing pure functions — plus the *outputs* of `useBudgetProgress()`/`useNetWorthStats()`/`useTradingStats()`, which are called once at the orchestration layer (`useExecutiveDashboard.ts`) and passed in as data. `useTradingStats()`'s calculation only exists inline inside its own hook (no standalone exported pure function), so calling it at the orchestration layer and passing its output through was the only way to reuse it without either duplicating its math or refactoring an existing, untouched module.
+>
+> **Priority engine — deterministic and explainable.** `calculateExecutivePriorities()` scores overdue todos, at-risk habits, and at-risk/deadline-soon goals from small, named, capped signals (e.g. overdue todo = `100 + priorityWeight + min(overdueDays,10)*2`), each paired with a `reasons[]` array resolved through i18n at render time — never a fabricated or opaque score. Ties break through an explicit multi-key comparator (score desc → category → id), not JS's incidental sort stability. `buildExecutiveSummary()`'s workload level is a plain threshold over the real priority-item count, and is always labeled "Executive Summary" — never phrased as "AI says," since no model is involved anywhere in this task.
+>
+> **A real bug found and fixed before this landed**: `useBudgetProgress`/`useNetWorthStats`/`useTradingStats` only read whatever is already sitting in their stores — none of them trigger their own load. `useExecutiveDashboard`'s original `loadAll` only loaded the 6 stores the domain model reads directly (todos/habits/schedule/goals/goal-milestones/workouts), so landing on `/executive` directly — without having first visited `/finance` or `/trading` in that session — would have silently rendered a zeroed-out Finance/Trading snapshot even with real data in Dexie. Fixed by also loading `transactions`/`budgets`/`netWorthItems`/`trades` from `useExecutiveDashboard`, caught by the page-level integration test before it ever shipped (`reflects real budget and net worth data in the Finance snapshot` failed until the fix landed).
+>
+> **UI** — 8 new components (`TodayScheduleSection`, `PrioritySection`, `OverdueSection`, `GoalsSnapshotSection`, `FinanceSnapshotSection`, `HealthSnapshotSection`, `TradingSnapshotSection`, `ExecutiveSummaryPanel`) composed by `pages/ExecutiveDashboard.tsx`, all using the app's existing `rounded-2xl` card and inline empty-state conventions — no new shared component was introduced. Routed at `/executive`, placed as the first item in the `personalMenus` nav group (`layouts/navItems.ts`) rather than touching `Sidebar.tsx`/`MobileTabBar.tsx` directly.
+>
+> **Database: no schema change.** Every field is read live from existing tables through existing stores/hooks — nothing is cached or persisted by this feature, so `docs/DATABASE_SCHEMA.md` is untouched.
+>
+> `tsc -b`, `oxlint`, the full test suite (**2620 tests**, all passing — 26 new: `buildExecutiveContext.test.ts`, `calculateExecutivePriorities.test.ts`, `buildExecutiveSummary.test.ts`, `ExecutiveDashboard.integration.test.tsx`), and `npm run build` are all clean. New Playwright coverage (`e2e/executive.spec.ts`, 4 tests: nav + empty state, a real overdue todo surfacing in Priority and linking back to Todo, refresh persistence, and a mobile-viewport reachability check via the More menu) all pass. **Files**: new `src/features/executive/**` (types, `utils/todoStatus.ts`, 3 engine functions + tests, `hooks/useExecutiveDashboard.ts`, 8 components, `pages/ExecutiveDashboard.tsx` + integration test); touched `src/layouts/navItems.ts`, `src/router/lazyPages.ts`/`router.tsx`, `src/i18n/translations.ts` (EN+TH, new `executive.*` namespace + `nav.executive`); new `e2e/executive.spec.ts`. **Not pushed** — committed locally only, per this task's explicit scope.
 
 ---
 

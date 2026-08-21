@@ -4,7 +4,7 @@
 
 ## Overview
 
-Nexus is a **local-first, feature-first** single-page application. Every domain (finance, trading, portfolio, todo, habits, schedule, AI analytics, sync, encryption, app lock, vault, workout tracking) lives in its own `src/features/<name>/` folder with an identical internal shape, and the UI always talks to IndexedDB through a fixed store → service → repository layering — never directly. Cloud sync and encryption-at-rest are optional layers bolted onto the same repositories, not a parallel data path.
+Nexus is a **local-first, feature-first** single-page application. Every domain (finance, trading, portfolio, todo, habits, schedule, AI analytics, sync, encryption, app lock, vault, workout tracking) lives in its own `src/features/<name>/` folder with an identical internal shape, and the UI always talks to IndexedDB through a fixed store → service → repository layering — never directly. Cloud sync and encryption-at-rest are optional layers bolted onto the same repositories, not a parallel data path. `src/features/executive/` (EXEC-001) is the one exception to "every feature owns a domain": it owns no entity and no table, and instead reads every other module's own store/hook output to build one prioritized, explainable summary view — see [MODULES.md](MODULES.md)'s Executive section.
 
 ## High-Level Architecture
 
@@ -64,7 +64,7 @@ See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) for the full table list and [DEPEND
 
 ## Module Responsibilities
 
-Every `src/features/<name>/` module owns one domain end-to-end (types, schema, repository, service, store, hooks, components, pages). See [MODULES.md](MODULES.md) for the complete per-module breakdown of all 15 feature modules. Shared, cross-feature code lives outside `features/`:
+Every `src/features/<name>/` module owns one domain end-to-end (types, schema, repository, service, store, hooks, components, pages) — except `executive/`, which owns no domain and instead aggregates every other module's already-computed data (see Overview above). See [MODULES.md](MODULES.md) for the complete per-module breakdown of all 16 feature modules. Shared, cross-feature code lives outside `features/`:
 
 - `src/components/` — shared UI (design-system components, settings panels, import/export panels).
 - `src/database/` — the Dexie instance and the repository/service factories every feature module builds on.
@@ -109,7 +109,7 @@ If a real backend is introduced in the future, the most natural seam is already 
 
 ## Current Status
 
-Fully implemented: the entire layered architecture described above, for all 15 feature modules, including the optional sync/encryption wrapper layers. See [MODULES.md](MODULES.md) for per-module status and [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) for known gaps (e.g. one orphaned `calendar` module retained only for data-safety reasons).
+Fully implemented: the entire layered architecture described above, for all 16 feature modules, including the optional sync/encryption wrapper layers. See [MODULES.md](MODULES.md) for per-module status and [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) for known gaps (e.g. one orphaned `calendar` module retained only for data-safety reasons).
 
 ## Future Improvements
 

@@ -1,6 +1,6 @@
 # Routing
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-21
 
 ## Overview
 
@@ -23,10 +23,16 @@ All routes are children of one root layout route (`path: "/"`, element `<MainLay
 | `/net-worth` | `NetWorth` | Finance |
 | `/subscriptions` | `Subscriptions` | Finance |
 | `/categories` | `Categories` | Finance |
+| `/merchants` | `Merchants` | Finance |
 | `/recipients` | `RecipientProfiles` | Finance |
+| `/reports` | `Reports` | Finance |
 | `/trading` | `TradingDashboard` | Trading |
 | `/trading/journal` | `TradingJournal` | Trading |
 | `/trading/portfolio` | `Portfolio` | Trading |
+| `/trading/strategies` | `Strategies` | Trading |
+| `/trading/watchlist` | `Watchlist` | Trading |
+| `/trading/economic-calendar` | `EconomicCalendar` | Trading |
+| `/executive` | `ExecutiveDashboard` | Personal |
 | `/todo` | `Todo` | Personal |
 | `/habits` | `Habits` | Personal |
 | `/schedule` | `LifeSchedule` | Personal |
@@ -42,9 +48,9 @@ All routes are children of one root layout route (`path: "/"`, element `<MainLay
 `src/layouts/navItems.ts` exports three arrays consumed by both the desktop sidebar and the mobile "more" menu:
 
 ```ts
-financeMenus: MenuItem[]   // 11 items — financeDashboard, aiAnalytics, transactions, favorites, budget, goals, accounts, netWorth, subscriptions, categories, recipients
-tradingMenus: MenuItem[]   // 3 items — tradingDashboard, tradingJournal, portfolio
-personalMenus: MenuItem[]  // 5 items — todo, habits, schedule, vault, workouts
+financeMenus: MenuItem[]   // 13 items — financeDashboard, aiAnalytics, transactions, favorites, budget, goals, accounts, netWorth, subscriptions, categories, merchants, recipients, reports
+tradingMenus: MenuItem[]   // 6 items — tradingDashboard, tradingJournal, portfolio, strategies, watchlist, economicCalendar
+personalMenus: MenuItem[]  // 6 items — executive, todo, habits, schedule, vault, workouts
 ```
 
 `MenuItem = { icon: LucideIcon, labelKey: string, path: string }`.
@@ -100,7 +106,7 @@ Every route component is lazy-loaded via `React.lazy()` in `src/router/lazyPages
 
 ## Current Status
 
-Fully implemented — 22 routes (21 named + catch-all), all lazy-loaded, all reachable without configuration.
+Fully implemented — 29 routes (28 named + catch-all), all lazy-loaded, all reachable without configuration.
 
 ## Future Improvements
 

@@ -1,6 +1,6 @@
 # State Management
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-21
 
 ## Overview
 
@@ -49,6 +49,8 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `sync/authStore` | Supabase session + sync status | wraps the Supabase Auth SDK directly, not a repo cache | initialize, signUp, signIn, signOut, sync |
 | `encryption/encryptionSessionStore` | In-memory DEK (`CryptoKey`) | ephemeral, deliberately **not** persisted | setDek, clearDek |
 | `dashboard/dashboardPeriodStore` | Period selector UI | pure UI state | setGranularity |
+
+`src/features/executive/` (EXEC-001) deliberately owns **no store of its own** — it has no entity and no Dexie table, so there is nothing to cache. Its `hooks/useExecutiveDashboard.ts` is a plain orchestration hook that reads the feature stores listed above directly (todo/habit/schedule/goal/goalMilestoneEvent/workoutEntry) plus the outputs of `useBudgetProgress`/`useNetWorthStats`/`useTradingStats`, and hands the combined result to pure functions in `executive/engine/` — the same "derive, don't duplicate" rule every other read-only view in this app already follows.
 
 **Uniform pattern for every entity store:** `set({loading:true})` → `service.list()` → `set({data, loading:false})`; mutations call the service then re-`list()` rather than optimistically patch. Every entity store spreads `initialAsyncState` and normalizes errors via `toErrorMessage`. **Deliberate convention:** mutation failures throw and are *not* written to the store's own `error` field — that field is reserved for the list-load error, so a failed add/update/delete is handled locally by the calling component, not surfaced through the store.
 

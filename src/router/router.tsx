@@ -16,6 +16,7 @@ import {
   Goals,
   RecipientProfiles,
   Reports,
+  ExecutiveDashboard,
   TradingDashboard,
   TradingJournal,
   Strategies,
@@ -119,6 +120,10 @@ export const router = createBrowserRouter([
       {
         path: "trading/economic-calendar",
         element: <EconomicCalendar />,
+      },
+      {
+        path: "executive",
+        element: <ExecutiveDashboard />,
       },
       {
         path: "todo",
