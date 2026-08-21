@@ -4,13 +4,15 @@ import { useTranslation } from "@/i18n/useTranslation";
 
 interface Props {
   onSubmit: (question: string) => void;
+  disabled?: boolean;
 }
 
-export default function AiCoachInput({ onSubmit }: Props) {
+export default function AiCoachInput({ onSubmit, disabled = false }: Props) {
   const [value, setValue] = useState("");
   const { t } = useTranslation();
 
   function submit() {
+    if (disabled) return;
     const trimmed = value.trim();
     if (trimmed === "") return;
     onSubmit(trimmed);
@@ -28,13 +30,14 @@ export default function AiCoachInput({ onSubmit }: Props) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={handleKeyDown}
+        disabled={disabled}
         placeholder={t("aiAnalytics.aiCoach.inputPlaceholder")}
-        className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm outline-none transition focus:border-brand-500"
+        className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 text-sm outline-none transition focus:border-brand-500 disabled:opacity-60"
       />
       <button
         type="button"
         onClick={submit}
-        disabled={value.trim() === ""}
+        disabled={disabled || value.trim() === ""}
         aria-label={t("aiAnalytics.aiCoach.send")}
         className="flex shrink-0 items-center justify-center rounded-2xl bg-brand-500 p-3 text-white transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
       >

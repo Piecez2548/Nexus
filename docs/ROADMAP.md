@@ -55,6 +55,9 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 ### Executive
 - [x] Executive Dashboard (EXEC-001) — a deterministic, explainable priority view above Todo/Habits/Schedule/Goals/Finance/Trading/Workouts: today's schedule, a ranked "Top Priorities" list (overdue todos, at-risk habits, at-risk/deadline-soon goals — each with a plain-language reason), overdue items, a goals snapshot, and Finance/Health/Trading snapshots, plus a rule-based Executive Summary (workload level, top priority, overdue/at-risk counts). No LLM, no randomness, no new Dexie table — every number is read live through existing stores/hooks.
 
+### AI
+- [x] AI Gateway wired to a real Claude provider — an opt-in fallback for the AI Coach's questions the rule-based engine can't classify, via a new Supabase Edge Function proxy so the Anthropic API key never lives in client code. Every other AI surface (scoring, analysis, recommendations, forecasting) stays deliberately rule-based.
+
 ### Vault
 - [x] Encrypted password manager, secure notes, and recovery-key store — one unified `VaultEntry` model, gated behind `encryptionEnabled`
 
@@ -119,11 +122,11 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 
 - **OTP email verification at sign-up.** A direct follow-up request in the same Layer 2 area: `signUp()`'s link-based "check your inbox" confirmation is replaced with a 6-digit code the user types into a new `EmailVerificationScreen.tsx` (shown by `AuthGate.tsx` exactly like the MFA challenge screen before it — `LoginScreen.tsx` needed no changes), verified via Supabase Auth's own `verifyOtp`/`resend` APIs, again no new backend. Also closes a real gap: Supabase's documented anti-enumeration behavior returns a "successful" `signUp()` response with an empty `identities` array (rather than an error) when the email already belongs to a confirmed account, so `authStore.ts` now detects that and rejects it as a duplicate instead of silently proceeding — the specific behavior the user asked for to prevent the same email registering twice. Requires the Supabase Dashboard's "Confirm signup" email template to include `{{ .Token }}`, a Dashboard-only setting documented in [DEPLOYMENT.md](DEPLOYMENT.md) rather than configurable from this repo.
 
+- **AI Gateway wired to Claude + AI Coach real-LLM fallback.** The previously-inert `src/ai/` seam (`AIProvider`/`AIGateway`/`ProviderRegistry`/`ProviderFactory`, built ahead of time with a named `"claude"` slot that only ever threw `ConfigurationError`) now has a real implementation, `ClaudeProvider`, reached exclusively through a new Supabase Edge Function (`supabase/functions/ai-coach`) — this repo's first server-side code ever, but deliberately minimal: it verifies the caller's own forwarded JWT (no service-role key anywhere), atomically checks a per-user daily rate-limit counter via a `SECURITY INVOKER` Postgres function before ever calling Anthropic, then proxies to the Messages API and returns plain text. The AI Coach (`AiCoachSection.tsx`) routes to it only when the rule-based `classifyIntent()` returns `"unknown"` **and** the user has explicitly opted in via a new off-by-default Settings toggle **and** they're signed in — every rule-answerable question keeps its existing deterministic, offline, zero-cost path untouched, matching this app's stated "why rule-based, not LLM-based, AI" philosophy for everything except this one opt-in fallback. Only a strict, tested allow-list of aggregate numbers (`buildCoachLlmContext.ts` — totals, top categories, budget status, health score, behavior-style label, generic habit flags) ever leaves the device; named merchants and individual transaction titles/dates are never included. An LLM-sourced answer is visually distinguished with an "AI-generated" badge instead of the rule engine's confidence percentage, which wouldn't mean the same thing for free-form prose.
+
 ## Planned
 
-Items explicitly implied as unfinished by the current architecture, in rough order of how directly the existing code already supports them:
-
-- **AI Gateway integration** — the seam (`AIProvider`, `LocalRuleProvider`) is fully built; wiring a real LLM provider (e.g. Claude) needs a backend proxy first, since an API key cannot safely live in client code. See [SECURITY.md](SECURITY.md), [DECISIONS.md](DECISIONS.md).
+No items currently queued — the "AI Gateway integration" line that lived here (wiring a real LLM provider now that the client-side-API-key blocker is resolved) shipped above; see [SECURITY.md](SECURITY.md), [DECISIONS.md](DECISIONS.md) for the resulting design.
 
 ## Future
 

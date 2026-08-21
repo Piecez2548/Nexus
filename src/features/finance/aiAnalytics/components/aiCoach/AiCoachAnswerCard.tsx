@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { CoachResponse, CoachSuggestion } from "@/features/finance/aiAnalytics/engine/coach/types";
 
@@ -40,7 +40,14 @@ export default function AiCoachAnswerCard({ response, onSuggestionClick }: Props
 
       <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400">{t(response.reason.key, response.reason.params)}</p>
 
-      <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-600">{t("aiAnalytics.aiCoach.confidence", { value: response.confidence })}</p>
+      {response.source === "llm" ? (
+        <p className="mt-1 flex items-center gap-1 text-xs text-violet-500 dark:text-violet-400">
+          <Sparkles size={12} />
+          {t("aiAnalytics.aiCoach.llmBadge")}
+        </p>
+      ) : (
+        <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-600">{t("aiAnalytics.aiCoach.confidence", { value: response.confidence })}</p>
+      )}
 
       {response.relatedRecommendations.length > 0 && (
         <div className="mt-3 space-y-1.5 border-t border-zinc-100 dark:border-zinc-800 pt-3">

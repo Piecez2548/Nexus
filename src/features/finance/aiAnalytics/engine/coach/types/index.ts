@@ -65,6 +65,13 @@ export interface CoachResponse {
   // 0-3, sliced from the already-priority-sorted actionableRecommendations — never re-sorted.
   relatedRecommendations: ActionableRecommendation[];
   nextSuggestedQuestion: CoachSuggestion | null; // null only for "unknown"
+  // Set only by AiCoachSection.tsx's real-LLM fallback path (never by any
+  // responder or by computeCoachResponse itself) — undefined means "the
+  // existing local rule engine answered this", identical to every
+  // CoachResponse produced before that fallback existed. "llm" lets
+  // AiCoachAnswerCard.tsx swap the (meaningless-for-Claude) confidence line
+  // for a small "AI-generated" indicator instead.
+  source?: "rule" | "llm";
 }
 
 export interface CoachEngineContext {
@@ -81,11 +88,15 @@ export type CoachResponder = (data: FinancialAnalysisResult) => Omit<CoachRespon
 
 // The future-AI seam, mirroring ForecastEngine/BehaviorEngine/
 // ExecutiveSummaryEngine — ask() returns a Promise even though the local
-// implementation computes synchronously, so a future Claude/OpenAI/Gemini/
-// Ollama-backed implementation can satisfy this same interface with zero
-// changes to any call site. The UI itself calls the synchronous
-// computeCoachResponse() directly (see engine/askCoach.ts) — this
-// interface exists purely for that future swap, not today's call path.
+// implementation computes synchronously, so a Claude/OpenAI/Gemini/
+// Ollama-backed implementation could satisfy this same interface with zero
+// changes to any call site. In practice, the real Claude fallback
+// (AiCoachSection.tsx) was wired through src/ai/'s broader, already-built
+// AIGateway/AIProvider seam instead of a dedicated CoachEngine
+// implementation — one provider-agnostic integration point rather than a
+// second, parallel one — so this interface/localCoachEngine.ts remain
+// unused by that fallback specifically; they still exist as a documented,
+// narrower alternative seam a future maintainer could choose instead.
 export interface CoachEngine {
   ask(context: CoachEngineContext): Promise<CoachResponse>;
 }
