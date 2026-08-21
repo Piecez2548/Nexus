@@ -32,8 +32,12 @@ const CORS_HEADERS: Record<string, string> = {
   // Android WebView, and Electron -- none share one origin. Access control
   // here is the JWT check below, not CORS -- CORS was never a security
   // boundary for a bearer-token API, only a browser-only convenience.
+  // x-client-info is attached to every supabase-js request automatically
+  // (client version telemetry) -- omitting it here fails the browser's
+  // preflight check and blocks the real request with a CORS error before
+  // it ever reaches this function's own code.
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
