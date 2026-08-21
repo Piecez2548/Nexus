@@ -3,6 +3,7 @@ import LanguageSettings from "@/components/settings/LanguageSettings";
 import PreferenceSettings from "@/components/settings/PreferenceSettings";
 import SecuritySettings from "@/components/settings/SecuritySettings";
 import SyncSettings from "@/components/settings/SyncSettings";
+import MfaSettings from "@/components/settings/MfaSettings";
 import LoginHistorySettings from "@/components/settings/LoginHistorySettings";
 import EncryptionSettings from "@/components/settings/EncryptionSettings";
 import AuditLogSettings from "@/components/settings/AuditLogSettings";
@@ -32,6 +33,7 @@ export default function Settings() {
         <SecuritySettings />
         <EncryptionSettings />
         <SyncSettings />
+        <MfaSettings />
         <LoginHistorySettings />
         <AuditLogSettings />
         <PermissionManagerSettings />

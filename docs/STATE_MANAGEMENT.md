@@ -57,7 +57,7 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `vault/vaultEntryStore` | `VaultEntry` | fetch-on-mount cache | load, add, update, delete (each mutation records an audit-log event) |
 | `workouts/workoutExerciseStore` | `WorkoutExercise` | fetch-on-mount cache | load, add, update, delete |
 | `workouts/workoutEntryStore` | `WorkoutEntry` | fetch-on-mount cache | load, add (awards XP), update, delete |
-| `sync/authStore` | Supabase session + sync status | wraps the Supabase Auth SDK directly, not a repo cache | initialize, signUp, signIn, signOut, sync |
+| `sync/authStore` | Supabase session + sync status + MFA challenge state | wraps the Supabase Auth SDK directly, not a repo cache | initialize, signUp, signIn, signOut, sync, verifyMfaCode, verifyBackupCode, cancelMfaChallenge |
 | `encryption/encryptionSessionStore` | In-memory DEK (`CryptoKey`) | ephemeral, deliberately **not** persisted | setDek, clearDek |
 | `dashboard/dashboardPeriodStore` | Period selector UI | pure UI state | setGranularity |
 

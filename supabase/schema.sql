@@ -82,3 +82,32 @@ drop policy if exists "Users manage their own key" on public.user_encryption_key
 
 create policy "Users manage their own key" on public.user_encryption_keys
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Two-factor authentication: TOTP backup/recovery codes. Generated once at
+-- enrollment (and on regeneration), shown to the user exactly once in
+-- plaintext, stored here only as a salted hash -- reuses the same
+-- salted-SHA-256 approach as src/features/lock/utils/pinHash.ts, appropriate
+-- here because a backup code is already a high-entropy random secret
+-- (unlike a human-chosen PIN). Verified entirely client-side, same as every
+-- other client-verified secret in this app -- there is no custom backend
+-- anywhere in Nexus (see docs/PROJECT_ARCHITECTURE.md). TOTP factor
+-- enrollment itself lives entirely in Supabase Auth's own tables
+-- (auth.mfa_factors), not here -- this table is only the custom recovery
+-- mechanism Supabase's native MFA API doesn't provide.
+create table if not exists public.mfa_backup_codes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  code_hash text not null,
+  salt text not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists mfa_backup_codes_user_idx on public.mfa_backup_codes (user_id);
+
+alter table public.mfa_backup_codes enable row level security;
+
+drop policy if exists "Users manage their own backup codes" on public.mfa_backup_codes;
+
+create policy "Users manage their own backup codes" on public.mfa_backup_codes
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 
 const mockSignUp = vi.fn();
 const mockSignInWithPassword = vi.fn();
+const mockListFactors = vi.fn();
 
 vi.mock("@/lib/supabaseClient", () => ({
   isSyncConfigured: true,
@@ -11,6 +12,9 @@ vi.mock("@/lib/supabaseClient", () => ({
     auth: {
       signUp: (...args: unknown[]) => mockSignUp(...args),
       signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
+      mfa: {
+        listFactors: (...args: unknown[]) => mockListFactors(...args),
+      },
     },
   },
 }));
@@ -29,9 +33,13 @@ describe("LoginScreen", () => {
       needsEmailConfirmation: false,
       syncing: false,
       lastSyncedAt: null,
+      mfaPending: false,
+      mfaFactorId: null,
+      mfaError: null,
     });
     mockSignUp.mockReset();
     mockSignInWithPassword.mockReset();
+    mockListFactors.mockReset().mockResolvedValue({ data: { totp: [] }, error: null });
   });
 
   it("shows a sign-in form by default", () => {

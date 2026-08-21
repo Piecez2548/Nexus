@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 const mockSignInWithPassword = vi.fn();
+const mockListFactors = vi.fn();
 const mockSelect = vi.fn();
 const mockEq = vi.fn();
 const mockMaybeSingle = vi.fn();
@@ -10,6 +11,9 @@ vi.mock("@/lib/supabaseClient", () => ({
   supabase: {
     auth: {
       signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
+      mfa: {
+        listFactors: (...args: unknown[]) => mockListFactors(...args),
+      },
     },
     from: () => ({
       select: (...args: unknown[]) => {
@@ -55,8 +59,9 @@ async function makeEscrowRecord(password: string, dek: CryptoKey) {
 
 describe("recoverDekFromEscrow", () => {
   beforeEach(() => {
-    useAuthStore.setState({ user: null, error: null, loading: false });
+    useAuthStore.setState({ user: null, error: null, loading: false, mfaPending: false, mfaFactorId: null, mfaError: null });
     mockSignInWithPassword.mockReset();
+    mockListFactors.mockReset().mockResolvedValue({ data: { totp: [] }, error: null });
     mockSelect.mockReset();
     mockEq.mockReset();
     mockMaybeSingle.mockReset();

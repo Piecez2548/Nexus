@@ -1,6 +1,6 @@
 # Security
 
-**Last Updated:** 2026-08-19
+**Last Updated:** 2026-08-21
 
 ## Overview
 
@@ -14,7 +14,8 @@ Layer 1 — App Lock (device-local, optional)
   Threat model: someone glancing at / picking up an unlocked device
 
 Layer 2 — Cloud sync authentication (optional, requires Supabase configured)
-  Supabase email/password only — no OAuth, no magic link, no MFA
+  Supabase email/password, with optional TOTP two-factor authentication and
+  one-time backup codes — no OAuth, no magic link
   Threat model: unauthorized access to a user's synced cloud data
 
 Layer 3 — Encryption-at-rest (optional, requires Layer 1 + Layer 2)
@@ -32,9 +33,12 @@ These are independent and stackable — a user can run fully local with no lock,
 
 ## Layer 2 — Cloud Sync Authentication (`src/features/sync/`)
 
-- **Email/password only** — confirmed via `LoginScreen.tsx`: no OAuth/social login, no magic link, no MFA. Minimum password length: 6 characters.
+- **Email/password** — confirmed via `LoginScreen.tsx`: no OAuth/social login, no magic link. Minimum password length: 6 characters.
 - **Fully optional and gracefully absent:** `AuthGate.tsx` renders the app with **no login screen at all** if Supabase env vars aren't configured (`isSyncConfigured === false`) — a deliberate choice so the app "never locks anyone out with no way in" when sync isn't set up.
-- **Access control:** Postgres Row-Level Security (`auth.uid() = user_id`) on both `synced_records` and `user_encryption_keys` — the only access-control mechanism; there is no application-level authorization layer beyond it.
+- **Access control:** Postgres Row-Level Security (`auth.uid() = user_id`) on `synced_records`, `user_encryption_keys`, and `mfa_backup_codes` — the only access-control mechanism; there is no application-level authorization layer beyond it.
+- **Optional TOTP two-factor authentication**, using Supabase Auth's native MFA API directly (`supabase.auth.mfa.*`) — no new backend, since Supabase Auth already is the backend. Enrollment (`EnrollMfaForm.tsx`) shows a QR code and setup secret from `auth.mfa.enroll()`, confirmed via `auth.mfa.challengeAndVerify()`; the same primitive verifies a code at sign-in (`MfaChallengeScreen.tsx`, shown by `AuthGate.tsx` in place of `LoginScreen` whenever a password step succeeds but the account has a verified factor this browser session hasn't satisfied yet). Successful verification also promotes the Supabase session itself to `aal2` and — per Supabase's own documented behavior — signs out every other session on the account.
+  - **Session-gating is tracked by the app itself, not solely by Supabase's own AAL**, specifically to support backup codes correctly (see below): `src/features/sync/mfaSession.ts` sets a `sessionStorage`-scoped "verified" flag (cleared on sign-out, never persisted to `localStorage`) once either a TOTP code or a backup code is accepted. `resolveMfaAccess()` (`src/features/sync/mfa.ts`) is the single gate — called from every place `authStore.ts` can set `user` (the initial `getSession()` check, the `onAuthStateChange` listener, and `signIn()` itself) — so a password-only session can never race past the challenge no matter which of those three paths a given sign-in happens to go through.
+  - **Backup/recovery codes** (`src/features/sync/backupCodes.ts`) are a custom mechanism, since Supabase's native MFA API has no recovery-code feature of its own: 10 codes generated client-side (`crypto.getRandomValues`, no ambiguous characters), hashed with the same salted-SHA-256 approach as the App Lock PIN (`src/features/lock/utils/pinHash.ts`, reused directly — appropriate here since a backup code, unlike a human-chosen PIN, is already a high-entropy random secret) and stored in a new `public.mfa_backup_codes` table (`supabase/schema.sql`), RLS-scoped per user. Verified entirely client-side (fetch this user's unused hashes, hash the entered code, compare) — the same pattern every other client-verified secret in this app already follows, since Nexus has no custom server-side business logic at all. A backup code is shown in plaintext exactly once, at generation time, then only ever exists as a hash. Losing the authenticator device only costs cloud-sync access, never local data — Nexus stays fully usable offline regardless (see Layer 1).
 
 ## Layer 3 — Encryption-at-Rest (`src/features/encryption/`)
 
@@ -63,7 +67,7 @@ There are two distinct "passwords" in this app, handled differently:
 
 ## Future Authentication
 
-Already implemented: Supabase email/password (see Layer 2). **Not implemented and not currently planned:** OAuth/social sign-in, magic links, multi-factor authentication, or any multi-user/role-based access model — see [ROADMAP.md](ROADMAP.md).
+Already implemented: Supabase email/password, TOTP two-factor authentication, and backup codes (see Layer 2). **Not implemented and not currently planned:** OAuth/social sign-in, magic links, or any multi-user/role-based access model — see [ROADMAP.md](ROADMAP.md).
 
 ## Future Encryption
 
@@ -117,8 +121,8 @@ An app-wide, persisted, bounded, metadata-only security audit trail (SEC-002) �
 
 - **Relocated and widened, not new from scratch.** The mechanism (bounded ring buffer, injectable sink, `recordAudit(type, action, detail)`) previously lived scanner-scoped at `slipScanner/security/scanAuditLog.ts` — it moved to `src/features/security/auditLog.ts` and its event-type union widened from the original six scanner categories (`permission`/`import`/`scan`/`delete`/`validation`/`suspicious`) to also cover `auth`, `encryption`, `lock`, `vault`, and `backup`. No production code called it before this — it was scaffolding with tests but no real callers or persistence.
 - **Now actually persisted.** The injectable sink (designed for exactly this from the start, per the module's own original comment) is wired at app bootstrap (`main.tsx`) to `dexieAuditSink.ts`, which writes every event to a new local-only (unsynced) Dexie table, bounded at 500 rows (oldest trimmed first) — independent of, and larger than, the 200-event in-memory cap, since persistence changes the retention tradeoff.
-- **What's actually recorded today:** sign-in/sign-up/sign-out (success/failure only, never the email or password — `authStore.ts`), encryption enabled/re-escrowed (`enableEncryption.ts`/`reescrowDek.ts`), PIN setup/changed/disabled and biometric enabled/disabled (`appLockStore.ts`), **failed unlock attempts specifically** — the classic audit signal — while routine successful unlocks are deliberately not logged (they'd fire many times a day and add noise, not signal), Vault entry created/updated/deleted (entry *type* only, never title/username/password/content — `vaultEntryStore.ts`), and backup exported/imported/reset (`backupService.ts`). The scanner's own original event types (`permission`/`import`/`scan`/`delete`/`validation`/`suspicious`) are wired at the mechanism level but, as before this change, have no production call sites yet — that remains separate, not-yet-done work.
-- **Read-only, local, and clearable.** The Settings drawer only ever reads and optionally clears the log — nothing in the app queries it to make decisions, so a cleared or disabled log never changes app behavior, only observability.
+- **What's actually recorded today:** sign-in/sign-up/sign-out (success/failure only, never the email or password — `authStore.ts`), two-factor enroll/unenroll/verify and backup-code generation (`mfa-enroll`/`mfa-unenroll`/`mfa-verify`/`mfa-backup-codes-generated`, also type `auth` — `src/features/sync/mfa.ts`/`backupCodes.ts`, never the TOTP secret or a backup code itself), encryption enabled/re-escrowed (`enableEncryption.ts`/`reescrowDek.ts`), PIN setup/changed/disabled and biometric enabled/disabled (`appLockStore.ts`), **failed unlock attempts specifically** — the classic audit signal — while routine successful unlocks are deliberately not logged (they'd fire many times a day and add noise, not signal), Vault entry created/updated/deleted (entry *type* only, never title/username/password/content — `vaultEntryStore.ts`), and backup exported/imported/reset (`backupService.ts`). The scanner's own original event types (`permission`/`import`/`scan`/`delete`/`validation`/`suspicious`) are wired at the mechanism level but, as before this change, have no production call sites yet — that remains separate, not-yet-done work.
+- **Read-only, local, and clearable.** The Settings drawer only ever reads and optionally clears the log — nothing in the app queries it to make decisions, so a cleared or disabled log never changes app behavior, only observability. A dedicated, discoverable **Login History** view (Settings > Security & Sync > Login History, `LoginHistorySettings.tsx`) reuses the same `AuditLogDrawer` locked to the `auth` type filter — the sign-in/sign-up/sign-out/mfa events above, without the rest of the security log mixed in.
 
 ## Permission Manager (`src/features/security/permissions/`)
 

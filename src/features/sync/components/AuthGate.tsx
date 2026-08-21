@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import { useAuthStore } from "@/features/sync/store/authStore";
 import { isSyncConfigured } from "@/lib/supabaseClient";
 import LoginScreen from "@/features/sync/components/LoginScreen";
+import MfaChallengeScreen from "@/features/sync/components/MfaChallengeScreen";
 import AuthBackdrop from "@/components/ui/AuthBackdrop";
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 export default function AuthGate({ children }: Props) {
   const user = useAuthStore((s) => s.user);
   const sessionChecked = useAuthStore((s) => s.sessionChecked);
+  const mfaPending = useAuthStore((s) => s.mfaPending);
 
   useEffect(() => {
     useAuthStore.getState().initialize();
@@ -29,6 +31,14 @@ export default function AuthGate({ children }: Props) {
     return (
       <AuthBackdrop>
         <span className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 dark:border-zinc-700 border-t-brand-500" />
+      </AuthBackdrop>
+    );
+  }
+
+  if (!user && mfaPending) {
+    return (
+      <AuthBackdrop>
+        <MfaChallengeScreen />
       </AuthBackdrop>
     );
   }

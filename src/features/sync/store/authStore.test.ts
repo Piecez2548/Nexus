@@ -7,6 +7,9 @@ const mockSignOut = vi.fn();
 const mockGetSession = vi.fn();
 const mockOnAuthStateChange = vi.fn();
 const mockRunFullSync = vi.fn();
+const mockListFactors = vi.fn();
+const mockChallengeAndVerify = vi.fn();
+const mockRedeemBackupCode = vi.fn();
 
 vi.mock("@/lib/supabaseClient", () => ({
   isSyncConfigured: true,
@@ -17,12 +20,20 @@ vi.mock("@/lib/supabaseClient", () => ({
       signOut: (...args: unknown[]) => mockSignOut(...args),
       getSession: (...args: unknown[]) => mockGetSession(...args),
       onAuthStateChange: (...args: unknown[]) => mockOnAuthStateChange(...args),
+      mfa: {
+        listFactors: (...args: unknown[]) => mockListFactors(...args),
+        challengeAndVerify: (...args: unknown[]) => mockChallengeAndVerify(...args),
+      },
     },
   },
 }));
 
 vi.mock("@/features/sync/syncEngine", () => ({
   runFullSync: (...args: unknown[]) => mockRunFullSync(...args),
+}));
+
+vi.mock("@/features/sync/backupCodes", () => ({
+  redeemBackupCode: (...args: unknown[]) => mockRedeemBackupCode(...args),
 }));
 
 const { useAuthStore } = await import("./authStore");
@@ -38,13 +49,20 @@ describe("authStore", () => {
       needsEmailConfirmation: false,
       syncing: false,
       lastSyncedAt: null,
+      mfaPending: false,
+      mfaFactorId: null,
+      mfaError: null,
     });
     mockSignUp.mockReset();
     mockSignInWithPassword.mockReset();
-    mockSignOut.mockReset();
+    mockSignOut.mockReset().mockResolvedValue({ error: null });
     mockGetSession.mockReset().mockResolvedValue({ data: { session: null } });
     mockOnAuthStateChange.mockReset();
     mockRunFullSync.mockReset().mockResolvedValue(undefined);
+    mockListFactors.mockReset().mockResolvedValue({ data: { totp: [] }, error: null });
+    mockChallengeAndVerify.mockReset();
+    mockRedeemBackupCode.mockReset();
+    sessionStorage.clear();
     clearAuditLog();
   });
 
@@ -187,5 +205,124 @@ describe("authStore", () => {
     await useAuthStore.getState().initialize();
 
     expect(mockGetSession).toHaveBeenCalledTimes(1);
+  });
+
+  describe("MFA", () => {
+    it("withholds the user and sets mfaPending on signIn when a verified TOTP factor exists", async () => {
+      mockSignInWithPassword.mockResolvedValue({ data: { user: { id: "u1", email: "a@b.com" } }, error: null });
+      mockListFactors.mockResolvedValue({ data: { totp: [{ id: "factor-1", status: "verified" }] }, error: null });
+
+      await useAuthStore.getState().signIn("a@b.com", "password123");
+
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(useAuthStore.getState().mfaPending).toBe(true);
+      expect(useAuthStore.getState().mfaFactorId).toBe("factor-1");
+
+      const events = getAuditLog().filter((e) => e.type === "auth" && e.action === "sign-in");
+      expect(events[0]).toMatchObject({ detail: { success: true, mfaRequired: true } });
+    });
+
+    it("verifyMfaCode grants access and clears mfaPending on a correct code", async () => {
+      useAuthStore.setState({ mfaPending: true, mfaFactorId: "factor-1" });
+      mockChallengeAndVerify.mockResolvedValue({ data: {}, error: null });
+      mockGetSession.mockResolvedValue({ data: { session: { user: { id: "u1", email: "a@b.com" } } } });
+
+      await useAuthStore.getState().verifyMfaCode("123456");
+
+      expect(mockChallengeAndVerify).toHaveBeenCalledWith({ factorId: "factor-1", code: "123456" });
+      expect(useAuthStore.getState().user).toMatchObject({ id: "u1" });
+      expect(useAuthStore.getState().mfaPending).toBe(false);
+      expect(useAuthStore.getState().mfaFactorId).toBeNull();
+      expect(sessionStorage.getItem("nexus-mfa-verified-user-id")).toBe("u1");
+      expect(getAuditLog().some((e) => e.action === "mfa-verify" && e.detail?.success === true)).toBe(true);
+    });
+
+    it("verifyMfaCode keeps mfaPending and sets mfaError on an incorrect code", async () => {
+      useAuthStore.setState({ mfaPending: true, mfaFactorId: "factor-1" });
+      mockChallengeAndVerify.mockResolvedValue({ data: null, error: { message: "Invalid code" } });
+
+      await useAuthStore.getState().verifyMfaCode("000000");
+
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(useAuthStore.getState().mfaPending).toBe(true);
+      expect(useAuthStore.getState().mfaError).toBe("Invalid code");
+      expect(getAuditLog().some((e) => e.action === "mfa-verify" && e.detail?.success === false)).toBe(true);
+    });
+
+    it("verifyBackupCode grants access and clears mfaPending on a valid code", async () => {
+      useAuthStore.setState({ mfaPending: true, mfaFactorId: "factor-1" });
+      mockGetSession.mockResolvedValue({ data: { session: { user: { id: "u1", email: "a@b.com" } } } });
+      mockRedeemBackupCode.mockResolvedValue(true);
+
+      await useAuthStore.getState().verifyBackupCode("ABCDE-FGHJK");
+
+      expect(mockRedeemBackupCode).toHaveBeenCalledWith("u1", "ABCDE-FGHJK");
+      expect(useAuthStore.getState().user).toMatchObject({ id: "u1" });
+      expect(useAuthStore.getState().mfaPending).toBe(false);
+      expect(sessionStorage.getItem("nexus-mfa-verified-user-id")).toBe("u1");
+    });
+
+    it("verifyBackupCode keeps mfaPending and sets mfaError on an invalid/already-used code", async () => {
+      useAuthStore.setState({ mfaPending: true, mfaFactorId: "factor-1" });
+      mockGetSession.mockResolvedValue({ data: { session: { user: { id: "u1", email: "a@b.com" } } } });
+      mockRedeemBackupCode.mockResolvedValue(false);
+
+      await useAuthStore.getState().verifyBackupCode("ZZZZZ-ZZZZZ");
+
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(useAuthStore.getState().mfaPending).toBe(true);
+      expect(useAuthStore.getState().mfaError).not.toBeNull();
+    });
+
+    it("cancelMfaChallenge signs out and clears the mfa challenge state", async () => {
+      useAuthStore.setState({ mfaPending: true, mfaFactorId: "factor-1", mfaError: "Invalid code" });
+
+      await useAuthStore.getState().cancelMfaChallenge();
+
+      expect(mockSignOut).toHaveBeenCalled();
+      expect(useAuthStore.getState().mfaPending).toBe(false);
+      expect(useAuthStore.getState().mfaFactorId).toBeNull();
+      expect(useAuthStore.getState().mfaError).toBeNull();
+    });
+
+    it("signOut clears the session-verified MFA flag", async () => {
+      useAuthStore.setState({ user: { id: "u1" } as never });
+      sessionStorage.setItem("nexus-mfa-verified-user-id", "u1");
+
+      await useAuthStore.getState().signOut();
+
+      expect(sessionStorage.getItem("nexus-mfa-verified-user-id")).toBeNull();
+    });
+
+    // The actual bug this feature exists to prevent: onAuthStateChange
+    // fires independently of signIn()'s own code, as soon as
+    // signInWithPassword establishes a session. If this listener ever goes
+    // back to setting `user` directly from the session without going
+    // through resolveMfaAccess, a password-only session would race past
+    // the MFA challenge the moment Supabase's client fires this event.
+    it("initialize()'s onAuthStateChange listener withholds the user when a verified factor exists", async () => {
+      mockListFactors.mockResolvedValue({ data: { totp: [{ id: "factor-1", status: "verified" }] }, error: null });
+
+      await useAuthStore.getState().initialize();
+      expect(mockOnAuthStateChange).toHaveBeenCalledTimes(1);
+
+      const listener = mockOnAuthStateChange.mock.calls[0]![0] as (event: string, session: unknown) => Promise<void>;
+      await listener("SIGNED_IN", { user: { id: "u1", email: "a@b.com" } });
+
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(useAuthStore.getState().mfaPending).toBe(true);
+      expect(useAuthStore.getState().mfaFactorId).toBe("factor-1");
+    });
+
+    it("initialize()'s getSession() path also withholds the user when a verified factor exists", async () => {
+      mockGetSession.mockResolvedValue({ data: { session: { user: { id: "u1", email: "a@b.com" } } } });
+      mockListFactors.mockResolvedValue({ data: { totp: [{ id: "factor-1", status: "verified" }] }, error: null });
+
+      await useAuthStore.getState().initialize();
+
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(useAuthStore.getState().mfaPending).toBe(true);
+      expect(useAuthStore.getState().sessionChecked).toBe(true);
+    });
   });
 });
