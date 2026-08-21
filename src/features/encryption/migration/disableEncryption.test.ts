@@ -72,6 +72,9 @@ const SYNCED_TABLES = [
   "netWorthSnapshots",
   "subscriptions",
   "budgetPeriodSnapshots",
+  "strategies",
+  "watchlistItems",
+  "economicEvents",
 ] as const;
 
 async function clearAllSyncedTables() {

@@ -858,6 +858,58 @@ describe("syncEngine", () => {
     expect(push.data.title).toBeUndefined();
   });
 
+  it("pushes and pulls strategies, watchlistItems, and economicEvents through the same generic path as every other table (Deeper Trading Analytics tables)", async () => {
+    await db.strategies.add({ name: "Breakout Pro", syncId: "strat-push-1", updatedAt: "2026-08-21T00:00:00.000Z" } as never);
+    await db.watchlistItems.add({ symbol: "AAPL", market: "stocks", syncId: "watch-push-1", updatedAt: "2026-08-21T00:00:00.000Z" } as never);
+    await db.economicEvents.add({ title: "FOMC Meeting", eventDate: "2099-01-15", syncId: "event-push-1", updatedAt: "2026-08-21T00:00:00.000Z" } as never);
+
+    mockFrom.mockImplementation(() => ({
+      upsert: mockUpsert,
+      ...selectResultBuilder({
+        data: [
+          {
+            id: "strat-pull-1",
+            table_name: "strategies",
+            data: { name: "Reversal", syncId: "strat-pull-1", updatedAt: "2026-08-21T00:00:00.000Z" },
+            updated_at: "2026-08-21T00:00:00.000Z",
+            deleted_at: null,
+          },
+          {
+            id: "watch-pull-1",
+            table_name: "watchlistItems",
+            data: { symbol: "TSLA", market: "stocks", syncId: "watch-pull-1", updatedAt: "2026-08-21T00:00:00.000Z" },
+            updated_at: "2026-08-21T00:00:00.000Z",
+            deleted_at: null,
+          },
+          {
+            id: "event-pull-1",
+            table_name: "economicEvents",
+            data: { title: "Rate Decision", eventDate: "2099-02-01", syncId: "event-pull-1", updatedAt: "2026-08-21T00:00:00.000Z" },
+            updated_at: "2026-08-21T00:00:00.000Z",
+            deleted_at: null,
+          },
+        ],
+        error: null,
+      }),
+    }));
+
+    await runFullSync(USER_ID);
+
+    const pushed = mockUpsert.mock.calls.flatMap((call) => call[0]);
+    expect(pushed.find((p: { table_name: string; id: string }) => p.table_name === "strategies" && p.id === "strat-push-1")).toBeDefined();
+    expect(pushed.find((p: { table_name: string; id: string }) => p.table_name === "watchlistItems" && p.id === "watch-push-1")).toBeDefined();
+    expect(pushed.find((p: { table_name: string; id: string }) => p.table_name === "economicEvents" && p.id === "event-push-1")).toBeDefined();
+
+    const pulledStrategy = (await db.strategies.toArray()).find((s) => s.syncId === "strat-pull-1");
+    expect(pulledStrategy).toMatchObject({ name: "Reversal" });
+
+    const pulledWatchlistItem = (await db.watchlistItems.toArray()).find((w) => w.syncId === "watch-pull-1");
+    expect(pulledWatchlistItem).toMatchObject({ symbol: "TSLA" });
+
+    const pulledEvent = (await db.economicEvents.toArray()).find((e) => e.syncId === "event-pull-1");
+    expect(pulledEvent).toMatchObject({ title: "Rate Decision" });
+  });
+
   it("does not reload any store when a pass pulls no data and dedupes nothing", async () => {
     // A fast periodic sync (e.g. every 5s) means most passes have nothing
     // new at all — reloading (and re-rendering every subscriber of) all 12

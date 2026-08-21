@@ -89,6 +89,15 @@ describe("calculateResult", () => {
     const trade: Trade = { ...baseTrade, status: "closed" };
     expect(calculateResult(trade)).toBe("unknown");
   });
+
+  // Regression coverage (integration audit): break-even (pnl exactly 0) was
+  // previously untested anywhere. Pre-existing behavior, unchanged by this
+  // batch -- pinned here so a future change can't silently flip it.
+  it("returns 'win' for a break-even closed trade (pnl exactly 0)", () => {
+    const trade: Trade = { ...baseTrade, status: "closed", exitPrice: 100 };
+    expect(calculatePnl(trade)).toBe(0);
+    expect(calculateResult(trade)).toBe("win");
+  });
 });
 
 describe("calculateRealizedRMultiple", () => {
@@ -111,6 +120,11 @@ describe("calculateRealizedRMultiple", () => {
   it("returns null when stop loss equals entry price", () => {
     const trade: Trade = { ...baseTrade, status: "closed", exitPrice: 110, stopLoss: 100 };
     expect(calculateRealizedRMultiple(trade)).toBeNull();
+  });
+
+  it("returns exactly 0 (not null) for a break-even trade with a stop loss", () => {
+    const trade: Trade = { ...baseTrade, status: "closed", exitPrice: 100, stopLoss: 95 };
+    expect(calculateRealizedRMultiple(trade)).toBe(0);
   });
 });
 

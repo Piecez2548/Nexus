@@ -55,7 +55,10 @@ test.describe("trade lifecycle", () => {
 
     await page.goto("/trading");
     await expect(page.getByRole("heading", { name: "Trading Dashboard" })).toBeVisible();
-    await expect(page.getByText("100.0%")).toBeVisible(); // win rate
+    // Scoped to the heading: the Strategy Comparison table (added by the
+    // Deeper Trading Analytics batch) also renders "100.0%" as this trade's
+    // win rate, making a bare text match ambiguous now.
+    await expect(page.getByRole("heading", { name: "100.0%" })).toBeVisible(); // win rate
     await expect(page.getByRole("table").getByText("MSFT")).toBeVisible(); // recent trades
   });
 
@@ -112,5 +115,65 @@ test.describe("trade lifecycle", () => {
     await page.getByRole("button", { name: "Export CSV" }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toMatch(/nexus-trades-.*\.csv/);
+  });
+});
+
+test.describe("Trade Replay", () => {
+  test("shows a read-only entry -> position -> exit -> reflection timeline matching the trade's own data", async ({ page }) => {
+    await page.goto("/trading/journal");
+
+    await page.getByRole("button", { name: "Add Trade" }).click();
+    await page.getByLabel("Symbol").fill("AAPL");
+    await page.getByLabel("Entry Price").fill("100");
+    await page.getByLabel("Lot Size").fill("10");
+    await page.getByLabel("Stop Loss").fill("95");
+    await page.getByLabel("Exit Price").fill("120");
+    await page.getByLabel("Exit Date").fill("2026-07-21");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByRole("table").getByText("AAPL")).toBeVisible();
+
+    await page.getByRole("button", { name: "View replay for AAPL" }).click();
+    const replayDialog = page.getByRole("dialog");
+
+    await expect(replayDialog.getByRole("heading", { level: 3, name: "Entry" })).toBeVisible();
+    await expect(replayDialog.getByRole("heading", { level: 3, name: "Position" })).toBeVisible();
+    await expect(replayDialog.getByRole("heading", { level: 3, name: "Exit" })).toBeVisible();
+    await expect(replayDialog.getByRole("heading", { level: 3, name: "Reflection" })).toBeVisible();
+
+    // Values shown are drawn from the trade itself -- not a separate,
+    // divergent computation. Scoped to the dialog since the table behind it
+    // (still in the DOM) also shows these same numbers in its own columns.
+    await expect(replayDialog.getByText("100", { exact: true })).toBeVisible(); // entry price
+    await expect(replayDialog.getByText("120", { exact: true })).toBeVisible(); // exit price
+    await expect(replayDialog.getByText("95", { exact: true })).toBeVisible(); // stop loss
+    await expect(replayDialog.getByText("Win")).toBeVisible();
+
+    // Genuinely read-only -- no input/select/textarea anywhere in the view.
+    await expect(replayDialog.locator("input, select, textarea")).toHaveCount(0);
+  });
+});
+
+test.describe("Strategy Comparison", () => {
+  test("shows the same win rate and P/L for a strategy as the trade itself, not a divergent computation", async ({ page }) => {
+    await page.goto("/trading/journal");
+
+    await page.getByRole("button", { name: "Add Trade" }).click();
+    await page.getByLabel("Symbol").fill("NVDA");
+    await page.getByLabel("Entry Price").fill("100");
+    await page.getByLabel("Lot Size").fill("10");
+    await page.getByLabel("Exit Price").fill("150");
+    await page.getByLabel("Exit Date").fill("2026-07-21");
+    await page.getByLabel("Strategy").fill("Swing Trade");
+    await page.getByRole("button", { name: "Save" }).click();
+
+    const row = page.getByRole("table").getByRole("row").filter({ hasText: "NVDA" });
+    await expect(row).toBeVisible();
+    await expect(row.getByText("500")).toBeVisible(); // (150-100)*10
+
+    await page.goto("/trading");
+    const comparisonRow = page.getByRole("row").filter({ hasText: "Swing Trade" });
+    await expect(comparisonRow).toBeVisible();
+    await expect(comparisonRow.getByText("100.0%")).toBeVisible(); // win rate: the one trade won
+    await expect(comparisonRow.getByText("500")).toBeVisible(); // same total P/L as the trade row
   });
 });

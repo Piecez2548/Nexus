@@ -68,6 +68,9 @@ const SYNCED_TABLES = [
   "netWorthSnapshots",
   "subscriptions",
   "budgetPeriodSnapshots",
+  "strategies",
+  "watchlistItems",
+  "economicEvents",
 ] as const;
 
 async function clearAllSyncedTables() {
@@ -277,6 +280,26 @@ describe("enableEncryption (full orchestration)", () => {
     const [entryRow] = await db.workoutEntries.toArray();
     expect(entryRow).toHaveProperty("encryptedContent");
     expect((entryRow as unknown as { exerciseName?: string }).exerciseName).toBeUndefined();
+  });
+
+  it("migrates strategies, watchlistItems, and economicEvents (Deeper Trading Analytics tables)", async () => {
+    await db.strategies.add({ name: "Breakout Pro", entryRules: "Close above resistance", syncId: "strat-1", updatedAt: "2026-01-01T00:00:00.000Z" } as never);
+    await db.watchlistItems.add({ symbol: "AAPL", market: "stocks", targetPrice: 200, syncId: "watch-1", updatedAt: "2026-01-01T00:00:00.000Z" } as never);
+    await db.economicEvents.add({ title: "FOMC Meeting", eventDate: "2099-01-15", impact: "high", syncId: "event-1", updatedAt: "2026-01-01T00:00:00.000Z" } as never);
+
+    await enableEncryption({ pin: "1234", accountPassword: "correct-password", translate: t });
+
+    const [strategyRow] = await db.strategies.toArray();
+    expect(strategyRow).toHaveProperty("encryptedContent");
+    expect((strategyRow as unknown as { name?: string }).name).toBeUndefined();
+
+    const [watchlistRow] = await db.watchlistItems.toArray();
+    expect(watchlistRow).toHaveProperty("encryptedContent");
+    expect((watchlistRow as unknown as { symbol?: string }).symbol).toBeUndefined();
+
+    const [eventRow] = await db.economicEvents.toArray();
+    expect(eventRow).toHaveProperty("encryptedContent");
+    expect((eventRow as unknown as { title?: string }).title).toBeUndefined();
   });
 
   it("rejects a wrong account password up front, without ever escrowing or touching local data", async () => {

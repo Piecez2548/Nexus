@@ -600,6 +600,61 @@ describe("backupService", () => {
       expect(decryptedEntries[0]).toMatchObject({ exerciseName: "Push-up", reps: 10 });
     });
 
+    it("includes strategies, watchlistItems, and economicEvents in the backup and re-encrypts them correctly on import", async () => {
+      const dek = await generateDek();
+      useAppLockStore.setState({ encryptionEnabled: true });
+      useEncryptionSessionStore.getState().setDek(dek);
+
+      const { strategyRepository } = await import("@/features/trading/repositories/strategyRepository");
+      const { watchlistRepository } = await import("@/features/trading/repositories/watchlistRepository");
+      const { economicEventRepository } = await import("@/features/trading/repositories/economicEventRepository");
+
+      await strategyRepository.add({ name: "Breakout Pro", entryRules: "Close above resistance" });
+      await watchlistRepository.add({ symbol: "AAPL", market: "stocks", targetPrice: 200 });
+      await economicEventRepository.add({ title: "FOMC Meeting", eventDate: "2099-01-15", impact: "high" });
+
+      const json = await exportBackup();
+      const parsed = JSON.parse(json);
+      expect(parsed.data.strategies).toHaveLength(1);
+      expect(parsed.data.watchlistItems).toHaveLength(1);
+      expect(parsed.data.economicEvents).toHaveLength(1);
+      // The backup itself is plaintext regardless of encryption being on --
+      // same guarantee as every other table.
+      expect(parsed.data.strategies[0]).toMatchObject({ name: "Breakout Pro" });
+      expect(parsed.data.strategies[0]).not.toHaveProperty("encryptedContent");
+      expect(parsed.data.watchlistItems[0]).toMatchObject({ symbol: "AAPL", targetPrice: 200 });
+      expect(parsed.data.watchlistItems[0]).not.toHaveProperty("encryptedContent");
+      expect(parsed.data.economicEvents[0]).toMatchObject({ title: "FOMC Meeting", impact: "high" });
+      expect(parsed.data.economicEvents[0]).not.toHaveProperty("encryptedContent");
+
+      await db.strategies.clear();
+      await db.watchlistItems.clear();
+      await db.economicEvents.clear();
+      await importBackup(json, t);
+
+      const rawStrategies = await db.strategies.toArray();
+      expect(rawStrategies).toHaveLength(1);
+      expect(rawStrategies[0]).toHaveProperty("encryptedContent");
+      expect((rawStrategies[0] as unknown as { name?: string }).name).toBeUndefined();
+
+      const rawWatchlist = await db.watchlistItems.toArray();
+      expect(rawWatchlist).toHaveLength(1);
+      expect(rawWatchlist[0]).toHaveProperty("encryptedContent");
+      expect((rawWatchlist[0] as unknown as { symbol?: string }).symbol).toBeUndefined();
+
+      const rawEvents = await db.economicEvents.toArray();
+      expect(rawEvents).toHaveLength(1);
+      expect(rawEvents[0]).toHaveProperty("encryptedContent");
+      expect((rawEvents[0] as unknown as { title?: string }).title).toBeUndefined();
+
+      const decryptedStrategies = await strategyRepository.getAll();
+      expect(decryptedStrategies[0]).toMatchObject({ name: "Breakout Pro" });
+      const decryptedWatchlist = await watchlistRepository.getAll();
+      expect(decryptedWatchlist[0]).toMatchObject({ symbol: "AAPL", targetPrice: 200 });
+      const decryptedEvents = await economicEventRepository.getAll();
+      expect(decryptedEvents[0]).toMatchObject({ title: "FOMC Meeting", impact: "high" });
+    });
+
     it("keeps plaintextKeys (e.g. recipientKey) unencrypted after a re-encrypting import", async () => {
       await db.recipientProfiles.add({
         recipientKey: "0812345678",

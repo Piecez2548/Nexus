@@ -34,4 +34,21 @@ test.describe("mobile layout", () => {
     await page.getByRole("link", { name: "Todo" }).click();
     await expect(page.getByRole("heading", { name: "Todo" })).toBeVisible();
   });
+
+  // Representative check for the Deeper Trading Analytics batch's new
+  // entity forms -- Strategies has the most fields (two textareas) of the
+  // three, so a layout/scroll regression there is the most likely to show.
+  test("the Strategies drawer form works on a narrow viewport", async ({ page }) => {
+    await page.goto("/trading/strategies");
+
+    await page.getByRole("button", { name: "Add Strategy" }).click();
+    await page.getByLabel("Strategy name").fill("Mobile Test Strategy");
+    await page.getByLabel("Entry rules").fill("Some entry rule");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Mobile Test Strategy")).toBeVisible();
+
+    await page.getByRole("button", { name: "Add Strategy" }).click();
+    await page.getByRole("button", { name: "Back" }).click();
+    await expect(page.getByRole("heading", { name: "Add Strategy" })).not.toBeVisible();
+  });
 });
