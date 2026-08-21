@@ -66,7 +66,7 @@ describe("LoginScreen", () => {
     expect(mockSignInWithPassword).toHaveBeenCalledWith({ email: "a@b.com", password: "password123" });
   });
 
-  it("switches to the sign-up form and submits it", async () => {
+  it("switches to the sign-up form and submits it with the new profile fields", async () => {
     mockSignUp.mockResolvedValue({
       data: { user: { id: "u1", email: "new@user.com" }, session: { access_token: "token" } },
       error: null,
@@ -75,14 +75,45 @@ describe("LoginScreen", () => {
     const user = userEvent.setup();
     render(<LoginScreen />);
 
-    await user.click(screen.getByText("Don't have an account? Sign up"));
+    await user.click(screen.getByRole("tab", { name: "Sign Up" }));
     expect(screen.getByText("Create your account")).toBeInTheDocument();
 
+    await user.type(screen.getByLabelText("First Name"), "Ada");
+    await user.type(screen.getByLabelText("Last Name"), "Lovelace");
+    await user.type(screen.getByLabelText("Phone Number"), "812345678");
     await user.type(screen.getByLabelText("Email"), "new@user.com");
     await user.type(screen.getByLabelText("Password"), "password123");
     await user.click(screen.getByRole("button", { name: "Sign Up" }));
 
-    expect(mockSignUp).toHaveBeenCalledWith({ email: "new@user.com", password: "password123" });
+    expect(mockSignUp).toHaveBeenCalledWith({
+      email: "new@user.com",
+      password: "password123",
+      options: { data: { first_name: "Ada", last_name: "Lovelace", phone: "+66812345678" } },
+    });
+  });
+
+  it("does not show the sign-up-only profile fields while in sign-in mode", () => {
+    render(<LoginScreen />);
+
+    expect(screen.queryByLabelText("First Name")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Last Name")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Phone Number")).not.toBeInTheDocument();
+  });
+
+  it("shows a validation icon only after a field is touched, reflecting its current validity", async () => {
+    const user = userEvent.setup();
+    render(<LoginScreen />);
+
+    const email = screen.getByLabelText("Email");
+    expect(email.parentElement?.querySelector("svg")).not.toBeInTheDocument();
+
+    await user.type(email, "not-an-email");
+    await user.tab();
+    expect(email.parentElement?.querySelector(".text-red-400")).toBeInTheDocument();
+
+    await user.type(email, "@b.com");
+    await user.tab();
+    expect(email.parentElement?.querySelector(".text-emerald-400")).toBeInTheDocument();
   });
 
   it("shows an error message on failed sign-in", async () => {

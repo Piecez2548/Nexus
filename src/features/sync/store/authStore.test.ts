@@ -86,6 +86,22 @@ describe("authStore", () => {
     expect(useAuthStore.getState().user).toMatchObject({ id: "u1" });
     expect(useAuthStore.getState().error).toBeNull();
     expect(useAuthStore.getState().needsEmailConfirmation).toBe(false);
+    expect(mockSignUp).toHaveBeenCalledWith({ email: "a@b.com", password: "password123" });
+  });
+
+  it("passes first/last name and phone as Supabase user metadata when a profile is given", async () => {
+    mockSignUp.mockResolvedValue({
+      data: { user: { id: "u1", email: "a@b.com" }, session: { access_token: "token" } },
+      error: null,
+    });
+
+    await useAuthStore.getState().signUp("a@b.com", "password123", { firstName: "Ada", lastName: "Lovelace", phone: "+66812345678" });
+
+    expect(mockSignUp).toHaveBeenCalledWith({
+      email: "a@b.com",
+      password: "password123",
+      options: { data: { first_name: "Ada", last_name: "Lovelace", phone: "+66812345678" } },
+    });
   });
 
   it("flags needsEmailConfirmation and emailVerificationPending when sign up succeeds without an active session", async () => {

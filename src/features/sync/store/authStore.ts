@@ -40,7 +40,7 @@ interface AuthState {
   emailVerificationError: string | null;
 
   initialize: () => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, profile?: { firstName: string; lastName: string; phone: string }) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   sync: () => Promise<void>;
@@ -99,11 +99,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  async signUp(email, password) {
+  async signUp(email, password, profile) {
     if (!supabase) return;
 
     set({ loading: true, error: null, needsEmailConfirmation: false });
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      ...(profile
+        ? { options: { data: { first_name: profile.firstName, last_name: profile.lastName, phone: profile.phone } } }
+        : {}),
+    });
 
     if (error) {
       recordAudit("auth", "sign-up", { success: false });
