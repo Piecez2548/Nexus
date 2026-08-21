@@ -19,12 +19,14 @@ export interface UseAuditLog {
 
 // Drives the Audit Log view (SEC-002): loads every persisted security event
 // on mount, with a search (over the action string) + type filter over it.
-// Mirrors useImportHistory.ts's shape.
-export function useAuditLog(): UseAuditLog {
+// Mirrors useImportHistory.ts's shape. `initialTypeFilter` seeds the type
+// filter for a caller that wants a pre-scoped view (e.g. Login History
+// locking this to "auth") without forking the hook.
+export function useAuditLog(initialTypeFilter: AuditLogTypeFilter = "all"): UseAuditLog {
   const [entries, setEntries] = useState<AuditLogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<AuditLogTypeFilter>("all");
+  const [typeFilter, setTypeFilter] = useState<AuditLogTypeFilter>(initialTypeFilter);
 
   async function reload(): Promise<void> {
     setLoading(true);

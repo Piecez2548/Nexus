@@ -21,6 +21,13 @@ import { useTranslation } from "@/i18n/useTranslation";
 interface Props {
   open: boolean;
   onClose: () => void;
+  // When set, locks the view to this one event type and hides the
+  // type-filter chip row entirely -- used by LoginHistorySettings so the
+  // view reads as its own dedicated screen, not "the audit log with a chip
+  // pre-clicked" (a person could otherwise wander back into "all").
+  fixedType?: AuditEventType;
+  title?: string;
+  description?: string;
 }
 
 const TYPE_FILTERS: AuditLogTypeFilter[] = [
@@ -93,10 +100,10 @@ function formatDetail(detail: AuditLogRow["detail"]): string | null {
 
 // Audit Log (SEC-002): every persisted security event on this device, with
 // search + type filter. Read-only log, mirrors ImportHistoryDrawer.tsx.
-export default function AuditLogDrawer({ open, onClose }: Props) {
+export default function AuditLogDrawer({ open, onClose, fixedType, title, description }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
-  const log = useAuditLog();
+  const log = useAuditLog(fixedType);
 
   async function handleClear(): Promise<void> {
     if (!window.confirm(t("security.auditLog.clearConfirm"))) return;
@@ -108,8 +115,8 @@ export default function AuditLogDrawer({ open, onClose }: Props) {
     <Drawer open={open} onClose={onClose}>
       <div className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
         <div>
-          <h2 className="text-xl font-bold">{t("security.auditLog.title")}</h2>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{t("security.auditLog.subtitle")}</p>
+          <h2 className="text-xl font-bold">{title ?? t("security.auditLog.title")}</h2>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{description ?? t("security.auditLog.subtitle")}</p>
         </div>
 
         <div className="relative">
@@ -124,6 +131,7 @@ export default function AuditLogDrawer({ open, onClose }: Props) {
           />
         </div>
 
+        {!fixedType && (
         <div className="flex flex-wrap gap-1" role="group" aria-label={t("security.auditLog.filterAll")}>
           {TYPE_FILTERS.map((filter) => (
             <button
@@ -141,6 +149,7 @@ export default function AuditLogDrawer({ open, onClose }: Props) {
             </button>
           ))}
         </div>
+        )}
 
         {log.visible.length === 0 ? (
           <p className="py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">

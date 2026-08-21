@@ -64,6 +64,20 @@ describe("AuditLogDrawer", () => {
     expect(screen.getByText("unlock-failed")).toBeInTheDocument();
   });
 
+  it("locks to fixedType and hides the type-filter row", async () => {
+    await db.auditLog.add(entry({ type: "auth", action: "sign-in" }));
+    await db.auditLog.add(entry({ type: "vault", action: "created" }));
+
+    render(<AuditLogDrawer open onClose={() => {}} fixedType="auth" title="Login History" description="Sign-ins only" />);
+
+    await waitFor(() => expect(screen.getByText("sign-in")).toBeInTheDocument());
+    expect(screen.queryByText("created")).not.toBeInTheDocument();
+    expect(screen.getByText("Login History")).toBeInTheDocument();
+    expect(screen.getByText("Sign-ins only")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Vault" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "All types" })).not.toBeInTheDocument();
+  });
+
   it("clears the log after confirmation", async () => {
     const user = userEvent.setup();
     vi.spyOn(window, "confirm").mockReturnValue(true);

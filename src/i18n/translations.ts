@@ -1095,6 +1095,12 @@ export const translations = {
         clearConfirm: "Clear the audit log? This can't be undone.",
         cleared: "Audit log cleared",
       },
+      loginHistory: {
+        viewTitle: "Login History",
+        viewDescription: "See every sign-in, sign-out, and two-factor authentication event on your account",
+        title: "Login History",
+        subtitle: "Sign-ins and two-factor authentication events on your account, newest first",
+      },
       permissionManager: {
         viewTitle: "Permission Manager",
         viewDescription: "Review and manage the device permissions Nexus has requested",
@@ -3624,6 +3630,12 @@ export const translations = {
         clear: "ล้างบันทึกความปลอดภัย",
         clearConfirm: "ล้างบันทึกความปลอดภัยใช่ไหม? ยกเลิกไม่ได้",
         cleared: "ล้างบันทึกความปลอดภัยเรียบร้อย",
+      },
+      loginHistory: {
+        viewTitle: "ประวัติการเข้าสู่ระบบ",
+        viewDescription: "ดูการเข้าสู่ระบบ ออกจากระบบ และเหตุการณ์ยืนยันตัวตนสองขั้นตอนของบัญชีคุณ",
+        title: "ประวัติการเข้าสู่ระบบ",
+        subtitle: "การเข้าสู่ระบบและเหตุการณ์ยืนยันตัวตนสองขั้นตอนของบัญชีคุณ ใหม่สุดก่อน",
       },
       permissionManager: {
         viewTitle: "จัดการสิทธิ์การใช้งาน",
