@@ -125,4 +125,25 @@ describe("candidateToTransaction", () => {
     const tx = candidateToTransaction(candidate({ merchant: "Coffee Shop", amount: 500, type: "income", category: "Salary" }));
     expect(tx.category).toBe("Salary");
   });
+
+  it("still recognises a Salary guess for an income candidate -- the one keyword category that's actually income-shaped", () => {
+    const tx = candidateToTransaction(candidate({ merchant: "เงินเดือน สิงหาคม", amount: 30000, type: "income" }));
+    expect(tx.category).toBe("Salary");
+  });
+
+  it("does not apply an 'Investment' guess to an income candidate, even though the name reads income-adjacent", () => {
+    // This app's own seeded "Investment" category is type: "expense" (money
+    // spent buying stocks) -- applying the guess here would stamp an
+    // expense-shaped category name onto an income row.
+    const tx = candidateToTransaction(candidate({ merchant: "ซื้อกองทุน", amount: 5000, type: "income" }));
+    expect(tx.category).toBeUndefined();
+  });
+
+  it("still honours a learned correction for an income candidate even when it isn't Salary (an explicit past human choice, not a keyword guess)", () => {
+    const learned = new Map([["freelance client x", "Shopping" as const]]);
+    const tx = candidateToTransaction(candidate({ merchant: "Freelance Client X", amount: 8000, type: "income" }), {
+      learnedCategories: learned,
+    });
+    expect(tx.category).toBe("Shopping");
+  });
 });

@@ -65,15 +65,16 @@ export default function PendingPaymentSheet() {
     setSelectedCategory(undefined);
   }
 
-  // The categorizer's keyword rules are expense-oriented -- for an income
-  // candidate its guess would highlight an expense-shaped category name that
-  // doesn't even appear in this income-filtered chip list (see
-  // candidateToTransaction.ts, which applies the same restriction to the
-  // actual import).
+  // No type restriction needed here, unlike candidateToTransaction.ts's own
+  // guess (which resolves against every one of the user's category names,
+  // regardless of type): `categories` above is already filtered to the
+  // selected type, so an expense-shaped guess (e.g. "Food") for an income
+  // candidate simply never equals any chip's name below and highlights
+  // nothing -- safe by construction, not by a second type check here.
   const guessedCategory = useMemo(() => {
-    if (type !== "expense" || !title.trim()) return undefined;
+    if (!title.trim()) return undefined;
     return categorize(title).category;
-  }, [title, type]);
+  }, [title]);
 
   async function handleConfirm(): Promise<void> {
     if (!candidate) return;

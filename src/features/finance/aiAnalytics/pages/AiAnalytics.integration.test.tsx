@@ -1,10 +1,11 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import AiAnalytics from "./AiAnalytics";
 import { db } from "@/database/db";
 import { toLocalDateString } from "@/utils/localDate";
+import { transactionService } from "@/features/finance/services/transactionService";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
@@ -39,9 +40,26 @@ describe("AiAnalytics page", () => {
     await resetAll();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("shows the empty state with no transactions", async () => {
     render(<AiAnalytics />);
     expect(await screen.findByText("Add some transactions to see your financial analysis")).toBeInTheDocument();
+  });
+
+  it("shows ErrorState, not the empty state, when a finance store's own load fails", async () => {
+    // The page re-calls loadTransactions() on mount regardless of any state
+    // set beforehand, so the failure has to come from the real load path
+    // (the underlying service call rejecting) rather than a pre-set error
+    // field, which the mount-time load would otherwise immediately clear.
+    vi.spyOn(transactionService, "list").mockRejectedValueOnce(new Error("Failed to load transactions"));
+
+    render(<AiAnalytics />);
+
+    expect(await screen.findByText("Failed to load transactions")).toBeInTheDocument();
+    expect(screen.queryByText("Add some transactions to see your financial analysis")).not.toBeInTheDocument();
   });
 
   it("renders every section with real numbers once seeded with meaningful data", async () => {

@@ -86,6 +86,43 @@ describe("useFullGalleryScan", () => {
     expect(result.current.snapshot?.ocrProcessed).toBe(1);
   });
 
+  it("flags a same-batch duplicate after the scan settles, deterministically regardless of arrival order", async () => {
+    const dupExtractor: SlipExtractor = async ({ assetId }): Promise<SlipCandidate> => ({
+      id: assetId,
+      assetId,
+      source: "qr",
+      isDuplicate: false,
+      confidence: 90,
+      bankId: "scb",
+      amount: 500,
+      // Two of the three files resolve to the same reference number -- a
+      // same-batch duplicate the concurrent queue's arrival order alone
+      // cannot flag (see flagBatchDuplicates.ts).
+      reference: assetId.includes("dup") ? "TXN-SHARED" : `TXN-${assetId}`,
+    });
+
+    const { result } = renderHook(() => useFullGalleryScan(dupExtractor));
+
+    await act(async () => {
+      await result.current.scanPickedFiles(
+        [file("dupA.jpg", "a"), file("dupB.jpg", "b"), file("unique.jpg", "c")],
+        false,
+      );
+    });
+
+    await waitFor(() => expect(result.current.status).toBe("completed"));
+    expect(result.current.candidates).toHaveLength(3);
+
+    const flags = result.current.candidates.map((c) => ({ assetId: c.assetId, isDuplicate: c.isDuplicate }));
+    const dupCandidates = flags.filter((c) => c.assetId.includes("dup"));
+    const uniqueCandidate = flags.find((c) => c.assetId.includes("unique"));
+
+    // Exactly one of the two same-reference candidates is flagged -- the
+    // other (whichever sorts first by assetId) is treated as the original.
+    expect(dupCandidates.filter((c) => c.isDuplicate)).toHaveLength(1);
+    expect(uniqueCandidate?.isDuplicate).toBe(false);
+  });
+
   it("reset() clears candidates without starting a new scan", async () => {
     const { result } = renderHook(() => useFullGalleryScan(fakeExtractor));
 

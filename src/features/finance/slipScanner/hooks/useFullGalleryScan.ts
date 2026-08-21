@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useGalleryScan } from "@/features/finance/slipScanner/hooks/useGalleryScan";
+import { flagBatchDuplicates } from "@/features/finance/slipScanner/engine/dedup/flagBatchDuplicates";
 import { extractSlipCandidate } from "@/features/finance/slipScanner/import/extractSlipCandidate";
 import { scanCandidateRepository } from "@/features/finance/slipScanner/repositories/scanCandidateRepository";
 import { scanRunRepository } from "@/features/finance/slipScanner/repositories/scanRunRepository";
@@ -35,7 +36,12 @@ export interface UseFullGalleryScan {
 // concurrent queue and cache exist for that case); the existing bounded
 // picker flow (useSlipScan) intentionally stays on its own simple sequential
 // loop, since its within-batch duplicate detection depends on strict
-// processing order that the concurrent queue does not guarantee.
+// processing order that the concurrent queue does not guarantee. This path
+// recovers the same advisory `isDuplicate` badge a different way: once a
+// scan settles (below), flagBatchDuplicates() re-derives it in one
+// deterministic pass over the *complete* accumulated batch, sorted by the
+// one stable key every candidate carries (assetId) -- so the result never
+// depends on the concurrent queue's actual arrival order.
 //
 // Default extractor opts into skipOcrWhenNoQr: real-device measurement
 // showed OCR (even pooled) dominates per-image cost, and the overwhelming
@@ -102,6 +108,7 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
     async (files: File[], incremental = false) => {
       await beginNewRun(incremental); // picker flow never sets a dateRange
       await gallery.scanPickedFiles(files, incremental, processor);
+      setCandidates(flagBatchDuplicates);
     },
     [gallery, processor],
   );
@@ -110,6 +117,7 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
     async (incremental = true, dateRange?: ScanOptions["dateRange"]) => {
       await beginNewRun(incremental && !dateRange);
       await gallery.scanNativeGallery(incremental, processor, dateRange);
+      setCandidates(flagBatchDuplicates);
     },
     [gallery, processor],
   );

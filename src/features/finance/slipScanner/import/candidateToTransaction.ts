@@ -1,4 +1,4 @@
-import { categorize, type SlipCategory } from "@/features/finance/slipScanner/ai/transactionCategorizer";
+import { categorize, type CategoryGuess, type SlipCategory } from "@/features/finance/slipScanner/ai/transactionCategorizer";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { Transaction } from "@/features/finance/types";
 import { toLocalDateString } from "@/utils/localDate";
@@ -24,6 +24,30 @@ export interface CandidateImportOptions {
 function resolveCategory(guess: SlipCategory, validCategoryNames: Set<string> | undefined): string | undefined {
   if (!validCategoryNames || validCategoryNames.has(guess)) return guess;
   return validCategoryNames.has("Others") ? "Others" : undefined;
+}
+
+// Most of categorize()'s keyword rules (Food, Transport, Bills, ...) describe
+// ways to spend money, not receive it -- wrong for an income row. "Salary"
+// is the one keyword-sourced category that's safely income-shaped
+// (categorize() has always had a "Salary"/"เงินเดือน" keyword rule, just
+// never reached for income before now) -- confirmed against this app's own
+// seeded categories (database/seed.ts), where "Salary" is `type: "income"`.
+// "Investment" is deliberately excluded even though the name reads
+// income-adjacent: this app's own default "Investment" category is
+// `type: "expense"` (money spent buying stocks, not investment income), and
+// candidateToTransaction's validCategoryNames is a plain Set<string> of
+// names with no type info to disambiguate a same-named category the other
+// way -- guessing "Investment" for an income row would risk stamping an
+// expense-shaped category onto it. A non-keyword guess ("learned" -- a
+// person's own past correction -- or "default"/"Others", categorize()'s
+// neutral no-signal answer) carries no expense-vs-income bias either way, so
+// both stay safe to keep regardless of type.
+const INCOME_SAFE_KEYWORD_CATEGORIES: ReadonlySet<SlipCategory> = new Set(["Salary"]);
+
+function isSafeCategoryGuess(guess: CategoryGuess, type: "expense" | "income"): boolean {
+  if (type === "expense") return true;
+  if (guess.source !== "keyword") return true;
+  return INCOME_SAFE_KEYWORD_CATEGORIES.has(guess.category);
 }
 
 // Pure mapping from a scanned slip candidate to a transaction draft. Slips
@@ -63,12 +87,15 @@ export function candidateToTransaction(candidate: SlipCandidate, options: Candid
 
   // `title` is already merchant → bank → fallback, so it is the right
   // categorisation signal (categorising the fallback title is harmless — it has
-  // no keyword hits and resolves to "Others"). The categorizer's keyword rules
-  // are expense-oriented (Food, Transport, Bills, ...), so only guess for an
-  // expense -- applying it to an income candidate (Payment Notification
-  // Capture only) would hand back an expense-shaped category name for an
-  // income row. Left unset, the same as any other unresolvable guess.
-  const guessedCategory = type === "expense" ? categorize(title, learnedCategories).category : undefined;
+  // no keyword hits and resolves to "Others"). Most of the categorizer's
+  // keyword rules describe ways to spend money (Food, Transport, Bills, ...),
+  // wrong for an income row (Payment Notification Capture only, the one
+  // source that can produce income) -- isSafeCategoryGuess keeps only the
+  // guesses that make sense for the candidate's own type, e.g. still
+  // recognising "เงินเดือน"/"Salary" for an incoming payment instead of
+  // leaving every income row uncategorised on principle.
+  const guess = categorize(title, learnedCategories);
+  const guessedCategory = isSafeCategoryGuess(guess, type) ? guess.category : undefined;
   // A Review Queue correction is a person's explicit choice from their own
   // live category list — trust it directly, skip the guess-validation path.
   const category =

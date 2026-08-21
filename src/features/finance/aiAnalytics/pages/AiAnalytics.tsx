@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
@@ -30,16 +30,27 @@ import ErrorState from "@/components/ui/ErrorState";
 import { useTranslation } from "@/i18n/useTranslation";
 
 export default function AiAnalytics() {
-  const { loadTransactions } = useTransactionStore();
-  const { loadBudgets } = useBudgetStore();
-  const { loadCategories } = useCategoryStore();
-  const { loadGoals } = useGoalStore();
-  const { loadProfiles } = useRecipientProfileStore();
-  const { loadEvents } = useGoalMilestoneEventStore();
+  const { loadTransactions, error: transactionsError } = useTransactionStore();
+  const { loadBudgets, error: budgetsError } = useBudgetStore();
+  const { loadCategories, error: categoriesError } = useCategoryStore();
+  const { loadGoals, error: goalsError } = useGoalStore();
+  const { loadProfiles, error: profilesError } = useRecipientProfileStore();
+  const { loadEvents, error: eventsError } = useGoalMilestoneEventStore();
 
   const { t } = useTranslation();
-  const { data, loading, error, retry } = useFinancialAnalysis();
-  const trendPoints = useFinancialHealthTrend();
+  // One shared `now`, memoized once per mount, so the main analysis and the
+  // trend's own "current" point score the same instant (PERF-003) -- two
+  // independent `new Date()` calls could otherwise land a tick apart and
+  // (in principle) disagree if a transaction changed in between, on top of
+  // being wasted duplicate work for what should be the same result.
+  const now = useMemo(() => new Date(), []);
+  const { data, loading, error: analysisError, retry } = useFinancialAnalysis(undefined, now);
+  // A failed store load previously fell through to the empty state below
+  // (analysisError only ever reflects the analysis engine itself, never a
+  // load failure) -- a person would see "no data" when the real problem was
+  // a broken fetch. Surfaced as the same ErrorState the analysis error uses.
+  const error = analysisError ?? transactionsError ?? budgetsError ?? categoriesError ?? goalsError ?? profilesError ?? eventsError;
+  const trendPoints = useFinancialHealthTrend(now);
   // Category Insights drawer: local page state, not the shared finance
   // uiStore — this only ever opens from this one page, unlike the
   // Transaction/Trade drawers, which are triggered from several pages.
