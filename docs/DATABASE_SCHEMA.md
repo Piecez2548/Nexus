@@ -274,7 +274,7 @@ The 25 tables are: `transactions`, `accounts`, `categories`, `trades`, `recipien
 
 ## Future PostgreSQL Schema
 
-**Implemented, but intentionally minimal — not a mirror of the Dexie schema.** `supabase/schema.sql` defines exactly three tables — an opaque relay, an encryption-key escrow, and a two-factor-authentication backup-code store — never queried for display:
+**Implemented, but intentionally minimal — not a mirror of the Dexie schema.** `supabase/schema.sql` defines exactly four tables — an opaque relay, an encryption-key escrow, a two-factor-authentication backup-code store, and an AI Coach rate-limit counter — never queried for display:
 
 ```sql
 create table public.synced_records (
@@ -318,6 +318,21 @@ create table public.mfa_backup_codes (
 -- TOTP factor enrollment itself lives in Supabase Auth's own tables
 -- (auth.mfa_factors), not here -- this table is only the custom recovery
 -- mechanism Supabase's native MFA API doesn't provide on its own.
+
+create table public.ai_coach_daily_usage (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  usage_date date not null default ((now() at time zone 'utc')::date),
+  request_count int not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, usage_date)
+);
+-- RLS: owner-only. Written exclusively by supabase/functions/ai-coach's
+-- increment_ai_coach_usage() RPC (SECURITY INVOKER -- no more power than
+-- the calling user's own RLS grants), which atomically increments and
+-- returns the day's count in one statement so concurrent requests from the
+-- same user can never race past the daily cap. Never read for display --
+-- exists purely so the Edge Function can reject a capped user's request
+-- before it ever reaches (and gets billed by) Anthropic.
 ```
 
 One generic `synced_records` row per (entity, table) holds the entity's data as an opaque JSONB blob (encrypted or not, depending on the client's local encryption state) — Postgres itself never has per-entity typed columns for transactions, trades, etc., and there is no plan to add them (see [DECISIONS.md](DECISIONS.md) for why). A true multi-user backend with typed tables and server-side business logic is **not built and not currently planned** — see [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)'s "Future Backend Architecture."

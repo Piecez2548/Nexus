@@ -62,16 +62,25 @@ All defined in `.env.example`, all optional:
 | `VITE_SUPABASE_URL` | Supabase project URL | Cloud sync + encryption escrow disabled; app runs fully local-only |
 | `VITE_SUPABASE_ANON_KEY` | Supabase publishable anon key | Same as above |
 | `VITE_SENTRY_DSN` | Sentry error-monitoring endpoint | Error monitoring is a no-op (`initErrorMonitoring()` checks for the DSN's presence) |
+| `VITE_AI_PROVIDER` | Selects the AI Gateway's active provider (`src/ai/config/aiGatewayConfig.ts`) | Defaults to `"local-rule"` (deterministic, offline). Set to `"claude"` to route the AI Coach's real-LLM fallback through `supabase/functions/ai-coach` once a signed-in user also opts in via Settings — see [SECURITY.md](SECURITY.md). This is a **public build-time selector only**; it never holds a real API key. |
 
 Both Supabase variables must be set together for sync to activate (`isSyncConfigured = Boolean(supabaseUrl && supabaseAnonKey)`, `src/lib/supabaseClient.ts`) — setting only one leaves the app in local-only mode, same as setting neither. See [SECURITY.md](SECURITY.md) for what each optional integration actually does once configured.
 
-**Server-side environment (Supabase project, not this repo):** `supabase/schema.sql` must be run once in the target Supabase project's SQL Editor to create the `synced_records` and `user_encryption_keys` tables + RLS policies before sync/encryption will function against that project — see [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md).
+**Server-side environment (Supabase project, not this repo):** `supabase/schema.sql` must be run once in the target Supabase project's SQL Editor to create the `synced_records`, `user_encryption_keys`, `mfa_backup_codes`, and `ai_coach_daily_usage` tables + RLS policies before sync/encryption/2FA/the AI Coach fallback will function against that project — see [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md).
 
 **Dashboard-only, no SQL involved:** the Authentication → Email Templates → "Confirm signup" template must include the `{{ .Token }}` variable, or sign-up emails will only ever contain a confirmation link, not the 6-digit OTP code the app's email-verification screen asks for. This is a Supabase Dashboard setting, not something `schema.sql` or this repo can configure.
 
+**Edge Function deploy + secret (CLI, one-time per Supabase project):** the AI Coach's real-LLM fallback (`supabase/functions/ai-coach`) is not deployed automatically — it must be pushed to the target project and given its own Anthropic API key, both via the Supabase CLI, not this repo's build:
+```bash
+supabase init                                          # once, if supabase/config.toml doesn't exist yet
+supabase functions deploy ai-coach --project-ref REF
+supabase secrets set ANTHROPIC_API_KEY=sk-ant-KEY --project-ref REF
+```
+Until both the Edge Function is deployed and its `ANTHROPIC_API_KEY` secret is set, the AI Coach's local rule-based answers keep working exactly as before — the real-LLM fallback just quietly never succeeds (see `ClaudeProvider`'s error mapping in [SECURITY.md](SECURITY.md)).
+
 ## Future Backend Deployment
 
-**Not applicable — no backend exists to deploy.** Supabase is a managed third-party service, configured via the environment variables above, not deployed from this repository. If a real application backend is ever built (see [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)'s "Future Backend Architecture" and [DECISIONS.md](DECISIONS.md)), it would need its own deployment pipeline, entirely separate from the three client targets documented above.
+**Mostly not applicable — no persistent application server exists or is deployed from this repository.** Supabase's managed Auth + Postgres remain configured via the environment variables above, not deployed here. The one exception is `supabase/functions/ai-coach` (see above): one small, stateless Supabase Edge Function, deployed via the Supabase CLI rather than this repo's own build/CI pipeline. It holds no state of its own beyond the rate-limit table in Postgres, and does not change this document's overall story — there is still no persistent application server, no API gateway, and no deployment pipeline in this repository for anything beyond the three client targets documented above. See [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)'s "Future Backend Architecture" and [DECISIONS.md](DECISIONS.md) for the fuller picture.
 
 ## Current Status
 

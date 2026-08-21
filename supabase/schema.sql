@@ -116,3 +116,56 @@ drop policy if exists "Users manage their own backup codes" on public.mfa_backup
 
 create policy "Users manage their own backup codes" on public.mfa_backup_codes
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- AI Coach -- Anthropic Claude fallback (see supabase/functions/ai-coach).
+-- Tracks how many ai-coach requests each user has made today, so the Edge
+-- Function can enforce a per-user daily cap without ever touching a
+-- service-role key. increment_ai_coach_usage() below runs SECURITY INVOKER
+-- (the Postgres default, spelled out here for clarity) -- i.e. as the
+-- calling user -- so the same auth.uid() = user_id RLS policy every other
+-- table in this file uses protects this one too: a user can only ever
+-- see/increment their own row, there is no cross-user read/write path, and
+-- there is no service-role bypass anywhere in this feature.
+create table if not exists public.ai_coach_daily_usage (
+  user_id uuid not null references auth.users (id) on delete cascade,
+  usage_date date not null default ((now() at time zone 'utc')::date),
+  request_count int not null default 0,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, usage_date)
+);
+
+alter table public.ai_coach_daily_usage enable row level security;
+
+drop policy if exists "Users manage their own AI Coach usage" on public.ai_coach_daily_usage;
+
+create policy "Users manage their own AI Coach usage"
+  on public.ai_coach_daily_usage
+  for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- Atomic increment-and-return: a single upsert, so concurrent requests from
+-- the same user serialize on Postgres's own row lock instead of racing a
+-- separate count-then-insert (which could let a user briefly exceed the
+-- cap under concurrency). SECURITY INVOKER means this function has no more
+-- power than the calling user already has via RLS above -- it is not a
+-- service-role bypass, just a way to make "increment my own row" atomic.
+create or replace function public.increment_ai_coach_usage()
+returns int
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  new_count int;
+begin
+  insert into public.ai_coach_daily_usage (user_id, usage_date, request_count)
+  values (auth.uid(), (now() at time zone 'utc')::date, 1)
+  on conflict (user_id, usage_date)
+  do update set request_count = public.ai_coach_daily_usage.request_count + 1,
+                updated_at = now()
+  returning request_count into new_count;
+
+  return new_count;
+end;
+$$;
