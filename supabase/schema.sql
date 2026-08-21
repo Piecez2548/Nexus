@@ -169,3 +169,91 @@ begin
   return new_count;
 end;
 $$;
+
+-- Automation -- weekly financial digest, server-computed even while the
+-- app is closed (see docs/DECISIONS.md for why this is scoped to
+-- non-encrypted accounts only). Rows are written exclusively by
+-- generate_weekly_digests() below -- never by the client.
+create table if not exists public.automation_weekly_digests (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  period_start date not null,
+  period_end date not null,
+  income numeric not null,
+  expense numeric not null,
+  net numeric not null,
+  transaction_count int not null,
+  seen_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (user_id, period_start)
+);
+
+create index if not exists automation_weekly_digests_user_idx on public.automation_weekly_digests (user_id, period_start);
+
+alter table public.automation_weekly_digests enable row level security;
+
+drop policy if exists "Users read their own weekly digests" on public.automation_weekly_digests;
+create policy "Users read their own weekly digests" on public.automation_weekly_digests
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "Users mark their own weekly digests seen" on public.automation_weekly_digests;
+create policy "Users mark their own weekly digests seen" on public.automation_weekly_digests
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+-- Deliberately no insert/delete policy for the authenticated role -- only
+-- generate_weekly_digests() (SECURITY DEFINER, below) ever creates rows;
+-- a user must never be able to fabricate their own digest.
+
+-- SECURITY DEFINER (unlike increment_ai_coach_usage()'s SECURITY INVOKER
+-- above): this function's whole job is computing a digest for EVERY
+-- eligible user in one pass, which requires reading across user
+-- boundaries no RLS-respecting invoker role could ever do. Pinned
+-- search_path per Postgres's own SECURITY DEFINER hardening guidance.
+-- Defensive regex guards below exist because ONE malformed row must never
+-- abort every other user's digest in the same batch.
+create or replace function public.generate_weekly_digests()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_period_end date := current_date;
+  v_period_start date := current_date - 7;
+begin
+  insert into public.automation_weekly_digests (user_id, period_start, period_end, income, expense, net, transaction_count)
+  select
+    sr.user_id,
+    v_period_start,
+    v_period_end,
+    coalesce(sum((sr.data->>'amount')::numeric) filter (where sr.data->>'type' = 'income'), 0),
+    coalesce(sum((sr.data->>'amount')::numeric) filter (where sr.data->>'type' = 'expense'), 0),
+    coalesce(sum((sr.data->>'amount')::numeric) filter (where sr.data->>'type' = 'income'), 0)
+      - coalesce(sum((sr.data->>'amount')::numeric) filter (where sr.data->>'type' = 'expense'), 0),
+    count(*)
+  from public.synced_records sr
+  where sr.table_name = 'transactions'
+    and sr.deleted_at is null
+    and sr.data->>'type' in ('income', 'expense')
+    and sr.data->>'amount' ~ '^-?\d+(\.\d+)?$'
+    and sr.data->>'date' ~ '^\d{4}-\d{2}-\d{2}'
+    and (sr.data->>'date')::date >= v_period_start
+    and (sr.data->>'date')::date < v_period_end
+    and sr.user_id not in (select user_id from public.user_encryption_keys)
+  group by sr.user_id
+  having count(*) > 0
+  on conflict (user_id, period_start) do nothing;
+end;
+$$;
+
+-- Requires the pg_cron extension (Supabase Dashboard -> Database ->
+-- Extensions -> pg_cron, one toggle, no external account). Wrapped so
+-- re-running this file BEFORE that toggle is flipped doesn't abort the
+-- whole script -- it just notices and skips; re-run this file again after
+-- enabling pg_cron to actually schedule the job. cron.schedule() itself
+-- upserts by job name, so this is safe to run repeatedly either way.
+do $$
+begin
+  perform cron.schedule('nexus-weekly-digest', '0 9 * * 1', $cron$select public.generate_weekly_digests();$cron$);
+exception when undefined_function or invalid_schema_name then
+  raise notice 'pg_cron not enabled yet -- enable it in Supabase Dashboard > Database > Extensions, then re-run this file to schedule the weekly digest job.';
+end $$;

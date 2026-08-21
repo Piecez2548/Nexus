@@ -12,6 +12,7 @@ import TodoPreviewPanel from "@/features/dashboard/components/TodoPreviewPanel";
 import HabitPreviewPanel from "@/features/dashboard/components/HabitPreviewPanel";
 import SchedulePreviewPanel from "@/features/dashboard/components/SchedulePreviewPanel";
 import AiDailySummaryPanel from "@/features/dashboard/components/AiDailySummaryPanel";
+import WeeklyDigestCard from "@/features/automation/components/WeeklyDigestCard";
 import InsightsPanel from "@/features/finance/components/InsightsPanel";
 import LoadingState from "@/components/ui/LoadingState";
 import ErrorState from "@/components/ui/ErrorState";
@@ -64,6 +65,8 @@ export default function Dashboard() {
       <DashboardHeader onAddTransaction={() => openTransactionDrawer()} />
 
       <DashboardPeriodSelector />
+
+      <WeeklyDigestCard />
 
       {error ? (
         <ErrorState message={error} onRetry={loadTransactions} />

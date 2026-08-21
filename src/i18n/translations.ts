@@ -247,6 +247,17 @@ export const translations = {
         unusualDailySpend: "You've spent ฿{{amount}} today — well above your daily average (฿{{average}})",
       },
     },
+    automation: {
+      weeklyDigest: {
+        title: "Weekly Digest",
+        subtitle: "Week of {{period}}",
+        income: "Income",
+        expense: "Expense",
+        net: "Net",
+        transactionCount: "Transactions",
+        dismiss: "Dismiss",
+      },
+    },
     transactions: {
       pageTitle: "Transactions",
       addTransaction: "Add Transaction",
@@ -2843,6 +2854,17 @@ export const translations = {
         duplicateSubscription: "ค่า Subscription ซ้ำ {{count}} รายการในหมวด{{category}}",
         unusualSpend: "รายจ่าย \"{{title}}\" (฿{{amount}}) สูงผิดปกติเทียบกับค่าเฉลี่ยหมวด{{category}}",
         unusualDailySpend: "วันนี้ใช้เงินไปแล้ว ฿{{amount}} สูงกว่าค่าเฉลี่ยต่อวัน (฿{{average}}) มาก",
+      },
+    },
+    automation: {
+      weeklyDigest: {
+        title: "สรุปรายสัปดาห์",
+        subtitle: "สัปดาห์ {{period}}",
+        income: "รายรับ",
+        expense: "รายจ่าย",
+        net: "สุทธิ",
+        transactionCount: "จำนวนรายการ",
+        dismiss: "ปิด",
       },
     },
     transactions: {

@@ -274,7 +274,7 @@ The 25 tables are: `transactions`, `accounts`, `categories`, `trades`, `recipien
 
 ## Future PostgreSQL Schema
 
-**Implemented, but intentionally minimal — not a mirror of the Dexie schema.** `supabase/schema.sql` defines exactly four tables — an opaque relay, an encryption-key escrow, a two-factor-authentication backup-code store, and an AI Coach rate-limit counter — never queried for display:
+**Implemented, but intentionally minimal — not a mirror of the Dexie schema.** `supabase/schema.sql` defines five tables — an opaque relay, an encryption-key escrow, a two-factor-authentication backup-code store, an AI Coach rate-limit counter, and a weekly financial digest. The first four are never queried for display; the digest table is the one exception, read directly by the Dashboard's `WeeklyDigestCard`:
 
 ```sql
 create table public.synced_records (
@@ -333,6 +333,27 @@ create table public.ai_coach_daily_usage (
 -- same user can never race past the daily cap. Never read for display --
 -- exists purely so the Edge Function can reject a capped user's request
 -- before it ever reaches (and gets billed by) Anthropic.
+
+create table public.automation_weekly_digests (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  period_start date not null,
+  period_end date not null,
+  income numeric not null,
+  expense numeric not null,
+  net numeric not null,
+  transaction_count int not null,
+  seen_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (user_id, period_start)
+);
+-- RLS: owner-only select + update (marking seen) -- no insert/delete
+-- policy for the authenticated role at all, since rows are written
+-- exclusively by generate_weekly_digests() (SECURITY DEFINER), scheduled
+-- weekly via pg_cron. Computed directly from synced_records -- never for
+-- an account that has encryption enabled (checked via user_encryption_keys
+-- row presence), since the server literally cannot read that account's
+-- ciphertext. See docs/DECISIONS.md.
 ```
 
 One generic `synced_records` row per (entity, table) holds the entity's data as an opaque JSONB blob (encrypted or not, depending on the client's local encryption state) — Postgres itself never has per-entity typed columns for transactions, trades, etc., and there is no plan to add them (see [DECISIONS.md](DECISIONS.md) for why). A true multi-user backend with typed tables and server-side business logic is **not built and not currently planned** — see [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)'s "Future Backend Architecture."
