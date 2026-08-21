@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ProviderFactory } from "./ProviderFactory";
 import { LocalRuleProvider } from "./LocalRuleProvider";
+import { ClaudeProvider } from "./ClaudeProvider";
 import { ConfigurationError } from "@/ai/utils/errors";
 
 describe("ProviderFactory.create", () => {
@@ -11,7 +12,16 @@ describe("ProviderFactory.create", () => {
     await expect(provider.isAvailable()).resolves.toBe(true);
   });
 
-  it.each(["claude", "openai", "gemini", "ollama"])("throws ConfigurationError for the known-but-unimplemented provider \"%s\"", (providerName) => {
+  it("creates a real, usable ClaudeProvider for \"claude\"", async () => {
+    const provider = ProviderFactory.create({ providerName: "claude" });
+    expect(provider).toBeInstanceOf(ClaudeProvider);
+    expect(provider.name).toBe("claude");
+    // isAvailable() never makes a network call (see ClaudeProvider's own
+    // file header), so this assertion needs no supabaseClient mock.
+    await expect(provider.isAvailable()).resolves.toEqual(expect.any(Boolean));
+  });
+
+  it.each(["openai", "gemini", "ollama"])("throws ConfigurationError for the known-but-unimplemented provider \"%s\"", (providerName) => {
     expect(() => ProviderFactory.create({ providerName })).toThrow(ConfigurationError);
   });
 
