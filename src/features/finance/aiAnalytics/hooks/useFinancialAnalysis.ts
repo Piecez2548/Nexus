@@ -28,12 +28,12 @@ export interface FinancialAnalysisState extends AnalysisSnapshot {
 // the page or any section component. Doesn't call any load*() itself,
 // matching Budget.tsx's convention that the page owns load orchestration.
 export function useFinancialAnalysis(engine: FinancialIntelligenceEngine = localStatisticalEngine, now?: Date): FinancialAnalysisState {
-  const { transactions } = useTransactionStore();
-  const { budgets } = useBudgetStore();
-  const { categories } = useCategoryStore();
-  const { goals } = useGoalStore();
-  const { profiles: recipientProfiles } = useRecipientProfileStore();
-  const { events: goalMilestoneEvents } = useGoalMilestoneEventStore();
+  const transactions = useTransactionStore((state) => state.transactions);
+  const budgets = useBudgetStore((state) => state.budgets);
+  const categories = useCategoryStore((state) => state.categories);
+  const goals = useGoalStore((state) => state.goals);
+  const recipientProfiles = useRecipientProfileStore((state) => state.profiles);
+  const goalMilestoneEvents = useGoalMilestoneEventStore((state) => state.events);
 
   const [state, setState] = useState<AnalysisSnapshot>({ data: null, loading: true, error: null });
 

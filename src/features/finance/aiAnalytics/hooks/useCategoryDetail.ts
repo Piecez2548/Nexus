@@ -10,9 +10,9 @@ import type { CategoryDetailResult } from "@/features/finance/aiAnalytics/engine
 // local computation over data the page has already loaded, not a
 // candidate for a future remote-AI swap.
 export function useCategoryDetail(category: string | null, now?: Date): CategoryDetailResult | null {
-  const { transactions } = useTransactionStore();
-  const { budgets } = useBudgetStore();
-  const { profiles: recipientProfiles } = useRecipientProfileStore();
+  const transactions = useTransactionStore((state) => state.transactions);
+  const budgets = useBudgetStore((state) => state.budgets);
+  const recipientProfiles = useRecipientProfileStore((state) => state.profiles);
 
   const resolvedNow = useMemo(() => now ?? new Date(), [now]);
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { useFinancialHealthTrend } from "./useFinancialHealthTrend";
 import { useFinancialAnalysis } from "./useFinancialAnalysis";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
@@ -13,7 +13,7 @@ import type { Transaction } from "@/features/finance/types";
 const now = new Date(2026, 6, 30);
 
 function resetStores() {
-  useTransactionStore.setState({ transactions: [], loading: false });
+  useTransactionStore.setState({ transactions: [], loading: false, error: null });
   useBudgetStore.setState({ budgets: [], loading: false, error: null });
   useCategoryStore.setState({ categories: [], loading: false, error: null });
   useGoalStore.setState({ goals: [], loading: false, error: null });
@@ -30,6 +30,20 @@ describe("useFinancialHealthTrend", () => {
     const { result } = renderHook(() => useFinancialHealthTrend(now));
     expect(result.current).toHaveLength(6);
     expect(result.current.every((p) => p.overallScore === null)).toBe(true);
+  });
+
+  it("does not rerender or recompute when unrelated store state changes", () => {
+    let renderCount = 0;
+    const { result } = renderHook(() => {
+      renderCount += 1;
+      return useFinancialHealthTrend(now);
+    });
+    const initialResult = result.current;
+
+    act(() => useTransactionStore.setState({ loading: true }));
+
+    expect(renderCount).toBe(1);
+    expect(result.current).toBe(initialResult);
   });
 
   it("reflects real transaction history from the stores", () => {

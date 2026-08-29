@@ -15,11 +15,11 @@ import type { ScoreTrendPoint } from "@/features/finance/aiAnalytics/engine/scor
 // across renders, or `points`/the returned array would change identity
 // every render.
 export function useFinancialHealthTrend(now?: Date): ScoreTrendPoint[] {
-  const { transactions } = useTransactionStore();
-  const { budgets } = useBudgetStore();
-  const { goals } = useGoalStore();
-  const { profiles: recipientProfiles } = useRecipientProfileStore();
-  const { events: goalMilestoneEvents } = useGoalMilestoneEventStore();
+  const transactions = useTransactionStore((state) => state.transactions);
+  const budgets = useBudgetStore((state) => state.budgets);
+  const goals = useGoalStore((state) => state.goals);
+  const recipientProfiles = useRecipientProfileStore((state) => state.profiles);
+  const goalMilestoneEvents = useGoalMilestoneEventStore((state) => state.events);
 
   const resolvedNow = useMemo(() => now ?? new Date(), [now]);
 

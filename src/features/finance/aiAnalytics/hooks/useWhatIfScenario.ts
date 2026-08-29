@@ -25,11 +25,11 @@ export function useWhatIfScenario(
   subscriptions: BehaviorAnalysisResult["subscriptions"],
   now: Date
 ): WhatIfResult | null {
-  const { transactions } = useTransactionStore();
-  const { budgets } = useBudgetStore();
-  const { goals } = useGoalStore();
-  const { profiles: recipientProfiles } = useRecipientProfileStore();
-  const { events: goalMilestoneEvents } = useGoalMilestoneEventStore();
+  const transactions = useTransactionStore((state) => state.transactions);
+  const budgets = useBudgetStore((state) => state.budgets);
+  const goals = useGoalStore((state) => state.goals);
+  const recipientProfiles = useRecipientProfileStore((state) => state.profiles);
+  const goalMilestoneEvents = useGoalMilestoneEventStore((state) => state.events);
 
   return useMemo(() => {
     if (input === null) return null;

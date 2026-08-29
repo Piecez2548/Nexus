@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { useCategoryDetail } from "./useCategoryDetail";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
@@ -13,7 +13,7 @@ function txn(overrides: Partial<Transaction> = {}): Transaction {
 }
 
 function resetStores() {
-  useTransactionStore.setState({ transactions: [], loading: false });
+  useTransactionStore.setState({ transactions: [], loading: false, error: null });
   useBudgetStore.setState({ budgets: [], loading: false, error: null });
   useRecipientProfileStore.setState({ profiles: [], loading: false, error: null });
 }
@@ -26,6 +26,20 @@ describe("useCategoryDetail", () => {
   it("returns null when no category is selected", () => {
     const { result } = renderHook(() => useCategoryDetail(null, now));
     expect(result.current).toBeNull();
+  });
+
+  it("does not rerender or recompute when unrelated store state changes", () => {
+    let renderCount = 0;
+    const { result } = renderHook(() => {
+      renderCount += 1;
+      return useCategoryDetail("Food", now);
+    });
+    const initialResult = result.current;
+
+    act(() => useTransactionStore.setState({ loading: true }));
+
+    expect(renderCount).toBe(1);
+    expect(result.current).toBe(initialResult);
   });
 
   it("computes real category detail from the stores once a category is selected", () => {

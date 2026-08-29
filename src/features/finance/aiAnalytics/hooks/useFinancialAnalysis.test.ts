@@ -12,12 +12,12 @@ import type { FinancialAnalysisResult, FinancialIntelligenceEngine } from "@/fea
 const now = new Date(2026, 6, 21);
 
 function resetStores() {
-  useTransactionStore.setState({ transactions: [], loading: false });
-  useBudgetStore.setState({ budgets: [], loading: false });
-  useCategoryStore.setState({ categories: [], loading: false });
-  useGoalStore.setState({ goals: [], loading: false });
-  useRecipientProfileStore.setState({ profiles: [], loading: false });
-  useGoalMilestoneEventStore.setState({ events: [], loading: false });
+  useTransactionStore.setState({ transactions: [], loading: false, error: null });
+  useBudgetStore.setState({ budgets: [], loading: false, error: null });
+  useCategoryStore.setState({ categories: [], loading: false, error: null });
+  useGoalStore.setState({ goals: [], loading: false, error: null });
+  useRecipientProfileStore.setState({ profiles: [], loading: false, error: null });
+  useGoalMilestoneEventStore.setState({ events: [], loading: false, error: null });
 }
 
 function stubResult(overrides: Partial<FinancialAnalysisResult> = {}): FinancialAnalysisResult {
@@ -224,6 +224,32 @@ describe("useFinancialAnalysis", () => {
 
     expect(hookResult.current.data).toBe(result);
     expect(hookResult.current.error).toBeNull();
+  });
+
+  it("does not rerender or re-run analysis when unrelated store state changes", async () => {
+    const analysisResult = stubResult();
+    let analyzeCalls = 0;
+    let renderCount = 0;
+    const engine: FinancialIntelligenceEngine = {
+      analyze: () => {
+        analyzeCalls += 1;
+        return Promise.resolve(analysisResult);
+      },
+    };
+
+    const { result: hookResult } = renderHook(() => {
+      renderCount += 1;
+      return useFinancialAnalysis(engine, now);
+    });
+    await waitFor(() => expect(hookResult.current.loading).toBe(false));
+    const settledRenderCount = renderCount;
+
+    act(() => useTransactionStore.setState({ loading: true }));
+    await Promise.resolve();
+
+    expect(renderCount).toBe(settledRenderCount);
+    expect(analyzeCalls).toBe(1);
+    expect(hookResult.current.data).toBe(analysisResult);
   });
 
   it("surfaces a rejected analyze() as an error", async () => {

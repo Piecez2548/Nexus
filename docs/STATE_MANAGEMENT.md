@@ -1,6 +1,6 @@
 # State Management
 
-**Last Updated:** 2026-08-29
+**Last Updated:** 2026-08-30
 
 ## Overview
 
@@ -100,6 +100,8 @@ Widening `useGlobalSearch` to index every entity type (11 stores) previously cau
 2. `useGlobalSearch` selects only each store's searchable collection, so loading/error/action changes do not re-render it. `GlobalSearch`, `LevelBadge`, `UserMenu`, and `NotificationsMenu` are also wrapped in `memo()` and take no props, isolating their subscriptions from their siblings.
 3. `TopBar` eagerly loads only transactions and budgets, which its always-visible notifications require. `GlobalSearch` loads its nine additional collections once, on first focus, instead of forcing those reads on every route before search is used.
 4. `LevelBadge`/`UserMenu` use narrow single-field selectors (`s.xp`, `s.isEnabled()`) rather than whole-store destructuring.
+
+The same rule now applies to every store-backed AI Analytics computation hook: `useFinancialAnalysis` selects its six inputs; `useFinancialHealthTrend` and `useWhatIfScenario` select five each; and `useCategoryDetail` selects three. Loading/error/action changes therefore cannot trigger another full analysis, six-point trend pass, scenario simulation, or category-detail calculation.
 
 Any future component mounted directly in `TopBar`/`MainLayout` that needs broad store access should follow the same `memo()`-isolation pattern rather than subscribing broadly at the layout level.
 

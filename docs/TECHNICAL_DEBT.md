@@ -1,6 +1,6 @@
 # Technical Debt
 
-**Last Updated:** 2026-08-29
+**Last Updated:** 2026-08-30
 
 ## Overview
 
@@ -33,7 +33,7 @@ The former 5,209-line `src/i18n/translations.ts` merge-conflict hotspot is also 
 
 ## Current Status
 
-All items above are current findings verified by direct code reading; the translation count, production bundle, health-score boundary, and header/search subscriptions were re-checked on 2026-08-29. Since the original 2026-08-02 audit, scoped AI Analytics passes landed for accessibility, analyzer/trend performance, and error/retry UX. PERF-003 aligned the analysis and trend reference time so their current scores cannot diverge at a clock boundary; the trend still computes that point independently. Store-level data-load error surfacing has also closed — see [AI_ANALYTICS.md](AI_ANALYTICS.md). The Gallery Slip Scanner and Platform epics are complete, followed by on-device stabilization, Slip Intelligence phases, native MediaStore validation, live orchestrator wiring, and physical end-to-end testing. Later deliveries include gallery-scan performance work, date-range scanning, Payment Notification Capture, Vault, Audit Log, Workout Tracker, and sync-engine hardening; see [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md) and [CHANGELOG.md](CHANGELOG.md) for detailed evidence.
+All items above are current findings verified by direct code reading; the translation count, production bundle, health-score boundary, header/search subscriptions, and store-backed AI Analytics computation hooks were re-checked through 2026-08-30. The AI Analytics hooks now select only their actual data collections, so unrelated loading/error/action changes cannot repeat the full analysis, health-trend, what-if, or category-detail calculations. Since the original 2026-08-02 audit, scoped AI Analytics passes landed for accessibility, analyzer/trend performance, and error/retry UX. PERF-003 aligned the analysis and trend reference time so their current scores cannot diverge at a clock boundary; the trend still computes that point independently. Store-level data-load error surfacing has also closed — see [AI_ANALYTICS.md](AI_ANALYTICS.md). The Gallery Slip Scanner and Platform epics are complete, followed by on-device stabilization, Slip Intelligence phases, native MediaStore validation, live orchestrator wiring, and physical end-to-end testing. Later deliveries include gallery-scan performance work, date-range scanning, Payment Notification Capture, Vault, Audit Log, Workout Tracker, and sync-engine hardening; see [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md) and [CHANGELOG.md](CHANGELOG.md) for detailed evidence.
 
 ## Future Improvements
 

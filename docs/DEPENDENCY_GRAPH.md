@@ -1,6 +1,6 @@
 # Dependency Graph
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-30
 
 ## Overview
 
@@ -72,7 +72,7 @@ Higher layers never get imported by lower ones. Within `features/finance/aiAnaly
 ## Tight Coupling
 
 - **`TopBar.tsx` subscribes to 12 stores** (11 feature stores for their `load*` actions, plus `appSettingsStore`) to eagerly load data for header widgets (global search, notifications) regardless of the active route. This is deliberate — not accidental coupling — and was already tuned once: narrow per-store selectors + `memo()` on `GlobalSearch`/`LevelBadge`/`UserMenu`/`NotificationsMenu` were added specifically to stop this broad subscription surface from cascading re-renders (see [STATE_MANAGEMENT.md](STATE_MANAGEMENT.md)). Still worth flagging as the single most cross-cutting file in the app.
-- **`useGlobalSearch.ts` reads all 11 data stores' full state** (whole-store destructuring, not narrow selectors) to build a unified search index. Accepted as-is because it's isolated behind `GlobalSearch`'s own `memo()` boundary, so the necessarily-broad subscription doesn't leak to siblings.
+- **`useGlobalSearch.ts` reads searchable collections from 11 data stores** through narrow selectors. Transactions and budgets load eagerly for always-visible notifications; the other 9 collections load once on first search focus. `GlobalSearch` remains behind its own `memo()` boundary so its broad data dependency does not leak to siblings.
 - **`goalStore` / `transactionStore` / `habitStore` / `todoStore` / `tradeStore` all call `useGamificationStore.getState().addXp(...)` imperatively** (not via a hook) — a real but narrow one-directional coupling, all five one-way into the single gamification store.
 - **`recordAudit()` (`features/security/auditLog.ts`) is called imperatively from six otherwise-unrelated call sites** — `database/backupService.ts`, `store/appLockStore.ts`, `encryption/migration/enableEncryption.ts`, `encryption/migration/reescrowDek.ts`, `sync/store/authStore.ts`, and `vault/store/vaultEntryStore.ts` — the same get-a-function-and-call-it pattern already used for `gamificationStore.addXp()` above. New as of the 2026-08-17 Audit Log work (SEC-002); it's also the one documented exception to "`database/`/`store/` never import from `features/`" noted in the Overview, since two of those six callers (`backupService.ts`, `appLockStore.ts`) live below the feature-module layer, not inside one.
 

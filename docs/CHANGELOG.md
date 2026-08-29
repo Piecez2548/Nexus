@@ -1,12 +1,15 @@
 # Changelog
 
-- Established `0.1.0` as Nexus's first semantic version. This updates package metadata only; no Git tag or published release is implied.
+- Narrowed the remaining synchronous AI Analytics hooks: `useWhatIfScenario` now selects five data collections and `useCategoryDetail` selects three, preventing unrelated store state from re-running either calculation; both have render/result-identity regression coverage.
+- Narrowed `useFinancialAnalysis` to its six actual input collections, preventing unrelated store state changes from re-running the full analysis engine; regression coverage locks both render count and engine call count.
+- Narrowed `useFinancialHealthTrend` to its five data collections so unrelated store loading/error/action changes no longer trigger another six-point scoring pass; added a render-identity regression test and corrected the stale Global Search dependency note.
+- Released Nexus `v0.1.0` from commit `b1efa21`: the annotated tag and `main` were pushed to GitHub, the GitHub pre-release was published, and CI run #87 passed. This is the project's first semantic release.
 - Reconciled documentation with the current implementation: PERF-003 is now accurately recorded as reference-time alignment (not computational deduplication), the Claude AI Coach fallback is no longer described as future work, test totals are current, and stale Roadmap commit-date claims were removed.
 - Reduced `TopBar` startup work from 11 eager store loads to the 2 collections required by always-visible notifications; `GlobalSearch` now loads its other 9 searchable collections once on first focus.
 - Narrowed `useGlobalSearch` subscriptions to the searchable collection in each of its 11 stores, preventing unrelated loading/error/action state changes from re-rendering and recomputing global search; regression-tested with an unrelated transaction-store update.
 - Clarified the dual health-calculation boundary without changing results: recommendation rules now consume explicitly named `ruleHealthSignals`, while the weighted `financialHealthScore` remains the sole UI/reporting score; the legacy public `healthScore` field is retained and deprecated for compatibility.
 
-**Last Updated:** 2026-08-29
+**Last Updated:** 2026-08-30
 
 ## Overview
 

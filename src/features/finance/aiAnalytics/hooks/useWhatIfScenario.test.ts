@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { useWhatIfScenario } from "./useWhatIfScenario";
 import { runAnalysis } from "@/features/finance/aiAnalytics/engine/localStatisticalEngine";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
@@ -28,7 +28,7 @@ const transactions: Transaction[] = [
 ];
 
 function resetStores() {
-  useTransactionStore.setState({ transactions, loading: false });
+  useTransactionStore.setState({ transactions, loading: false, error: null });
   useBudgetStore.setState({ budgets: [], loading: false, error: null });
   useGoalStore.setState({ goals: [goal], loading: false, error: null });
   useRecipientProfileStore.setState({ profiles: [], loading: false, error: null });
@@ -63,6 +63,27 @@ describe("useWhatIfScenario", () => {
       useWhatIfScenario(null, result.goalProgress, result.spendingAnalysis, result.behaviorAnalysis.subscriptions, now)
     );
     expect(hookResult.current).toBeNull();
+  });
+
+  it("does not rerender or recompute when unrelated store state changes", () => {
+    const result = analysis();
+    let renderCount = 0;
+    const { result: hookResult } = renderHook(() => {
+      renderCount += 1;
+      return useWhatIfScenario(
+        { type: "reduceFoodSpending", reductionPercent: 20 },
+        result.goalProgress,
+        result.spendingAnalysis,
+        result.behaviorAnalysis.subscriptions,
+        now
+      );
+    });
+    const initialResult = hookResult.current;
+
+    act(() => useTransactionStore.setState({ loading: true }));
+
+    expect(renderCount).toBe(1);
+    expect(hookResult.current).toBe(initialResult);
   });
 
   it("simulates reduceFoodSpending", () => {
