@@ -29,7 +29,7 @@ import type { FinancialAnalysisInput, FinancialAnalysisResult, FinancialIntellig
 export function runAnalysis(input: FinancialAnalysisInput): FinancialAnalysisResult {
   const { transactions, budgets, goals, recipientProfiles, goalMilestoneEvents, now } = input;
 
-  // Computed once, shared by every analyzer that needs it (healthScore,
+  // Computed once, shared by every analyzer that needs these legacy rule signals
   // budgetAnalysis, forecast) — guarantees they all agree on the same
   // spent/status figures instead of each re-deriving it slightly differently.
   const budgetProgress: BudgetProgress[] = budgets.map((budget) => ({
@@ -37,7 +37,7 @@ export function runAnalysis(input: FinancialAnalysisInput): FinancialAnalysisRes
     ...computeBudgetSpend(budget, transactions, now),
   }));
 
-  const healthScore = analyzeHealthScore(transactions, budgetProgress, now);
+  const ruleHealthSignals = analyzeHealthScore(transactions, budgetProgress, now);
   const budgetAnalysis = analyzeBudgets(budgetProgress);
   const cashFlowAnalysis = analyzeCashFlow(transactions, now);
   const spendingAnalysis = analyzeSpending(transactions, cashFlowAnalysis.monthlyTrend, now);
@@ -50,7 +50,7 @@ export function runAnalysis(input: FinancialAnalysisInput): FinancialAnalysisRes
     budgetAnalysis,
     behaviorAnalysis,
     spendingAnalysis,
-    healthScore,
+    ruleHealthSignals,
     cashFlowAnalysis,
     transactions,
     budgets,
@@ -134,7 +134,9 @@ export function runAnalysis(input: FinancialAnalysisInput): FinancialAnalysisRes
   const executiveSummaryReport = computeExecutiveSummaryReport(executiveSummaryEngineContext);
 
   return {
-    healthScore,
+    // Kept under the legacy public field name for compatibility. New code
+    // should use financialHealthScore for the user-facing weighted score.
+    healthScore: ruleHealthSignals,
     insights,
     spendingAnalysis,
     behaviorAnalysis,

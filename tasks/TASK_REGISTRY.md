@@ -2,7 +2,7 @@
 
 Master registry of all planned and completed Nexus tasks, grouped by Epic. See [README.md](README.md) for conventions and lifecycle.
 
-**Last Updated:** 2026-08-21
+**Last Updated:** 2026-08-29
 
 ## Legend
 
@@ -247,7 +247,7 @@ Foundational layers — all in place. Performance work (lazy loading, narrow sel
 
 ## Testing
 
-Infrastructure + baseline coverage established (224 unit, 22 integration, 18 e2e files) — see [../docs/TESTING_GUIDE.md](../docs/TESTING_GUIDE.md). `Completed` here means the layer exists and is CI-enforced; new features still add their own tests under each layer.
+Infrastructure + baseline coverage established (436 Vitest unit/integration files and 23 e2e spec files; 2,740 Vitest cases and 76 Playwright cases verified on 2026-08-29) — see [../docs/TESTING_GUIDE.md](../docs/TESTING_GUIDE.md). `Completed` here means the layer exists and is CI-enforced; new features still add their own tests under each layer.
 
 | Task ID | Epic | Title | Priority | Status | Dependencies |
 |---|---|---|---|---|---|
@@ -278,8 +278,9 @@ AI Analytics engine performance passes — both are output-preserving optimizati
 |---|---|---|---|---|---|
 | PERF-001 | Performance | Analyzer Cache Optimization | Medium | Completed | — |
 | PERF-002 | Performance | Eliminate Duplicate buildScoreContext Computation | Medium | Completed | — |
+| PERF-003 | Performance | Align Analysis and Trend Reference Time | Medium | Completed | PERF-002 |
 
-> PERF-003 (share `now` across the analysis/trend hooks to dedupe the trend's "current" point; optional Web Worker offload) is scoped but not yet registered — it needs a small UI-level change deliberately excluded from PERF-002.
+> PERF-003 shares `now` across the analysis and trend hooks and regression-tests exact agreement at the current point. It closes time-boundary divergence; it does not claim to remove the trend's independent current-point computation. Optional Web Worker offload remains a future optimization rather than part of PERF-003.
 
 ---
 

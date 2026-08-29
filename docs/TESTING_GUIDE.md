@@ -1,16 +1,16 @@
 # Testing Guide
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-29
 
 ## Overview
 
-Testing is **extensively implemented already** — unit, integration, and e2e testing all exist as real, enforced parts of the development workflow (CI runs all three on every push/PR to `main`, see `.github/workflows/ci.yml`). This document deliberately does not use "Future Unit/Integration/E2E Testing" framing, since that would misrepresent a codebase that already has **343 unit test files, 27 integration test files, and 18 end-to-end spec files** — 2,286 individual Vitest test cases across the unit+integration files alone (2,281 passing on the most recent full `npx vitest run`; see Known Test-Infrastructure Flakiness below).
+Testing is **extensively implemented already** — unit, integration, and e2e testing all exist as real, enforced parts of the development workflow (CI runs all three on every push/PR to `main`, see `.github/workflows/ci.yml`). As verified on 2026-08-29, the repository has **436 Vitest unit/integration files and 23 Playwright end-to-end spec files**: 2,740 Vitest cases and 76 Playwright cases, all passing in the validated runs described under Known Test-Infrastructure Flakiness.
 
 ## Testing Strategy
 
 Three layers, each with a distinct purpose (see [CODING_STANDARDS.md](CODING_STANDARDS.md) for the naming convention that distinguishes them):
 
-1. **Unit tests** (`*.test.ts(x)`) — one function, hook, or store tested in isolation, collaborators mocked via `vi.mock`. The large majority of the suite (343 files) — most heavily concentrated in `src/features/finance/aiAnalytics/engine/` (93 files; pure-function calculators/analyzers are naturally unit-test-friendly) and every store/service/repository/schema across every module. (Exception observed in the newest modules: `vault/store/vaultEntryStore.test.ts` and `workouts/store/workoutEntryStore.test.ts` are plain `.test.ts` files but exercise the real Dexie instance directly with no `vi.mock` — functionally integration-style despite the unit-test filename.)
+1. **Unit tests** (`*.test.ts(x)`) — one function, hook, or store tested in isolation, collaborators mocked via `vi.mock`. These form the large majority of the 436-file Vitest suite and are most heavily concentrated in `src/features/finance/aiAnalytics/engine/`; repositories, services, stores, schemas, hooks, and utilities across the other modules are covered as well. Some plain `.test.ts` files intentionally exercise real fake-indexeddb-backed Dexie behavior and are functionally integration-style despite their filename.
 2. **Integration tests** (`*.integration.test.ts(x)`) — no mocking. Either exercises a store against the real Dexie instance (via `fake-indexeddb`), or renders a full page component with Testing Library and interacts with it as a user would (`Transactions.integration.test.tsx`, `Dashboard.integration.test.tsx`, `RecipientLearning.integration.test.tsx`, etc.).
 3. **End-to-end tests** (Playwright, `e2e/*.spec.ts`) — a real Chromium browser against a real built-and-served app, covering full user flows across page boundaries (navigation, mobile layout, cross-feature flows like "add a transaction, see it reflected on the dashboard").
 
@@ -35,7 +35,7 @@ Same Vitest runner, same config — the distinction from unit tests is purely ab
 - `VITE_SENTRY_DSN` is also unset, so a developer's real local Sentry DSN doesn't get flooded with e2e console noise or genuine test failures.
 - `storageState: "./e2e/storageState.json"` pre-seeds the language-toggle localStorage key to English for the same reason as the unit-test setup file — every spec asserts on English UI text.
 
-**Coverage (18 spec files):** accounts, ai-analytics, app-lock, budget-and-goals, categories, dashboard-period, habits, header, life-schedule, merge-duplicate-transactions, mobile (layout/responsive), navigation, portfolio, quick-add, recipient-learning, todo, trading, transactions.
+**Coverage (23 spec files / 76 cases):** accounts, ai-analytics, app-lock, budget-and-goals, categories, dashboard-period, economic calendar, executive dashboard, habits, header, life-schedule, merge-duplicate-transactions, mobile (layout/responsive), navigation, portfolio, quick-add, recipient-learning, reports, strategies, todo, trading, transactions, and watchlist.
 
 **Script:** `npm run test:e2e`.
 
@@ -49,9 +49,9 @@ Used during active development for anything Playwright/Vitest can't easily cover
 
 ## Known Test-Infrastructure Flakiness
 
-Two integration tests (`TradingDashboard.integration.test.tsx`'s "shows zeroed stats with no trades" and `RecipientLearning.integration.test.tsx`'s "learns a recipient's category...") have been observed to intermittently fail **only** under full-parallel-suite resource contention, never when run in isolation (`npx vitest run <file>`). This is documented here as known pre-existing flakiness, not a regression to chase — re-running the full suite cleanly (with no concurrent file edits in flight) is the correct response if either shows up as a failure.
+Full-suite runs can exceed jsdom interaction timing budgets when Vitest uses the machine's unrestricted default worker count, especially if Build or Playwright runs concurrently. The stable validation command on this workstation is `npx vitest run --maxWorkers=4`; on 2026-08-29 it passed all 436 files / 2,740 cases. `RecipientLearning.integration.test.tsx` now waits for the asynchronous recipient-profile write it actually asserts and has a test-local 15-second integration budget. The orchestrated Slip Scanner integration no longer assumes which concurrent worker wins an identical-content hash race; it asserts that exactly one copy survives.
 
-**2026-08-18 note:** a single full-suite run (`npx vitest run`, 519.90s, 4 files / 5 tests failed out of 370 files / 2,286 tests) reproduced the `RecipientLearning.integration.test.tsx` failure above, plus three failures not on this list: `TradingJournal.integration.test.tsx` (2 tests, `Test timed out in 5000ms`) and `enableEncryption.test.ts` / `EncryptionRecoveryFlow.test.tsx` (1 each). Only one run was performed, so it's unconfirmed whether these three are the same full-suite-contention flakiness or a real regression — re-run each in isolation (`npx vitest run <file>`) to tell them apart before acting either way.
+Playwright requires permission to launch Chromium in restricted execution environments. A sandboxed launch can make every case fail immediately before page setup; that is a runner failure, not an application regression. The unrestricted 2026-08-29 run passed all 76 cases in about 1.2 minutes.
 
 ## Current Status
 

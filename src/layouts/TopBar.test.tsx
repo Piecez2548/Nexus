@@ -139,6 +139,26 @@ describe("TopBar", () => {
     expect(await screen.findByText("Transactions Page")).toBeInTheDocument();
   });
 
+  it("loads non-notification search data when search is first focused", async () => {
+    await db.trades.add({
+      symbol: "MSFT",
+      market: "stocks",
+      direction: "long",
+      status: "open",
+      entryPrice: 300,
+      quantity: 2,
+      entryDate: "2026-07-21",
+    });
+
+    renderTopBar();
+    expect(useTradeStore.getState().trades).toEqual([]);
+
+    const user = userEvent.setup();
+    await user.type(screen.getByPlaceholderText("Search anything..."), "msft");
+
+    expect(await screen.findByText("MSFT")).toBeInTheDocument();
+  });
+
   it("shows the current level and streak, with XP progress in the popover", async () => {
     useGamificationStore.setState({ xp: 150, streak: 3, lastActiveDate: new Date().toISOString().slice(0, 10) });
 

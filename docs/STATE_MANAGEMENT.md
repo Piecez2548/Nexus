@@ -1,6 +1,6 @@
 # State Management
 
-**Last Updated:** 2026-08-21
+**Last Updated:** 2026-08-29
 
 ## Overview
 
@@ -95,10 +95,11 @@ No store subscribes to another store reactively (no store-in-a-store composition
 
 ### The TopBar re-render fix (a documented perf pattern worth preserving)
 
-Widening `useGlobalSearch` to index every entity type (11 stores, whole-store destructuring) previously caused `TopBar` and its children to re-render on unrelated state changes. The fix, still in place:
+Widening `useGlobalSearch` to index every entity type (11 stores) previously caused `TopBar` and its children to re-render on unrelated state changes. The fix, still in place:
 1. `TopBar.tsx` selects only the **stable action function** from each store (`useTransactionStore((s) => s.loadTransactions)`, never the data itself) — so `TopBar` never re-renders when the underlying data changes.
-2. `GlobalSearch`, `LevelBadge`, `UserMenu`, `NotificationsMenu` are each wrapped in `memo()` and take no props, isolating their own necessarily-broader subscriptions from their siblings.
-3. `LevelBadge`/`UserMenu` use narrow single-field selectors (`s.xp`, `s.isEnabled()`) rather than whole-store destructuring.
+2. `useGlobalSearch` selects only each store's searchable collection, so loading/error/action changes do not re-render it. `GlobalSearch`, `LevelBadge`, `UserMenu`, and `NotificationsMenu` are also wrapped in `memo()` and take no props, isolating their subscriptions from their siblings.
+3. `TopBar` eagerly loads only transactions and budgets, which its always-visible notifications require. `GlobalSearch` loads its nine additional collections once, on first focus, instead of forcing those reads on every route before search is used.
+4. `LevelBadge`/`UserMenu` use narrow single-field selectors (`s.xp`, `s.isEnabled()`) rather than whole-store destructuring.
 
 Any future component mounted directly in `TopBar`/`MainLayout` that needs broad store access should follow the same `memo()`-isolation pattern rather than subscribing broadly at the layout level.
 

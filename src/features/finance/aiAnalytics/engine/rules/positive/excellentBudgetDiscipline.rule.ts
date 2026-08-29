@@ -2,7 +2,7 @@ import type { FinancialRule, RuleContext } from "@/features/finance/aiAnalytics/
 import { ruleMessages, type RecommendationDraft } from "@/features/finance/aiAnalytics/engine/rules/shared";
 
 function evaluate(context: RuleContext): RecommendationDraft[] {
-  if (context.healthScore.grade !== "excellent") return [];
+  if (context.ruleHealthSignals.grade !== "excellent") return [];
 
   return [
     {

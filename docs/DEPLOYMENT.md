@@ -1,6 +1,6 @@
 # Deployment
 
-**Last Updated:** 2026-08-02
+**Last Updated:** 2026-08-29
 
 ## Overview
 
@@ -31,6 +31,10 @@ npm run preview        # serve the built output locally for a final check
 `npm run build` is also the first thing CI runs after tests pass (`.github/workflows/ci.yml`), and is a hard gate — a type error or build failure fails the pipeline.
 
 ## Deployment Process
+
+### Versioning
+
+Nexus uses semantic versioning beginning at `0.1.0`. While the major version is `0`, compatibility may still change between minor releases. Keep the root version in `package.json` and both root-package entries in `package-lock.json` synchronized. Changing package metadata does not create a release by itself; a release still requires an explicit commit, Git tag, and the target-specific deployment or packaging step below.
 
 ### Web
 The output of `vite build` (`dist/`) is a static site — deployable to any static host (Vercel, Netlify, Cloudflare Pages, a plain S3+CDN, etc.). `vite-plugin-pwa` registers a service worker (`/sw.js`) **only when running on the actual web target** — explicitly skipped inside the Capacitor native WebView (`main.tsx` checks `Capacitor.isNativePlatform()`), since a fresh APK install already delivers current code and a caching service worker there only risks serving a stale bundle from before the install. This repository does not contain a specific hosting-provider config (no `vercel.json`, no `netlify.toml`) — hosting choice is left to whoever deploys it.

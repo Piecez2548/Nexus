@@ -1,6 +1,6 @@
 # Project Tree
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-08-29
 
 ## Overview
 
@@ -286,7 +286,14 @@ Complete folder tree of the Nexus repository, generated from `git ls-files` (i.e
 │   │   ├── useResolvedTheme.ts
 │   │   └── useToast.ts
 │   ├── i18n/
-│   │   ├── translations.ts
+│   │   ├── locales/             # Bilingual dictionaries split by domain
+│   │   │   ├── aiAnalytics.ts
+│   │   │   ├── core.ts
+│   │   │   ├── finance.ts
+│   │   │   ├── life.ts
+│   │   │   ├── security.ts
+│   │   │   └── trading.ts
+│   │   ├── translations.ts      # Compatibility facade; preserves translations[language]
 │   │   ├── useTranslation.test.ts
 │   │   └── useTranslation.ts
 │   ├── layouts/                      # app shell — see ROUTING.md, STATE_MANAGEMENT.md

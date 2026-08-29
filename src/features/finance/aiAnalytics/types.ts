@@ -29,6 +29,7 @@ export interface FinancialAnalysisInput {
 }
 
 export interface FinancialAnalysisResult {
+  /** @deprecated Internal rule signals; use financialHealthScore for UI/reporting. */
   healthScore: HealthScoreResult;
   insights: AiInsight[];
   spendingAnalysis: SpendingAnalysisResult;

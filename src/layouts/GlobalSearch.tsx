@@ -6,6 +6,15 @@ import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 import { useTranslation } from "@/i18n/useTranslation";
+import { useTradeStore } from "@/features/trading/store/tradeStore";
+import { useTodoStore } from "@/features/todo/store/todoStore";
+import { useHabitStore } from "@/features/habits/store/habitStore";
+import { useGoalStore } from "@/features/finance/store/goalStore";
+import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
+import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
+import { useAccountStore } from "@/features/finance/store/accountStore";
+import { useCategoryStore } from "@/features/finance/store/categoryStore";
+import { useRecipientProfileStore } from "@/features/finance/store/recipientProfileStore";
 
 function GlobalSearch() {
   const navigate = useNavigate();
@@ -13,6 +22,16 @@ function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+  const loadedSearchStores = useRef(false);
+  const loadTrades = useTradeStore((state) => state.loadTrades);
+  const loadTodos = useTodoStore((state) => state.loadTodos);
+  const loadHabits = useHabitStore((state) => state.loadHabits);
+  const loadGoals = useGoalStore((state) => state.loadGoals);
+  const loadHoldings = useHoldingStore((state) => state.loadHoldings);
+  const loadScheduleItems = useScheduleItemStore((state) => state.loadItems);
+  const loadAccounts = useAccountStore((state) => state.loadAccounts);
+  const loadCategories = useCategoryStore((state) => state.loadCategories);
+  const loadProfiles = useRecipientProfileStore((state) => state.loadProfiles);
 
   const results = useGlobalSearch(query);
 
@@ -22,6 +41,22 @@ function GlobalSearch() {
     setOpen(false);
     setQuery("");
     navigate(path);
+  }
+
+  function loadSearchDataOnce() {
+    if (loadedSearchStores.current) return;
+    loadedSearchStores.current = true;
+    void Promise.all([
+      loadTrades(),
+      loadTodos(),
+      loadHabits(),
+      loadGoals(),
+      loadHoldings(),
+      loadScheduleItems(),
+      loadAccounts(),
+      loadCategories(),
+      loadProfiles(),
+    ]);
   }
 
   return (
@@ -38,7 +73,10 @@ function GlobalSearch() {
           setQuery(e.target.value);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          loadSearchDataOnce();
+          setOpen(true);
+        }}
         placeholder={t("topbar.searchPlaceholder")}
         className="w-full rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 py-3 pl-11 pr-4 text-sm outline-none transition focus:border-brand-500"
       />

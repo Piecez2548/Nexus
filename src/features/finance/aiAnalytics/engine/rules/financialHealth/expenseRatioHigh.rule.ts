@@ -6,7 +6,7 @@ import { ruleMessages, type RecommendationDraft } from "@/features/finance/aiAna
 const EXPENSE_RATIO_HIGH_THRESHOLD = 0.8;
 
 function evaluate(context: RuleContext): RecommendationDraft[] {
-  const expenseRatio = context.healthScore.subScores.find((s) => s.key === "expenseRatio");
+  const expenseRatio = context.ruleHealthSignals.subScores.find((s) => s.key === "expenseRatio");
   if (!expenseRatio || expenseRatio.value === null || expenseRatio.value <= EXPENSE_RATIO_HIGH_THRESHOLD) return [];
 
   const percent = Math.round(expenseRatio.value * 100);

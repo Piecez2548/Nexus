@@ -43,6 +43,36 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Keep the entry chunk focused on Nexus bootstrap code. These are
+        // stable, independently-cacheable runtime families that the bundle
+        // analyzer showed dominating the shared entry chunk; grouping them
+        // changes packaging only, not the app's import or execution order.
+        codeSplitting: {
+          groups: [
+            {
+              name: "vendor-react",
+              test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+            },
+            {
+              name: "vendor-router",
+              test: /node_modules[\\/]react-router(?:-dom)?[\\/]/,
+            },
+            {
+              name: "vendor-motion",
+              test: /node_modules[\\/](framer-motion|motion-dom|motion-utils)[\\/]/,
+            },
+            {
+              name: "vendor-cloud",
+              test: /node_modules[\\/](@supabase|@sentry|iceberg-js)[\\/]/,
+            },
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     setupFiles: ["./src/tests/setup.ts"],

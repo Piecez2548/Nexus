@@ -1,20 +1,34 @@
 # Changelog
 
-**Last Updated:** 2026-08-21
+- Established `0.1.0` as Nexus's first semantic version. This updates package metadata only; no Git tag or published release is implied.
+- Reconciled documentation with the current implementation: PERF-003 is now accurately recorded as reference-time alignment (not computational deduplication), the Claude AI Coach fallback is no longer described as future work, test totals are current, and stale Roadmap commit-date claims were removed.
+- Reduced `TopBar` startup work from 11 eager store loads to the 2 collections required by always-visible notifications; `GlobalSearch` now loads its other 9 searchable collections once on first focus.
+- Narrowed `useGlobalSearch` subscriptions to the searchable collection in each of its 11 stores, preventing unrelated loading/error/action state changes from re-rendering and recomputing global search; regression-tested with an unrelated transaction-store update.
+- Clarified the dual health-calculation boundary without changing results: recommendation rules now consume explicitly named `ruleHealthSignals`, while the weighted `financialHealthScore` remains the sole UI/reporting score; the legacy public `healthScore` field is retained and deprecated for compatibility.
+
+**Last Updated:** 2026-08-29
 
 ## Overview
 
-This changelog is reconstructed directly from `git log` (189 commits, `26abcb9` → `HEAD`), grouped into milestones rather than listed commit-by-commit. `package.json` still declares `"version": "0.0.0"` — **no semantic versioning scheme is in use yet**; this document uses the term "version" loosely to mean development milestones.
+This changelog is reconstructed directly from `git log`, grouped into milestones rather than listed commit-by-commit. Nexus now uses semantic versioning beginning at `0.1.0`; versions below `1.0.0` remain development versions and may include breaking internal changes.
 
 ## Current Version
 
-`0.0.0` (package.json) — pre-release, actively developed, not yet tagged or published.
+`0.1.0` (package.json/package-lock.json) — first semantic development version; not yet tagged or published.
 
 ## Timeline
 
 The full commit history spans **2026-07-25 to 2026-08-22**, with the AI Analytics module and several other major features landing on 2026-08-01 alone, Gallery Scanner/Payment Notification Capture/Vault/Workout Tracker/sync hardening work concentrated in the 2026-08-15 to 2026-08-18 window, a full architecture review's refactoring order (sync perf, Drawer a11y, appLockStore slices, PLAINTEXT_KEYS, Disable Encryption) worked through on 2026-08-18/19, and Reports/Deeper Trading Analytics/the Executive Dashboard Foundation (EXEC-001)/a Tier 1-3 backlog cleanup pass/two-factor authentication + Login History/email OTP sign-up verification/the AI Gateway's Claude wiring/a redesigned Login screen/a weekly-digest automation landing 2026-08-20 through 2026-08-22.
 
 ## Major Milestones
+
+### Validation baseline and concurrent-test stabilization (2026-08-29)
+- Verified production Build/TypeScript and oxlint clean; the initial build exposed a shared-chunk size warning that was resolved in the bundle-splitting step below.
+- Stabilized the full orchestrated Slip Scanner integration by asserting the concurrency-safe invariant (one of two byte-identical assets survives) instead of assuming a particular worker wins the content-hash reservation race.
+- Stabilized Recipient Learning integration coverage by waiting for its intentionally asynchronous best-effort profile update and assigning a test-local integration timeout.
+- Verified the final accumulated working tree with 436/436 Vitest files (2,740/2,740 cases) using four workers and 76/76 Playwright E2E cases in Chromium.
+- Analyzed and split the shared entry bundle into stable React, Router, Motion, and cloud vendor groups. The entry chunk dropped from about 824 kB to 134 kB minified, the large-chunk build warning cleared, and 76/76 Playwright cases passed again against the split production output.
+- Split the 5,209-line bilingual translation dictionary into six domain modules while preserving the public `translations[language]` object and all existing key paths. EN/TH parity coverage now also asserts the complete 40-namespace surface, preventing a namespace accidentally removed from both languages from escaping parity checks.
 
 ### Foundation (2026-07-25)
 - Initial commit (`26abcb9`).
@@ -219,12 +233,12 @@ See [ROADMAP.md](ROADMAP.md)'s "Completed" section for the full current-state fe
 
 ## Upcoming Features
 
-See [ROADMAP.md](ROADMAP.md)'s "Planned" and "Future" sections. Headline item: wiring the AI Gateway to a real LLM provider (needs a backend proxy first — see [SECURITY.md](SECURITY.md), [DECISIONS.md](DECISIONS.md)).
+See [ROADMAP.md](ROADMAP.md)'s "Planned" and "Future" sections. No item is currently queued under Planned; larger Future initiatives require product or infrastructure decisions first.
 
 ## Current Status
 
-This changelog is accurate as of commit `4292cb8` (2026-08-19), plus the Disable Encryption flow (SEC-005) landing on top of it in this same session. Also on top of: a sync-engine hardening round (self-healing push cursors, automatic account/category dedup), Workout Tracker, Vault, an app-wide Audit Log, Gallery Scanner date-range scanning, and Payment Notification Capture (Phase 1 through an income/expense type selector) — all landing on top of the 2026-08-15/16 real-device Gallery Scanner verification, live wiring, and speed investigation, the 2026-08-15 Slip Intelligence Phases 1-9 (commit `d092800`), the 2026-08-11 Gallery Slip Scanner post-launch stabilization work (commit `ec75eff`), the 2026-08-08 GS/PLT epic completion, and the 2026-08-07 documentation and AI Analytics quality passes.
+This changelog was reconciled with the current working tree on 2026-08-29. The accumulated tree passes Build/TypeScript, oxlint, 2,740 Vitest cases, and 76 Playwright Chromium cases.
 
 ## Future Improvements
 
-Adopt semantic versioning (`package.json` is still at the Vite template default `0.0.0`) once the app reaches a state worth tagging releases for — see [DEPLOYMENT.md](DEPLOYMENT.md).
+Create a signed release commit and Git tag when `0.1.0` is ready to publish; package metadata alone is not a release — see [DEPLOYMENT.md](DEPLOYMENT.md).

@@ -26,17 +26,17 @@ const MAX_RESULTS_PER_GROUP = 5;
 
 export function useGlobalSearch(query: string): SearchResult[] {
   const { t } = useTranslation();
-  const { transactions } = useTransactionStore();
-  const { trades } = useTradeStore();
-  const { todos } = useTodoStore();
-  const { habits } = useHabitStore();
-  const { goals } = useGoalStore();
-  const { holdings } = useHoldingStore();
-  const { items: scheduleItems } = useScheduleItemStore();
-  const { budgets } = useBudgetStore();
-  const { accounts } = useAccountStore();
-  const { categories } = useCategoryStore();
-  const { profiles } = useRecipientProfileStore();
+  const transactions = useTransactionStore((state) => state.transactions);
+  const trades = useTradeStore((state) => state.trades);
+  const todos = useTodoStore((state) => state.todos);
+  const habits = useHabitStore((state) => state.habits);
+  const goals = useGoalStore((state) => state.goals);
+  const holdings = useHoldingStore((state) => state.holdings);
+  const scheduleItems = useScheduleItemStore((state) => state.items);
+  const budgets = useBudgetStore((state) => state.budgets);
+  const accounts = useAccountStore((state) => state.accounts);
+  const categories = useCategoryStore((state) => state.categories);
+  const profiles = useRecipientProfileStore((state) => state.profiles);
 
   return useMemo(() => {
     const q = query.trim().toLowerCase();

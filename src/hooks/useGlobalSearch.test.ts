@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 
 import { useGlobalSearch } from "./useGlobalSearch";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
@@ -18,7 +18,7 @@ import type { Trade } from "@/features/trading/types";
 
 describe("useGlobalSearch", () => {
   beforeEach(() => {
-    useTransactionStore.setState({ transactions: [] });
+    useTransactionStore.setState({ transactions: [], loading: false, error: null });
     useTradeStore.setState({ trades: [] });
     useTodoStore.setState({ todos: [] });
     useHabitStore.setState({ habits: [] });
@@ -34,6 +34,18 @@ describe("useGlobalSearch", () => {
   it("returns nothing for an empty query", () => {
     const { result } = renderHook(() => useGlobalSearch(""));
     expect(result.current).toEqual([]);
+  });
+
+  it("does not rerender when unrelated store state changes", () => {
+    let renderCount = 0;
+    renderHook(() => {
+      renderCount += 1;
+      return useGlobalSearch("coffee");
+    });
+
+    expect(renderCount).toBe(1);
+    act(() => useTransactionStore.setState({ loading: true }));
+    expect(renderCount).toBe(1);
   });
 
   it("matches transactions by title, case-insensitively", () => {

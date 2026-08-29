@@ -81,14 +81,16 @@ describe("Rule Engine / Learning Engine (end to end through the real UI)", () =>
     await user.selectOptions(screen.getByLabelText("Account"), "Cash");
     await user.click(screen.getByRole("button", { name: "Save" }));
 
+    let updatedProfile = (await db.recipientProfiles.toArray())[0];
     await waitFor(async () => {
       expect(await db.transactions.toArray()).toHaveLength(2);
+      updatedProfile = (await db.recipientProfiles.toArray())[0];
+      expect(updatedProfile.transactionCount).toBe(2);
     });
 
-    const updatedProfile = (await db.recipientProfiles.toArray())[0];
     expect(updatedProfile.transactionCount).toBe(2);
     expect(updatedProfile.totalAmount).toBe(123);
-  });
+  }, 15_000);
 
   it("suggests a category from the merchant database when the title matches a known merchant", async () => {
     await db.merchants.add({ name: "Starbucks", category: "Food" });

@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last Updated:** 2026-08-21
+**Last Updated:** 2026-08-29
 
 ## Overview
 
@@ -143,11 +143,11 @@ Larger initiatives with no code-level scaffolding yet:
 - **Automation** (IF/THEN workflows, scheduled reports/alerts) — **one concrete slice shipped** (see "AI" section below and Recently Shipped): a weekly financial digest computed server-side via `pg_cron`, waiting in-app next open. A generic rule-builder UI (arbitrary triggers × arbitrary actions) is still not started — this was one specific, requested automation, not the general engine.
 - **iOS build** — only an Android Capacitor project exists (`android/`, 53 tracked files); no `ios/` project directory exists in the repository.
 - **A real backend / multi-user architecture** — Supabase is used only as an auth provider + a generic sync relay (see [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)); there is no server-side business logic, and none is currently planned. See [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)'s "Future Backend Architecture."
-- **Semantic versioning / tagged releases** — `package.json` is still at `0.0.0`.
+- **Tagged releases** — semantic package versioning now starts at `0.1.0`, but no signed release commit/tag or publishing pipeline exists yet.
 
 ## Current Status
 
-This roadmap reflects the repository exactly as of commit `6dde569` (2026-08-18) — regenerate against the code, not this document, if a long time has passed since this date.
+This roadmap was reconciled with the current working tree on 2026-08-29. No implementation item is queued under Planned; Future items require product or infrastructure decisions before work begins.
 
 ## Future Improvements
 

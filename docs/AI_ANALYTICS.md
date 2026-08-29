@@ -1,6 +1,6 @@
 # AI Analytics
 
-**Last Updated:** 2026-08-21
+**Last Updated:** 2026-08-29
 
 ## Overview
 
@@ -60,7 +60,7 @@ An independent, weighted, explainable 0-100 **Financial Health Score**, alongsid
 
 **Combination:** categories with `score === null` (insufficient data — e.g. no goals/budgets set yet) are excluded and the remaining weights **renormalized**, never treated as a 0: `overallScore = Σ(weight·score) / Σweight` over only the scored categories. Grade comes from a 7-band table (A+ ≥95 … F <50), each carrying a `status` (excellent → critical). `explanations/aggregateExplanations.ts` rolls every category's factors into 5 output buckets: `strengths, weaknesses, warnings, recommendations, improvementOpportunities`.
 
-`score-engine/scoreTrend.ts` additionally re-runs the pipeline once per historical point to produce a trend line, powering `useFinancialHealthTrend.ts`. Each point uses the lean `computeHealthScoreSummary` (overallScore + grade only), skipping the explanation aggregation the trend would otherwise compute and discard (PERF-002); the shared `multiMonthTrends.monthlyValuesFor` helper it leans on is a single pass over transactions rather than one scan per month (PERF-001). Both are output-preserving; the remaining duplicate — the trend's "current" point overlapping the main pipeline's score — is scoped as PERF-003 (see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md)).
+`score-engine/scoreTrend.ts` additionally re-runs the pipeline once per historical point to produce a trend line, powering `useFinancialHealthTrend.ts`. Each point uses the lean `computeHealthScoreSummary` (overallScore + grade only), skipping the explanation aggregation the trend would otherwise compute and discard (PERF-002); the shared `multiMonthTrends.monthlyValuesFor` helper it leans on is a single pass over transactions rather than one scan per month (PERF-001). The trend's `now` point is still computed independently from the main analysis score, but PERF-003 closed the correctness risk by making both hooks share the same reference time and testing that the two outputs agree exactly.
 
 ## Behavior Engine (`engine/behavior/`)
 
@@ -134,4 +134,4 @@ Fully implemented across all 7 sub-engines plus the legacy analyzer foundation. 
 
 ## Future Improvements
 
-Wiring `src/ai/`'s Gateway to a real LLM provider is the one clearly-designed-for extension point — it would sit alongside this deterministic engine (e.g. for open-ended natural-language Q&A beyond the Coach's 16 fixed intents), not replace it. See [DECISIONS.md](DECISIONS.md) for why the engine stays rule-based today. A nearer-term, scoped follow-up is data tables for the remaining secondary charts (A11Y-002 covered focus rings and the key charts) — see [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) and [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md). Two items previously listed here have since been closed: surfacing store-level data-load errors as their own error state (see "States & accessibility" above), and **PERF-003** (the analysis and trend hooks now share one `now`, so the trend's "current" point and the main Financial Health Score are guaranteed to agree, proven by a dedicated test in `useFinancialHealthTrend.test.ts`).
+The AI Gateway is now wired to Claude as an opt-in fallback for AI Coach questions the deterministic classifier cannot answer; recognized intents remain local and rule-based. A nearer-term, scoped follow-up is data tables for the remaining secondary charts (A11Y-002 covered focus rings and the key charts). Two earlier correctness gaps are closed: store-level data-load errors surface as their own error state, and **PERF-003** makes the analysis and trend hooks share one `now`, so their current Financial Health Score is guaranteed to agree, proven by `useFinancialHealthTrend.test.ts`.

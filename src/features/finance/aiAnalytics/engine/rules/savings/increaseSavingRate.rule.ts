@@ -8,7 +8,7 @@ const SAVING_RATE_LOW_BAND_PERCENT = 10;
 const SAVING_RATE_TARGET_PERCENT = 20;
 
 function evaluate(context: RuleContext): RecommendationDraft[] {
-  const savingRate = context.healthScore.subScores.find((s) => s.key === "savingRate");
+  const savingRate = context.ruleHealthSignals.subScores.find((s) => s.key === "savingRate");
   if (
     !savingRate ||
     savingRate.value === null ||

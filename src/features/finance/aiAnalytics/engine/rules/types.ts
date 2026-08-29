@@ -35,7 +35,11 @@ export interface RuleContext {
   transactions: Transaction[];
   budgets: Budget[];
   recipientProfiles: RecipientProfile[];
-  healthScore: HealthScoreResult;
+  // Legacy unweighted score retained specifically as rule input. This is
+  // intentionally distinct from the weighted financialHealthScore rendered
+  // by the UI; naming it as signals prevents the two score systems from being
+  // mistaken for interchangeable outputs.
+  ruleHealthSignals: HealthScoreResult;
   budgetAnalysis: BudgetAnalysisResult;
   cashFlowAnalysis: CashFlowAnalysisResult;
   spendingAnalysis: SpendingAnalysisResult;

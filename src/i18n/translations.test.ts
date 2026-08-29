@@ -31,6 +31,49 @@ function difference(a: Set<string>, b: Set<string>): string[] {
   return [...a].filter((key) => !b.has(key)).sort();
 }
 
+const EXPECTED_NAMESPACES = [
+  "accounts",
+  "aiAnalytics",
+  "automation",
+  "budget",
+  "categories",
+  "common",
+  "dashboard",
+  "economicCalendar",
+  "errorBoundary",
+  "executive",
+  "favorites",
+  "financeDashboard",
+  "goals",
+  "habits",
+  "lock",
+  "login",
+  "merchants",
+  "mfa",
+  "nav",
+  "netWorth",
+  "notFound",
+  "portfolio",
+  "quickAdd",
+  "recipients",
+  "reminders",
+  "reports",
+  "schedule",
+  "security",
+  "settings",
+  "slipScanner",
+  "strategies",
+  "subscriptions",
+  "todo",
+  "topbar",
+  "trading",
+  "transactions",
+  "validation",
+  "vault",
+  "watchlist",
+  "workouts",
+] as const;
+
 describe("translations (en/th key parity)", () => {
   it("has no key present in `en` but missing from `th`", () => {
     const enKeys = collectLeafKeyPaths(translations.en);
@@ -42,5 +85,10 @@ describe("translations (en/th key parity)", () => {
     const enKeys = collectLeafKeyPaths(translations.en);
     const thKeys = collectLeafKeyPaths(translations.th);
     expect(difference(thKeys, enKeys)).toEqual([]);
+  });
+
+  it("preserves every top-level namespace when domain modules are composed", () => {
+    expect(Object.keys(translations.en).sort()).toEqual(EXPECTED_NAMESPACES);
+    expect(Object.keys(translations.th).sort()).toEqual(EXPECTED_NAMESPACES);
   });
 });

@@ -159,14 +159,17 @@ describe("full architecture chain: orchestrated scan -> transaction import -> hi
 
     expect(run.status).toBe("completed");
     // 4 enumerated, but "clean-dup" is content-identical to "clean" -> the
-    // orchestrator's own cache-backed content dedup skips it before the
-    // processor ever runs, so only 3 candidates are actually extracted.
+    // orchestrator's own cache-backed content dedup skips one of them before
+    // the processor ever runs, so only 3 candidates are actually extracted.
+    // The queue is concurrent, so either asset may reserve the shared hash
+    // first; the invariant is that exactly one survives, not which id wins.
     expect(run.done).toBe(3);
     expect(run.skipped).toBe(1);
     expect(candidates).toHaveLength(3);
-    expect(candidates.find((c) => c.assetId === "clean-dup")).toBeUndefined();
 
-    const clean = candidates.find((c) => c.assetId === "clean")!;
+    const cleanCandidates = candidates.filter((c) => c.assetId === "clean" || c.assetId === "clean-dup");
+    expect(cleanCandidates).toHaveLength(1);
+    const clean = cleanCandidates[0]!;
     const ledgerDup = candidates.find((c) => c.assetId === "ledger-dup")!;
     const ambiguous = candidates.find((c) => c.assetId === "ambiguous")!;
 
@@ -201,7 +204,7 @@ describe("full architecture chain: orchestrated scan -> transaction import -> hi
     // "clean" became a real transaction; "ledger-dup" was recognized as a
     // near-certain duplicate of the pre-seeded ledger transaction and
     // skipped -- proving no duplicate transaction was created.
-    expect(importResult.importedCandidateIds).toEqual(["clean"]);
+    expect(importResult.importedCandidateIds).toEqual([clean.id]);
     expect(importResult.skippedDuplicates.map((s) => s.candidateId)).toEqual(["ledger-dup"]);
     expect(importResult.failed).toEqual([]);
 
