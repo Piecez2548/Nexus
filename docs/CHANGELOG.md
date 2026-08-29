@@ -1,5 +1,6 @@
 # Changelog
 
+- Unified the Trading Dashboard and Journal behind a responsive Trading workspace header inspired by the standalone `Trading_journal` prototype: Dashboard/Journal/Analytics navigation, live trade-count and total-P/L context, and a clearly grouped analytics surface. The implementation reuses Nexus's existing synced Trade model, stores, drawers, charts, filters, CSV export, risk controls, and analytics hooks rather than importing the prototype's single-file/localStorage architecture.
 - Narrowed the remaining synchronous AI Analytics hooks: `useWhatIfScenario` now selects five data collections and `useCategoryDetail` selects three, preventing unrelated store state from re-running either calculation; both have render/result-identity regression coverage.
 - Narrowed `useFinancialAnalysis` to its six actual input collections, preventing unrelated store state changes from re-running the full analysis engine; regression coverage locks both render count and engine call count.
 - Narrowed `useFinancialHealthTrend` to its five data collections so unrelated store loading/error/action changes no longer trigger another six-point scoring pass; added a render-identity regression test and corrected the stale Global Search dependency note.

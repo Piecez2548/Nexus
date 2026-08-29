@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 
 import TradingJournal from "./TradingJournal";
 import TradeDrawer from "@/features/trading/components/TradeDrawer";
@@ -12,10 +13,10 @@ import type { Trade } from "@/features/trading/types";
 
 function renderJournalPage() {
   return render(
-    <>
+    <MemoryRouter>
       <TradingJournal />
       <TradeDrawer />
-    </>
+    </MemoryRouter>
   );
 }
 

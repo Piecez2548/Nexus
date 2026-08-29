@@ -64,6 +64,7 @@ export function useTradingStats(periodRange?: PeriodRange) {
 
     const grossProfit = wins.reduce((sum, { pnl }) => sum + pnl, 0);
     const grossLoss = Math.abs(losses.reduce((sum, { pnl }) => sum + pnl, 0));
+    const totalPnl = withPnl.reduce((sum, { pnl }) => sum + pnl, 0);
     const profitFactor =
       grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0;
 
@@ -128,6 +129,7 @@ export function useTradingStats(periodRange?: PeriodRange) {
       todayPnl,
       weeklyPnl,
       monthlyPnl,
+      totalPnl,
       periodPnl,
       periodWinRate,
       winRate,

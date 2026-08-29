@@ -16,6 +16,9 @@ describe("TradingDashboard (real data flow)", () => {
     render(<TradingDashboard />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText("Trading Dashboard")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Dashboard" })).toHaveAttribute("href", "/trading");
+    expect(screen.getByRole("link", { name: "Journal" })).toHaveAttribute("href", "/trading/journal");
+    expect(screen.getByRole("link", { name: "Analytics" })).toHaveAttribute("href", "/trading#analytics");
     expect(screen.getByText("0.0%")).toBeInTheDocument(); // win rate
     expect(screen.getAllByText("0").length).toBeGreaterThan(0); // open positions, etc.
   });
@@ -59,6 +62,7 @@ describe("TradingDashboard (real data flow)", () => {
 
     // "Breakout" appears both in the recent-trades row and the best-strategy card.
     expect(screen.getAllByText("Breakout").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText("2 trades · +200 total P/L")).toBeInTheDocument();
   });
 
   it("shows empty states for the analytics section with no closed trades", async () => {
