@@ -12,6 +12,7 @@ import {
 import { NavLink, useLocation } from "react-router-dom";
 
 import ThemeToggleSwitch from "@/components/ui/ThemeToggleSwitch";
+import NexusToolsLink from "./NexusToolsLink";
 import { useTranslation } from "@/i18n/useTranslation";
 import { financeMenus, tradingMenus, personalMenus, type MenuItem } from "./navItems";
 
@@ -129,6 +130,7 @@ export default function Sidebar() {
         <NavGroup icon={ListChecks} labelKey="nav.personal" items={personalMenus} isActive={isPersonalActive} />
 
         <NavItem icon={Settings} labelKey="nav.settings" path="/settings" />
+        <NexusToolsLink />
 
       </nav>
 
