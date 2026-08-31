@@ -1,0 +1,44 @@
+import { afterEach, expect, test, vi } from "vitest";
+const mocks = vi.hoisted(() => ({ getSession: vi.fn(), getUser: vi.fn(), getState: vi.fn() }));
+vi.mock("@/lib/supabaseClient", () => ({ supabase: { auth: { getSession: mocks.getSession, getUser: mocks.getUser } } }));
+vi.mock("./store/authStore", () => ({ useAuthStore: { getState: mocks.getState } }));
+import { installToolsSessionLinks, openNexusTools, toolsOrigin } from "./toolsSession";
+afterEach(() => { vi.restoreAllMocks(); vi.clearAllMocks(); vi.useRealTimers(); document.body.innerHTML = ""; });
+test("sends a verified session only to the launched Tools window with the matching nonce", async () => {
+  vi.useFakeTimers();
+  const child = { location: { replace: vi.fn() }, postMessage: vi.fn() };
+  vi.spyOn(window, "open").mockReturnValue(child as unknown as Window);
+  mocks.getState.mockReturnValue({ user: { id: "user-1" }, mfaPending: false });
+  mocks.getSession.mockResolvedValue({ data: { session: { access_token: "test-access", refresh_token: "test-refresh" } } });
+  mocks.getUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
+  openNexusTools();
+  const url = new URL(child.location.replace.mock.calls[0][0]);
+  const nonce = url.searchParams.get("nexus_sso");
+  const send = (origin: string, source: unknown, value = nonce) => window.dispatchEvent(new MessageEvent("message", { origin, source: source as Window, data: { type: "nexus:ready", nonce: value } }));
+  send("https://attacker.example", child);
+  send(toolsOrigin, window);
+  send(toolsOrigin, child, "wrong");
+  expect(mocks.getSession).not.toHaveBeenCalled();
+  send(toolsOrigin, child);
+  await vi.waitFor(() => expect(child.postMessage).toHaveBeenCalledTimes(1));
+  expect(child.postMessage).toHaveBeenCalledWith({ type: "nexus:session", nonce, access_token: "test-access", refresh_token: "test-refresh" }, toolsOrigin);
+  expect(url.href).not.toContain("token");
+  send(toolsOrigin, child);
+  expect(child.postMessage).toHaveBeenCalledTimes(1);
+});
+
+test("Nexus All template links share the launcher without intercepting other destinations", () => {
+  vi.useFakeTimers();
+  const child = { location: { replace: vi.fn() }, postMessage: vi.fn() };
+  const open = vi.spyOn(window, "open").mockReturnValue(child as unknown as Window);
+  const remove = installToolsSessionLinks();
+  document.body.innerHTML = `<a href="${toolsOrigin}/"><span>Tools</span></a><a href="/dashboard">Main</a>`;
+  document.querySelector("span")!.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 }));
+  expect(open).toHaveBeenCalledTimes(1);
+  const unrelated = new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 });
+  document.querySelectorAll("a")[1].dispatchEvent(unrelated);
+  expect(unrelated.defaultPrevented).toBe(false);
+  expect(open).toHaveBeenCalledTimes(1);
+  remove();
+  vi.advanceTimersByTime(20_000);
+});

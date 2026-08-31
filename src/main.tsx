@@ -10,8 +10,11 @@ import { seedDatabase } from "@/database/seed";
 import { initErrorMonitoring } from "@/lib/sentry";
 import { configureAuditLog } from "@/features/security/auditLog";
 import { dexieAuditSink } from "@/features/security/dexieAuditSink";
+import { installToolsSessionLinks } from "@/features/sync/toolsSession";
 
 initErrorMonitoring();
+const removeToolsSessionLinks = installToolsSessionLinks();
+if (import.meta.hot) import.meta.hot.dispose(removeToolsSessionLinks);
 
 // Wires the audit log's already-existing injectable sink (see auditLog.ts)
 // to real Dexie persistence — every recordAudit() call anywhere in the app,
