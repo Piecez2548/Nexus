@@ -8,10 +8,10 @@ test.describe("Rule Engine / Learning Engine", () => {
     await page.getByRole("button", { name: "Add Transaction" }).click();
     await page.getByLabel("Item name").fill("ก๋วยเตี๋ยว");
     await page.getByLabel("Amount").fill("58");
-    await page.getByRole("button", { name: "More" }).click();
+    await page.getByRole("button", { name: "More", exact: true }).click();
     await page.getByLabel("Recipient / Phone / PromptPay").fill("0812345678");
     await page.getByLabel("Category").selectOption({ label: "Food" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("ก๋วยเตี๋ยว")).toBeVisible();
 
@@ -19,13 +19,13 @@ test.describe("Rule Engine / Learning Engine", () => {
     await page.getByRole("button", { name: "Add Transaction" }).click();
     await page.getByLabel("Item name").fill("มื้อเที่ยง");
     await page.getByLabel("Amount").fill("65");
-    await page.getByRole("button", { name: "More" }).click();
+    await page.getByRole("button", { name: "More", exact: true }).click();
     await page.getByLabel("Recipient / Phone / PromptPay").fill("0812345678");
 
     await expect(page.getByLabel("Category")).toHaveValue("Food");
     await expect(page.getByText(/Suggested category/)).toBeVisible();
 
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("มื้อเที่ยง")).toBeVisible();
 

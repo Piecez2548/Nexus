@@ -52,6 +52,8 @@ async function clearBackfillFlags(): Promise<void> {
 }
 
 const BACKUP_VERSION = 1;
+export const MAX_BACKUP_BYTES = 25 * 1024 * 1024;
+export const MAX_BACKUP_ROWS = 250_000;
 
 interface NexusBackup {
   version: number;
@@ -222,7 +224,8 @@ function isNexusBackup(value: unknown): value is NexusBackup {
 
   const candidate = value as Record<string, unknown>;
 
-  if (typeof candidate.version !== "number") return false;
+  if (candidate.version !== BACKUP_VERSION) return false;
+  if (typeof candidate.exportedAt !== "string" || !Number.isFinite(Date.parse(candidate.exportedAt))) return false;
   if (typeof candidate.data !== "object" || candidate.data === null) return false;
 
   const data = candidate.data as Record<string, unknown>;
@@ -258,10 +261,21 @@ function isNexusBackup(value: unknown): value is NexusBackup {
     "watchlistItems",
     "economicEvents",
   ];
-  return optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]));
+  if (!optionalKeys.every((key) => data[key] === undefined || Array.isArray(data[key]))) return false;
+
+  const arrays = [...requiredKeys, ...optionalKeys]
+    .map((key) => data[key])
+    .filter((rows): rows is unknown[] => Array.isArray(rows));
+  if (arrays.reduce((total, rows) => total + rows.length, 0) > MAX_BACKUP_ROWS) return false;
+  return arrays.every((rows) =>
+    rows.every((row) => typeof row === "object" && row !== null && !Array.isArray(row))
+  );
 }
 
 export async function importBackup(jsonText: string, translate: TranslateFn): Promise<void> {
+  if (new TextEncoder().encode(jsonText).length > MAX_BACKUP_BYTES) {
+    throw new Error(translate("settings.backupTooLarge"));
+  }
   let parsed: unknown;
 
   try {

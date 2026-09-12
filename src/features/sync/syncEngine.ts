@@ -1,6 +1,7 @@
 import { db } from "@/database/db";
 import { supabase, isSyncConfigured } from "@/lib/supabaseClient";
 import { withSyncMeta } from "@/utils/syncMeta";
+import { writeLocalSyncRows } from "@/database/localSyncWrite";
 import { dedupeAccountsAndCategories } from "@/features/finance/utils/dedupeAccountsAndCategories";
 import type { SyncTableName } from "@/features/sync/types";
 
@@ -85,7 +86,7 @@ async function backfillSyncMeta(table: SyncTableName) {
   const unstamped = await dexieTable.filter((row: { syncId?: string }) => !row.syncId).toArray();
 
   for (const row of unstamped) {
-    await dexieTable.put(withSyncMeta(row));
+    await writeLocalSyncRows(dexieTable, [withSyncMeta(row)]);
   }
 
   await setSyncState(flagKey, "true");
@@ -125,13 +126,13 @@ async function pushTable(userId: string, table: SyncTableName) {
       (existingRemote ?? []).map((r: { id: string; deleted_at: string }) => [r.id, r.deleted_at])
     );
 
-    // Genuinely stale relative to a newer server-side deletion: don't
-    // resurrect it. Equal timestamps keep the deletion — the safer side to
-    // err on for a delete/edit collision at the same instant.
-    const isStale = (row: { syncId?: string; updatedAt?: string }) => {
-      const tombstoneAt = serverTombstoneAt.get(row.syncId!);
-      return tombstoneAt !== undefined && !(row.updatedAt && row.updatedAt > tombstoneAt);
-    };
+    // A server tombstone is terminal for this syncId. Device clocks are not
+    // a safe conflict-resolution source: a stale desktop clock can be ahead
+    // of the phone that deleted the row and previously made that stale copy
+    // look like an intentional undelete. A genuinely re-created record gets
+    // a fresh syncId through withSyncMeta(), so preserving the tombstone here
+    // loses no supported user action and makes cross-device deletion stable.
+    const isStale = (row: { syncId?: string }) => serverTombstoneAt.has(row.syncId!);
 
     const payload = toSync
       .filter((row: { syncId?: string; updatedAt?: string }) => !isStale(row))
@@ -240,13 +241,11 @@ async function pullTable(userId: string, table: SyncTableName): Promise<boolean>
   // sends anything with updatedAt >= this device's own push cursor, and a
   // pulled row's updatedAt (the editing device's timestamp) can easily be
   // newer than that cursor if this device hasn't pushed anything since.
-  // Without this, this device would redundantly re-push its now-identical
-  // copy of a row it never touched — and if another device edits (or
-  // deletes) that same row in the gap before this device's next push, the
-  // redundant push silently overwrites the newer edit/deletion, since the
-  // upsert replaces the whole row unconditionally. Far more likely to
-  // actually collide at a fast sync interval than the original 30s one.
+  // Avoid redundant uploads of those unchanged copies. The server's atomic
+  // version/tombstone guards protect against stale replays, but advancing
+  // this cursor must never skip a version that still needs uploading.
   let maxAppliedUpdatedAt: string | undefined;
+  const appliedVersions = new Map<string, string>();
 
   for (const remoteRow of data) {
     const existing = await dexieTable.where("syncId").equals(remoteRow.id).first();
@@ -294,8 +293,11 @@ async function pullTable(userId: string, table: SyncTableName): Promise<boolean>
     }
 
     const rowUpdatedAt = remoteRow.data?.updatedAt;
-    if (typeof rowUpdatedAt === "string" && (!maxAppliedUpdatedAt || rowUpdatedAt > maxAppliedUpdatedAt)) {
-      maxAppliedUpdatedAt = rowUpdatedAt;
+    if (typeof rowUpdatedAt === "string") {
+      appliedVersions.set(remoteRow.id, rowUpdatedAt);
+      if (!maxAppliedUpdatedAt || rowUpdatedAt > maxAppliedUpdatedAt) {
+        maxAppliedUpdatedAt = rowUpdatedAt;
+      }
     }
   }
 
@@ -303,41 +305,32 @@ async function pullTable(userId: string, table: SyncTableName): Promise<boolean>
   await setSyncState(lastPulledKey, newest);
 
   if (maxAppliedUpdatedAt) {
-    const lastPushedKey = `push:${table}`;
-    const lastPushed = await getSyncState(lastPushedKey);
-    // Nudged 1ms past the pulled row's own updatedAt, not set to the exact
-    // same value — pushTable's cursor comparison is deliberately inclusive
-    // (>=), so a row sharing the watermark exactly would still match it and
-    // get re-pushed on the very next pass, and again every pass after that
-    // (since re-pushing an unchanged row just re-sets the watermark to the
-    // same value again).
-    let nudged = new Date(new Date(maxAppliedUpdatedAt).getTime() + 1).toISOString();
+    const appliedWatermark = maxAppliedUpdatedAt;
+    // Serialize the pending-version check and cursor update with local
+    // writers, which allocate their versions in these same two tables.
+    await db.transaction("rw", dexieTable, db.syncState, async () => {
+      const lastPushedKey = `push:${table}`;
+      const lastPushed = await getSyncState(lastPushedKey);
+      // Push uses >=, so move 1ms beyond applied versions to avoid replaying
+      // unchanged rows indefinitely. Cap at any still-pending version below.
+      let nudged = new Date(new Date(appliedWatermark).getTime() + 1).toISOString();
 
-    // This nudge is a single per-table watermark, not a per-row marker — it
-    // can't tell "this specific row is now in sync" apart from "everything
-    // with an earlier updatedAt is already pushed". If this device also has
-    // its own local, never-yet-pushed row whose updatedAt happens to be
-    // *earlier* than the row(s) just pulled above (e.g. it was written
-    // moments before the other device's write reached this device mid-pass),
-    // nudging past it would silently exclude it from every future push,
-    // since the cursor only ever advances. Cap the nudge at the oldest such
-    // still-pending row instead — a redundant re-push of an unmodified
-    // pulled row next pass is harmless (see above); silently losing a real
-    // pending push forever is not. Mirrors pushTable's own "no cursor yet"
-    // branch: with no lastPushed at all (this device's very first sync),
-    // every local row is potentially pending, not just ones above a cursor.
-    const pending = lastPushed
-      ? await localTable(table).where("updatedAt").aboveOrEqual(lastPushed).toArray()
-      : await localTable(table).toArray();
-    const pulledSyncIds = new Set(data.map((r) => r.id));
-    for (const row of pending as { syncId?: string; updatedAt?: string }[]) {
-      if (!row.syncId || !row.updatedAt || pulledSyncIds.has(row.syncId)) continue;
-      if (row.updatedAt < nudged) nudged = row.updatedAt;
-    }
+      // With no push cursor, every local row is potentially pending. Only
+      // the exact version successfully applied by this pull can be excluded.
+      const pending = lastPushed
+        ? await dexieTable.where("updatedAt").aboveOrEqual(lastPushed).toArray()
+        : await dexieTable.toArray();
+      for (const row of pending as { syncId?: string; updatedAt?: string }[]) {
+        // A fetched ID is not an acknowledgement: its payload may have been
+        // rejected, or edited locally again after this pull applied it.
+        if (!row.syncId || !row.updatedAt || appliedVersions.get(row.syncId) === row.updatedAt) continue;
+        if (row.updatedAt < nudged) nudged = row.updatedAt;
+      }
 
-    if (!lastPushed || nudged > lastPushed) {
-      await setSyncState(lastPushedKey, nudged);
-    }
+      if (!lastPushed || nudged > lastPushed) {
+        await setSyncState(lastPushedKey, nudged);
+      }
+    });
   }
 
   return true;
@@ -388,21 +381,20 @@ async function dedupeSyncedTables(): Promise<Set<SyncTableName>> {
 // fixed pullTable() nudge bug: older builds could nudge a device's own
 // push:<table> cursor past a local row that was never actually pushed,
 // silently excluding it from every sync pass thereafter with no error ever
-// surfaced (see the "still pushes an unrelated not-yet-pushed local row..."
-// test below, which proves the nudge itself no longer does this). This just
-// repairs cursors that were already corrupted by it before that fix shipped.
+// surfaced. Version 2 also repairs SC-003 on devices that already ran v1:
+// merely fetching a stale version used to exclude its unsent local edit
+// from the pending-row cap. Replaying still-present rows repairs that gap.
 // Clearing a push cursor only makes the next pass re-consider every local
-// row for push — re-upserting an already-synced row is a harmless no-op
-// (same data, same updated_at), so this is safe to run unconditionally.
+// row for push. The database trigger rejects an older live payload atomically
+// and retains terminal tombstones, so this is safe to run unconditionally.
 // Gated by a flag so it only ever runs once per device, not on every pass.
 async function repairStuckPushCursorsOnce() {
-  const flagKey = "migration:clearedPushCursors:v1";
-  if (await getSyncState(flagKey)) return;
-
-  for (const table of SYNCED_TABLES) {
-    await db.syncState.delete(`push:${table}`);
-  }
-  await setSyncState(flagKey, "true");
+  const flagKey = "migration:clearedPushCursors:v2";
+  await db.transaction("rw", db.syncState, async () => {
+    if (await getSyncState(flagKey)) return;
+    await db.syncState.bulkDelete(SYNCED_TABLES.map(table => `push:${table}`));
+    await setSyncState(flagKey, "true");
+  });
 }
 
 const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
@@ -497,7 +489,17 @@ export async function runFullSync(userId: string): Promise<void> {
 
   for (const table of SYNCED_TABLES) {
     const hadChanges = await attemptReturning(() => pullTable(userId, table), false);
-    if (hadChanges) changedTables.add(table);
+    if (hadChanges) {
+      changedTables.add(table);
+
+      // Make a successfully applied remote change visible as soon as its
+      // own table finishes. Waiting until every later table has completed
+      // made an early transaction pull sit unseen for several more seconds
+      // on a real Android device. The final refresh below still runs after
+      // cross-table account/category dedupe, so dependent finance views are
+      // reconciled once the complete sync pass is consistent.
+      await attempt(() => STORE_REFRESHERS[table]());
+    }
   }
 
   (await attemptReturning(() => dedupeSyncedTables(), new Set<SyncTableName>())).forEach((t) =>

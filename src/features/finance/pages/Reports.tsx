@@ -90,7 +90,7 @@ export default function Reports() {
               onClick={() => setReportType("financialSummary")}
               className={`rounded-xl px-4 py-2 font-medium transition ${
                 reportType === "financialSummary"
-                  ? "bg-brand-600 text-zinc-900 dark:text-white"
+                  ? "nexus-primary-action"
                   : "border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               }`}
             >
@@ -102,7 +102,7 @@ export default function Reports() {
               onClick={() => setReportType("aiAnalytics")}
               className={`rounded-xl px-4 py-2 font-medium transition ${
                 reportType === "aiAnalytics"
-                  ? "bg-brand-600 text-zinc-900 dark:text-white"
+                  ? "nexus-primary-action"
                   : "border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               }`}
             >

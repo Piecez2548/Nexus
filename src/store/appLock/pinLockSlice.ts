@@ -6,13 +6,15 @@ import { recordAudit } from "@/features/security/auditLog";
 import { resyncBiometricCredential } from "./biometricSlice";
 import { unwrapDekForUnlock, wrapDekForPin } from "./encryptionKeySlice";
 import type { AppLockState, PinLockSlice } from "./types";
+import { acknowledgeLock, publishLock, readLockSignal, sessionIsCurrent } from "./lockSignal";
+import { validateRecoveryKey } from "@/features/encryption/recovery/validateRecoveryKey";
 
 const SESSION_KEY = "nexus-session-unlocked";
 const REMEMBER_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 function readSessionUnlocked(): boolean {
   try {
-    return sessionStorage.getItem(SESSION_KEY) === "true";
+    return sessionStorage.getItem(SESSION_KEY) === "true" && sessionIsCurrent();
   } catch {
     return false;
   }
@@ -20,7 +22,7 @@ function readSessionUnlocked(): boolean {
 
 function writeSessionUnlocked(value: boolean): void {
   try {
-    if (value) sessionStorage.setItem(SESSION_KEY, "true");
+    if (value) { acknowledgeLock(); sessionStorage.setItem(SESSION_KEY, "true"); }
     else sessionStorage.removeItem(SESSION_KEY);
   } catch {
     // sessionStorage unavailable (e.g. privacy mode) — the app simply
@@ -34,6 +36,8 @@ export const createPinLockSlice: StateCreator<AppLockState, [], [], PinLockSlice
   autoLockMinutes: 0,
   rememberUntil: null,
   sessionUnlocked: readSessionUnlocked(),
+  hubLockRequired: false,
+  unlockGeneration: null,
   lastActivityAt: Date.now(),
 
   isEnabled: () => get().pinHash !== null,
@@ -41,8 +45,9 @@ export const createPinLockSlice: StateCreator<AppLockState, [], [], PinLockSlice
   isLocked: () => {
     const { pinHash, rememberUntil, sessionUnlocked } = get();
     if (pinHash === null) return false;
-    if (sessionUnlocked) return false;
-    if (rememberUntil !== null && Date.now() < rememberUntil) return false;
+    const generation = readLockSignal()?.id ?? null;
+    if (sessionUnlocked && sessionIsCurrent()) return false;
+    if (get().unlockGeneration === generation && rememberUntil !== null && Date.now() < rememberUntil) return false;
     return true;
   },
 
@@ -55,6 +60,8 @@ export const createPinLockSlice: StateCreator<AppLockState, [], [], PinLockSlice
       pinHash,
       salt,
       sessionUnlocked: true,
+      hubLockRequired: false,
+      unlockGeneration: readLockSignal()?.id ?? null,
       rememberUntil: remember ? Date.now() + REMEMBER_DURATION_MS : null,
     });
     recordAudit("lock", "pin-setup");
@@ -75,18 +82,45 @@ export const createPinLockSlice: StateCreator<AppLockState, [], [], PinLockSlice
 
     await unwrapDekForUnlock(get, pin);
 
+    // Hashing and PBKDF2 unwrapping are intentionally expensive. A sibling
+    // tab can publish a newer lock generation while that work is in flight
+    // (commonly when tabs reload around a deployment). The PIN has already
+    // been verified at this point, so acknowledge the latest generation as
+    // the user's explicit unlock instead of misreporting a correct PIN as
+    // incorrect. A lock published after this commit is still observed by
+    // installLockSync and immediately locks this tab again.
+    const generation = readLockSignal()?.id ?? null;
+
     writeSessionUnlocked(true);
     set({
       sessionUnlocked: true,
+      hubLockRequired: false,
+      unlockGeneration: generation,
       rememberUntil: remember ? Date.now() + REMEMBER_DURATION_MS : null,
     });
     return true;
   },
 
+  unlockWithPairedDevice(dek) {
+    const generation = readLockSignal()?.id ?? null;
+    useEncryptionSessionStore.getState().setDek(dek);
+    writeSessionUnlocked(true);
+    set({ sessionUnlocked: true, hubLockRequired: false, unlockGeneration: generation, rememberUntil: null });
+    recordAudit("lock", "unlocked-by-paired-device");
+  },
+
   lock() {
+    publishLock(false);
     writeSessionUnlocked(false);
     useEncryptionSessionStore.getState().clearDek();
     set({ sessionUnlocked: false, rememberUntil: null });
+  },
+
+  lockHub() {
+    if (!get().isEnabled()) return;
+    get().lock();
+    publishLock(true);
+    set({ hubLockRequired: true });
   },
 
   async changePin(currentPin, newPin) {
@@ -144,7 +178,7 @@ export const createPinLockSlice: StateCreator<AppLockState, [], [], PinLockSlice
     await deleteBiometricCredential();
     writeSessionUnlocked(false);
     useEncryptionSessionStore.getState().clearDek();
-    set({ pinHash: null, salt: null, rememberUntil: null, sessionUnlocked: false, biometricEnabled: false });
+    set({ pinHash: null, salt: null, rememberUntil: null, sessionUnlocked: false, biometricEnabled: false, hubLockRequired: false });
     recordAudit("lock", "disabled");
     return true;
   },
@@ -158,8 +192,11 @@ export const createPinLockSlice: StateCreator<AppLockState, [], [], PinLockSlice
   },
 
   checkAutoLock() {
-    const { autoLockMinutes, sessionUnlocked, lastActivityAt } = get();
-    if (autoLockMinutes <= 0 || !sessionUnlocked) return;
+    const { autoLockMinutes, lastActivityAt } = get();
+    // A remembered unlock is effective access even in a fresh tab where the
+    // tab-scoped session flag is deliberately absent. Apply the same idle
+    // deadline to both forms of access so Remember cannot bypass auto-lock.
+    if (autoLockMinutes <= 0 || get().isLocked()) return;
 
     const elapsedMs = Date.now() - lastActivityAt;
     if (elapsedMs >= autoLockMinutes * 60 * 1000) {
@@ -168,6 +205,7 @@ export const createPinLockSlice: StateCreator<AppLockState, [], [], PinLockSlice
   },
 
   async completeRecovery(newPin, dek) {
+    await validateRecoveryKey(dek);
     const salt = generateSalt();
     const pinHash = await hashPin(newPin, salt);
 
@@ -185,6 +223,8 @@ export const createPinLockSlice: StateCreator<AppLockState, [], [], PinLockSlice
       pinHash,
       salt,
       encryptionEnabled: true,
+      hubLockRequired: false,
+      unlockGeneration: readLockSignal()?.id ?? null,
       wrappedDek,
       kekSalt,
       kekIterations,

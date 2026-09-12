@@ -90,7 +90,7 @@ export default function WorkoutGpsTrackerDrawer({ onFinish, onCancel }: Props) {
             type="button"
             onClick={() => void handleStart()}
             disabled={starting}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 nexus-primary-action"
           >
             <Play size={16} />
             {starting ? t("workouts.gpsRequestingPermission") : t("workouts.startGpsTracking")}
@@ -145,7 +145,7 @@ export default function WorkoutGpsTrackerDrawer({ onFinish, onCancel }: Props) {
         <button
           type="button"
           onClick={() => void handleStop()}
-          className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition nexus-primary-action"
         >
           <Square size={16} />
           {t("workouts.stopAndLog")}

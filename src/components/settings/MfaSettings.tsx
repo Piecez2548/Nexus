@@ -50,7 +50,7 @@ export default function MfaSettings() {
         <button
           type="button"
           onClick={() => setDrawerContent("enroll")}
-          className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700"
+          className="flex items-center gap-2 rounded-xl px-4 py-2 transition nexus-primary-action"
         >
           <ShieldCheck size={16} />
           {t("mfa.enableButton")}

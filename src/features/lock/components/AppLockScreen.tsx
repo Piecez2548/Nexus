@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Lock, Zap, FingerprintPattern } from "lucide-react";
+import { Lock, FingerprintPattern } from "lucide-react";
 
 import { useAppLockStore, EncryptionStateCorruptedError } from "@/store/appLockStore";
 import { isSyncConfigured } from "@/lib/supabaseClient";
 import { retrieveBiometricPin } from "@/features/lock/services/biometricService";
 import { useTranslation } from "@/i18n/useTranslation";
 import EncryptionRecoveryFlow from "@/features/encryption/components/EncryptionRecoveryFlow";
+import DesktopPairUnlock from "@/features/pairing/DesktopPairUnlock";
+import { Capacitor } from "@capacitor/core";
+import { useAuthStore } from "@/features/sync/store/authStore";
 
 const inputClassName =
   "w-full rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100/80 dark:bg-zinc-800/80 p-3.5 text-center text-2xl tracking-[0.6em] outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15";
@@ -16,8 +19,9 @@ interface Props {
 }
 
 export default function AppLockScreen({ mode, onDone }: Props) {
-  const { setupPin, unlock, encryptionEnabled, biometricEnabled } = useAppLockStore();
+  const { setupPin, unlock, encryptionEnabled, biometricEnabled, restoreBiometricState, disableBiometric } = useAppLockStore();
   const { t } = useTranslation();
+  const signedIn = useAuthStore((state) => state.user !== null);
 
   const [showRecovery, setShowRecovery] = useState(false);
   const [pin, setPin] = useState("");
@@ -44,6 +48,7 @@ export default function AppLockScreen({ mode, onDone }: Props) {
       const success = await unlock(recoveredPin, remember);
       setSubmitting(false);
       if (success) onDone?.();
+      else await disableBiometric();
     } catch (err) {
       setSubmitting(false);
 
@@ -57,6 +62,11 @@ export default function AppLockScreen({ mode, onDone }: Props) {
   }
 
   const hasAutoTriggered = useRef(false);
+
+  useEffect(() => {
+    if (mode !== "unlock" || biometricEnabled || !Capacitor.isNativePlatform()) return;
+    void restoreBiometricState();
+  }, [mode, biometricEnabled, restoreBiometricState]);
 
   useEffect(() => {
     if (mode !== "unlock" || !biometricEnabled || hasAutoTriggered.current) return;
@@ -123,18 +133,10 @@ export default function AppLockScreen({ mode, onDone }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-sm space-y-5 rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-9 shadow-2xl shadow-zinc-900/10 ring-1 ring-zinc-900/5 dark:shadow-black/50 dark:ring-white/5"
+      className="nexus-auth-panel w-full max-w-sm space-y-5"
     >
       <div className="flex flex-col items-center gap-3 text-center">
-        <div className="relative flex h-12 w-12 items-center justify-center">
-          <div className="absolute inset-0 scale-150 rounded-full bg-brand-500/25 blur-xl" />
-          <div
-            className="relative flex h-12 w-12 items-center justify-center bg-gradient-to-br from-brand-500 to-brand-glow shadow-lg shadow-brand-600/30"
-            style={{ clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)" }}
-          >
-            <Zap size={22} className="text-white" fill="currentColor" />
-          </div>
-        </div>
+        <div className="nexus-auth-wordmark" aria-hidden="true">nexus<span>.</span></div>
 
         <div>
           <h1 className="text-balance text-2xl font-bold">
@@ -195,10 +197,14 @@ export default function AppLockScreen({ mode, onDone }: Props) {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-2xl bg-brand-600 py-3 font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-600/30 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
+        className="nexus-primary-action w-full rounded-xl py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? t("lock.processing") : mode === "setup" ? t("lock.setupPinButton") : t("lock.unlockButton")}
       </button>
+
+      {mode === "unlock" && signedIn && isSyncConfigured && !Capacitor.isNativePlatform() && (
+        <DesktopPairUnlock />
+      )}
 
       {mode === "unlock" && biometricEnabled && (
         <button

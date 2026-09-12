@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { ShieldCheck } from "lucide-react";
 
 import { useAuthStore } from "@/features/sync/store/authStore";
-import { useTranslation } from "@/i18n/useTranslation";
+import { useEntryTranslation } from "@/i18n/useEntryTranslation";
 import FormField from "@/components/ui/FormField";
 
 const inputClassName =
@@ -14,7 +14,7 @@ const inputClassName =
 // changes for any of this -- AuthGate is what branches.
 export default function MfaChallengeScreen() {
   const { mfaError, loading, verifyMfaCode, verifyBackupCode, cancelMfaChallenge } = useAuthStore();
-  const { t } = useTranslation();
+  const { t } = useEntryTranslation();
 
   const [useBackupCode, setUseBackupCode] = useState(false);
   const [code, setCode] = useState("");
@@ -76,7 +76,7 @@ export default function MfaChallengeScreen() {
       <button
         type="submit"
         disabled={submitting || loading}
-        className="w-full rounded-2xl bg-brand-600 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-600/30 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
+        className="w-full rounded-2xl py-3.5 text-base font-semibold shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-600/30 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none nexus-primary-action"
       >
         {submitting ? t("settings.processing") : t("mfa.verifyButton")}
       </button>

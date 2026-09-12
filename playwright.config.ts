@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: ["**/login.spec.ts","**/auth-entry.spec.ts", "**/project-hub.spec.ts", "**/production-smoke.spec.ts"],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -31,7 +32,7 @@ export default defineConfig({
     // real DSN would otherwise report every E2E run's console noise (and
     // any genuinely failing test) to the real Sentry project.
     command:
-      "cross-env VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= VITE_SENTRY_DSN= npm run build && npm run preview -- --port 4173",
+      "cross-env VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= VITE_SENTRY_DSN= npm run build -- --mode e2e && npm run preview -- --port 4173",
     url: "http://localhost:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

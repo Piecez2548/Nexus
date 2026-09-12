@@ -472,6 +472,7 @@ export const financeTranslations = {
         editCategoryAuto: "Auto-detect",
       },
       galleryScan: {
+        scanningNew: "Checking new slips…",
         scanning: "Scanning slip {{done}}/{{total}}…",
         noneFound: "No slips found in the selected images",
         imported: "Imported {{count}} transaction(s)",
@@ -1003,6 +1004,7 @@ export const financeTranslations = {
         editCategoryAuto: "ตรวจจับอัตโนมัติ",
       },
       galleryScan: {
+        scanningNew: "กำลังตรวจสลิปใหม่…",
         scanning: "กำลังสแกนสลิป {{done}}/{{total}}…",
         noneFound: "ไม่พบสลิปในรูปที่เลือก",
         imported: "นำเข้า {{count}} รายการแล้ว",

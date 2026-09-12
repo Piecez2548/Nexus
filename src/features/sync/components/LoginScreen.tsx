@@ -1,29 +1,24 @@
 import { useState, type FormEvent } from "react";
-import { Zap, Check, X, Wallet, Target } from "lucide-react";
+import { ArrowUpRight, Check, X, Wallet, Target } from "lucide-react";
 
 import { useAuthStore } from "@/features/sync/store/authStore";
-import { useTranslation } from "@/i18n/useTranslation";
+import { useEntryTranslation } from "@/i18n/useEntryTranslation";
 import FormField from "@/components/ui/FormField";
+import "./loginScreen.css";
 
 // Not exhaustive -- a small, hand-picked list rather than a full phone-number
 // library (none is installed anywhere in this codebase). +66 first since
 // Thai is this app's primary audience.
 const COUNTRY_CODES = ["+66", "+1", "+44", "+65", "+81", "+82", "+86"];
 
-// Deliberately forced dark regardless of the app's own light/dark/system
-// theme setting -- a distinct "arrival" identity for the auth screen, same
-// pattern many apps use for onboarding/auth. `.dark` on this wrapper makes
-// every dark: utility below (including FormField's own, a shared component
-// used elsewhere in light mode) resolve to its dark styling via this app's
-// `@custom-variant dark (&:where(.dark, .dark *))` (src/styles/index.css) --
-// no changes needed to FormField or any other shared component.
+// Arrival fields inherit the shared theme; validation only changes their state.
 function fieldClassName(touched: boolean, valid: boolean): string {
   const state = !touched
     ? "border-white/10 focus:border-brand-400"
     : valid
       ? "border-emerald-500/70 focus:border-emerald-500"
       : "border-red-500/70 focus:border-red-500";
-  return `w-full rounded-2xl border ${state} bg-white/5 p-3 pr-11 text-white outline-none transition placeholder:text-zinc-600 focus:ring-4 focus:ring-brand-500/15`;
+  return `login-input ${touched ? valid ? "is-valid" : "is-invalid" : ""} w-full rounded-2xl border ${state} bg-white/5 p-3 pr-11 text-white outline-none transition placeholder:text-zinc-600 focus:ring-4 focus:ring-brand-500/15`;
 }
 
 function ValidationBadge({ touched, valid }: { touched: boolean; valid: boolean }) {
@@ -41,7 +36,7 @@ function ValidationBadge({ touched, valid }: { touched: boolean; valid: boolean 
 
 export default function LoginScreen() {
   const { loading, error, needsEmailConfirmation, signUp, signIn } = useAuthStore();
-  const { t } = useTranslation();
+  const { t } = useEntryTranslation();
 
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [email, setEmail] = useState("");
@@ -71,93 +66,53 @@ export default function LoginScreen() {
   }
 
   return (
-    <div className="dark w-full max-w-5xl overflow-hidden rounded-3xl bg-zinc-950 shadow-2xl shadow-black/40 ring-1 ring-white/10 md:grid md:grid-cols-2">
-      <div className="relative hidden flex-col justify-between overflow-hidden p-10 text-white md:flex">
-        <div className="absolute inset-0 bg-zinc-950" />
-        <div className="pointer-events-none absolute -left-16 -top-16 h-80 w-80 rounded-full bg-brand-500/40 blur-3xl" />
-        <div className="pointer-events-none absolute -right-20 top-1/3 h-96 w-96 rounded-full bg-brand-glow/30 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 left-8 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "22px 22px" }}
-        />
-
-        <div
-          className="relative z-10 flex h-14 w-14 items-center justify-center bg-white/10 ring-1 ring-white/20 backdrop-blur-md"
-          style={{ clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)" }}
-        >
-          <Zap size={24} className="text-white" fill="currentColor" />
-        </div>
-
-        <div className="relative z-10">
-          <h2 className="text-balance text-4xl font-extrabold tracking-tight">Nexus</h2>
-          <p className="mt-3 max-w-xs text-sm text-white/70">{t("login.tagline")}</p>
-        </div>
-
-        <div className="relative z-10 space-y-3">
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 p-4 shadow-xl backdrop-blur-xl">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/30">
-              <Wallet size={18} />
-            </span>
-            <div>
-              <p className="text-sm font-semibold">{t("login.featureFinanceTitle")}</p>
-              <p className="text-xs text-white/60">{t("login.featureFinanceSubtitle")}</p>
-            </div>
+    <main className="login-page dark">
+      <header className="login-header">
+        <div className="login-brand" aria-label="Nexus">nexus<span>.</span></div>
+        <span className="login-back" lang="en">Nexus All</span>
+      </header>
+      <div className="login-layout">
+        <section className="login-story" aria-label="Nexus All">
+          <div className="login-story-copy">
+            <h2 lang="en">Your Nexus<br /><span>workspace.</span></h2>
+            <p>{t("login.tagline")}</p>
           </div>
-
-          <div className="ml-6 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/10 p-4 shadow-xl backdrop-blur-xl">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/30">
-              <Target size={18} />
-            </span>
-            <div>
-              <p className="text-sm font-semibold">{t("login.featureHabitsTitle")}</p>
-              <p className="text-xs text-white/60">{t("login.featureHabitsSubtitle")}</p>
-            </div>
+          <div className="login-scene" aria-hidden="true" />
+          <div className="login-features">
+            <div><Wallet size={20} aria-hidden="true" /><p><strong>{t("login.featureFinanceTitle")}</strong><span>{t("login.featureFinanceSubtitle")}</span></p></div>
+            <div><Target size={20} aria-hidden="true" /><p><strong>{t("login.featureHabitsTitle")}</strong><span>{t("login.featureHabitsSubtitle")}</span></p></div>
           </div>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-5 bg-zinc-950 p-8 sm:p-10">
-        <div>
-          <h1 className="text-balance text-2xl font-extrabold tracking-tight text-white">
-            {mode === "signUp" ? t("login.createAccount") : t("login.welcomeBack")}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-400">
-            {mode === "signUp" ? t("login.createAccountSubtitle") : t("login.welcomeBackSubtitle")}
-          </p>
-        </div>
-
-        <div role="tablist" className="flex rounded-2xl bg-white/5 p-1">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "signUp"}
-            onClick={() => setMode("signUp")}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition ${
-              mode === "signUp" ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            {t("settings.signUp")}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mode === "signIn"}
-            onClick={() => setMode("signIn")}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition ${
-              mode === "signIn" ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            {t("settings.signIn")}
-          </button>
-        </div>
-
+        </section>
+        <form onSubmit={handleSubmit} className="login-form" aria-labelledby="login-heading" aria-busy={loading}>
+          <div className="login-intro">
+            <h1 id="login-heading">{mode === "signUp" ? t("login.createAccount") : t("login.welcomeBack")}</h1>
+            <p>{mode === "signUp" ? t("login.createAccountSubtitle") : t("login.welcomeBackSubtitle")}</p>
+          </div>
+          <div role="tablist" aria-label="Account" className="login-tabs">
+            {(["signIn", "signUp"] as const).map((item) => (
+              <button key={item} id={`login-tab-${item}`} type="button" role="tab"
+                aria-selected={mode === item} aria-controls="login-fields" tabIndex={mode === item ? 0 : -1}
+                onClick={() => setMode(item)}
+                onKeyDown={(event) => {
+                  if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+                    event.preventDefault();
+                    const next = event.key === "Home" ? "signIn" : event.key === "End" ? "signUp" : mode === "signIn" ? "signUp" : "signIn";
+                    setMode(next);
+                    document.getElementById(`login-tab-${next}`)?.focus();
+                  }
+                }}>
+                {item === "signIn" ? t("settings.signIn") : t("settings.signUp")}
+              </button>
+            ))}
+          </div>
+          <div id="login-fields" role="tabpanel" aria-labelledby={`login-tab-${mode}`} className="login-fields">
         {mode === "signUp" && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="login-name-fields">
             <FormField label={t("login.firstNameLabel")} htmlFor="login-first-name">
               <div className="relative">
                 <input
                   id="login-first-name"
+                  autoComplete="given-name"
                   type="text"
                   required
                   value={firstName}
@@ -173,6 +128,7 @@ export default function LoginScreen() {
               <div className="relative">
                 <input
                   id="login-last-name"
+                  autoComplete="family-name"
                   type="text"
                   required
                   value={lastName}
@@ -190,6 +146,7 @@ export default function LoginScreen() {
           <FormField label={t("login.phoneLabel")} htmlFor="login-phone">
             <div className="flex gap-2">
               <select
+                aria-label="Country calling code"
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
                 className="rounded-2xl border border-white/10 bg-white/5 px-2 text-sm text-white outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-500/15"
@@ -200,9 +157,10 @@ export default function LoginScreen() {
                   </option>
                 ))}
               </select>
-              <div className="relative flex-1">
+              <div className="relative min-w-0 flex-1">
                 <input
                   id="login-phone"
+                  autoComplete="tel-national"
                   type="tel"
                   required
                   value={phone}
@@ -220,6 +178,7 @@ export default function LoginScreen() {
           <div className="relative">
             <input
               id="login-email"
+              autoComplete="email"
               type="email"
               required
               value={email}
@@ -235,6 +194,7 @@ export default function LoginScreen() {
           <div className="relative">
             <input
               id="login-password"
+              autoComplete={mode === "signIn" ? "current-password" : "new-password"}
               type="password"
               required
               minLength={6}
@@ -247,18 +207,24 @@ export default function LoginScreen() {
           </div>
         </FormField>
 
-        {needsEmailConfirmation && <p className="text-sm text-amber-400">{t("settings.confirmEmailSpamNote")}</p>}
+        {mode === "signIn" && <a href="/forgot-password" style={{ alignSelf: "flex-end", minHeight: 44, display: "inline-flex", alignItems: "center", color: "var(--login-accent)" }}>ลืมรหัสผ่าน?</a>}
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        {needsEmailConfirmation && <p role="status" className="text-sm text-amber-400">{t("settings.confirmEmailSpamNote")}</p>}
+
+        {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-2xl bg-brand-600 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-600/40 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
+          className="login-submit"
         >
           {loading ? t("settings.processing") : mode === "signUp" ? t("settings.signUp") : t("settings.signIn")}
+          <ArrowUpRight size={18} aria-hidden="true" />
         </button>
-      </form>
-    </div>
+          </div>
+        </form>
+      </div>
+      <footer className="login-footer" lang="en">Nexus All <span>One account. Your workspace.</span></footer>
+    </main>
   );
 }

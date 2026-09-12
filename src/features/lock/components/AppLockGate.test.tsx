@@ -20,7 +20,7 @@ import AppLockGate from "./AppLockGate";
 import { useAppLockStore } from "@/store/appLockStore";
 import { useAuthStore } from "@/features/sync/store/authStore";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
-import { generateDek } from "@/features/encryption/crypto/encryption";
+import { generateDek, encryptField } from "@/features/encryption/crypto/encryption";
 import { db } from "@/database/db";
 
 const SYNCED_TABLES = [
@@ -279,9 +279,10 @@ describe("AppLockGate", () => {
     });
 
     it("reveals children after completing the recovery flow from the catch-up screen", async () => {
-      await seedEncryptedTransaction();
+      const dek = await generateDek();
+      await db.table("transactions").put({ id: 1, encryptedContent: await encryptField(dek, { amount: 120, note: "Catch-up fixture" }) });
       useAuthStore.setState({ user: { id: "u1", email: "me@nexus.app" } as never });
-      mockRecoverDekFromEscrow.mockResolvedValue(await generateDek());
+      mockRecoverDekFromEscrow.mockResolvedValue(dek);
 
       const user = userEvent.setup();
       render(

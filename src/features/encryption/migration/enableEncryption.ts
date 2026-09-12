@@ -1,4 +1,5 @@
 import { db } from "@/database/db";
+import { writeLocalSyncRows } from "@/database/localSyncWrite";
 import { downloadFile } from "@/utils/download";
 import { exportBackup } from "@/database/backupService";
 import { supabase, isSyncConfigured } from "@/lib/supabaseClient";
@@ -104,7 +105,7 @@ export async function migrateTable(
   dek: CryptoKey,
   onChunk?: (rowsDone: number, rowsTotal: number) => void
 ): Promise<void> {
-  const dexieTable = db.table(table);
+  const dexieTable = db.table<EncryptedRow, number>(table);
   const plaintextKeys = PLAINTEXT_KEYS[table] ?? [];
 
   const allRows: EncryptedRow[] = await dexieTable.toArray();
@@ -117,17 +118,12 @@ export async function migrateTable(
     const chunk = pending.slice(i, i + CHUNK_SIZE);
 
     const encryptedChunk = await Promise.all(
-      chunk.map((row) => {
-        // Bumping updatedAt is required, not cosmetic — it's the only
-        // reason the (otherwise unmodified) sync engine will push this
-        // row's new ciphertext up to Supabase on the next sync pass,
-        // replacing whatever plaintext copy is sitting there today.
-        const bumped = { ...row, updatedAt: new Date().toISOString() };
-        return encryptRow(dek, bumped, plaintextKeys as never[]);
-      })
+      chunk.map((row) => encryptRow(dek, row, plaintextKeys as never[]))
     );
 
-    await dexieTable.bulkPut(encryptedChunk as never[]);
+    // Stamp after encryption, atomically with persistence, so clock rollback
+    // cannot leave the old plaintext cloud version newer than this ciphertext.
+    await writeLocalSyncRows(dexieTable, encryptedChunk);
     done += chunk.length;
     onChunk?.(done, pending.length);
   }

@@ -7,6 +7,7 @@ import { useFullGalleryScan } from "@/features/finance/slipScanner/hooks/useFull
 import { useSmartImport } from "@/features/finance/slipScanner/hooks/useSmartImport";
 import { isNativeGalleryAvailable } from "@/features/finance/slipScanner/gallery/pickImages";
 import { NativeMediaProvider } from "@/features/finance/slipScanner/gallery/media/NativeMediaProvider";
+import { galleryPermissionService } from "@/features/finance/slipScanner/gallery/permission/galleryPermissionService";
 import type { ScanOptions } from "@/features/finance/slipScanner/models/scanTypes";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { SlipExtractor } from "@/features/finance/slipScanner/services/slipExtractionProcessor";
@@ -17,12 +18,20 @@ import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useToast } from "@/hooks/useToast";
 import { toErrorMessage } from "@/utils/asyncState";
 import { useTranslation } from "@/i18n/useTranslation";
+import { decideScan } from "@/features/finance/slipScanner/schedule/scanScheduler";
+import { getDeviceState } from "@/features/finance/slipScanner/schedule/deviceState";
+import { useScanScheduleStore } from "@/features/finance/slipScanner/store/scanScheduleStore";
 
 type Phase = "idle" | "banks" | "preview";
 
+// React Strict Mode can mount the page twice in development. Keep the native
+// gallery scan single-flight at module scope so that never creates two scan
+// sessions or duplicate previews.
+let automaticScanInFlight = false;
+
 interface Props {
   // Injectable so tests can supply a fake instead of the real jsQR + Tesseract
-  // pipeline (mirrors FullGalleryScanPanel's extractor param).
+  // pipeline (injectable so tests can supply a deterministic extractor).
   extractor?: SlipExtractor;
 }
 
@@ -51,8 +60,56 @@ export default function GalleryScanFlow({ extractor }: Props) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [rangeImageCount, setRangeImageCount] = useState<number | null>(null);
+  const [isAutomaticScan, setIsAutomaticScan] = useState(false);
 
   const scan = useFullGalleryScan(extractor);
+  const scheduleConfig = useScanScheduleStore((state) => state.config);
+  const lastScanAt = useScanScheduleStore((state) => state.lastScanAt);
+  const markScanned = useScanScheduleStore((state) => state.markScanned);
+
+  // On Android, scan only new gallery images when the transaction page opens.
+  // The OS permission is requested once; subsequent visits are hands-free and
+  // the persistent scan cache prevents rescanning the same image.
+  useEffect(() => {
+    if (!isNativeGalleryAvailable() || automaticScanInFlight) return;
+
+    let active = true;
+    automaticScanInFlight = true;
+
+    void (async () => {
+      try {
+        let permission = await galleryPermissionService.check();
+        if (permission.status === "prompt" || permission.status === "denied") {
+          permission = await galleryPermissionService.request();
+        }
+        if (!permission.canScanGallery || !active) return;
+
+        const decision = decideScan({
+          trigger: "scheduled",
+          config: scheduleConfig,
+          device: await getDeviceState(),
+          lastScanAt,
+        });
+        if (!decision.shouldScan || !active) return;
+
+        setIsAutomaticScan(true);
+        await scan.scanNativeGallery(true);
+        if (active) markScanned();
+      } catch (err) {
+        if (active) toast.error(toErrorMessage(err));
+      } finally {
+        automaticScanInFlight = false;
+        if (active) setIsAutomaticScan(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+    // Run once for this page visit. Schedule values are intentionally captured
+    // at entry; changing settings applies on the next visit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Live "N photos in this range" estimate as the user adjusts the date
   // fields -- only meaningful on native (the web picker has no gallery to
@@ -85,7 +142,7 @@ export default function GalleryScanFlow({ extractor }: Props) {
   // could otherwise inherit an already-"completed" status left over from a
   // previous scan elsewhere in the app — seeding from the first-seen status
   // means only an actual running/paused -> completed transition is acted on
-  // (see FullGalleryScanPanel, where this exact bug was first found).
+  // Only an actual running/paused -> completed transition may finish the flow.
   const prevScanStatusRef = useRef(scan.status);
 
   useEffect(() => {
@@ -142,7 +199,10 @@ export default function GalleryScanFlow({ extractor }: Props) {
   // Bank selection acts as a filter on results; unknown-bank slips (OCR-only,
   // no rail identified) are always kept so nothing is silently dropped.
   const visibleCandidates = useMemo(
-    () => scan.candidates.filter((c) => !c.bankId || selectedBankIds.includes(c.bankId)),
+    () =>
+      scan.candidates.filter(
+        (c) => selectedBankIds.length === 0 || !c.bankId || selectedBankIds.includes(c.bankId),
+      ),
     [scan.candidates, selectedBankIds],
   );
 
@@ -191,7 +251,7 @@ export default function GalleryScanFlow({ extractor }: Props) {
   // Shown only while actually in flight -- "completed"/"cancelled"/"error"
   // are all communicated via toast (above) and don't need a lingering modal,
   // which would otherwise have nothing to dismiss it.
-  const showScanOverlay = phase === "idle" && busy;
+  const showScanOverlay = phase === "idle" && busy && !isAutomaticScan;
 
   return (
     <>
@@ -201,13 +261,14 @@ export default function GalleryScanFlow({ extractor }: Props) {
         disabled={busy}
         className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 px-4 py-2 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        <Images size={18} />
-        {t("transactions.scanGallery")}
+        <Images size={18} className={isAutomaticScan ? "animate-pulse text-brand-400" : ""} />
+        {isAutomaticScan ? t("slipScanner.galleryScan.scanningNew") : t("transactions.scanGallery")}
       </button>
 
       <input
         ref={inputRef}
         type="file"
+        aria-label={t("transactions.scanGallery")}
         accept="image/*"
         multiple
         onChange={handleFiles}

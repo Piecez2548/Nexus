@@ -9,7 +9,7 @@ export default function DashboardHeader({ onAddTransaction }: Props) {
   const { t, language } = useTranslation();
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="dashboard-heading flex items-center justify-between gap-4">
 
       <div>
 
@@ -30,7 +30,7 @@ export default function DashboardHeader({ onAddTransaction }: Props) {
 
       <button
         onClick={onAddTransaction}
-        className="hidden items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 font-medium transition hover:bg-brand-700 md:flex"
+        className="nexus-primary-action hidden items-center gap-2 rounded-xl px-5 py-3 font-medium transition md:flex"
       >
         <Plus size={18} />
         {t("transactions.addTransaction")}

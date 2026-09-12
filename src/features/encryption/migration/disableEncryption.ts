@@ -1,4 +1,5 @@
 import { db } from "@/database/db";
+import { writeLocalSyncRows } from "@/database/localSyncWrite";
 import { downloadFile } from "@/utils/download";
 import { exportBackup } from "@/database/backupService";
 import { supabase, isSyncConfigured } from "@/lib/supabaseClient";
@@ -47,7 +48,7 @@ export async function decryptTable(
   dek: CryptoKey,
   onChunk?: (rowsDone: number, rowsTotal: number) => void
 ): Promise<void> {
-  const dexieTable = db.table(table);
+  const dexieTable = db.table<EncryptedRow, number>(table);
 
   const allRows: EncryptedRow[] = await dexieTable.toArray();
   const pending = allRows.filter((row) => row.encryptedContent !== undefined);
@@ -59,17 +60,10 @@ export async function decryptTable(
     const chunk = pending.slice(i, i + CHUNK_SIZE);
 
     const decryptedChunk = await Promise.all(
-      chunk.map(async (row) => {
-        const plain = await decryptRow<Record<string, unknown>>(dek, row);
-        // Bumping updatedAt is required, not cosmetic -- same reason
-        // migrateTable bumps it: it's the only reason the (otherwise
-        // unmodified) sync engine will push this row's new plaintext shape
-        // up on the next sync pass, replacing whatever ciphertext is there.
-        return { ...plain, updatedAt: new Date().toISOString() };
-      })
+      chunk.map((row) => decryptRow<EncryptedRow>(dek, row))
     );
 
-    await dexieTable.bulkPut(decryptedChunk as never[]);
+    await writeLocalSyncRows(dexieTable, decryptedChunk);
     done += chunk.length;
     onChunk?.(done, pending.length);
   }

@@ -5,10 +5,12 @@ import { clearAuditLog, getAuditLog } from "@/features/security/auditLog";
 
 const mockStoreBiometricCredential = vi.fn();
 const mockDeleteBiometricCredential = vi.fn();
+const mockHasBiometricCredential = vi.fn();
 
 vi.mock("@/features/lock/services/biometricService", () => ({
   storeBiometricCredential: (...args: unknown[]) => mockStoreBiometricCredential(...args),
   deleteBiometricCredential: (...args: unknown[]) => mockDeleteBiometricCredential(...args),
+  hasBiometricCredential: (...args: unknown[]) => mockHasBiometricCredential(...args),
 }));
 
 const { useAppLockStore, EncryptionStateCorruptedError } = await import("./appLockStore");
@@ -37,6 +39,7 @@ describe("appLockStore", () => {
     vi.clearAllMocks();
     mockStoreBiometricCredential.mockResolvedValue(undefined);
     mockDeleteBiometricCredential.mockResolvedValue(undefined);
+    mockHasBiometricCredential.mockResolvedValue(false);
     resetStore();
     clearAuditLog();
   });
@@ -147,6 +150,7 @@ describe("appLockStore", () => {
   });
 
   it("checkAutoLock does not lock before the inactivity window elapses", async () => {
+    // Covered separately below for remembered access in a fresh tab.
     await useAppLockStore.getState().setupPin("1234", false);
     useAppLockStore.getState().setAutoLockMinutes(5);
     useAppLockStore.setState({ lastActivityAt: Date.now() - 1 * 60 * 1000 });
@@ -154,6 +158,22 @@ describe("appLockStore", () => {
     useAppLockStore.getState().checkAutoLock();
 
     expect(useAppLockStore.getState().isLocked()).toBe(false);
+  });
+
+  it("auto-locks a fresh tab admitted by a remembered unlock", async () => {
+    await useAppLockStore.getState().setupPin("1234", true);
+    useAppLockStore.getState().setAutoLockMinutes(5);
+    sessionStorage.clear();
+    useAppLockStore.setState({
+      sessionUnlocked: false,
+      lastActivityAt: Date.now() - 6 * 60 * 1000,
+    });
+    expect(useAppLockStore.getState().isLocked()).toBe(false);
+
+    useAppLockStore.getState().checkAutoLock();
+
+    expect(useAppLockStore.getState().isLocked()).toBe(true);
+    expect(useAppLockStore.getState().rememberUntil).toBeNull();
   });
 
   it("checkAutoLock is a no-op when auto-lock is disabled (0 minutes)", async () => {
@@ -299,6 +319,13 @@ describe("appLockStore", () => {
   });
 
   describe("biometric unlock", () => {
+    it("restores the web flag when the native keystore credential survived an update", async () => {
+      mockHasBiometricCredential.mockResolvedValue(true);
+
+      expect(await useAppLockStore.getState().restoreBiometricState()).toBe(true);
+      expect(useAppLockStore.getState().biometricEnabled).toBe(true);
+    });
+
     it("enableBiometric requires the correct PIN before storing a credential", async () => {
       await useAppLockStore.getState().setupPin("1234", false);
 

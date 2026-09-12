@@ -116,7 +116,7 @@ export default function ImportTransactionsPanel() {
             type="button"
             onClick={handleConfirmImport}
             disabled={importing || parsed.valid.length === 0}
-            className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 transition disabled:opacity-50 nexus-primary-action"
           >
             {importing ? t("settings.importingProgress") : t("settings.confirmImportCount", { count: parsed.valid.length })}
           </button>

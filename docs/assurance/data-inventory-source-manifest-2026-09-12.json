@@ -1,0 +1,2176 @@
+{
+  "task": "DATA-INVENTORY-001",
+  "scope": "Selected local source files; not a production or whole-working-tree fingerprint",
+  "sources": [
+    {
+      "repo": "Nexus",
+      "path": "android/app/src/main/AndroidManifest.xml",
+      "sha256": "943a84ebd75f186b8d1cd8f934e9bdeb77360ae9c5fa3a202899dfdee2491070"
+    },
+    {
+      "repo": "Nexus",
+      "path": "android/app/src/main/java/com/nexus/app/gallery/GalleryMediaPlugin.java",
+      "sha256": "94e3d9a6b0342d3cbd63fcc31f1d1d240c5200d3b394d72d6d38a9329a02f8c1"
+    },
+    {
+      "repo": "Nexus",
+      "path": "android/app/src/main/java/com/nexus/app/notifications/PaymentNotificationCapturePlugin.java",
+      "sha256": "59caf8b88d45fb45dc86a34ed1650847d633fdb66e07570777ce6bdc4fdf06e8"
+    },
+    {
+      "repo": "Nexus",
+      "path": "android/app/src/main/java/com/nexus/app/notifications/PaymentNotificationListenerService.java",
+      "sha256": "d9cbe3b03451fb763536a3ce45957a102f59540899e8542af782587c710ecb91"
+    },
+    {
+      "repo": "Nexus",
+      "path": "package-lock.json",
+      "sha256": "11be6b8e0883892f3e8435ccb72bdac0d2467a860fab5ef43d102b28f50a3596"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/ai/providers/ClaudeProvider.ts",
+      "sha256": "f3a4f050f4bc17354f71099e1dfcbcdc05a075db8e53683747a7f765e02c9899"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/components/ui/ErrorBoundary.tsx",
+      "sha256": "9375444431c0d10f1787bfad5ce4e5bc3a6f838ece450ccc96787a425187b3b5"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/database/backupService.ts",
+      "sha256": "3c062e0e2c0a3aaa4f2fc64b26d0cf0a2b7960e18dee8827f311f6d124e32daf"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/database/createRepository.ts",
+      "sha256": "84e0fd9f736ba02353496f9689d503d8a369fcababf99f8fe4ae74a2069fe186"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/database/db.ts",
+      "sha256": "3f687062a2540c30d0e2515fcdcdbe5f1f8c0fce12c77b423d77fa217f67906b"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/database/encryptedRepository.ts",
+      "sha256": "ea3501d7bbe94df52783ccd0ad3fc1ca811d591535590ad633054f77385a9cf0"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/database/plaintextKeys.ts",
+      "sha256": "e24eb916657cfb5083c273e3e03749d11af348fe49e7a777777b17a352049b0b"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/calendar/types/index.ts",
+      "sha256": "254821a12ce0c39d39bd8a99bd678e7cd5c6074a65d5a05cc8404e611703248a"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/encryption/migration/enableEncryption.ts",
+      "sha256": "7b07767e0f1e0813afd79c1ce44d59c644bf9f79e8a5528a2cf3aa926bef2ff3"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/encryption/migration/migrationShared.ts",
+      "sha256": "37c45a586d9846282ad520ae44af4375112d1fb548e7d3b9b818b67db241813a"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/encryption/recovery/recoverDekFromEscrow.ts",
+      "sha256": "fc822dc57c290e5bed7d3a2fd0c46f3dd92b3a1ed4db2ae05906b42b787696ed"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/encryption/store/encryptionSessionStore.ts",
+      "sha256": "52c49532c5dc6813a545d93381201e6d281eb8784c44c3595392167d48462442"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/executive/types/index.ts",
+      "sha256": "4a823295b19078c8778f0540f8ca42dd3e7ec96c8ca615191b73b323832d83a7"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/aiAnalytics/components/aiCoach/AiCoachSection.tsx",
+      "sha256": "4fdfd5f0e3518b52ba479822e6e9cf57f9727f2c31767d70bad0c06056da957a"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/aiAnalytics/engine/coach/context/buildCoachLlmContext.ts",
+      "sha256": "1144a0c464aca26a0d8840cebdf6d08d6b6374fc0c1fe27bba65e0a67e1d8e65"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/notificationCapture/store/pendingNotificationCandidateStore.ts",
+      "sha256": "c729c0780d4cb87bda2c768799f599a31cc2b3f8fe221401658daf784bd7ddf1"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/hooks/useFullGalleryScan.ts",
+      "sha256": "54e975fee68141de58af61d745cf94a79b75a582512225b6c1a140e1fe364829"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/hooks/useSmartImport.ts",
+      "sha256": "cc0789cccce653099d3c2d06e98845a8ad817a0bb8972827afbc14f3684fda84"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/models/importHistory.ts",
+      "sha256": "bba84a2f24bba7f6f9d30e43f3e503cea74b9df99505752ae207db3f7e8455eb"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/models/scanTypes.ts",
+      "sha256": "3497b645ef6fd127540b53e563c00a4dc7d07d9c7d823c6723dafc5184a9a9b2"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/models/slipCandidate.ts",
+      "sha256": "3d2c39dcb355879cf7363954553791dae7bb629a7b0e3eed3edc7b655b34b6c1"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/repositories/importHistoryRepository.ts",
+      "sha256": "764b8d92b37d75d9ff37dac869b3a2c4189e5c1d93221c5e9191e859e5439778"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/repositories/scanCandidateRepository.ts",
+      "sha256": "5ce4d4391c7a1b24dc7594bb5aba2bb3f8e59b6337f30a54a9745f6a052cc98f"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/store/bankSelectionStore.ts",
+      "sha256": "2bc11f67846a377bc3dd5f264e765a4e2759a1faa8d91ce59e0506c3a1ffa8bc"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/store/categoryLearningStore.ts",
+      "sha256": "4860570410c84035323e5dc503ec0bc5537ca5dba1cec272073f3c18b3b96c0a"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/store/learningStore.ts",
+      "sha256": "23909d97a8f39f139a87b3fbb457bf4dfaf627e7bf75d7330ddf9015236e66f7"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/store/scanScheduleStore.ts",
+      "sha256": "200fd6bbb79afdeb746663a50c51b840a75018193d77d34b318b657d42895b98"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/store/scanStore.ts",
+      "sha256": "5e7aea49b704c98bc59fa30f31e405fde40d951a562bada2d78496348d4fc2ed"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/store/scannerAnalyticsStore.ts",
+      "sha256": "283e97b162131fbb47e7594ca14d3007b695e8e42bcc001e74ebbc1b65256288"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/types/index.ts",
+      "sha256": "dc616832ff9d1bef91e023fe85191cb4bc75c63b09e86c77861afd82b73fd8b5"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/utils/slipOcr.ts",
+      "sha256": "aedc0b7bff9b8e4aad7d4a0af87ea2528249c3ba7b2c26e15e339c2e74d41adc"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/habits/types/index.ts",
+      "sha256": "a53b761176053f2f9b8e0d75b622a02435c4bbf6e3083f61413c18b0b1d8cbb7"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/lock/services/biometricService.ts",
+      "sha256": "36bb2c459147ebfdd698f9f928781e16fa6dd23a15dd5d82d9538ecc786a3f7f"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/pairing/pairingService.ts",
+      "sha256": "db0f8a04651c5432d823fe9077f85be246863d9f46a0c825bee1daec8b62bf27"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/portfolio/types/index.ts",
+      "sha256": "cdf0e604e50d9d769cf3981840194b887b98aa8f3dee1349b97211a03d46759c"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/reminders/services/nativeReminderService.ts",
+      "sha256": "98cfe8a3614501c212663ae81cba5f170c960e351fd900caad199fc9388731ad"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/schedule/types/index.ts",
+      "sha256": "02d9ac5b3cacebc8273affa213b30215bb4fc309e0bfb2a1ed7cc75a2ce83b68"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/security/auditLog.ts",
+      "sha256": "0e9693e69dd8cdd3969e7f5e2edd2ac4646109b4a88e0046ef0d36b86b4fc321"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/security/auditLogRepository.ts",
+      "sha256": "b7e966fcf94d352dfc0cdba15ae43527ae9b168a977be5c9549deaf6054ac94b"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/security/dexieAuditSink.ts",
+      "sha256": "0d5a3bd230458187037732ff5d886a64e5f56edb7450152c1dcb8528b6634846"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/backupCodes.ts",
+      "sha256": "985c5d61f22ddfc6b19332dbc65b2afa31e6bb35a14f7cf685318ce4152c8fc5"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/components/SyncProvider.tsx",
+      "sha256": "f67ca712255b53d80a6e5d3581374cdc031c4b0601fbe925a4ba10ac862ca3f0"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/mfa.ts",
+      "sha256": "20397d7b01b38bf34ec37385fa0f46fc8f8c7d03a741c5d616f8ccdfe45421c6"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/mfaSession.ts",
+      "sha256": "44643f85d431dbf765b61005c31531be3977da7041c56a479d14fb7c043c6641"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/passwordRecovery.ts",
+      "sha256": "b979ac89d16e3ce78745bc52110df5ec8d06bb39f7c01b2d2626f9c28df278f1"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/store/authStore.ts",
+      "sha256": "756c0cfe7319d9018aab5d165ff94dd570eec929300ce77ddc8bbbe1c9972b71"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/syncEngine.ts",
+      "sha256": "7771c7fa4acfeb5ca8dfe32744422a530f0ccab53ebcd5849a462f157d753457"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/tombstones.ts",
+      "sha256": "350fe4f2e07e7908e14a6d8538d2d979daae6798d4d22e4c37dfe5f230db4fba"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/toolsSession.ts",
+      "sha256": "65346fbd69339762a55a1d5dd7449e4d42600ab589134ef299a28064349aaf68"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/sync/types.ts",
+      "sha256": "8bf1d74a18295a01d995cc0db112285188c4f5db9443bf774842e86ffc0fa539"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/todo/types/index.ts",
+      "sha256": "a4aff81a4cb126a3bf36ad72fc9e576fb3cb461c696ef76d4edf3ccd36f99f24"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/trading/components/TradeRiskCalculator.tsx",
+      "sha256": "df86baeefea6acef1c256b8b20a6d73f55c580e9afde072a6bb9e10c7f531a94"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/trading/store/riskConfigStore.ts",
+      "sha256": "72c4ad6d7282eacdb3dd63942352312feb20bd3a9026b1a8d0a7876f162a4d13"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/trading/types/index.ts",
+      "sha256": "d9593aecc7544ff63a12e67f3e9f809fb96a836860134e0be1f0507023480658"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/vault/types/index.ts",
+      "sha256": "c2703ca9a828589376a41537a1c9115705ad03e77b9904d824b5ebc3afa50e9f"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/workouts/components/WorkoutRouteMap.tsx",
+      "sha256": "c2846ed754baf1b55c3795be539a7c5bf75859edf2e31f697f7cf28cfa9ede9c"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/workouts/gps/useGpsTracker.ts",
+      "sha256": "2313acc0ea5b13121f03e0819452c684f60c49c31a95139a2f285b0b7e788eb7"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/workouts/types/index.ts",
+      "sha256": "45c9cc04376ae41bb9282bf3ad3b9fce4596109e401e53f87d3e236f953e5e79"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/workouts/utils/youtubeLink.ts",
+      "sha256": "86f7ed59eabb02451931558bcd2e848b3dc1dacc827366fd19a9d6a589b57a1f"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/lib/sentry.ts",
+      "sha256": "f1c4701e959bd225f660a26867f2a58110437594afb9853b76ee18b294e22bda"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/lib/supabaseClient.ts",
+      "sha256": "799a6df107d2d4d1544bd0ae02338065fed2b93c89671ad3ec9fa8ce286e4654"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/platform/featureFlagStore.ts",
+      "sha256": "f9ad8f39fb233f8988ba260019d0e1b4e2b1115e072a77dc4126f4eb170ea3c6"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/aiCoachSettingsStore.ts",
+      "sha256": "6ce076c15ff21d3d7609ffcacca31e63a3f11e700feae9d28b9cc129a8aa11a7"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/appLock/biometricSlice.ts",
+      "sha256": "12bb469e434775b78b7bdcea787ef5261c6451f298ce472b737feeb63311d08f"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/appLock/encryptionKeySlice.ts",
+      "sha256": "d1d7c1c3e7d41bd85602bdceff7586d1be8f60f60263df5d759f2cb6127ff91f"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/appLock/installLockSync.ts",
+      "sha256": "7d3e3d986c6e2c04933d30e99f3c25d8027cfce4aa71f077bc775487be8eda5a"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/appLock/lockSignal.ts",
+      "sha256": "2b11f8c9c4c3cb37eb803b1829dac792b1650bebf4454c96c56158401d7d996a"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/appLock/pinLockSlice.ts",
+      "sha256": "cd31f5307723de035e31473425c7459ee575d9aff101da61e26b87d9160f8dc1"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/appLock/types.ts",
+      "sha256": "7ae29a5ef01e189223cbc53d2988311376bb065f5848cbdda44df60550f772ae"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/appLockStore.ts",
+      "sha256": "acf660b494390658112a32f57fafd4792aef27bebf2920596d5b3d021e7a9c22"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/appSettingsStore.ts",
+      "sha256": "e68ef7e7fcf5b553c642221dd73e573cb117b50a2e9039947eefabbc794cc494"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/gamificationStore.ts",
+      "sha256": "5ad5a70a30e0a95faea70ccc78aea1e11b350d76b85ffca8d3f40a93db464afc"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/languageStore.ts",
+      "sha256": "4b3ba64cbc9b79ab6154565f4c2c498e92411cd419c79498272b40a2180446fb"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/notificationStore.ts",
+      "sha256": "626881ad59f6c8b491420deaea5f2915cf3f1ab199c8e34a7d6f1a7a529f467c"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/store/toastStore.ts",
+      "sha256": "c2901dcb20fc3f1bee0191a3f1a7e203fcb7c9223e6cb22bdc6e9e8023f7582b"
+    },
+    {
+      "repo": "Nexus",
+      "path": "supabase/functions/ai-coach/index.ts",
+      "sha256": "f4751e9f2a6c1b240b44f1c964947bf61bfb21461a36d7fe4d4d7e7842792481"
+    },
+    {
+      "repo": "Nexus",
+      "path": "supabase/migrations/20260908133500_delete_wins_sync.sql",
+      "sha256": "a17c2686f04361e47b7ba7980c2db96916450a681e579aa4979b23c1e7758580"
+    },
+    {
+      "repo": "Nexus",
+      "path": "supabase/migrations/20260908173000_device_pairing.sql",
+      "sha256": "bea547e69236518296fc443c5042120b4c36646b717632944fd7c7cff752d408"
+    },
+    {
+      "repo": "Nexus",
+      "path": "supabase/migrations/20260909090000_restrict_weekly_digest_execute.sql",
+      "sha256": "cc047f4ff6d891d6f1455e635c646fb5c0361c3446271fe3019d90695c6dce74"
+    },
+    {
+      "repo": "Nexus",
+      "path": "supabase/migrations/20260909093000_production_advisor_hardening.sql",
+      "sha256": "ce3fd308fd62f4b19b7f3f091bc5bd2b4ddf69f66130a9f3c9cc3e8b2a5473a2"
+    },
+    {
+      "repo": "Nexus",
+      "path": "supabase/migrations/20260909110000_secure_mfa_backup_code_redemption.sql",
+      "sha256": "3dad6195a89d9a9e10007a3a01d915b33de6db7ac49fab0fd78850be2609c20d"
+    },
+    {
+      "repo": "Nexus",
+      "path": "supabase/schema.sql",
+      "sha256": "b4b4807483b829ac6d8ef7208f7434f3675e751438c9450029144f1889107e2e"
+    },
+    {
+      "repo": "Nexus",
+      "path": "vite.config.ts",
+      "sha256": "60e32a3d792655754fceb6affa75190329c282e5e9c669aa4cc6328a4c4edea9"
+    },
+    {
+      "repo": "Tools",
+      "path": "api/cloud-book.ts",
+      "sha256": "85d236f1fda2790bacdedf45c8820d21dcb14029b2375586dc689eeb2e433952"
+    },
+    {
+      "repo": "Tools",
+      "path": "api/manage-media.ts",
+      "sha256": "778ceaa4e6d100250d7e0a05ca6657264237aafb7110daabda11ba289cded7b9"
+    },
+    {
+      "repo": "Tools",
+      "path": "api/media-access.ts",
+      "sha256": "bd3665d28cde9631429b07c3fd202687fc70d0cc9be88a0408253a7edfae703e"
+    },
+    {
+      "repo": "Tools",
+      "path": "api/media.ts",
+      "sha256": "cebda23d0c76ce077077d31a76c5028304b3fd8a8dff352db4d5e2725652a004"
+    },
+    {
+      "repo": "Tools",
+      "path": "api/upload.ts",
+      "sha256": "84ac84eed63f24ba82e51e1572844be521bb820e65bafec2e4d3d7697f6bc38f"
+    },
+    {
+      "repo": "Tools",
+      "path": "package-lock.json",
+      "sha256": "1f1663b6ddfa3a7c96d9a1d3c95819f15b45043f924ee063dc43e7cf903e137d"
+    },
+    {
+      "repo": "Tools",
+      "path": "server/account.ts",
+      "sha256": "2b51452a601c969c4f317315aeea5ca52ee4dae7c53e624c5d1ef6a23b6b4489"
+    },
+    {
+      "repo": "Tools",
+      "path": "server/mediaAccess.ts",
+      "sha256": "f6b6b6125eb22c253c8314adeee4c6a59deb93e5cd0a876b76512cfe7581e6e2"
+    },
+    {
+      "repo": "Tools",
+      "path": "server/mediaPolicy.ts",
+      "sha256": "83b33d6fb4731eab4e021c3c300e94af043f83692b0ea59db2930a32a798c5ce"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/components/FileTools.tsx",
+      "sha256": "593a3c3fdf593b86ab92f1de87170d5a27737aab4cce893af30728690fe7cf6e"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/components/SettingsHistory.tsx",
+      "sha256": "c67c05b62cc213219c5a7415a8f28eaad2a2962468ca8d7e3a1e2f7b723953b4"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/services/account.ts",
+      "sha256": "9c99f73717715cfc62240a82552979f0de3db8a7fc376a9482ca06abde0b46ac"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/services/cloudBook.ts",
+      "sha256": "ed88361afccedee30a6c22095fd3e08f80bac0484427d77291848943ce4b9830"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/services/documentBook.ts",
+      "sha256": "125d7eb27b77ed27fb82df24f28fb08e572e5ccbdd9d9bb6434ef8ca8d5287d7"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/services/localData.ts",
+      "sha256": "be96f94c08de641e7e2e1faf43920c5ecd382bfa08767ec168f5e1d090e08b11"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/services/media.ts",
+      "sha256": "295f92cd2e94cf57d2d040b9edd1397ae25f8ce7d6f8e83f8e24d17730f2be30"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/services/sso.ts",
+      "sha256": "2d8f4307534c31ed6fa66be3c4ea2b9894c56eef806207384e2076d6e315baaf"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/store.ts",
+      "sha256": "6e86fd2ebc287f74a7c58ef2f9c50ec115fb244270246ac729cfb4e1505ebcd6"
+    },
+    {
+      "repo": "DataLens",
+      "path": "backend/app/analysis.py",
+      "sha256": "dfba11aed8edc5786383882772d64abdecbfe97f18cda6487df2bdbc08ae8b97"
+    },
+    {
+      "repo": "DataLens",
+      "path": "backend/app/main.py",
+      "sha256": "401aa5083995108ec302a3205560e10eb5c7f4ea1f657a7af28bcca6ec66ce05"
+    },
+    {
+      "repo": "DataLens",
+      "path": "backend/app/security.py",
+      "sha256": "d1ba4587f8a3b250c02a9fdeb1b67c2116ce1ff7bc362ef59914beb320074e51"
+    },
+    {
+      "repo": "DataLens",
+      "path": "frontend/package-lock.json",
+      "sha256": "1788882418f461b0d0ded5e1c9eef7325b73c8faeaff129ee9424d0e22c40905"
+    },
+    {
+      "repo": "DataLens",
+      "path": "frontend/src/App.tsx",
+      "sha256": "544e7d4127fa635d28fdd56f66e472984f6aa1d63e288da449ec36025b0bab02"
+    },
+    {
+      "repo": "DataLens",
+      "path": "frontend/src/Governance.tsx",
+      "sha256": "56086e9dacc0af7feea016421fbaf42628d83ae1b39ed4c66726dd4f8e123b75"
+    },
+    {
+      "repo": "DataLens",
+      "path": "frontend/src/auth.tsx",
+      "sha256": "aebabeefd9cb289f28e2d8ed935b80176c716a6b76508b2ced7b78e05ac69aeb"
+    },
+    {
+      "repo": "DataLens",
+      "path": "frontend/src/report.ts",
+      "sha256": "329abde3cffc567c0a3e800ab7358d6ddbde759f43bbda1f241d17e788d0d85e"
+    },
+    {
+      "repo": "Nexus",
+      "path": "node_modules/@supabase/auth-js/src/GoTrueClient.ts",
+      "sha256": "016e150b0eb5d5948d2ffc4f6fe76bdd93b711fc485f1052f30c63932f766ab2",
+      "kind": "installed-dependency-source"
+    },
+    {
+      "repo": "Nexus",
+      "path": "node_modules/tesseract.js/src/worker-script/index.js",
+      "sha256": "5cdcf24dc69ae7ace7c1cc7d519f899963c98746a57c963903a31d936a22a803",
+      "kind": "installed-dependency-source"
+    },
+    {
+      "repo": "Nexus",
+      "path": "node_modules/tesseract.js/src/worker-script/browser/getCore.js",
+      "sha256": "feede8459097c8553ca9c3037efa7a07b65487bfcac89df29043e17cd09b8843",
+      "kind": "installed-dependency-source"
+    },
+    {
+      "repo": "Nexus",
+      "path": "node_modules/tesseract.js/src/worker/browser/defaultOptions.js",
+      "sha256": "30b2c62a0af9ffa83834f32ce6e365df43f468945d277f059f4e5146bfecea65",
+      "kind": "installed-dependency-source"
+    },
+    {
+      "repo": "Nexus",
+      "path": "node_modules/tesseract.js/src/worker-script/browser/cache.js",
+      "sha256": "a0dac99fcc9d7155d1b6ad1904e1f3452d5824f560dcf0d0f64ae3b9089e8244",
+      "kind": "installed-dependency-source"
+    },
+    {
+      "repo": "Nexus",
+      "path": "src/features/finance/slipScanner/cache/dexieScanCache.ts",
+      "sha256": "45ccdf9f7426a6ec42869f5a54294373a12b17a38d5a37e2eb9b4ee4ba9b0ebd"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/shared/languageStore.ts",
+      "sha256": "4b3ba64cbc9b79ab6154565f4c2c498e92411cd419c79498272b40a2180446fb"
+    },
+    {
+      "repo": "Tools",
+      "path": "src/services/files.ts",
+      "sha256": "7730274cd960c13013feca265ffb6c656357787913a1f0456c233fd5d0256830"
+    }
+  ],
+  "repositories": {
+    "Nexus": {
+      "root": "D:/Project_001/Nexus-Project/Nexus",
+      "head": "efdebc43b58a4adbc121d90ec5dfe2e857f1ee4a",
+      "dirty": true
+    },
+    "Tools": {
+      "root": "D:/Project_001/Nexus-Tools",
+      "head": "900da1de87734b767650cf6216296d88f31d7eb9",
+      "dirty": true
+    },
+    "DataLens": {
+      "root": "D:/Project_001/Nexus-Project/DataLens",
+      "head": "3670872e0e4a47a96fa1accd980b336e28000c33",
+      "dirty": true
+    }
+  },
+  "dexie_tables": [
+    "transactions",
+    "accounts",
+    "categories",
+    "trades",
+    "recipientProfiles",
+    "merchants",
+    "budgets",
+    "goals",
+    "transactionTemplates",
+    "todos",
+    "habits",
+    "holdings",
+    "calendarEvents",
+    "scheduleItems",
+    "goalMilestoneEvents",
+    "syncTombstones",
+    "syncState",
+    "slipScanRuns",
+    "slipScanCache",
+    "slipImportHistory",
+    "vaultEntries",
+    "auditLog",
+    "workoutExercises",
+    "workoutEntries",
+    "netWorthItems",
+    "netWorthSnapshots",
+    "subscriptions",
+    "budgetPeriodSnapshots",
+    "slipScanCandidates",
+    "strategies",
+    "watchlistItems",
+    "economicEvents"
+  ],
+  "dexie_version": 27,
+  "sync_tables": [
+    "transactions",
+    "accounts",
+    "categories",
+    "recipientProfiles",
+    "budgets",
+    "goals",
+    "transactionTemplates",
+    "trades",
+    "todos",
+    "habits",
+    "holdings",
+    "calendarEvents",
+    "scheduleItems",
+    "goalMilestoneEvents",
+    "vaultEntries",
+    "workoutExercises",
+    "workoutEntries",
+    "netWorthItems",
+    "netWorthSnapshots",
+    "subscriptions",
+    "budgetPeriodSnapshots",
+    "strategies",
+    "watchlistItems",
+    "economicEvents"
+  ],
+  "cloud_tables": [
+    "synced_records",
+    "user_encryption_keys",
+    "device_pairing_requests",
+    "mfa_backup_codes",
+    "mfa_backup_code_attempts",
+    "ai_coach_daily_usage",
+    "automation_weekly_digests"
+  ],
+  "persist_keys": [
+    {
+      "repo": "Nexus",
+      "key": "nexus-bank-selection",
+      "path": "src/features/finance/slipScanner/store/bankSelectionStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-category-learning",
+      "path": "src/features/finance/slipScanner/store/categoryLearningStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-slip-learning",
+      "path": "src/features/finance/slipScanner/store/learningStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-scan-schedule",
+      "path": "src/features/finance/slipScanner/store/scanScheduleStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-scanner-analytics",
+      "path": "src/features/finance/slipScanner/store/scannerAnalyticsStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-trading-risk-config",
+      "path": "src/features/trading/store/riskConfigStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-feature-flags",
+      "path": "src/platform/featureFlagStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-ai-coach-settings",
+      "path": "src/store/aiCoachSettingsStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-app-lock",
+      "path": "src/store/appLockStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-app-settings",
+      "path": "src/store/appSettingsStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-gamification",
+      "path": "src/store/gamificationStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-language",
+      "path": "src/store/languageStore.ts"
+    },
+    {
+      "repo": "Nexus",
+      "key": "nexus-dismissed-notifications",
+      "path": "src/store/notificationStore.ts"
+    },
+    {
+      "repo": "Tools",
+      "key": "nexus-tools-preferences",
+      "path": "src/store.ts"
+    },
+    {
+      "repo": "Tools",
+      "key": "nexus-language",
+      "path": "src/shared/languageStore.ts"
+    }
+  ],
+  "captured_at": "2026-09-12 10:13:42 UTC",
+  "assets": [
+    {
+      "id": "D001",
+      "name": "transactions",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "รายการเงิน: title, amount, account, recipient, date/time, tags, note, attachment, recurring",
+      "purpose": "ธุรกรรม/นำเข้าและรายงาน",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F04",
+        "F13",
+        "F15"
+      ]
+    },
+    {
+      "id": "D002",
+      "name": "accounts",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "name, type, icon, color (ไม่มี balance field ใน Account type ที่ตรวจ)",
+      "purpose": "จัดหมวดบัญชี",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D003",
+      "name": "categories",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "ชื่อ/ประเภทหมวด icon/color",
+      "purpose": "จัดหมวดรายรับรายจ่าย",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D004",
+      "name": "trades",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "symbol ราคา/จำนวน entry/exit, P&L inputs, emotion/confidence, notes/screenshots",
+      "purpose": "สมุดบันทึกการเทรด",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D005",
+      "name": "recipientProfiles",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "recipientKey (phone/PromptPay), alias, category, amount/count/history",
+      "purpose": "เรียนรู้ผู้รับและเสนอหมวด",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F04",
+        "F15"
+      ]
+    },
+    {
+      "id": "D006",
+      "name": "merchants",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "ชื่อร้านและหมวดจาก reference/seed",
+      "purpose": "จับคู่ร้าน",
+      "synced": false,
+      "flows": [
+        "F01",
+        "F15"
+      ]
+    },
+    {
+      "id": "D007",
+      "name": "budgets",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "category, budget amount/period",
+      "purpose": "ติดตามงบ",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D008",
+      "name": "goals",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "ชื่อ เป้าหมายเงิน ความคืบหน้า",
+      "purpose": "ติดตามเป้าหมาย",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D009",
+      "name": "transactionTemplates",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "ชื่อและค่าเริ่มต้นธุรกรรม",
+      "purpose": "เพิ่มรายการซ้ำ",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D010",
+      "name": "todos",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "title/notes, due date, priority, completion",
+      "purpose": "รายการงาน",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D011",
+      "name": "habits",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "ชื่อ ความถี่ completedDates และ reminder",
+      "purpose": "ติดตามพฤติกรรม",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F14",
+        "F15"
+      ]
+    },
+    {
+      "id": "D012",
+      "name": "holdings",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "symbol, quantity, cost/manual price, notes",
+      "purpose": "พอร์ตลงทุน",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D013",
+      "name": "calendarEvents",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "title/notes/location, start/end, repeat/reminder",
+      "purpose": "ปฏิทิน",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F14",
+        "F15"
+      ]
+    },
+    {
+      "id": "D014",
+      "name": "scheduleItems",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "title/notes, เวลา repeat/category/reminder",
+      "purpose": "ตารางกิจกรรม",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F14",
+        "F15"
+      ]
+    },
+    {
+      "id": "D015",
+      "name": "goalMilestoneEvents",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "goal identity และ milestone event",
+      "purpose": "ประวัติความคืบหน้าเป้าหมาย",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D016",
+      "name": "syncTombstones",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "table, syncId, deletedAt",
+      "purpose": "ส่งต่อการลบ",
+      "synced": false,
+      "flows": [
+        "F03"
+      ]
+    },
+    {
+      "id": "D017",
+      "name": "syncState",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "push/pull cursor, backfill flags (key/value)",
+      "purpose": "ควบคุม incremental sync",
+      "synced": false,
+      "flows": [
+        "F02",
+        "F03"
+      ]
+    },
+    {
+      "id": "D018",
+      "name": "slipScanRuns",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "source, cursor/dateRange, timestamps/count/status",
+      "purpose": "resume scan",
+      "synced": false,
+      "flows": [
+        "F04"
+      ]
+    },
+    {
+      "id": "D019",
+      "name": "slipScanCache",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "assetId/hash/version/status/failures/timestamp",
+      "purpose": "skip/deduplicate scan",
+      "synced": false,
+      "flows": [
+        "F04"
+      ]
+    },
+    {
+      "id": "D020",
+      "name": "slipImportHistory",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "bank, total imported amount, counts/errors, source/date/duration",
+      "purpose": "ประวัติการนำเข้า",
+      "synced": false,
+      "flows": [
+        "F04"
+      ]
+    },
+    {
+      "id": "D021",
+      "name": "vaultEntries",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "password/secret notes/recovery key และ metadata ตาม type",
+      "purpose": "เก็บความลับ",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F06",
+        "F15"
+      ]
+    },
+    {
+      "id": "D022",
+      "name": "auditLog",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "event type/action/time และ detail metadata",
+      "purpose": "ตรวจเหตุการณ์ความปลอดภัย",
+      "synced": false,
+      "flows": [
+        "F16"
+      ]
+    },
+    {
+      "id": "D023",
+      "name": "workoutExercises",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "ชื่อ ประเภท exercise/calorie coefficients, gpsTracked/YouTube URL",
+      "purpose": "รายการท่าออกกำลังกาย",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F12",
+        "F15"
+      ]
+    },
+    {
+      "id": "D024",
+      "name": "workoutEntries",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "exercise/date, reps/duration/calories/note, GPS lat/lng/t",
+      "purpose": "บันทึกออกกำลังกายและเส้นทาง",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F12",
+        "F15"
+      ]
+    },
+    {
+      "id": "D025",
+      "name": "netWorthItems",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "asset/liability และมูลค่า",
+      "purpose": "คำนวณ net worth",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D026",
+      "name": "netWorthSnapshots",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "วันที่และยอดรวม asset/liability/net worth",
+      "purpose": "ประวัติ net worth",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D027",
+      "name": "subscriptions",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "ชื่อ ค่าใช้จ่าย billing/status/note",
+      "purpose": "ติดตามค่าสมาชิก",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D028",
+      "name": "budgetPeriodSnapshots",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "budget identity/period และยอดใช้เทียบงบ",
+      "purpose": "ประวัติรอบงบ",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D029",
+      "name": "slipScanCandidates",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "bank, merchant, amount, date/time, reference, raw QR payload, confidence; ไม่เก็บ thumbnailUrl",
+      "purpose": "กู้คืนรายการสแกนรอยืนยัน",
+      "synced": false,
+      "flows": [
+        "F04"
+      ]
+    },
+    {
+      "id": "D030",
+      "name": "strategies",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "ชื่อ strategy และ trading rules/notes",
+      "purpose": "playbook",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D031",
+      "name": "watchlistItems",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "symbol และบันทึก watchlist",
+      "purpose": "เฝ้ารายการลงทุนที่ผู้ใช้กรอก",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D032",
+      "name": "economicEvents",
+      "kind": "dexie-table",
+      "repo": "Nexus",
+      "data": "event/date และข้อมูลที่ผู้ใช้บันทึก",
+      "purpose": "economic calendar แบบกรอกเอง",
+      "synced": true,
+      "flows": [
+        "F01",
+        "F02",
+        "F15"
+      ]
+    },
+    {
+      "id": "D033",
+      "name": "synced_records",
+      "kind": "supabase-public-table",
+      "repo": "Nexus",
+      "data": "user_id, table_name, id, data (plain/envelope), updated_at/deleted_at",
+      "purpose": "relay 24 tables และ tombstones",
+      "protection": "RLS owner ตาม auth.uid(); ไม่ใช่ทุกตารางบังคับ AAL2; payload encryption ตามแถว",
+      "lifetime": "upsert tombstone data={} และลบ local tombstone หลัง push; ไม่มี TTL purge ของ remote tombstones ที่พบ",
+      "flows": [
+        "F02",
+        "F03",
+        "F10"
+      ]
+    },
+    {
+      "id": "D034",
+      "name": "user_encryption_keys",
+      "kind": "supabase-public-table",
+      "repo": "Nexus",
+      "data": "wrapped_dek, dek_iv, escrow_salt/iterations, user_id/time",
+      "purpose": "password-based key recovery",
+      "protection": "owner RLS; DEK ส่งขึ้นเป็น envelope",
+      "lifetime": "delete เมื่อ disable encryption; user FK cascade; ระยะ backup/log UNKNOWN",
+      "flows": [
+        "F06"
+      ]
+    },
+    {
+      "id": "D035",
+      "name": "device_pairing_requests",
+      "kind": "supabase-public-table",
+      "repo": "Nexus",
+      "data": "id/user_id, secret_hash, encrypted_dek/iv, status, expires/approved timestamps",
+      "purpose": "QR ส่ง DEK ระหว่างอุปกรณ์บัญชีเดียวกัน",
+      "protection": "owner RLS; random secret อยู่ใน QR/memory; cloud รับ hash และ ciphertext",
+      "lifetime": "ticket 2 นาทีเป็น validation expiry; delete เมื่อ consumed/cancel; ไม่พบ scheduled purge ของ abandoned rows",
+      "flows": [
+        "F07"
+      ]
+    },
+    {
+      "id": "D036",
+      "name": "mfa_backup_codes",
+      "kind": "supabase-public-table",
+      "repo": "Nexus",
+      "data": "user_id, salt/hash, created/used_at",
+      "purpose": "recovery code",
+      "protection": "management ต้อง owner+aal2; redemption RPC รับ code จาก client เพื่อตรวจฝั่ง server",
+      "lifetime": "redeem ลบ hash ที่ใช้; regeneration แทนชุดเก่า; ไม่พบ age TTL",
+      "flows": [
+        "F08"
+      ]
+    },
+    {
+      "id": "D037",
+      "name": "mfa_backup_code_attempts",
+      "kind": "supabase-public-table",
+      "repo": "Nexus",
+      "data": "user_id, window_started_at, attempt_count",
+      "purpose": "จำกัดความถี่ recovery",
+      "protection": "security-definer RPC เป็นตัวจัดการ",
+      "lifetime": "window 15 นาที/5 attempts; success ลบ counter; window ไม่ใช่ retention TTL",
+      "flows": [
+        "F08"
+      ]
+    },
+    {
+      "id": "D038",
+      "name": "ai_coach_daily_usage",
+      "kind": "supabase-public-table",
+      "repo": "Nexus",
+      "data": "user_id, usage_date, request_count/updated_at",
+      "purpose": "usage/rate cap",
+      "protection": "owner RLS; calling-user JWT",
+      "lifetime": "30 requests/day ตาม Edge source; ไม่มี historical purge ที่พบ",
+      "flows": [
+        "F09"
+      ]
+    },
+    {
+      "id": "D039",
+      "name": "automation_weekly_digests",
+      "kind": "supabase-public-table",
+      "repo": "Nexus",
+      "data": "user_id/period, income/expense/net/count, seen_at",
+      "purpose": "สรุปการเงินรายสัปดาห์",
+      "protection": "server aggregate; excludes users with escrow row; owner read/update",
+      "lifetime": "cron จันทร์ 09:00 expression ตาม source; ไม่ยืนยัน timezone/config จริง; ไม่มี expiry ที่พบ",
+      "flows": [
+        "F10"
+      ]
+    },
+    {
+      "id": "D040",
+      "name": "บัญชี/Auth/session",
+      "kind": "additional-processing-asset",
+      "data": "email, password/OTP/TOTP, user ID/email/role, access+refresh token, factor metadata",
+      "processing": "ผู้ใช้ → SDK/Supabase Auth → browser session; recovery email ผ่าน provider ที่ UNKNOWN",
+      "protection": "ส่ง credentials ไป Auth; browser SDK persistent session; token/secret เป็นความลับ",
+      "lifetime": "signOut เคลียร์ session ตาม SDK แต่ไม่ใช่ลบ account/local data; provider session/log/SMTP retention UNKNOWN",
+      "source_refs": [
+        "N04",
+        "N05",
+        "N06",
+        "T01",
+        "L01"
+      ],
+      "flows": [
+        "F05",
+        "F08",
+        "F11",
+        "F18",
+        "F19"
+      ]
+    },
+    {
+      "id": "D041",
+      "name": "Browser preferences/lock",
+      "kind": "additional-processing-asset",
+      "data": "PIN hash/salt, wrapped DEK, lock generations, feature/settings/usage/preferences",
+      "processing": "origin localStorage/sessionStorage ดูตาราง keys",
+      "protection": "keys plaintext ยกเว้น wrapped key bytes; PIN hash ไม่ใช่การเข้ารหัสข้อมูล",
+      "lifetime": "ส่วนใหญ่ไม่มี TTL; rememberUntil 7 วันเป็นสิทธิ์ unlock ไม่ใช่การลบ key",
+      "source_refs": [
+        "N06",
+        "N07"
+      ],
+      "flows": [
+        "F01",
+        "F06",
+        "F07",
+        "F16"
+      ]
+    },
+    {
+      "id": "D042",
+      "name": "Scanner learning/settings",
+      "kind": "additional-processing-asset",
+      "data": "merchant/OCR corrections, category corrections, bank selection, scan schedule/counters",
+      "processing": "แก้ข้อมูลใน UI → Zustand persist → localStorage",
+      "protection": "plaintext และไม่เข้า ENCRYPTABLE_TABLES; text corrections อาจมีข้อมูลระบุตัว",
+      "lifetime": "reset actions แยกแต่ละ store; global data reset ไม่ครอบคลุม",
+      "source_refs": [
+        "N08"
+      ],
+      "flows": [
+        "F04"
+      ]
+    },
+    {
+      "id": "D043",
+      "name": "Native payment notifications",
+      "kind": "additional-processing-asset",
+      "data": "allowlisted package, raw title/text/bigText, postedAt/id; parsed candidate",
+      "processing": "OS bank notification → SharedPreferences → JS confirm → transaction",
+      "protection": "opt-in false + OS permission + 4-package allowlist; MODE_PRIVATE ไม่ใช่ application encryption",
+      "lifetime": "max 10 FIFO; acknowledge หลัง confirm/dismiss/unparseable; ไม่มี TTL ที่พบ; ต้นฉบับอยู่ใน OS/แอปธนาคาร",
+      "source_refs": [
+        "N09"
+      ],
+      "flows": [
+        "F13"
+      ]
+    },
+    {
+      "id": "D044",
+      "name": "Biometric/PIN credential",
+      "kind": "additional-processing-asset",
+      "data": "App Lock PIN literal ที่ส่งให้ plugin; credential name/server; unlock result",
+      "processing": "JS → NativeBiometric credentials store → biometric-gated retrieval → JS PIN/DEK unlock",
+      "protection": "app ไม่รับ fingerprint image/template ใน interface นี้; template อยู่ภายใต้ OS; PIN ถูกเก็บผ่าน plugin secure API",
+      "lifetime": "deleteCredentials เมื่อปิด; hardware backing/OS backup behavior ต้องตรวจอุปกรณ์จริง",
+      "source_refs": [
+        "N10"
+      ],
+      "flows": [
+        "F06"
+      ]
+    },
+    {
+      "id": "D045",
+      "name": "Raw image/QR/OCR",
+      "kind": "additional-processing-asset",
+      "data": "ภาพจาก picker/gallery/camera, filename/asset URI, decoded QR/OCR text, thumbnails",
+      "processing": "OS/file input → browser/native media reader → local OCR/QR → D029",
+      "protection": "local processing ไม่ใช่ upload OCR image ในเส้นทางที่ตรวจ; worker/model assets อาจดาวน์โหลดจาก CDN",
+      "lifetime": "memory/object URL ระหว่างงาน; gallery ต้นฉบับไม่ถูกลบจากการลบ transaction; model caches ไม่ใช่ slip table",
+      "source_refs": [
+        "N08",
+        "N11"
+      ],
+      "flows": [
+        "F04",
+        "F20"
+      ]
+    },
+    {
+      "id": "D046",
+      "name": "AI prompt/answer",
+      "kind": "additional-processing-asset",
+      "data": "free-text question ≤2000 chars, language, context JSON ≤20000 chars, rounded totals/categories/budgets/behavior",
+      "processing": "client → ai-coach Edge → Anthropic → answer",
+      "protection": "enabled default false + signed-in/configured + unknown intent; context builder allow-list ที่ client; server ตรวจ shape/length ไม่บังคับ nested allow-list",
+      "lifetime": "ไม่มี conversation DB ที่พบในเส้นทางนี้; upstream error body/exception อาจเข้า logs; provider retention UNKNOWN; category text/free-text อาจระบุตัวได้",
+      "source_refs": [
+        "N12"
+      ],
+      "flows": [
+        "F09"
+      ]
+    },
+    {
+      "id": "D047",
+      "name": "Sentry/error diagnostics",
+      "kind": "additional-processing-asset",
+      "data": "exception/message, stack/componentStack, SDK/device/request metadata และ extra ที่ caller ส่ง",
+      "processing": "browser error buffer → lazy Sentry SDK → configured DSN",
+      "protection": "VITE_SENTRY_DSN gate; sendDefaultPii:false; ไม่พบ beforeSend redaction ใน init ที่ตรวจ",
+      "lifetime": "buffer max50 ก่อน load; provider event retention/actual DSN UNKNOWN; ไม่รับรองว่าไม่มี sensitive strings",
+      "source_refs": [
+        "N13"
+      ],
+      "flows": [
+        "F16"
+      ]
+    },
+    {
+      "id": "D048",
+      "name": "Tools document book/draft/settings",
+      "kind": "additional-processing-asset",
+      "data": "seller/customer, item description/price/quantity, tax, phone/payment/note, saved documents/counters/logo; preferences/history",
+      "processing": "Tools UI → origin localStorage; explicit cloud sync/reserve → API → private Blob books/{owner}.json",
+      "protection": "Supabase auth for cloud; bearer + AAL server check; private Blob ไม่ใช่ client-side content encryption",
+      "lifetime": "local remove/clearContacts/deleteDocument; book cap 100 docs; ไม่พบ cloud DELETE/expiry ใน cloud-book API; overwrite/merge ไม่ใช่สิทธิ์ลบครบทุกแห่ง",
+      "source_refs": [
+        "T01",
+        "T02"
+      ],
+      "flows": [
+        "F11",
+        "F17",
+        "F18"
+      ]
+    },
+    {
+      "id": "D049",
+      "name": "Tools uploaded media/policy/cookie",
+      "kind": "additional-processing-asset",
+      "data": "image/video bytes, pathname,size,time, owner UUID/access/expiry, signed access cookie",
+      "processing": "admin-authorized upload token → private Blob media/policies → viewer API",
+      "protection": "media ≤50MiB; link/owner; owner JWT→HttpOnly/Secure/SameSite=Strict cookie; admin secret ใช้ฝั่ง UI/API flow",
+      "lifetime": "token 5นาที; policy1–365วัน(default7); cookie≤15นาที/expiry; expiry ปฏิเสธอ่านแต่ไม่ลบ; admin DELETE ลบ media+policy",
+      "source_refs": [
+        "T03"
+      ],
+      "flows": [
+        "F18"
+      ]
+    },
+    {
+      "id": "D050",
+      "name": "DataLens CSV/results/audit",
+      "kind": "additional-processing-asset",
+      "data": "arbitrary CSV/filename/schema, owner/source/purpose/classification, actor ID/email/role, preview100 rows, profile/issues, signed review/approval notes",
+      "processing": "browser FormData → FastAPI → pandas → browser result; review/approve round-trip → HTML export",
+      "protection": "server Auth verifies JWT+MFA/role; no-store response; HMAC service signature ไม่ใช่ encryption",
+      "lifetime": "handler ไม่มี durable DB write; UploadFile.close finally; framework temp/spooling, platform logs/backups UNKNOWN; browser state/export copy ยังมีข้อมูล",
+      "source_refs": [
+        "L01",
+        "L02",
+        "L03"
+      ],
+      "flows": [
+        "F19"
+      ]
+    },
+    {
+      "id": "D051",
+      "name": "Exports/backups/downloads",
+      "kind": "additional-processing-asset",
+      "data": "Nexus 25-table JSON รวม Vault, CSV/PDF reports, Tools documents/QR/files, DataLens HTML",
+      "processing": "UI reads decrypted values → Blob/file download/share/recipient device",
+      "protection": "plaintext artifact ตามชนิด; local encryption ไม่ติดไปกับ export; QR อาจบรรจุ phone/payment/contact/secret ตาม input",
+      "lifetime": "ผู้ใช้/ผู้รับควบคุมหลังดาวน์โหลด; server/local reset ไม่ลบสำเนา; import limits ไม่ใช่ retention policy",
+      "source_refs": [
+        "N03",
+        "T02",
+        "L03"
+      ],
+      "flows": [
+        "F15",
+        "F17",
+        "F19"
+      ]
+    },
+    {
+      "id": "D052",
+      "name": "OS/browser caches/backups",
+      "kind": "additional-processing-asset",
+      "data": "installed assets/PWA cache, OCR language cache, app/WebView/SharedPreferences copies ตาม OS backup policy",
+      "processing": "asset/CDN fetch → cache; OS may back up eligible app files",
+      "protection": "Android allowBackup=true; production exclusions/device transfer behavior UNKNOWN; ไม่อ้างว่า backup ทุกไฟล์สำเร็จจริง",
+      "lifetime": "cache eviction/update กับการลบข้อมูลส่วนบุคคลคนละเรื่อง; region/TTL/restore controls UNKNOWN",
+      "source_refs": [
+        "N11",
+        "N14"
+      ],
+      "flows": [
+        "F20"
+      ]
+    },
+    {
+      "id": "D053",
+      "name": "Scheduled reminders",
+      "kind": "additional-processing-asset",
+      "data": "title/body/entity ID, repeat/time/day, notification display",
+      "processing": "habit/calendar/schedule → native LocalNotifications → OS notification/lock screen",
+      "protection": "native platform + permission; content visibility ขึ้นกับ channel/OS; ไม่ใช่ server push ในเส้นทางนี้",
+      "lifetime": "schedule/cancel; pending/delivered OS copies และ global reset reconciliation ต้องตรวจ RB-007",
+      "source_refs": [
+        "N15"
+      ],
+      "flows": [
+        "F14"
+      ]
+    },
+    {
+      "id": "D054",
+      "name": "Map/YouTube external requests",
+      "kind": "additional-processing-asset",
+      "data": "tile z/x/y for viewed area, IP/request metadata; search query หรือ saved external URL",
+      "processing": "route viewer → OSM tiles; user link → YouTube",
+      "protection": "tile coordinates บอกพื้นที่ viewport ได้แม้ไม่ได้ส่ง GPS route array; ลิงก์เปิดภายนอกเผย query ตาม input",
+      "lifetime": "provider logging/retention/region UNKNOWN; เพิ่มใน vendor review จาก data-flow evidence",
+      "source_refs": [
+        "N16"
+      ],
+      "flows": [
+        "F12"
+      ]
+    },
+    {
+      "id": "D055",
+      "name": "Hosting/API/logs and operator secrets",
+      "kind": "additional-processing-asset",
+      "data": "request URLs/IP/header/error metadata, SMTP/account notices, deployment secrets, signing/admin/API keys",
+      "processing": "web/API/Auth infrastructure → provider logs/admin consoles/email provider",
+      "protection": "service secrets เป็น control-plane data; ไม่อ่านค่า .env/token/keystore จริงในงานนี้; no-store ไม่ปิด server logs",
+      "lifetime": "region, subprocessors, log retention, backups, access roles/custody UNKNOWN; ต้องมี configuration/contract evidence",
+      "source_refs": [
+        "N04",
+        "N12",
+        "N13",
+        "T03",
+        "L02"
+      ],
+      "flows": [
+        "F05",
+        "F09",
+        "F18",
+        "F19",
+        "F20"
+      ]
+    }
+  ],
+  "flows": [
+    {
+      "id": "F01",
+      "path": "User / derived engine → React store → repository → IndexedDB → UI",
+      "assets": [
+        "D001",
+        "D002",
+        "D003",
+        "D004",
+        "D005",
+        "D007",
+        "D008",
+        "D009",
+        "D010",
+        "D011",
+        "D012",
+        "D013",
+        "D014",
+        "D015",
+        "D021",
+        "D023",
+        "D024",
+        "D025",
+        "D026",
+        "D027",
+        "D028",
+        "D030",
+        "D031",
+        "D032",
+        "D006",
+        "D041"
+      ],
+      "controls": "forms/manual imports/derived computation; E1 encrypt/decrypt ตาม session; merchants และ persisted preferences ใช้ E0",
+      "boundary": "ผู้ใช้และอุปกรณ์/origin เดียวกัน; memory มี plaintext หลัง read",
+      "sources": [
+        "N01",
+        "N02",
+        "N07"
+      ]
+    },
+    {
+      "id": "F02",
+      "path": "IndexedDB ⇄ sync engine ⇄ Supabase synced_records ⇄ device อีกเครื่อง",
+      "assets": [
+        "D001",
+        "D002",
+        "D003",
+        "D004",
+        "D005",
+        "D007",
+        "D008",
+        "D009",
+        "D010",
+        "D011",
+        "D012",
+        "D013",
+        "D014",
+        "D015",
+        "D021",
+        "D023",
+        "D024",
+        "D025",
+        "D026",
+        "D027",
+        "D028",
+        "D030",
+        "D031",
+        "D032",
+        "D017",
+        "D033"
+      ],
+      "controls": "configured Supabase + authenticated user; automatic 5s/online; raw stored row plain หรือ encrypted envelope พร้อม user/table/id/time",
+      "boundary": "cross-device trust boundary; metadata ไม่เข้ารหัส; actual deploy/RLS verification UNKNOWN",
+      "sources": [
+        "N04"
+      ]
+    },
+    {
+      "id": "F03",
+      "path": "User delete/reset → local tombstone → Supabase deleted record → other devices",
+      "assets": [
+        "D016",
+        "D017",
+        "D033"
+      ],
+      "controls": "push data={} + deleted_at; clear local tombstone หลังส่งสำเร็จ; server trigger ห้าม stale resurrection",
+      "boundary": "ไม่ใช่ purge ตามเวลา/ลบ backup; offline device ต้อง sync จึงรับผล",
+      "sources": [
+        "N03",
+        "N04"
+      ]
+    },
+    {
+      "id": "F04",
+      "path": "Gallery/camera/file → local QR/OCR → candidate/history/learning → confirm → transaction",
+      "assets": [
+        "D001",
+        "D005",
+        "D018",
+        "D019",
+        "D020",
+        "D029",
+        "D042",
+        "D045"
+      ],
+      "controls": "user-selected files หรือ native permission; candidates persistence strips thumbnailUrl only; history sums amount; learning corrections persist",
+      "boundary": "ข้อมูลก่อน import ยังเป็น financial/text; reset/discard เคลียร์ current run ไม่ใช่ลบ gallery",
+      "sources": [
+        "N08",
+        "N11"
+      ]
+    },
+    {
+      "id": "F05",
+      "path": "Email/password/OTP → Supabase Auth ⇄ app session / account email",
+      "assets": [
+        "D040",
+        "D055"
+      ],
+      "controls": "signup/signin/recovery/OTP; Auth SDK persist session; configured email sender/provider UNKNOWN",
+      "boundary": "credentials/access/refresh/user identity ข้าม device→Auth; emails ออกสู่ mailbox/provider",
+      "sources": [
+        "N04",
+        "N05",
+        "N06"
+      ]
+    },
+    {
+      "id": "F06",
+      "path": "PIN/password/biometric → key derivation/secure credential → wrapped DEK escrow ⇄ session DEK",
+      "assets": [
+        "D021",
+        "D034",
+        "D041",
+        "D044"
+      ],
+      "controls": "storeBiometricCredential ส่ง literal PIN ให้ NativeBiometric; recovery unwrap DEK client-side; Supabase เก็บ password-wrapped envelope",
+      "boundary": "biometric template ไม่เข้าสู่ JS interface; plaintext PIN/DEK มีชั่วคราวใน process; hardware/backup assurance UNKNOWN",
+      "sources": [
+        "N02",
+        "N06",
+        "N07",
+        "N10"
+      ]
+    },
+    {
+      "id": "F07",
+      "path": "Desktop QR secret → phone approve → Supabase encrypted DEK → desktop memory",
+      "assets": [
+        "D035",
+        "D041"
+      ],
+      "controls": "QR id+32-byte random secret; secret hash cloud; AES-GCM wrapping; same-user RLS; ticket2นาที",
+      "boundary": "camera/display boundary มี secret; success/cancel delete แต่ abandoned expiry ไม่ใช่ scheduled purge",
+      "sources": [
+        "N06"
+      ]
+    },
+    {
+      "id": "F08",
+      "path": "TOTP/recovery code → Supabase MFA or redemption RPC → application verified marker",
+      "assets": [
+        "D036",
+        "D037",
+        "D040"
+      ],
+      "controls": "backup hashes; native TOTP factors in Auth; recovery attempts5/15นาที; code request plaintext over configured transport",
+      "boundary": "Nexus recovery marker ไม่เปลี่ยน JWT aal; provider Auth lifetime UNKNOWN",
+      "sources": [
+        "N05",
+        "N04"
+      ]
+    },
+    {
+      "id": "F09",
+      "path": "Unknown-intent question + aggregate context → ai-coach Edge → Anthropic → answer",
+      "assets": [
+        "D038",
+        "D046",
+        "D055"
+      ],
+      "controls": "AI opt-in default off + session/config; client context builder allow-list; free-text prompt/labels remain; server length/shape checks",
+      "boundary": "Anthropic sees question/context; Edge increments usage and logs upstream errors; no observed chat DB does not mean no provider logs",
+      "sources": [
+        "N12"
+      ]
+    },
+    {
+      "id": "F10",
+      "path": "Unencrypted synced transactions → server weekly aggregate → digest table → UI",
+      "assets": [
+        "D033",
+        "D039"
+      ],
+      "controls": "generate_weekly_digests skips users with encryption escrow row; cron configuration must be checked",
+      "boundary": "derived income/expense/net remain personal financial data; existing digest retention UNKNOWN",
+      "sources": [
+        "N04"
+      ]
+    },
+    {
+      "id": "F11",
+      "path": "Nexus popup session → verified-origin postMessage → Tools Auth SDK",
+      "assets": [
+        "D040",
+        "D048"
+      ],
+      "controls": "origin + window source + nonce; access/refresh tokens + theme in message; nonce in URL; receiver setSession",
+      "boundary": "tokens cross origin intentionally; no Nexus database payload is sent in this handshake",
+      "sources": [
+        "N06",
+        "T01"
+      ]
+    },
+    {
+      "id": "F12",
+      "path": "OS GPS → workout route → map viewport / external YouTube navigation",
+      "assets": [
+        "D023",
+        "D024",
+        "D054"
+      ],
+      "controls": "permission/high-accuracy watch; discard accuracy>50m; stop/reset/unmount clears watch; map fetch tile z/x/y; user opens external link",
+      "boundary": "workout route follows E1 sync; tile service sees viewport requests, not route JSON in reviewed call; external provider retention UNKNOWN",
+      "sources": [
+        "N16"
+      ]
+    },
+    {
+      "id": "F13",
+      "path": "Allowlisted banking app notification → Android pending queue → JS review → transaction",
+      "assets": [
+        "D001",
+        "D043"
+      ],
+      "controls": "opt-in flag+OS notification access; read only4 allowed packages; raw strings in SharedPreferences max10; confirm/dismiss acknowledge",
+      "boundary": "notification title/text/bigText are sensitive pre-import copies; own confirmation notification generic",
+      "sources": [
+        "N09"
+      ]
+    },
+    {
+      "id": "F14",
+      "path": "Habit/calendar/schedule reminder → native schedule → notification display",
+      "assets": [
+        "D011",
+        "D013",
+        "D014",
+        "D053"
+      ],
+      "controls": "native platform + notification permission; title/body/time/repeat/id sent to OS; cancellation API",
+      "boundary": "OS/lock-screen recipient boundary; source record delete/reset not proof all notifications cleared",
+      "sources": [
+        "N15"
+      ]
+    },
+    {
+      "id": "F15",
+      "path": "Nexus decrypted rows / reports → JSON/CSV/PDF → download/import",
+      "assets": [
+        "D001",
+        "D002",
+        "D003",
+        "D004",
+        "D005",
+        "D006",
+        "D007",
+        "D008",
+        "D009",
+        "D010",
+        "D011",
+        "D012",
+        "D013",
+        "D014",
+        "D015",
+        "D021",
+        "D023",
+        "D024",
+        "D025",
+        "D026",
+        "D027",
+        "D028",
+        "D030",
+        "D031",
+        "D032",
+        "D051"
+      ],
+      "controls": "exportBackup25 tables incl merchants/Vault; import max25MiB/250000 rows; validates then overwrites tables and tombstones removed syncIds",
+      "boundary": "recipient/device copies plaintext; no user-controlled export deletion guarantee from app reset",
+      "sources": [
+        "N03"
+      ]
+    },
+    {
+      "id": "F16",
+      "path": "App actions/errors → local audit + optional Sentry",
+      "assets": [
+        "D022",
+        "D041",
+        "D047"
+      ],
+      "controls": "audit ring200/persist500; Sentry only with DSN, buffer50, sendDefaultPii:false, componentStack/error extra",
+      "boundary": "local event cap not age TTL; SDK setting not semantic redaction of all strings",
+      "sources": [
+        "N13",
+        "N07"
+      ]
+    },
+    {
+      "id": "F17",
+      "path": "Tools document/file/QR inputs → local transform/book/draft → download",
+      "assets": [
+        "D048",
+        "D051"
+      ],
+      "controls": "localData/store persistence; saved documents/contacts/settings; file/QR processing via local UI",
+      "boundary": "ordinary file tool flow differs from deliberate cloud-book/media API paths; browser/download copies outside Nexus DB",
+      "sources": [
+        "T02"
+      ]
+    },
+    {
+      "id": "F18",
+      "path": "Tools cloud-book / media client ⇄ authenticated APIs ⇄ private Blob → viewer",
+      "assets": [
+        "D040",
+        "D048",
+        "D049",
+        "D055"
+      ],
+      "controls": "book uses user bearer+AAL; media admin upload + optional owner bearer; direct Blob upload token; signed cookie for owner viewer",
+      "boundary": "link access may be usable by anyone with link until expiry; policy expiry blocks read but admin DELETE removes blob; provider backups UNKNOWN",
+      "sources": [
+        "T01",
+        "T02",
+        "T03"
+      ]
+    },
+    {
+      "id": "F19",
+      "path": "DataLens CSV/schema → authenticated FastAPI analysis → result/review/approve → HTML",
+      "assets": [
+        "D040",
+        "D050",
+        "D051",
+        "D055"
+      ],
+      "controls": "10MiB local/4MiB Vercel source limit,100000 rows/100 cols; first100 rows preview; actor metadata+signed audit; HMAC review/approve",
+      "boundary": "request handler lacks durable write; multipart spool/platform logs not proven absent; HTML contains evidence/actor and is editable copy",
+      "sources": [
+        "L01",
+        "L02",
+        "L03"
+      ]
+    },
+    {
+      "id": "F20",
+      "path": "Browser/native infrastructure ⇄ hosting/CDN/cache/OS backup",
+      "assets": [
+        "D045",
+        "D052",
+        "D055"
+      ],
+      "controls": "Workbox static/navigation cache; OCR worker/core/language jsDelivr defaults; Android allowBackup true declaration",
+      "boundary": "source proves request/config paths; runtime enablement, user IP/log metadata, cache/backup recipients/retention UNKNOWN",
+      "sources": [
+        "N11",
+        "N14"
+      ]
+    }
+  ],
+  "source_index": [
+    {
+      "id": "N01",
+      "area": "Nexus DB/schema/types",
+      "links": [
+        "../src/database/db.ts",
+        "../src/features/sync/types.ts"
+      ]
+    },
+    {
+      "id": "N02",
+      "area": "Repository/encryption exemptions",
+      "links": [
+        "../src/database/createRepository.ts",
+        "../src/database/encryptedRepository.ts",
+        "../src/database/plaintextKeys.ts"
+      ]
+    },
+    {
+      "id": "N03",
+      "area": "Backup/export/reset",
+      "links": [
+        "../src/database/backupService.ts"
+      ]
+    },
+    {
+      "id": "N04",
+      "area": "Sync/Auth/cloud schema",
+      "links": [
+        "../src/features/sync/components/SyncProvider.tsx",
+        "../src/features/sync/store/authStore.ts",
+        "../src/features/sync/syncEngine.ts",
+        "../src/features/sync/tombstones.ts",
+        "../supabase/schema.sql"
+      ]
+    },
+    {
+      "id": "N05",
+      "area": "MFA / backup code",
+      "links": [
+        "../src/features/sync/mfa.ts",
+        "../src/features/sync/backupCodes.ts",
+        "../src/features/sync/mfaSession.ts"
+      ]
+    },
+    {
+      "id": "N06",
+      "area": "Session / escrow / pairing",
+      "links": [
+        "../src/lib/supabaseClient.ts",
+        "../src/features/sync/toolsSession.ts",
+        "../src/features/pairing/pairingService.ts",
+        "../src/features/encryption/migration/enableEncryption.ts",
+        "../src/features/encryption/recovery/recoverDekFromEscrow.ts"
+      ]
+    },
+    {
+      "id": "N07",
+      "area": "App lock / browser stores",
+      "links": [
+        "../src/store/appLockStore.ts",
+        "../src/store/appLock/pinLockSlice.ts",
+        "../src/store/appLock/lockSignal.ts",
+        "../src/store/gamificationStore.ts"
+      ]
+    },
+    {
+      "id": "N08",
+      "area": "Scan candidates / learning / history",
+      "links": [
+        "../src/features/finance/slipScanner/repositories/scanCandidateRepository.ts",
+        "../src/features/finance/slipScanner/hooks/useFullGalleryScan.ts",
+        "../src/features/finance/slipScanner/hooks/useSmartImport.ts",
+        "../src/features/finance/slipScanner/store/learningStore.ts",
+        "../src/features/finance/slipScanner/store/categoryLearningStore.ts"
+      ]
+    },
+    {
+      "id": "N09",
+      "area": "Native notification pipeline",
+      "links": [
+        "../android/app/src/main/java/com/nexus/app/notifications/PaymentNotificationListenerService.java",
+        "../android/app/src/main/java/com/nexus/app/notifications/PaymentNotificationCapturePlugin.java",
+        "../src/features/finance/notificationCapture/store/pendingNotificationCandidateStore.ts"
+      ]
+    },
+    {
+      "id": "N10",
+      "area": "Biometric interface",
+      "links": [
+        "../src/features/lock/services/biometricService.ts"
+      ]
+    },
+    {
+      "id": "N11",
+      "area": "Gallery / OCR",
+      "links": [
+        "../android/app/src/main/java/com/nexus/app/gallery/GalleryMediaPlugin.java",
+        "../src/features/finance/utils/slipOcr.ts"
+      ]
+    },
+    {
+      "id": "N12",
+      "area": "AI request boundary",
+      "links": [
+        "../src/features/finance/aiAnalytics/engine/coach/context/buildCoachLlmContext.ts",
+        "../src/ai/providers/ClaudeProvider.ts",
+        "../supabase/functions/ai-coach/index.ts",
+        "../src/store/aiCoachSettingsStore.ts"
+      ]
+    },
+    {
+      "id": "N13",
+      "area": "Sentry / audit persistence",
+      "links": [
+        "../src/lib/sentry.ts",
+        "../src/components/ui/ErrorBoundary.tsx",
+        "../src/features/security/dexieAuditSink.ts"
+      ]
+    },
+    {
+      "id": "N14",
+      "area": "OS/PWA cache declarations",
+      "links": [
+        "../android/app/src/main/AndroidManifest.xml",
+        "../vite.config.ts"
+      ]
+    },
+    {
+      "id": "N15",
+      "area": "OS reminders",
+      "links": [
+        "../src/features/reminders/services/nativeReminderService.ts"
+      ]
+    },
+    {
+      "id": "N16",
+      "area": "GPS/map/external link",
+      "links": [
+        "../src/features/workouts/gps/useGpsTracker.ts",
+        "../src/features/workouts/components/WorkoutRouteMap.tsx",
+        "../src/features/workouts/utils/youtubeLink.ts"
+      ]
+    },
+    {
+      "id": "T01",
+      "area": "Tools auth / SSO",
+      "links": [
+        "../../../Nexus-Tools/src/services/account.ts",
+        "../../../Nexus-Tools/src/services/sso.ts",
+        "../../../Nexus-Tools/server/account.ts"
+      ]
+    },
+    {
+      "id": "T02",
+      "area": "Tools local/cloud documents",
+      "links": [
+        "../../../Nexus-Tools/src/services/localData.ts",
+        "../../../Nexus-Tools/src/services/documentBook.ts",
+        "../../../Nexus-Tools/api/cloud-book.ts",
+        "../../../Nexus-Tools/src/store.ts"
+      ]
+    },
+    {
+      "id": "T03",
+      "area": "Tools media/policies/cookie",
+      "links": [
+        "../../../Nexus-Tools/src/services/media.ts",
+        "../../../Nexus-Tools/api/upload.ts",
+        "../../../Nexus-Tools/api/media.ts",
+        "../../../Nexus-Tools/api/manage-media.ts",
+        "../../../Nexus-Tools/server/mediaAccess.ts"
+      ]
+    },
+    {
+      "id": "L01",
+      "area": "DataLens client/auth",
+      "links": [
+        "../../DataLens/frontend/src/App.tsx",
+        "../../DataLens/frontend/src/auth.tsx"
+      ]
+    },
+    {
+      "id": "L02",
+      "area": "DataLens API / profiling / security",
+      "links": [
+        "../../DataLens/backend/app/main.py",
+        "../../DataLens/backend/app/analysis.py",
+        "../../DataLens/backend/app/security.py"
+      ]
+    },
+    {
+      "id": "L03",
+      "area": "DataLens report",
+      "links": [
+        "../../DataLens/frontend/src/report.ts",
+        "../../DataLens/frontend/src/Governance.tsx"
+      ]
+    }
+  ],
+  "governance_defaults": {
+    "named_owner": "UNASSIGNED",
+    "legal_roles": "UNKNOWN",
+    "lawful_basis": "UNKNOWN",
+    "provider_regions": "UNKNOWN",
+    "approved_retention": "UNKNOWN",
+    "production_verified": false,
+    "reviewer_acceptance": "PENDING RB-001"
+  }
+}

@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { describe, expect, it, beforeEach, vi } from "vitest";
 
 import { db } from "@/database/db";
 import { createEncryptedRepository, EncryptionLockedError } from "@/database/encryptedRepository";
@@ -64,6 +64,37 @@ describe("encryptedRepository", () => {
 
     const rows = await repo.getAll();
     expect(rows).toEqual([sample({ id })]);
+  });
+
+  it("reuses decrypted content for unchanged envelopes without sharing mutable results", async () => {
+    const dek = await generateDek();
+    useAppLockStore.setState({ encryptionEnabled: true });
+    useEncryptionSessionStore.getState().setDek(dek);
+    const id = await repo.add(sample());
+    const decryptSpy = vi.spyOn(crypto.subtle, "decrypt");
+
+    const first = await repo.getAll();
+    expect(decryptSpy).toHaveBeenCalledTimes(1);
+    first[0].title = "Mutated by consumer";
+
+    expect(await repo.getAll()).toEqual([sample({ id })]);
+    expect(decryptSpy).toHaveBeenCalledTimes(1);
+
+    await repo.update(id, sample({ amount: 200 }));
+    expect(await repo.getAll()).toEqual([sample({ id, amount: 200 })]);
+    expect(decryptSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not reuse cached plaintext after the session DEK changes", async () => {
+    const dek = await generateDek();
+    useAppLockStore.setState({ encryptionEnabled: true });
+    useEncryptionSessionStore.getState().setDek(dek);
+    await repo.add(sample());
+    await repo.getAll();
+
+    useEncryptionSessionStore.getState().setDek(await generateDek());
+
+    await expect(repo.getAll()).rejects.toThrow();
   });
 
   it("updates a row in place, still encrypted, preserving id and syncId", async () => {

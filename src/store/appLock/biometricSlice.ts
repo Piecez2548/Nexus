@@ -1,6 +1,6 @@
 import type { StateCreator, StoreApi } from "zustand";
 import { hashPin } from "@/features/lock/utils/pinHash";
-import { storeBiometricCredential, deleteBiometricCredential } from "@/features/lock/services/biometricService";
+import { storeBiometricCredential, deleteBiometricCredential, hasBiometricCredential } from "@/features/lock/services/biometricService";
 import { recordAudit } from "@/features/security/auditLog";
 import type { AppLockState, BiometricSlice } from "./types";
 
@@ -27,6 +27,13 @@ export async function resyncBiometricCredential(
 
 export const createBiometricSlice: StateCreator<AppLockState, [], [], BiometricSlice> = (set, get) => ({
   biometricEnabled: false,
+
+  async restoreBiometricState() {
+    if (get().biometricEnabled) return true;
+    const restored = await hasBiometricCredential();
+    if (restored) set({ biometricEnabled: true });
+    return restored;
+  },
 
   async enableBiometric(pin) {
     const { pinHash, salt } = get();

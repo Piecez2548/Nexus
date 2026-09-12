@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
+import { useModalA11y } from "@/components/ui/useModalA11y";
 
 import { filterCommands, type Command } from "@/platform/commandPalette/commands";
 import { financeMenus, personalMenus, tradingMenus } from "@/layouts/navItems";
@@ -24,19 +25,21 @@ export default function CommandPalette({ commands: injected }: Props) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y({ open, onClose: () => setOpen(false), containerRef: panelRef });
 
   const commands = useMemo<Command[]>(() => {
     if (injected) return injected;
     const nav: Command[] = [...financeMenus, ...tradingMenus, ...personalMenus].map((m) => ({
       id: `nav:${m.path}`,
       title: t(m.labelKey),
-      group: "Navigate",
+      group: t("common.commandPalette.navigationGroup"),
       run: () => navigate(m.path),
     }));
     nav.push({
       id: "action:add-transaction",
       title: t("common.commandPalette.addTransaction"),
-      group: "Actions",
+      group: t("common.commandPalette.actionsGroup"),
       run: () => openTransactionDrawer(),
     });
     return nav;
@@ -62,13 +65,16 @@ export default function CommandPalette({ commands: injected }: Props) {
     if (open) {
       setQuery("");
       setSelected(0);
-      inputRef.current?.focus();
     }
   }, [open]);
 
   useEffect(() => {
     setSelected(0);
   }, [query]);
+
+  useEffect(() => {
+    if (open) panelRef.current?.querySelectorAll("li button")[selected]?.scrollIntoView?.({ block: "nearest" });
+  }, [open, selected]);
 
   if (!open) return null;
 
@@ -83,7 +89,7 @@ export default function CommandPalette({ commands: injected }: Props) {
   const onListKeyDown = (e: React.KeyboardEvent): void => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelected((s) => Math.min(s + 1, results.length - 1));
+      setSelected((s) => Math.max(0, Math.min(s + 1, results.length - 1)));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setSelected((s) => Math.max(s - 1, 0));
@@ -95,47 +101,54 @@ export default function CommandPalette({ commands: injected }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-start justify-center bg-black/40 pt-[15vh]"
+      className="fixed inset-0 z-[70] flex items-start justify-center bg-black/40 px-3 pt-[10vh]"
       role="dialog"
       aria-modal="true"
+      aria-label={t("common.commandPalette.title")}
       onClick={() => setOpen(false)}
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
         className="w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={onListKeyDown}
       >
         <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 px-4">
           <Search size={18} className="text-zinc-400" />
           <input
             ref={inputRef}
+            onKeyDown={onListKeyDown}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("common.commandPalette.placeholder")}
             aria-label={t("common.commandPalette.placeholder")}
-            className="w-full bg-transparent py-3 text-sm outline-none"
+            className="min-w-0 w-full bg-transparent py-3 text-base outline-none placeholder:text-zinc-500 dark:placeholder:text-zinc-400"
           />
+          <button type="button" aria-label={t("common.close")} onClick={() => setOpen(false)} className="flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"><X size={18} /></button>
         </div>
+
+        <p role="status" className="sr-only">{results[selected]?.title}</p>
 
         {results.length === 0 ? (
           <div className="px-4 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
             {t("common.commandPalette.empty")}
           </div>
         ) : (
-          <ul className="max-h-80 overflow-y-auto py-1">
+          <ul className="max-h-[60dvh] overflow-y-auto py-1">
             {results.map((command, index) => (
               <li key={command.id}>
                 <button
                   type="button"
                   onClick={() => runAt(index)}
                   onMouseEnter={() => setSelected(index)}
-                  className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm ${
-                    index === selected ? "bg-brand-600 text-white" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  onFocus={() => setSelected(index)}
+                  className={`flex min-h-11 w-full items-center justify-between gap-3 px-4 py-2 text-left text-sm ${
+                    index === selected ? "nexus-primary-action" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   }`}
                 >
                   <span>{command.title}</span>
                   {command.group && (
-                    <span className={`text-xs ${index === selected ? "text-white/70" : "text-zinc-400"}`}>
+                    <span className={`text-xs ${index === selected ? "text-current" : "text-zinc-500 dark:text-zinc-400"}`}>
                       {command.group}
                     </span>
                   )}

@@ -1,6 +1,6 @@
 # Database Schema
 
-**Last Updated:** 2026-08-21
+**Last Updated:** 2026-09-12
 
 ## Overview
 
@@ -222,7 +222,9 @@ Every table's primary key is Dexie's auto-increment `++id` (device-local, **not*
 - `recipientProfiles`: `&recipientKey` (unique) — used for direct `.where("recipientKey").equals(...)` lookup by `recipientProfileRepository`.
 - `budgets`: `&category` (unique) — one budget per category.
 
-`syncTombstones` indexes `table, syncId, deletedAt`. `syncState` is a plain key-value table (`&key` primary key, e.g. per-table push/pull cursors).
+`syncTombstones` indexes `table, syncId, deletedAt`. `syncState` is a plain key-value table (`&key` primary key, e.g. per-table push/pull cursors). `clock:<table>` persists the last locally allocated version. `writeLocalSyncRows` advances this clock and writes the local mutation in one transaction, after encryption if needed. It reads the existing clock, push cursor and indexed newest `updatedAt` to remain monotonic after clock rollback, restart, remote pull or deletion of the newest row. This reuses v27's existing tables/indexes; no schema upgrade is needed.
+
+`migration:clearedPushCursors:v2` marks the SC-003 repair. The repair atomically clears only `push:<table>` keys and sets its completion flag, leaving `clock:<table>`, pull cursors and tombstone queues intact. It also runs on installations that already completed v1, so still-present edits skipped by the old pull bookkeeping are reconsidered. Pull-side push-cursor advancement now checks exact applied versions in a transaction shared with local writers.
 
 A handful of device-local tables outside the sync/encryption system keep their own small plaintext indexes for lookup/uniqueness reasons unrelated to encryption:
 - `slipScanCache`: `&assetId` (unique) — one cache row per gallery image, plus non-unique `contentHash` (duplicate detection) and `status` (retry/skip filtering).

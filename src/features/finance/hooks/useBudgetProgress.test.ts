@@ -1,3 +1,4 @@
+import { toLocalDateString } from "@/utils/localDate";
 import { describe, expect, it, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
 
@@ -6,7 +7,7 @@ import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import type { Transaction, Budget } from "@/features/finance/types";
 
-const today = new Date().toISOString().slice(0, 10);
+const today = toLocalDateString(new Date());
 
 describe("useBudgetProgress", () => {
   beforeEach(() => {

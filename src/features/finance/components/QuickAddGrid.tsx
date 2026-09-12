@@ -139,7 +139,7 @@ export default function QuickAddGrid() {
                     type="button"
                     onClick={() => handleDelete(template)}
                     aria-label={`Delete quick add ${template.name}`}
-                    className="rounded-full p-1 text-zinc-500 transition hover:bg-red-600/20 hover:text-red-400"
+                    className="rounded-full p-1 text-zinc-500 transition hover:bg-zinc-200 hover:text-red-700 dark:hover:bg-zinc-800 dark:hover:text-red-300"
                   >
                     <Trash2 size={12} />
                   </button>

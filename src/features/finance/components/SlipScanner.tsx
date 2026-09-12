@@ -254,7 +254,7 @@ export default function SlipScanner({ open, onClose }: Props) {
                     type="button"
                     onClick={() => removeBatchItem(item.key)}
                     aria-label={`Remove ${item.title}`}
-                    className="shrink-0 rounded-lg p-2 text-zinc-500 transition hover:bg-red-600/20 hover:text-red-400"
+                    className="shrink-0 rounded-lg p-2 text-zinc-500 transition hover:bg-zinc-200 hover:text-red-700 dark:hover:bg-zinc-800 dark:hover:text-red-300"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -266,7 +266,7 @@ export default function SlipScanner({ open, onClose }: Props) {
               type="button"
               onClick={handleSaveBatch}
               disabled={saving}
-              className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
             >
               {saving ? t("transactions.saving") : t("slipScanner.saveAll", { count: batchItems.length })}
             </button>

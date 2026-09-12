@@ -23,14 +23,28 @@ export function createRepository<T extends SyncMeta & { id?: number }>(
   // there's structurally nowhere left for a call site to specify a value
   // that could drift from it.
   const plaintextKeys = (PLAINTEXT_KEYS[tableName] ?? []) as (keyof T)[];
-  const encrypted = createEncryptedRepository<T>(table, { plaintextKeys });
+  const encrypted = createEncryptedRepository<T>(table, { plaintextKeys, stampLocalWrites: true });
 
   return {
     getAll: () => encrypted.getAll(),
 
     add: (entity: T) => encrypted.add(withSyncMeta(entity)),
 
-    update: (id: number, entity: T) => encrypted.update(id, withSyncMeta({ ...entity, id })),
+    update: async (id: number, entity: T) => {
+      // Forms submit business fields only, so an update normally arrives
+      // without syncId. Preserve the stored cross-device identity instead
+      // of letting withSyncMeta() generate a new one and turning an edit into
+      // a second record on every other device.
+      const existing = await table.get(id);
+      return encrypted.update(
+        id,
+        withSyncMeta({
+          ...entity,
+          id,
+          syncId: existing?.syncId ?? entity.syncId,
+        })
+      );
+    },
 
     remove: async (id: number) => {
       const existing = await table.get(id);

@@ -7,7 +7,7 @@ test.describe("Quick Add templates", () => {
     await page.getByRole("button", { name: "Add" }).click();
     await page.getByLabel("Name").fill("Starbucks");
     await page.getByLabel("Category").selectOption({ label: "Food" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByLabel("Starting amount (optional)").fill("65");
     await page.getByRole("button", { name: "Save" }).click();
 
@@ -38,7 +38,7 @@ test.describe("Quick Add templates", () => {
     await page.getByRole("button", { name: "Add" }).click();
     await page.getByLabel("Name").fill("Netflix");
     await page.getByLabel("Category").selectOption({ label: "Entertainment" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
 
     await expect(page.getByRole("button", { name: "Netflix", exact: true })).toBeVisible();

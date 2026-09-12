@@ -19,7 +19,7 @@ export default function CashFlowSection({ granularity }: Props) {
   ];
 
   return (
-    <div className="grid gap-6 xl:grid-cols-3">
+    <div className="dashboard-cashflow grid gap-6 xl:grid-cols-3">
 
       <div className="xl:col-span-2">
 

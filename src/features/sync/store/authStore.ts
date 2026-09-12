@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import type { User } from "@supabase/supabase-js";
 import { supabase, isSyncConfigured } from "@/lib/supabaseClient";
-import { runFullSync } from "@/features/sync/syncEngine";
 import { toErrorMessage } from "@/utils/asyncState";
 import { recordAudit } from "@/features/security/auditLog";
 import { resolveMfaAccess, verifyTotpCode } from "@/features/sync/mfa";
@@ -171,7 +170,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   async signOut() {
     if (!supabase) return;
 
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
     clearMfaSessionFlag();
     recordAudit("auth", "sign-out");
     set({ user: null, lastSyncedAt: null, mfaPending: false, mfaFactorId: null, mfaError: null });
@@ -184,6 +184,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ syncing: true, error: null });
 
     try {
+      const { runFullSync } = await import("@/features/sync/syncEngine");
       await runFullSync(user.id);
       set({ syncing: false, lastSyncedAt: new Date().toISOString() });
     } catch (err) {

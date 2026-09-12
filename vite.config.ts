@@ -21,6 +21,24 @@ export default defineConfig({
       // install -r` (and a normal user's app update), so it can silently
       // keep serving a stale, already-fixed JS bundle indefinitely.
       injectRegister: false,
+      // The project hub now shares the SPA's authenticated session gate.
+      workbox: {
+        // Manual registration does not send Workbox's SKIP_WAITING message.
+        skipWaiting: true,
+        clientsClaim: true,
+        // Prefer the deployed HTML shell; retain the precached shell offline.
+        navigateFallback: null,
+        runtimeCaching: [{
+          urlPattern: ({ request, url }) => request.mode === "navigate" && url.origin === self.location.origin,
+          handler: "NetworkFirst",
+          options: {
+            cacheName: "nexus-navigation-v1",
+            networkTimeoutSeconds: 4,
+            expiration: { maxEntries: 10 },
+            precacheFallback: { fallbackURL: "/index.html" },
+          },
+        }],
+      },
       includeAssets: ["favicon.svg", "icons/apple-touch-icon.png"],
       manifest: {
         name: "Nexus - Life Operating System",
@@ -66,7 +84,11 @@ export default defineConfig({
             },
             {
               name: "vendor-cloud",
-              test: /node_modules[\\/](@supabase|@sentry|iceberg-js)[\\/]/,
+              test: /node_modules[\\/](@supabase|iceberg-js)[\\/]/,
+            },
+            {
+              name: "vendor-monitoring",
+              test: /node_modules[\\/]@sentry[\\/]/,
             },
           ],
         },
@@ -74,6 +96,7 @@ export default defineConfig({
     },
   },
   test: {
+    maxWorkers: 4,
     environment: "jsdom",
     setupFiles: ["./src/tests/setup.ts"],
     exclude: ["**/node_modules/**", "**/e2e/**"],

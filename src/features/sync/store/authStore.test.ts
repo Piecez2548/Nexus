@@ -215,7 +215,8 @@ describe("authStore", () => {
     const firstCall = useAuthStore.getState().sync();
     await useAuthStore.getState().sync();
 
-    expect(mockRunFullSync).toHaveBeenCalledTimes(1);
+    expect(useAuthStore.getState().syncing).toBe(true);
+    await vi.waitFor(() => expect(mockRunFullSync).toHaveBeenCalledTimes(1));
 
     resolveFirstSync();
     await firstCall;

@@ -83,7 +83,7 @@ export default function MergeAccountForm({ sourceAccount, accounts, onDone }: Pr
       <button
         type="submit"
         disabled={submitting || !targetName}
-        className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
       >
         {submitting ? t("accounts.merging") : t("accounts.mergeButton")}
       </button>

@@ -11,10 +11,13 @@ import { initErrorMonitoring } from "@/lib/sentry";
 import { configureAuditLog } from "@/features/security/auditLog";
 import { dexieAuditSink } from "@/features/security/dexieAuditSink";
 import { installToolsSessionLinks } from "@/features/sync/toolsSession";
+import { installLockSync } from "@/store/appLock/installLockSync";
 
 initErrorMonitoring();
 const removeToolsSessionLinks = installToolsSessionLinks();
 if (import.meta.hot) import.meta.hot.dispose(removeToolsSessionLinks);
+const removeLockSync = installLockSync();
+if (import.meta.hot) import.meta.hot.dispose(removeLockSync);
 
 // Wires the audit log's already-existing injectable sink (see auditLog.ts)
 // to real Dexie persistence — every recordAudit() call anywhere in the app,
@@ -28,7 +31,11 @@ configureAuditLog({ sink: dexieAuditSink });
 // install), which is exactly what happened before this guard existed.
 if (!Capacitor.isNativePlatform() && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    void navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).then(registration => {
+      const checkForUpdate = () => { void registration.update().catch(() => { /* Offline: retain the installed version. */ }); };
+      checkForUpdate();
+      window.addEventListener("focus", checkForUpdate);
+    }).catch(() => { /* The application remains usable without offline support. */ });
   });
 } else if (Capacitor.isNativePlatform() && "serviceWorker" in navigator) {
   // Defensive one-time cleanup: a device that had this app installed BEFORE

@@ -1,20 +1,18 @@
 import { RouterProvider } from "react-router-dom";
 
 import { router } from "@/router/router";
-import AppLockGate from "@/features/lock/components/AppLockGate";
-import AuthGate from "@/features/sync/components/AuthGate";
-import { SyncProvider } from "@/features/sync/components/SyncProvider";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import UpdateNotice from "@/components/ui/UpdateNotice";
+
+import { usePasswordRecovery } from "@/features/sync/passwordRecovery";
+import PasswordRecoveryScreen from "@/features/sync/components/PasswordRecoveryScreen";
 
 export default function App() {
+  const recovery = usePasswordRecovery((state) => state.active);
   return (
     <ErrorBoundary>
-      <AuthGate>
-        <AppLockGate>
-          <SyncProvider />
-          <RouterProvider router={router} />
-        </AppLockGate>
-      </AuthGate>
+      {recovery ? <PasswordRecoveryScreen recovery /> : <RouterProvider router={router} />}
+      <UpdateNotice />
     </ErrorBoundary>
   );
 }

@@ -1,4 +1,4 @@
-import { memo, useRef, useState } from "react";
+import { memo, useId, useRef, useState } from "react";
 import { Bell, X } from "lucide-react";
 
 import { useNotifications } from "@/hooks/useNotifications";
@@ -8,6 +8,7 @@ import DropdownPanel from "@/components/ui/DropdownPanel";
 import { useTranslation } from "@/i18n/useTranslation";
 
 function NotificationsMenu() {
+  const panelId = useId();
   const notifications = useNotifications();
   const dismiss = useNotificationStore((state) => state.dismiss);
   const [open, setOpen] = useState(false);
@@ -23,7 +24,8 @@ function NotificationsMenu() {
         onClick={() => setOpen((prev) => !prev)}
         aria-label={t("topbar.notifications")}
         aria-expanded={open}
-        className="relative rounded-xl p-3 transition hover:bg-zinc-100 dark:hover:bg-zinc-900"
+        aria-controls={open ? panelId : undefined}
+        className="relative min-h-11 min-w-11 rounded-xl p-3 transition hover:bg-zinc-100 dark:hover:bg-zinc-900"
       >
         <Bell size={18} />
         {notifications.length > 0 && (
@@ -31,7 +33,8 @@ function NotificationsMenu() {
         )}
       </button>
 
-      <DropdownPanel open={open} className="absolute right-0 top-full z-20 mt-2 w-80 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-lg">
+      <DropdownPanel open={open} className="main-popover main-notifications rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-lg">
+        <div id={panelId} role="region" aria-label={t("topbar.notifications")}>
         <p className="px-2 py-1 text-sm font-semibold">{t("topbar.notifications")}</p>
 
         {notifications.length === 0 ? (
@@ -45,15 +48,15 @@ function NotificationsMenu() {
               return (
                 <div
                   key={notification.id}
-                  className="flex items-start gap-2 rounded-xl border border-amber-900/40 bg-amber-950/20 px-3 py-2 text-sm text-amber-300"
+                  className="main-warning flex items-start gap-2 rounded-xl border px-3 py-2 text-sm"
                 >
-                  <span className="flex-1">{text}</span>
+                  <span className="min-w-0 flex-1 break-words">{text}</span>
 
                   <button
                     type="button"
                     onClick={() => dismiss(notification.id)}
                     aria-label={t("topbar.dismissNotification", { message: text })}
-                    className="shrink-0 rounded-lg p-1 text-amber-300/70 transition hover:bg-amber-900/30 hover:text-amber-200"
+                    className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg p-2 transition hover:underline"
                   >
                     <X size={14} />
                   </button>
@@ -62,6 +65,7 @@ function NotificationsMenu() {
             })}
           </div>
         )}
+        </div>
       </DropdownPanel>
     </div>
   );

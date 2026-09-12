@@ -8,6 +8,8 @@ import {
     Line
 } from "recharts";
 import { format, parse } from "date-fns";
+import { ChartNoAxesCombined } from "lucide-react";
+import "../../dashboard.css";
 
 import { useChartData } from "@/features/dashboard/hooks/useChartData";
 import type { DashboardPeriodGranularity } from "@/features/dashboard/utils/dashboardPeriodRange";
@@ -51,7 +53,8 @@ export default function CashFlowLineChart({ granularity }: Props) {
 
     if (!hasData) {
         return (
-            <div className="flex h-[320px] items-center justify-center text-zinc-600 dark:text-zinc-500">
+            <div className="dashboard-chart-empty">
+                <ChartNoAxesCombined size={32} strokeWidth={1.5} aria-hidden="true" />
                 {t("dashboard.noIncomeExpenseData")}
             </div>
         );

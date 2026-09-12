@@ -16,7 +16,7 @@ test.describe("budget lifecycle", () => {
     await page.getByLabel("Item name").fill("Lunch");
     await page.getByLabel("Amount").fill("400");
     await page.getByLabel("Category").selectOption({ label: "Food" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("Lunch")).toBeVisible();
 

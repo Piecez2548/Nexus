@@ -9,7 +9,7 @@ test.describe("Merge Duplicate Transactions", () => {
       await page.getByLabel("Item name").fill("Lunch");
       await page.getByLabel("Amount").fill("100");
       await page.getByLabel("Category").selectOption({ label: "Food" });
-      await page.getByLabel("Account").selectOption({ label: "Cash" });
+      await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
       await page.getByRole("button", { name: "Save" }).click();
       await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
     }
@@ -37,7 +37,7 @@ test.describe("Merge Duplicate Transactions", () => {
     await page.getByLabel("Item name").fill("Lunch");
     await page.getByLabel("Amount").fill("100");
     await page.getByLabel("Category").selectOption({ label: "Food" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
 
@@ -45,7 +45,7 @@ test.describe("Merge Duplicate Transactions", () => {
     await page.getByLabel("Item name").fill("Dinner");
     await page.getByLabel("Amount").fill("200");
     await page.getByLabel("Category").selectOption({ label: "Food" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
 

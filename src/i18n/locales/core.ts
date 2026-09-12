@@ -3,6 +3,12 @@
 export const coreTranslations = {
   en: {
     common: {
+      skipToContent: "Skip to content",
+      mainNavigation: "Main navigation",
+      quickNavigation: "Quick navigation",
+      searchResults: "Search results",
+      detailsPanel: "Details",
+      authUnavailable: "Sign-in is not configured for this website. Please contact the site administrator, then retry.",
       add: "Add",
       edit: "Edit",
       delete: "Delete",
@@ -17,6 +23,9 @@ export const coreTranslations = {
       retry: "Retry",
       loading: "Loading...",
       commandPalette: {
+        title: "Commands and navigation",
+        navigationGroup: "Navigate",
+        actionsGroup: "Actions",
         placeholder: "Type a command or search…",
         empty: "No matching commands",
         addTransaction: "Add transaction",
@@ -53,6 +62,8 @@ export const coreTranslations = {
       levelUpToast: "🎉 Level up! You're now Lv.{{level}}",
     },
     nav: {
+      homeShort: "Home",
+      transactionsShort: "Entries",
       dashboard: "Dashboard",
       financeDashboard: "Finance Dashboard",
       aiAnalytics: "AI Analytics",
@@ -209,6 +220,12 @@ export const coreTranslations = {
   },
   th: {
     common: {
+      skipToContent: "ข้ามไปยังเนื้อหา",
+      mainNavigation: "เมนูหลัก",
+      quickNavigation: "เมนูด่วน",
+      searchResults: "ผลการค้นหา",
+      detailsPanel: "รายละเอียด",
+      authUnavailable: "เว็บไซต์ยังไม่ได้ตั้งค่าระบบเข้าสู่ระบบ กรุณาติดต่อผู้ดูแลเว็บไซต์ แล้วลองใหม่อีกครั้ง",
       add: "เพิ่ม",
       edit: "แก้ไข",
       delete: "ลบ",
@@ -223,6 +240,9 @@ export const coreTranslations = {
       retry: "ลองใหม่",
       loading: "กำลังโหลด...",
       commandPalette: {
+        title: "คำสั่งและเมนู",
+        navigationGroup: "ไปยังหน้า",
+        actionsGroup: "การทำงาน",
         placeholder: "พิมพ์คำสั่งหรือค้นหา…",
         empty: "ไม่พบคำสั่งที่ตรงกัน",
         addTransaction: "เพิ่มรายการ",
@@ -259,6 +279,8 @@ export const coreTranslations = {
       levelUpToast: "🎉 เลเวลอัพ! ตอนนี้คุณอยู่ Lv.{{level}}",
     },
     nav: {
+      homeShort: "หน้าหลัก",
+      transactionsShort: "ธุรกรรม",
       dashboard: "แดชบอร์ด",
       financeDashboard: "แดชบอร์ดการเงิน",
       aiAnalytics: "การวิเคราะห์ด้วย AI",

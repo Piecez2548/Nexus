@@ -62,7 +62,7 @@ export default function Workouts() {
           </button>
           <button
             onClick={() => setActiveView({ type: "entry", entry: null, prefill: null })}
-            className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-700"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition nexus-primary-action"
           >
             <Plus size={18} />
             {t("workouts.addEntry")}

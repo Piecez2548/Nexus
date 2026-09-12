@@ -5,13 +5,16 @@ test.describe("top bar", () => {
     await page.goto("/");
 
     const html = page.locator("html");
+    await expect(page.getByRole("button", { name: "Toggle dark mode" })).toBeVisible();
     const wasDark = await html.evaluate((el) => el.classList.contains("dark"));
 
     await page.getByRole("button", { name: "Toggle dark mode" }).click();
-    await expect(html).toHaveClass(wasDark ? /(?!.*dark)/ : /dark/);
+    if (wasDark) await expect(html).not.toHaveClass(/dark/);
+    else await expect(html).toHaveClass(/dark/);
 
     await page.getByRole("button", { name: "Toggle dark mode" }).click();
-    await expect(html).toHaveClass(wasDark ? /dark/ : /(?!.*dark)/);
+    if (wasDark) await expect(html).toHaveClass(/dark/);
+    else await expect(html).not.toHaveClass(/dark/);
   });
 
   test("notifications bell opens a dropdown with real budget alerts", async ({ page }) => {
@@ -26,7 +29,7 @@ test.describe("top bar", () => {
     await page.getByLabel("Item name").fill("Big lunch");
     await page.getByLabel("Amount").fill("200");
     await page.getByLabel("Category").selectOption({ label: "Food" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("Big lunch")).toBeVisible();
 
@@ -61,7 +64,7 @@ test.describe("top bar", () => {
     await page.getByLabel("Item name").fill("Starbucks Coffee");
     await page.getByLabel("Amount").fill("120");
     await page.getByLabel("Category").selectOption({ label: "Food" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("Starbucks Coffee")).toBeVisible();
 

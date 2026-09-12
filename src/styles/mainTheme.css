@@ -1,0 +1,70 @@
+/* Layout and interaction rules for the Main shell; palette lives in nexusTheme.css. */
+.nexus-main { background: var(--nexus-bg); }
+.nexus-main .main-accent-text, .nexus-main .main-tab-active { color: var(--main-accent-text); }
+.nexus-main .main-tab-active { font-weight: 700; text-decoration: underline; text-underline-offset: .25em; }
+.nexus-main .main-warning-text { color: var(--main-warning-text); }
+.nexus-main .main-warning { color: var(--main-warning-text); background: var(--main-warning-bg); border-color: var(--main-warning-border); }
+.nexus-main .main-workspace-heading { background: var(--main-header-wash); }
+.nexus-main [data-shell-audit='sidebar'] { max-width: 30vw; }
+.nexus-main .main-workspace-heading > div { min-width: 0; overflow-wrap: anywhere; }
+.nexus-main .main-workspace-heading { padding: clamp(16px, 2.5vw, 20px); }
+.nexus-main .main-search-input { border-color: var(--main-control-border); }
+.nexus-main .main-search-input::placeholder { color: var(--color-zinc-500); opacity: 1; }
+.nexus-main .main-search-input:focus { border-color: var(--main-focus); }
+.nexus-main :is(button, a) { overflow-wrap: anywhere; }
+.nexus-main :is(aside, .main-topbar, [data-shell-audit='mobile-navigation']) svg { flex-shrink: 0; }
+.nexus-main [data-shell-audit='mobile-navigation'] > div > button { max-width: 56px; max-height: 56px; }
+.nexus-main [data-shell-audit='mobile-navigation'] { flex-wrap: wrap; }
+.nexus-main [data-shell-audit='mobile-navigation'] > :is(a, button) { flex: 1 0 max(44px, 4em); overflow-wrap: normal; }
+.nexus-main [data-shell-audit='mobile-navigation'] > div { flex: 1 0 56px; }
+.nexus-main .main-skip-link { position: fixed; top: 1rem; left: 1rem; z-index: 80; padding: .75rem 1rem; transform: translateY(-200%); background: var(--main-action-bg); color: var(--main-action-ink); border-radius: .5rem; }
+.nexus-main .main-skip-link:focus { transform: none; }
+.nexus-main .main-popover { position: fixed; inset-inline: .75rem; top: calc(5rem + env(safe-area-inset-top)); z-index: 40; max-height: calc(100dvh - 6rem); overflow-y: auto; overflow-wrap: anywhere; }
+@media (min-width: 1024px) {
+  .nexus-main .main-popover { position: absolute; inset-inline: auto 0; top: 100%; margin-top: .5rem; max-width: calc(100vw - 2rem); }
+  .nexus-main .main-notifications { width: 20rem; }
+  .nexus-main .main-level { width: 16rem; }
+  .nexus-main .main-user-menu { width: 14rem; }
+}
+@media (max-width: 1023px) {
+  .nexus-main [data-shell-audit='sidebar'] { display: none; }
+  .nexus-main [data-shell-audit='mobile-navigation'] { display: flex; }
+  .nexus-main :is(input, select, textarea) { font-size: max(1rem, 16px); }
+  .nexus-main #main-content { padding: 16px; padding-bottom: calc(9rem + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nexus-main aside button svg { transition: none; }
+}
+
+.nexus-main .main-nav-active {
+  background: var(--main-action-bg);
+  color: var(--main-action-ink);
+}
+.nexus-main .main-wordmark { font-weight: 800; letter-spacing: -.04em; }
+.nexus-main .main-wordmark span { color: var(--main-action-bg); }
+.nexus-main :focus-visible { outline: 3px solid var(--main-focus); outline-offset: 3px; }
+.nexus-main ::selection { background: var(--main-action-bg); color: var(--main-action-ink); }
+.nexus-main input, .nexus-main textarea { caret-color: var(--main-focus); }
+.nexus-main :is(main, nav) { scrollbar-color: var(--color-zinc-500) transparent; }
+.nexus-main main { font-variant-numeric: tabular-nums; }
+
+/* Give interactive controls a usable target without enlarging their icons. */
+.nexus-main main button { min-width: 44px; min-height: 44px; }
+.nexus-main main .nexus-primary-action { min-height: 48px; }
+.nexus-main main button { flex-shrink: 0; }
+
+/* Status text uses accessible hues; chart fills and user categories stay intact. */
+.nexus-main .text-green-500 { color: #166534; }
+.nexus-main .text-red-500 { color: #b91c1c; }
+.nexus-main .text-orange-500 { color: #9a3412; }
+.nexus-main .text-brand-500 { color: var(--main-accent-text); }
+:root:not(.dark) .nexus-main .text-zinc-400 { color: var(--nexus-muted); }
+:root.dark .nexus-main .text-green-500 { color: #86efac; }
+:root.dark .nexus-main .text-red-500 { color: #fca5a5; }
+:root.dark .nexus-main .text-orange-500 { color: #fdba74; }
+:root.dark .nexus-main .dark\:text-zinc-600 { color: var(--nexus-muted); }
+
+@media (forced-colors: active) {
+  .nexus-main .main-nav-active { background: Highlight; color: HighlightText; outline: 1px solid Highlight; }
+  .nexus-main :focus-visible { outline-color: Highlight; }
+}

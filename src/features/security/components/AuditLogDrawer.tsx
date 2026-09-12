@@ -141,7 +141,7 @@ export default function AuditLogDrawer({ open, onClose, fixedType, title, descri
               aria-pressed={log.typeFilter === filter}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                 log.typeFilter === filter
-                  ? "bg-brand-600 text-white"
+                  ? "nexus-primary-action"
                   : "border border-zinc-300 dark:border-zinc-700 hover:border-brand-500"
               }`}
             >

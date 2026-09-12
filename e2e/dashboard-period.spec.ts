@@ -15,7 +15,7 @@ test.describe("Dashboard period selector", () => {
     await page.getByLabel("Amount").fill("30000");
     await page.getByLabel("Type").selectOption({ label: "Income" });
     await page.getByLabel("Category").selectOption({ label: "Salary" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
 
@@ -26,7 +26,7 @@ test.describe("Dashboard period selector", () => {
     await page.getByLabel("Amount").fill("999999");
     await page.getByLabel("Type").selectOption({ label: "Income" });
     await page.getByLabel("Category").selectOption({ label: "Salary" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByLabel("Date").fill("2020-01-01");
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();

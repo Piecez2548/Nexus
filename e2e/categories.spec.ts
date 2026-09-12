@@ -34,7 +34,7 @@ test.describe("category lifecycle", () => {
     await page.getByLabel("Item name").fill("Chips");
     await page.getByLabel("Amount").fill("50");
     await page.getByLabel("Category").selectOption({ label: "Snacks" });
-    await page.getByLabel("Account").selectOption({ label: "Cash" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("Chips")).toBeVisible();
 

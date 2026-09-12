@@ -100,7 +100,7 @@ export default function ReviewEditForm({ candidate, onSave, onCancel }: Props) {
         <button
           type="button"
           onClick={handleSave}
-          className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-brand-700"
+          className="rounded-lg px-3 py-1.5 text-sm font-medium transition nexus-primary-action"
         >
           {t("common.save")}
         </button>

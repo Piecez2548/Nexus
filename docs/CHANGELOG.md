@@ -1,5 +1,154 @@
 # Changelog
 
+## 2026-09-13 — Earlier sync UI refresh
+
+- Refreshes an affected store immediately after its table pull succeeds, instead of keeping an already-applied transaction invisible until all 24 sequential table pulls finish.
+- Reuses decrypted content for unchanged encrypted envelopes within the active DEK session, so an early store refresh decrypts only rows that actually changed on the wire.
+- Retains the final affected-store refresh after account/category deduplication so dependent finance views finish in a consistent state.
+- Added regressions for early visibility, cache invalidation after an encrypted write, independent returned objects, and isolation across DEK changes.
+- Validation: focused sync/encryption suite 63/63, related suite 224/224, desktop/mobile CRUD E2E 10/10, TypeScript, configured lint, release build and bundle budget passed. Deployment and physical post-deployment measurement are recorded in [the fix report](SYNC_LATENCY_FIX_2026-09-13.md).
+
+## 2026-09-12 — Retry skipped uploads and repair existing cursors
+
+- Pull now acknowledges only the exact versions successfully applied to local storage. Rejected payloads and edits made during pull remain pending, with the cursor check/update committed in one transaction.
+- Upgrade the one-time cursor repair to v2 so existing installations can resend still-present edits previously skipped by the old bookkeeping. Server version/tombstone guards remain in place.
+- Conflict drill 17/17, related suite 221/221 and desktop/mobile CRUD browser tests 10/10 passed. TypeScript, lint and release build passed.
+- Published `dpl_HfyjCfwCekpnuyTX4wK7CrtkTGMK` and installed the verified debug APK on vivo V2348. Published patch markers and installed APK hash verified. [Evidence](SYNC_CONFLICT_FIX_003_2026-09-12.md).
+
+## 2026-09-12 — Clock-rollback sync protection
+
+- Allocate durable monotonic local versions in the same IndexedDB transaction as the row write, after encryption, so clock rollback and same-millisecond edits cannot hide a mutation behind its push cursor.
+- Reuse the allocator for shared repositories, milestone events, encryption/decryption migrations and legacy metadata backfill. Preserve cloud/backup versions on import.
+- Full suite: 451 files, 2817 passed / 1 expected failure (SC-003). Final related suite: 211 passed / 1 expected failure. Mobile/desktop CRUD browser tests 10/10, TypeScript, lint and release build passed.
+- Deployed `dpl_9QRJueD4C8zZX6mdF2BGVmYkBWpM` to Nexus production and installed the matching verified debug APK on vivo V2348. Published assets, production smoke and installed APK hash checked. [Evidence](SYNC_CONFLICT_FIX_002_2026-09-12.md).
+
+## 2026-09-12 — Stale cross-device upload protection
+
+- Added an atomic Postgres trigger guard that retains a newer live cloud payload when an older offline device reconnects later, while preserving terminal tombstones and server-generated pull timestamps.
+- Converted both SC-001 reconnect orders to ordinary passing acceptance tests; the focused drill now reports 7 passed / 2 expected failures and the related suite reports 157 passed / 2 expected failures.
+- Applied migration `20260912220000` to the linked Nexus Supabase project and confirmed local/remote migration alignment. SC-002 and SC-003 remain open. [Fix report](SYNC_CONFLICT_FIX_001_2026-09-12.md).
+
+## 2026-09-12 — Offline/conflict/outage drill
+
+- Added a nine-scenario synthetic relay drill with independent device database snapshots, server timestamps, terminal tombstones, provider failures and lost write acknowledgements.
+- Six scenarios passed; three initially reproduced data-integrity defects: stale upload divergence, clock-rollback edit loss, and a failed upload skipped by the pull-induced push watermark.
+- The drill preserved all three desired acceptance assertions as expected failures at discovery time. SC-001 was later fixed and deployed; SC-002 and SC-003 remain open. [Findings](SYNC_CONFLICT_VERIFICATION_2026-09-12.md).
+
+## 2026-09-12 — Recovery patch installed on Android test device
+
+- Built and v2-signature-verified a debug APK containing the account/PIN recovery safeguards, then installed it in place on the connected vivo V2348 with application data preserved.
+- Confirmed the installed APK hash exactly matches the built artifact, existing app storage/account session survived, and MainActivity launched successfully. Recovery/lock regressions passed 70/70 and configured lint passed.
+- This remains a debug-device artifact; no production password/PIN or encrypted user data was changed, and live Android recovery remains unverified. [Android report](ACCOUNT_RECOVERY_ANDROID_2026-09-12.md).
+
+## 2026-09-12 — Recovery patch deployed
+
+- Published the account/PIN recovery patch as Vercel production deployment `dpl_C16PWvTQ6ScS3xvXsAb91qgYUTVp` and verified the public Nexus alias and patch markers in the served JavaScript assets.
+- Production TypeScript/build/bundle budget passed; production smoke passed 2/2, with mobile cold-login median LCP 956 ms and CLS 0 in the three measured samples.
+- No production password, mailbox or account data was changed. Android APK update and real mailbox/physical-device recovery remain pending. [Deployment report](ACCOUNT_RECOVERY_DEPLOYMENT_2026-09-12.md).
+
+## 2026-09-12 — Account and PIN recovery safeguards
+
+- Stop escrow recovery after failed reauthentication, pending MFA or an account mismatch instead of relying on a potentially stale auth-store user.
+- Validate the recovered key against existing local encrypted rows before replacing the PIN wrap, preserving the original local state on mismatch or unreadable ciphertext.
+- Handle new-PIN saving failures with retry and accessible Thai/English error messages; clear credential/key form state when no longer needed.
+- Added account recovery, data-preservation and password-reset failure regressions; documented the separate recovery-key repair step after account-password reset.
+
+## 2026-09-12 — Complete backup/restore drill
+
+- Added one encrypted disaster-recovery regression covering all 25 user-content tables from import through encrypted storage, portable export, complete simulated loss and exact-value restore.
+- Verified all 24 synced tables keep synthetic content encrypted at rest, every portable backup key is present, and all 25 tables return with the original identity and relationship values.
+- Corrected backup-test isolation to clear `scheduleItems` between cases. No backup production logic or production data changed.
+
+## 2026-09-12 — Cross-device edit identity fix
+
+- Preserved each stored row's `syncId` when form-shaped update payloads omit sync metadata, preventing a remote device from keeping the old row and adding the edit as a duplicate.
+- Corrected the two-device regression scenario to use real form-shaped updates and assert one-row convergence in both directions.
+- Confirmed the pre-fix defect on a physical Android device and desktop browser, then verified the corrected desktop-to-Android create/edit path without duplicates.
+- Installed the fixed APK in place and deployed Nexus production as `dpl_34vm47r1KBtJcwRjDriovsHEp3Cm`; post-deployment production smoke passed 2/2, the desktop test row was removed and the ledger returned to its 32-row baseline.
+
+## 2026-09-12 — Mobile/desktop CRUD and sync verification
+
+- Added mobile transaction add/edit/reload/delete browser coverage alongside the existing desktop CRUD lifecycle.
+- Added a two-device sync regression proving create, update and delete propagation from desktop to mobile and from mobile to desktop without allowing a stale device to resurrect a deletion.
+- Added coverage for signed-in five-second background sync and immediate retry when a device returns online. No application business logic changed.
+
+## 2026-09-12 — Core finance smoke coverage
+
+- Added one production-build browser flow for the ordinary-project baseline: open Dashboard, create synthetic income and expense entries, verify calculated totals, reload the page, and confirm both persisted rows through the Finance navigation.
+- Verified the core flow with 9/9 related browser tests, 26/26 related integration tests, TypeScript, lint, release build and bundle budget.
+
+## 2026-09-09 — Backup and media-secret hardening
+
+- Bounded Nexus backup imports to 25 MB and 250,000 rows, rejected unsupported versions, invalid export dates, and non-object rows before modifying local data.
+- Split Nexus Tools administrator authorization from owner-media cookie signing with a dedicated production secret.
+- Pinned CI GitHub Actions to reviewed commit SHAs and added production-dependency vulnerability gates.
+- Reconciled the four production Supabase migrations with migration history; a linked dry run now reports the database is up to date.
+- Added a repeatable Windows Android build using JDK 21 and a short temporary directory, produced a verified debug APK, and installed it in-place on the connected test device.
+- Hardened MFA backup codes: password-only sessions can no longer list or replace recovery hashes; redemption now uses an atomic, rate-limited database RPC and all management requires `aal2`.
+- Added reproducible, validated CycloneDX production-dependency SBOM generation and 90-day CI artifacts for Nexus, Nexus Tools, and the DataLens frontend.
+- Deployed Nexus `dpl_BZkReB55ATVkS3dmLcTnZHpf6jGg` and Tools `dpl_EPu5Kjcc4eG2TRbfBAjPrxNH4phQ`; production smoke passed 2/2.
+
+## 2026-09-09 — Five-role executive and compliance hardening
+
+- Completed independent legal/privacy, security architecture, executive UX, QA/reliability, and commercial due-diligence reviews with cross-review.
+- Added production security headers to Nexus and verified them in automated smoke coverage.
+- Hardened DataLens v0.7.0 with fail-closed hosted authentication, TOTP `aal2` enforcement, mobile Nexus return navigation, and non-certification approval language.
+- Applied live Supabase search-path and RLS initialization-plan hardening; the production performance advisor now reports no issues.
+- Added incident-response, data-rights/retention, vendor-transfer, legal-readiness, executive-UX, and commercial due-diligence records plus CycloneDX npm SBOMs.
+- Deployed Nexus `dpl_6Jm7nBCSf45s874JLB1KpSH8WndP`, Tools `dpl_6EebzdVEhB44hiGmBFaz5AP5RauJ`, and DataLens `dpl_88vRJpym3LkSDpXAnYEeAdSEtxpz`; production smoke passed.
+
+## 2026-09-08 — Executive readiness hardening
+
+- Removed the unconsumed legacy gallery-scan presentation component after confirming the live Transactions flow already uses the complete concurrent scanner pipeline.
+- Added an enforceable release bundle budget (500 KiB per JS chunk, 4 MiB total JS) and connected it to CI.
+- Scoped product lint away from generated output and duplicated agent/skill tooling; the verified product lint now completes without warnings.
+- Updated the vulnerable transitive XML dependency through the compatible lockfile resolution; `npm audit` now reports zero known vulnerabilities.
+- Revalidated Executive, accessibility, theme, keyboard navigation, complete workspace discoverability, and the scanner regression suite.
+- Added a 480px responsive Nexus monogram asset for mobile; constrained All-page LCP improved from 4,024 ms to 3,220 ms while preserving the full-resolution desktop artwork.
+- Added a public-brand-only HTML entry shell for anonymous cold starts, eliminating the blank screen before React authentication loads without changing the auth gate. Production mobile cold-login LCP measured 1,616/1,804/1,892 ms with CLS 0.
+- Published the verified release to `nexus-lemon-eight-32.vercel.app` as deployment `dpl_H4sB9aTMVoxqPzXYjkzKz7nQt38F`.
+- Included DataLens in the executive release gate and deployed `dpl_HU4sTZxuj5AGS4JpF42N8q9mvNJK` to `datalens-kappa-one.vercel.app`; production smoke now verifies its authentication boundary and security headers.
+
+## 2026-09-08 — Restore complete workspace navigation
+
+- Removed the Simple/Pro presentation filter that made established Main workspaces appear to be missing.
+- Restored all 25 finance, trading, investment, productivity, security, schedule and health destinations to desktop and mobile navigation without changing user data or route behavior.
+- Added a Playwright regression check that verifies every workspace link remains visible on desktop and in the mobile More menu.
+- Corrected three low-contrast destructive-action states found during the restoration audit.
+
+## 2026-09-08 — Biometric state recovery after updates
+
+- The native lock screen now reconciles its WebView flag with Android Keystore after an update, restoring fingerprint unlock when the protected credential is still present.
+- A recovered credential is removed only if biometric authentication succeeds but its stored PIN no longer matches the device's current App Lock PIN.
+
+## 2026-09-08 — Stable PIN unlock during deployments
+
+- Fixed a cross-tab race where a correct PIN could be reported as incorrect if All or Main published a new lock generation while the app was performing encrypted-key derivation.
+- A verified PIN now acknowledges the newest lock generation atomically; any genuinely later lock signal still takes effect immediately.
+
+## 2026-09-08 — Automatic on-device slip scan
+
+- Nexus Main now checks the Android gallery for new slip QR images automatically when the Transactions page opens.
+- Gallery permission is requested once; later checks run without requiring bank or date selection.
+- Incremental scan cache and Smart Import duplicate checks prevent old images and existing transactions from being imported twice.
+- Detected entries still open in Import Preview before they are committed, so uncertain OCR results cannot silently change the ledger.
+
+## 2026-09-08 — QR device unlock
+
+- Added a two-minute, one-time QR flow for unlocking a desktop from an already-unlocked Android device.
+- Added live in-app camera scanning with deferred loading so the All workspace stays fast.
+- Added end-to-end AES-GCM key transfer and same-account row-level security; PINs remain device-local.
+
+## 2026-09-01 — audit remediation
+
+- Synchronized same-origin PIN locks and invalidated stale remembered tab sessions; clear other tabs' in-memory DEKs without broadcasting secrets.
+- Corrected selected command-group contrast using the shared action foreground.
+- Restored anonymous Tools local utilities while retaining private cloud identity/MFA authorization.
+- Repaired exact control selectors, local-date budget fixtures, login build configuration and isolated performance execution; added auth/login/performance CI steps.
+- Applied compatible dependency security patches and synchronized the current access/security documentation. Validation and production references: [AUDIT_REMEDIATION_2026-09-01.md](AUDIT_REMEDIATION_2026-09-01.md).
+- Closed the follow-up audit findings: remembered fresh tabs now obey Main's idle timeout; login fonts no longer compete as critical preloads on constrained first visits; the authenticated All layout suite is current and wired into CI; Tools performance checks run separately with one Chromium worker.
+- Installed the unified Android launcher on device `V2348`: native cold launch reserves `/` for Nexus All while explicit Main routes retain their existing PIN gate. Latest web assets were synced into the existing debug native shell, aligned, signed with the same debug certificate and installed with `adb install -r` so app data was preserved.
+
 - Unified the Trading Dashboard and Journal behind a responsive Trading workspace header inspired by the standalone `Trading_journal` prototype: Dashboard/Journal/Analytics navigation, live trade-count and total-P/L context, and a clearly grouped analytics surface. The implementation reuses Nexus's existing synced Trade model, stores, drawers, charts, filters, CSV export, risk controls, and analytics hooks rather than importing the prototype's single-file/localStorage architecture.
 - Narrowed the remaining synchronous AI Analytics hooks: `useWhatIfScenario` now selects five data collections and `useCategoryDetail` selects three, preventing unrelated store state from re-running either calculation; both have render/result-identity regression coverage.
 - Narrowed `useFinancialAnalysis` to its six actual input collections, preventing unrelated store state changes from re-running the full analysis engine; regression coverage locks both render count and engine call count.
@@ -10,7 +159,7 @@
 - Narrowed `useGlobalSearch` subscriptions to the searchable collection in each of its 11 stores, preventing unrelated loading/error/action state changes from re-rendering and recomputing global search; regression-tested with an unrelated transaction-store update.
 - Clarified the dual health-calculation boundary without changing results: recommendation rules now consume explicitly named `ruleHealthSignals`, while the weighted `financialHealthScore` remains the sole UI/reporting score; the legacy public `healthScore` field is retained and deprecated for compatibility.
 
-**Last Updated:** 2026-08-30
+**Last Updated:** 2026-09-08
 
 ## Overview
 
@@ -25,6 +174,14 @@ This changelog is reconstructed directly from `git log`, grouped into milestones
 The full commit history spans **2026-07-25 to 2026-08-22**, with the AI Analytics module and several other major features landing on 2026-08-01 alone, Gallery Scanner/Payment Notification Capture/Vault/Workout Tracker/sync hardening work concentrated in the 2026-08-15 to 2026-08-18 window, a full architecture review's refactoring order (sync perf, Drawer a11y, appLockStore slices, PLAINTEXT_KEYS, Disable Encryption) worked through on 2026-08-18/19, and Reports/Deeper Trading Analytics/the Executive Dashboard Foundation (EXEC-001)/a Tier 1-3 backlog cleanup pass/two-factor authentication + Login History/email OTP sign-up verification/the AI Gateway's Claude wiring/a redesigned Login screen/a weekly-digest automation landing 2026-08-20 through 2026-08-22.
 
 ## Major Milestones
+
+### Cross-device deletion consistency (2026-09-08)
+- Fixed a delete/edit conflict where a stale desktop copy could resurrect a row deleted on mobile when the desktop clock appeared newer. Server tombstones are now terminal for the original `syncId`, enforced in both the sync client and the live Supabase trigger; a newly created item still receives a fresh identity. Added a clock-skew regression test.
+
+### Finance-first product foundation (2026-09-08)
+- Added persisted Simple and Pro experience modes in Settings. Simple mode narrows desktop and mobile navigation to everyday finance, goals, tasks, and habits; Pro remains the default and exposes every existing workspace. Switching modes never changes or deletes data.
+- Defined the initial commercial audience, product positioning, pilot metrics, research protocol, release gates, and candidate paid-value hypotheses without claiming product-market fit or approved pricing.
+- Added privacy and terms scopes grounded in the current local-first, optional-sync architecture and explicitly marked them for Thai legal review before public use.
 
 ### Validation baseline and concurrent-test stabilization (2026-08-29)
 - Verified production Build/TypeScript and oxlint clean; the initial build exposed a shared-chunk size warning that was resolved in the bundle-splitting step below.
@@ -160,7 +317,7 @@ A Strava-inspired workout logger: an exercise catalog (calorie rate, optional Yo
 Adds a from/to date picker to the existing bank-selection popup, with a live pre-scan count estimate (the same native query that will drive the actual scan). A date-range scan is deliberately non-resumable and excluded from the normal incremental scan's cursor/resume lifecycle — closing a real hazard found during design, not just implementation: a paused date-range run being picked up by a later unrelated normal scan's resume logic, corrupting its cursor. Verified live on-device including an exact numeric match between the pre-scan estimate and the actual scan's total.
 
 ### Sync engine — a second hardening round (2026-08-17 → 2026-08-18, `1b6fd60` → `11727b9`)
-A real cross-device data mismatch (a transaction present on the desktop but never reaching the phone) was traced — not assumed — through several layers of evidence to a specific root cause: `pullTable()`'s cursor-advance nudge could push a device's own push cursor past a local, not-yet-pushed row whenever a row pulled from another device had a newer `updatedAt`, silently excluding that local row from every future push with no error ever surfaced (`1b6fd60`, reproduced with a failing test first). That fix stops new corruption but doesn't repair cursors already left stuck by the old behavior on an existing install — closed by a one-time, per-device self-healing migration (`1c84a16`) that clears every `push:<table>` cursor exactly once, safe to run unconditionally since re-pushing an already-synced row is a harmless idempotent upsert. Separately, duplicate account/category records left behind whenever two devices each seed their own defaults before ever syncing (undetectable by the existing syncId-based dedup, since they're genuinely different syncIds for the same real-world thing) now merge automatically on every sync pass (`11727b9`) instead of requiring a manual "Merge Duplicates" button press.
+A real cross-device data mismatch (a transaction present on the desktop but never reaching the phone) was traced — not assumed — through several layers of evidence to a specific root cause: `pullTable()`'s cursor-advance nudge could push a device's own push cursor past a local, not-yet-pushed row whenever a row pulled from another device had a newer `updatedAt`, silently excluding that local row from every future push with no error ever surfaced (`1b6fd60`, reproduced with a failing test first). That fix stops new corruption but doesn't repair cursors already left stuck by the old behavior on an existing install — closed by a one-time, per-device self-healing migration (`1c84a16`) that clears every `push:<table>` cursor exactly once. Reconsidered rows are now protected by the database live-version guard and terminal tombstones. Separately, duplicate account/category records left behind whenever two devices each seed their own defaults before ever syncing (undetectable by the existing syncId-based dedup, since they're genuinely different syncIds for the same real-world thing) now merge automatically on every sync pass (`11727b9`) instead of requiring a manual "Merge Duplicates" button press.
 
 ### Documentation sync + two real Workout Tracker gaps found and fixed (2026-08-18)
 A full `/docs` sync pass (this document, README, ROADMAP, TECHNICAL_DEBT, TASK_REGISTRY, MODULES, DATABASE_SCHEMA, SECURITY, TESTING_GUIDE, PROJECT_ARCHITECTURE, STATE_MANAGEMENT, ROUTING, COMPONENT_LIBRARY, DEPENDENCY_GRAPH, PROJECT_TREE) verified every doc against current source and closed the gap left by 51 commits since the last sync. While cross-checking every recently-added table against every table-enumerating file in the codebase, found two real, previously-unnoticed bugs from when the Workout Tracker (v20 schema) shipped: `workoutExercises`/`workoutEntries` were silently excluded from `backupService.ts`'s export/import/reset (the same class of gap already fixed once for `vaultEntries`), and missing from `enableEncryption.ts`'s migration table list entirely (a pre-existing workout row would never get encrypted when a user enabled encryption). Both fixed, with a third, unrelated pre-existing test-isolation bug found and fixed along the way — a hand-duplicated, already-stale table list local to `enableEncryption.test.ts` was silently leaking encrypted rows between tests.

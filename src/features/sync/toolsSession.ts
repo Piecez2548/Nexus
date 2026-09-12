@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabaseClient";
 import { useAuthStore } from "./store/authStore";
+import { useAppSettingsStore } from "@/store/appSettingsStore";
 
 export const toolsOrigin = "https://nexus-tools-chi.vercel.app";
 
@@ -33,7 +34,7 @@ export function openNexusTools() {
       if (error || !data.session) return;
       const verified = await supabase.auth.getUser(data.session.access_token);
       if (verified.error || verified.data.user?.id !== useAuthStore.getState().user?.id) return;
-      child.postMessage({ type: "nexus:session", nonce, access_token: data.session.access_token, refresh_token: data.session.refresh_token }, toolsOrigin);
+      child.postMessage({ type: "nexus:session", nonce, access_token: data.session.access_token, refresh_token: data.session.refresh_token, theme: useAppSettingsStore.getState().themeMode }, toolsOrigin);
     })().catch(() => { /* Tools falls back to its own sign-in screen. Never log credentials. */ });
   };
   window.addEventListener("message", onMessage);

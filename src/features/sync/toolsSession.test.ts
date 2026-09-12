@@ -21,7 +21,7 @@ test("sends a verified session only to the launched Tools window with the matchi
   expect(mocks.getSession).not.toHaveBeenCalled();
   send(toolsOrigin, child);
   await vi.waitFor(() => expect(child.postMessage).toHaveBeenCalledTimes(1));
-  expect(child.postMessage).toHaveBeenCalledWith({ type: "nexus:session", nonce, access_token: "test-access", refresh_token: "test-refresh" }, toolsOrigin);
+  expect(child.postMessage).toHaveBeenCalledWith({ type: "nexus:session", nonce, access_token: "test-access", refresh_token: "test-refresh", theme: "dark" }, toolsOrigin);
   expect(url.href).not.toContain("token");
   send(toolsOrigin, child);
   expect(child.postMessage).toHaveBeenCalledTimes(1);

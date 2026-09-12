@@ -1,0 +1,559 @@
+{
+  "task": "SYNC-LATENCY-001",
+  "date": "2026-09-13",
+  "method": "Live UI, passive Android WebView network events; no interception/offline override; task-only transaction",
+  "baselineCounts": {
+    "desktop": 32,
+    "android": 32
+  },
+  "foregroundSamples": [
+    {
+      "sample": "D-edit-21",
+      "saveStart": 1789234114777,
+      "saveClickReturned": 1789234116892,
+      "phoneVisible": 1789234125228,
+      "transactionResponseEnd": 1789234120759,
+      "transactionRequestMs": 188,
+      "pullCount": 24,
+      "cycleStart": 1789234120571,
+      "cycleEnd": 1789234125008,
+      "pullCycleMs": 4437,
+      "responseToUiMs": 4469,
+      "lastResponseToUiMs": 220,
+      "saveActionToUiMs": 10451,
+      "requests": [
+        {
+          "table": "transactions",
+          "start": 1789234120571,
+          "end": 1789234120759,
+          "status": 200
+        },
+        {
+          "table": "accounts",
+          "start": 1789234120793,
+          "end": 1789234120958,
+          "status": 200
+        },
+        {
+          "table": "categories",
+          "start": 1789234120973,
+          "end": 1789234121133,
+          "status": 200
+        },
+        {
+          "table": "recipientProfiles",
+          "start": 1789234121219,
+          "end": 1789234121392,
+          "status": 200
+        },
+        {
+          "table": "budgets",
+          "start": 1789234121394,
+          "end": 1789234121558,
+          "status": 200
+        },
+        {
+          "table": "goals",
+          "start": 1789234121579,
+          "end": 1789234121739,
+          "status": 200
+        },
+        {
+          "table": "transactionTemplates",
+          "start": 1789234121758,
+          "end": 1789234121932,
+          "status": 200
+        },
+        {
+          "table": "trades",
+          "start": 1789234121934,
+          "end": 1789234122109,
+          "status": 200
+        },
+        {
+          "table": "todos",
+          "start": 1789234122117,
+          "end": 1789234122276,
+          "status": 200
+        },
+        {
+          "table": "habits",
+          "start": 1789234122299,
+          "end": 1789234122460,
+          "status": 200
+        },
+        {
+          "table": "holdings",
+          "start": 1789234122494,
+          "end": 1789234122644,
+          "status": 200
+        },
+        {
+          "table": "calendarEvents",
+          "start": 1789234122655,
+          "end": 1789234122826,
+          "status": 200
+        },
+        {
+          "table": "scheduleItems",
+          "start": 1789234122841,
+          "end": 1789234123012,
+          "status": 200
+        },
+        {
+          "table": "goalMilestoneEvents",
+          "start": 1789234123059,
+          "end": 1789234123194,
+          "status": 200
+        },
+        {
+          "table": "vaultEntries",
+          "start": 1789234123203,
+          "end": 1789234123400,
+          "status": 200
+        },
+        {
+          "table": "workoutExercises",
+          "start": 1789234123424,
+          "end": 1789234123610,
+          "status": 200
+        },
+        {
+          "table": "workoutEntries",
+          "start": 1789234123631,
+          "end": 1789234123804,
+          "status": 200
+        },
+        {
+          "table": "netWorthItems",
+          "start": 1789234123828,
+          "end": 1789234123976,
+          "status": 200
+        },
+        {
+          "table": "netWorthSnapshots",
+          "start": 1789234123978,
+          "end": 1789234124128,
+          "status": 200
+        },
+        {
+          "table": "subscriptions",
+          "start": 1789234124149,
+          "end": 1789234124286,
+          "status": 200
+        },
+        {
+          "table": "budgetPeriodSnapshots",
+          "start": 1789234124306,
+          "end": 1789234124463,
+          "status": 200
+        },
+        {
+          "table": "strategies",
+          "start": 1789234124486,
+          "end": 1789234124662,
+          "status": 200
+        },
+        {
+          "table": "watchlistItems",
+          "start": 1789234124669,
+          "end": 1789234124829,
+          "status": 200
+        },
+        {
+          "table": "economicEvents",
+          "start": 1789234124836,
+          "end": 1789234125008,
+          "status": 200
+        }
+      ]
+    },
+    {
+      "sample": "D-edit-22",
+      "saveStart": 1789234159415,
+      "saveClickReturned": 1789234161859,
+      "phoneVisible": 1789234170338,
+      "transactionResponseEnd": 1789234165725,
+      "transactionRequestMs": 172,
+      "pullCount": 24,
+      "cycleStart": 1789234165553,
+      "cycleEnd": 1789234169966,
+      "pullCycleMs": 4413,
+      "responseToUiMs": 4613,
+      "lastResponseToUiMs": 372,
+      "saveActionToUiMs": 10923,
+      "requests": [
+        {
+          "table": "transactions",
+          "start": 1789234165553,
+          "end": 1789234165725,
+          "status": 200
+        },
+        {
+          "table": "accounts",
+          "start": 1789234165747,
+          "end": 1789234165936,
+          "status": 200
+        },
+        {
+          "table": "categories",
+          "start": 1789234165947,
+          "end": 1789234166116,
+          "status": 200
+        },
+        {
+          "table": "recipientProfiles",
+          "start": 1789234166201,
+          "end": 1789234166365,
+          "status": 200
+        },
+        {
+          "table": "budgets",
+          "start": 1789234166366,
+          "end": 1789234166520,
+          "status": 200
+        },
+        {
+          "table": "goals",
+          "start": 1789234166535,
+          "end": 1789234166702,
+          "status": 200
+        },
+        {
+          "table": "transactionTemplates",
+          "start": 1789234166720,
+          "end": 1789234166888,
+          "status": 200
+        },
+        {
+          "table": "trades",
+          "start": 1789234166889,
+          "end": 1789234167036,
+          "status": 200
+        },
+        {
+          "table": "todos",
+          "start": 1789234167040,
+          "end": 1789234167223,
+          "status": 200
+        },
+        {
+          "table": "habits",
+          "start": 1789234167242,
+          "end": 1789234167412,
+          "status": 200
+        },
+        {
+          "table": "holdings",
+          "start": 1789234167434,
+          "end": 1789234167595,
+          "status": 200
+        },
+        {
+          "table": "calendarEvents",
+          "start": 1789234167599,
+          "end": 1789234167753,
+          "status": 200
+        },
+        {
+          "table": "scheduleItems",
+          "start": 1789234167765,
+          "end": 1789234167925,
+          "status": 200
+        },
+        {
+          "table": "goalMilestoneEvents",
+          "start": 1789234167942,
+          "end": 1789234168132,
+          "status": 200
+        },
+        {
+          "table": "vaultEntries",
+          "start": 1789234168140,
+          "end": 1789234168344,
+          "status": 200
+        },
+        {
+          "table": "workoutExercises",
+          "start": 1789234168366,
+          "end": 1789234168527,
+          "status": 200
+        },
+        {
+          "table": "workoutEntries",
+          "start": 1789234168549,
+          "end": 1789234168708,
+          "status": 200
+        },
+        {
+          "table": "netWorthItems",
+          "start": 1789234168728,
+          "end": 1789234168895,
+          "status": 200
+        },
+        {
+          "table": "netWorthSnapshots",
+          "start": 1789234168904,
+          "end": 1789234169062,
+          "status": 200
+        },
+        {
+          "table": "subscriptions",
+          "start": 1789234169069,
+          "end": 1789234169242,
+          "status": 200
+        },
+        {
+          "table": "budgetPeriodSnapshots",
+          "start": 1789234169254,
+          "end": 1789234169415,
+          "status": 200
+        },
+        {
+          "table": "strategies",
+          "start": 1789234169437,
+          "end": 1789234169623,
+          "status": 200
+        },
+        {
+          "table": "watchlistItems",
+          "start": 1789234169624,
+          "end": 1789234169794,
+          "status": 200
+        },
+        {
+          "table": "economicEvents",
+          "start": 1789234169801,
+          "end": 1789234169966,
+          "status": 200
+        }
+      ]
+    },
+    {
+      "sample": "D-edit-23",
+      "saveStart": 1789234253864,
+      "saveClickReturned": 1789234256779,
+      "phoneVisible": 1789234267930,
+      "transactionResponseEnd": 1789234261147,
+      "transactionRequestMs": 581,
+      "pullCount": 24,
+      "cycleStart": 1789234260566,
+      "cycleEnd": 1789234267399,
+      "pullCycleMs": 6833,
+      "responseToUiMs": 6783,
+      "lastResponseToUiMs": 531,
+      "saveActionToUiMs": 14066,
+      "requests": [
+        {
+          "table": "transactions",
+          "start": 1789234260566,
+          "end": 1789234261147,
+          "status": 200
+        },
+        {
+          "table": "accounts",
+          "start": 1789234261202,
+          "end": 1789234262077,
+          "status": 200
+        },
+        {
+          "table": "categories",
+          "start": 1789234262098,
+          "end": 1789234262286,
+          "status": 200
+        },
+        {
+          "table": "recipientProfiles",
+          "start": 1789234262366,
+          "end": 1789234262672,
+          "status": 200
+        },
+        {
+          "table": "budgets",
+          "start": 1789234262677,
+          "end": 1789234262850,
+          "status": 200
+        },
+        {
+          "table": "goals",
+          "start": 1789234262865,
+          "end": 1789234263051,
+          "status": 200
+        },
+        {
+          "table": "transactionTemplates",
+          "start": 1789234263067,
+          "end": 1789234263498,
+          "status": 200
+        },
+        {
+          "table": "trades",
+          "start": 1789234263506,
+          "end": 1789234263663,
+          "status": 200
+        },
+        {
+          "table": "todos",
+          "start": 1789234263671,
+          "end": 1789234264421,
+          "status": 200
+        },
+        {
+          "table": "habits",
+          "start": 1789234264452,
+          "end": 1789234264631,
+          "status": 200
+        },
+        {
+          "table": "holdings",
+          "start": 1789234264660,
+          "end": 1789234264828,
+          "status": 200
+        },
+        {
+          "table": "calendarEvents",
+          "start": 1789234264831,
+          "end": 1789234264995,
+          "status": 200
+        },
+        {
+          "table": "scheduleItems",
+          "start": 1789234265014,
+          "end": 1789234265189,
+          "status": 200
+        },
+        {
+          "table": "goalMilestoneEvents",
+          "start": 1789234265220,
+          "end": 1789234265559,
+          "status": 200
+        },
+        {
+          "table": "vaultEntries",
+          "start": 1789234265565,
+          "end": 1789234265727,
+          "status": 200
+        },
+        {
+          "table": "workoutExercises",
+          "start": 1789234265774,
+          "end": 1789234265956,
+          "status": 200
+        },
+        {
+          "table": "workoutEntries",
+          "start": 1789234265975,
+          "end": 1789234266135,
+          "status": 200
+        },
+        {
+          "table": "netWorthItems",
+          "start": 1789234266158,
+          "end": 1789234266314,
+          "status": 200
+        },
+        {
+          "table": "netWorthSnapshots",
+          "start": 1789234266321,
+          "end": 1789234266488,
+          "status": 200
+        },
+        {
+          "table": "subscriptions",
+          "start": 1789234266495,
+          "end": 1789234266667,
+          "status": 200
+        },
+        {
+          "table": "budgetPeriodSnapshots",
+          "start": 1789234266689,
+          "end": 1789234266861,
+          "status": 200
+        },
+        {
+          "table": "strategies",
+          "start": 1789234266882,
+          "end": 1789234267045,
+          "status": 200
+        },
+        {
+          "table": "watchlistItems",
+          "start": 1789234267056,
+          "end": 1789234267215,
+          "status": 200
+        },
+        {
+          "table": "economicEvents",
+          "start": 1789234267224,
+          "end": 1789234267399,
+          "status": 200
+        }
+      ]
+    }
+  ],
+  "mobileSamples": [
+    {
+      "name": "M-create-20",
+      "amount": 20,
+      "saveStart": 1789234034254,
+      "localVisible": 1789234034616,
+      "desktopAbsentAt": 1789234041060,
+      "desktopPresentAt": 1789234056119,
+      "uploadStart": 1789234035739,
+      "uploadEnd": 1789234036065,
+      "uploadHttpStatus": 201
+    },
+    {
+      "name": "M-edit-25",
+      "amount": 25,
+      "saveStart": 1789234437162,
+      "localVisible": 1789234437407,
+      "desktopAbsentAt": 1789234451429,
+      "desktopPresentAt": 1789234452194,
+      "uploadStart": 1789234440877,
+      "uploadEnd": 1789234441665,
+      "uploadHttpStatus": 200
+    }
+  ],
+  "background": {
+    "name": "D-edit-24-background",
+    "amount": 24,
+    "backgroundObservedAt": 1789234289346,
+    "visibility": "visible",
+    "saveStart": 1789234322142,
+    "saveClickReturned": 1789234325160,
+    "waitError": "locator.waitFor: Timeout 45000ms exceeded.",
+    "foregroundObservedAt": 1789234396881,
+    "phoneVisible": 1789234408462,
+    "nativeForegroundActivityDuringTest": "com.android.launcher3/com.bbk.launcher2.Launcher",
+    "nativeActivityRestored": "com.nexus.app/.MainActivity",
+    "longRequest": {
+      "table": "strategies",
+      "start": 1789234289845,
+      "end": 1789234388993,
+      "observedCompletionGapMs": 99148
+    },
+    "limits": "DOM observer timed out while backgrounded; request completion gap may include app/event delivery suspension, not server latency. Foreground and final UI observation timestamps are upper bounds, not an exact resume benchmark."
+  },
+  "desktopVisibilityProbe": {
+    "before": "visible",
+    "withBrowserPanelHidden": "visible",
+    "restored": true
+  },
+  "cleanup": {
+    "status": "verified",
+    "desktopCount": 32,
+    "androidCount": 32,
+    "temporaryRecordAbsentOnBoth": true,
+    "scanActive": false,
+    "androidReturnedToForeground": true,
+    "desktopVisibilityRestored": true,
+    "networkInterceptionUsed": false,
+    "deviceNetworkOrClockSettingsChanged": false
+  },
+  "sourceHashes": {
+    "src/features/sync/syncEngine.ts": "d7b7a85f3d10b21475234866b67d7a3c0934b66b4be5e2a355358a33cc2d54d2",
+    "src/features/sync/components/SyncProvider.tsx": "f67ca712255b53d80a6e5d3581374cdc031c4b0601fbe925a4ba10ac862ca3f0",
+    "src/features/sync/store/authStore.ts": "756c0cfe7319d9018aab5d165ff94dd570eec929300ce77ddc8bbbe1c9972b71"
+  }
+}

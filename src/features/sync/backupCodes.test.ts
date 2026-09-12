@@ -62,7 +62,18 @@ function fromMock() {
 
 vi.mock("@/lib/supabaseClient", () => ({
   isSyncConfigured: true,
-  supabase: { from: () => fromMock() },
+  supabase: {
+    from: () => fromMock(),
+    rpc: async (_name: string, { p_code }: { p_code: string }) => {
+      for (const row of rows.filter((candidate) => candidate.used_at === null)) {
+        const { hashPin } = await import("@/features/lock/utils/pinHash");
+        if ((await hashPin(p_code, row.salt)) !== row.code_hash) continue;
+        row.used_at = new Date().toISOString();
+        return { data: true, error: null };
+      }
+      return { data: false, error: null };
+    },
+  },
 }));
 
 const { generateBackupCodes, redeemBackupCode, countRemainingBackupCodes, formatBackupCode } = await import("./backupCodes");

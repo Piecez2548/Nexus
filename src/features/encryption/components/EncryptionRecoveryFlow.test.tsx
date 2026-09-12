@@ -14,6 +14,8 @@ const { useAppLockStore } = await import("@/store/appLockStore");
 const { useEncryptionSessionStore } = await import("@/features/encryption/store/encryptionSessionStore");
 const { generateDek } = await import("@/features/encryption/crypto/encryption");
 const { RecoveryNotAvailableError } = await import("@/features/encryption/recovery/recoverDekFromEscrow");
+const { RecoveryKeyMismatchError } = await import("@/features/encryption/recovery/validateRecoveryKey");
+const originalCompleteRecovery = useAppLockStore.getState().completeRecovery;
 
 describe("EncryptionRecoveryFlow", () => {
   beforeEach(() => {
@@ -26,6 +28,8 @@ describe("EncryptionRecoveryFlow", () => {
       wrappedDek: null,
       kekSalt: null,
       kekIterations: null,
+      sessionUnlocked: false,
+      completeRecovery: originalCompleteRecovery,
     });
     useEncryptionSessionStore.getState().clearDek();
     mockRecoverDekFromEscrow.mockReset();
@@ -67,6 +71,50 @@ describe("EncryptionRecoveryFlow", () => {
     expect(await screen.findByText("อีเมลหรือรหัสผ่านไม่ถูกต้อง")).toBeInTheDocument();
     // Stays on the credentials step — never reaches the new-PIN screen.
     expect(screen.queryByLabelText("New PIN")).not.toBeInTheDocument();
+  });
+
+  it("allows retry after saving the new PIN fails and calls onDone only after success", async () => {
+    mockRecoverDekFromEscrow.mockResolvedValue(await generateDek());
+    const completeRecovery = vi.fn()
+      .mockRejectedValueOnce(new Error("Storage unavailable"))
+      .mockImplementation(originalCompleteRecovery);
+    useAppLockStore.setState({ completeRecovery });
+    const onDone = vi.fn();
+    const user = userEvent.setup();
+    render(<EncryptionRecoveryFlow onDone={onDone} />);
+    await user.type(screen.getByLabelText("Email"), "me@nexus.app");
+    await user.type(screen.getByLabelText("Sync Account Password"), "correct-password");
+    await user.click(screen.getByRole("button", { name: "Recover" }));
+    await user.type(await screen.findByLabelText("New PIN"), "5678");
+    await user.type(screen.getByLabelText("Confirm New PIN"), "5678");
+    await user.click(screen.getByRole("button", { name: "Set New PIN" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't save your new PIN. Try saving again.");
+    expect(onDone).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("New PIN")).toHaveValue("5678");
+    expect(screen.getByRole("button", { name: "Set New PIN" })).toBeEnabled();
+    await user.click(screen.getByRole("button", { name: "Set New PIN" }));
+    await waitFor(() => expect(onDone).toHaveBeenCalledTimes(1));
+    expect(completeRecovery).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns to credentials and discards a key that cannot read local data", async () => {
+    mockRecoverDekFromEscrow.mockResolvedValue(await generateDek());
+    useAppLockStore.setState({ completeRecovery: vi.fn().mockRejectedValue(new RecoveryKeyMismatchError()) });
+    const onDone = vi.fn();
+    const user = userEvent.setup();
+    render(<EncryptionRecoveryFlow onDone={onDone} />);
+    await user.type(screen.getByLabelText("Email"), "me@nexus.app");
+    await user.type(screen.getByLabelText("Sync Account Password"), "correct-password");
+    await user.click(screen.getByRole("button", { name: "Recover" }));
+    await user.type(await screen.findByLabelText("New PIN"), "5678");
+    await user.type(screen.getByLabelText("Confirm New PIN"), "5678");
+    await user.click(screen.getByRole("button", { name: "Set New PIN" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("This key cannot read the data on this device. Your PIN is unchanged.");
+    expect(screen.getByLabelText("Sync Account Password")).toHaveValue("");
+    expect(screen.queryByLabelText("New PIN")).not.toBeInTheDocument();
+    expect(onDone).not.toHaveBeenCalled();
   });
 
   it("shows a generic error message for an unexpected failure", async () => {

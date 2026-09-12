@@ -20,17 +20,16 @@ interface Props {
 const linkClassName = ({ isActive }: { isActive: boolean }) =>
   `flex items-center gap-3 rounded-xl px-4 py-3 transition ${
     isActive
-      ? "bg-brand-600 text-white"
+      ? "main-nav-active"
       : "text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
   }`;
 
 export default function MobileMoreMenu({ open, onClose }: Props) {
   const { t } = useTranslation();
-
   return (
-    <Drawer open={open} onClose={onClose}>
+    <Drawer open={open} onClose={onClose} label={t("nav.menu")}>
       <div className="space-y-6">
-        <h2 className="text-xl font-bold">{t("nav.menu")}</h2>
+        <h2 className="pr-14 text-xl font-bold">{t("nav.menu")}</h2>
 
         {SECTIONS.map((section) => (
           <div key={section.titleKey}>

@@ -1,0 +1,17 @@
+node_modules
+dist
+release
+test-results
+playwright-report
+coverage
+.env*
+.git
+.agents
+.claude
+.codex
+.impeccable
+.codex-tools
+.github
+*.log
+android
+electron

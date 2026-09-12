@@ -51,7 +51,7 @@ export default function MultiFileField({ id, values, onChange }: Props) {
                 type="button"
                 onClick={() => handleRemove(index)}
                 aria-label={t("common.removeScreenshotN", { n: index + 1 })}
-                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-zinc-900 dark:text-white hover:bg-red-700"
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
               >
                 <X size={12} />
               </button>

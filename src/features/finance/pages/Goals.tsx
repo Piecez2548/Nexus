@@ -44,7 +44,7 @@ export default function Goals() {
 
         <button
           onClick={handleAdd}
-          className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-zinc-900 dark:text-white transition hover:bg-brand-700"
+          className="flex items-center gap-2 rounded-xl px-4 py-2 transition nexus-primary-action"
         >
           <Plus size={18} />
           {t("goals.addGoal")}

@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last Updated:** 2026-08-30
+**Last Updated:** 2026-09-08
 
 ## Overview
 
@@ -68,7 +68,11 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Device-local PIN + biometric App Lock, auto-lock timeout
 - [x] Supabase email/password authentication (optional, no-op if unconfigured)
 - [x] Client-side AES-GCM encryption-at-rest, PBKDF2 key derivation, account-password-based escrow/recovery
-- [x] Generic push/pull sync engine, tombstone-based deletion propagation, last-write-wins conflict handling, malformed-row guard, self-healing push-cursor repair (a one-time per-device migration that clears any push cursor left stuck by a since-fixed nudge bug)
+- [x] Generic push/pull sync engine, tombstone-based deletion propagation, atomic live-record last-write-wins conflict handling, malformed-row guard, self-healing push-cursor repair (a one-time per-device migration that clears any push cursor left stuck by a since-fixed nudge bug)
+- [x] Durable local version allocation for clock rollback and same-millisecond edits, committed atomically with plaintext/encrypted writes; reused by encryption migrations and legacy backfill ([SC-002](SYNC_CONFLICT_FIX_002_2026-09-12.md)).
+- [x] SC-003: compare applied versions and advance the push cursor transactionally; v2 repair reconsiders previously skipped rows ([evidence](SYNC_CONFLICT_FIX_003_2026-09-12.md)).
+- [x] Physical desktop/Android offline/reconnect and selective-failure verification of the combined SC-001/002/003 fixes, with explicit limits for dual-radio and clock testing ([evidence](SYNC_LIVE_VERIFICATION_2026-09-12.md)).
+- [x] Refresh successfully pulled stores before unrelated later table pulls complete, while retaining final dedupe reconciliation ([evidence](SYNC_LATENCY_FIX_2026-09-13.md)).
 - [x] App-wide, persisted Audit Log (auth, encryption, lock, vault, backup events — success/failure, never sensitive content)
 - [x] Permission Manager (SEC-001) — a single dedicated view of every OS-level permission the app requests (Gallery, Location, Local Notifications, Notification Access), with Request/Open Settings actions, replacing scattered inline permission checks
 - [x] Disable Encryption flow (SEC-005) — the symmetric inverse of `enableEncryption`: decrypts every table and verifies none remain encrypted before clearing the wrapped DEK, so the app can never be left with data permanently unreadable if interrupted partway through
@@ -77,6 +81,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] OTP email verification at sign-up — a 6-digit code emailed via Supabase Auth's `verifyOtp`/`resend`, replacing the previous link-based confirmation; also closes a duplicate-account gap by detecting Supabase's "empty identities array" signal for an email that already belongs to a confirmed account
 
 ### Platform & cross-cutting
+- [x] Simple/Pro experience modes — progressive navigation disclosure over the same data, with Pro preserving the complete existing workspace
 - [x] Full Thai/English i18n (validation messages included, via a `TranslateFn`-factory pattern)
 - [x] Dark/light/system/mono themes
 - [x] Gamification layer (XP, levels, streaks)
@@ -85,7 +90,19 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Sentry error monitoring (optional)
 - [x] CI pipeline (lint, type-check, unit/integration tests, build, e2e) on every push/PR to `main`
 
+### Product validation and commercial readiness
+- [x] Finance-first positioning, initial audience, Simple/Pro boundaries, pilot metrics, research protocol, and launch gates documented
+- [x] Privacy and terms scopes drafted from the implemented data flows and clearly marked for legal review
+- [ ] Complete 15–30 target-user interviews and two four-week pilot cohorts
+- [ ] Obtain Thai legal review of the privacy notice, terms, consent, retention, deletion, and financial disclaimers
+- [ ] Complete an independent security review and remediate critical/high findings
+- [ ] Validate willingness to pay before approving packages or prices
+- [ ] Validate licensed bank, brokerage, and market-data integrations before implementation
+- [ ] Validate an organization product before adding tenants, roles, approvals, company reporting, or SLAs
+
 ## Recently Shipped (detailed)
+
+- **Foreground sync visibility latency (2026-09-13).** Changed stores now refresh immediately after their table pull, while unchanged encrypted envelopes reuse DEK-scoped decrypted content during the unlocked session. Three physical Android traces reduced the pull-response-to-UI median from 4,613 ms to 69.5 ms (98.5%); the final post-deduplication refresh remains for referential consistency. The remaining 4.571–8.136 second cloud-write-to-UI time is scheduler/pass-start latency and is the next measured optimization target.
 
 - **Gallery Slip Scanner** (`GS` epic — see [../tasks/TASK_REGISTRY.md](../tasks/TASK_REGISTRY.md) and `MASTER_TASK.md`) — a production, plugin-agnostic gallery scanner, **complete (GS 50/50 + PLT 20/20)** and **verified on-device, including a full physical tap-through of the live native flow**. The full pipeline: scan foundation (permission manager, `MediaProvider` orchestration, concurrent queue, versioned cache, GS-005–GS-008); extraction (QR detection, EMVCo/PromptPay parsing, plugin-based bank identification, OCR fallback reusing the existing Tesseract engine, slip-level dedup, GS-009–GS-013); the `SlipCandidate` model, bank-selection popup, Import Preview and Smart Import with batch/progress/resume/rollback (GS-014–GS-016); security/performance/validation/analytics layers (GS-017–GS-020); a refinement wave (GS-023–GS-039) — battery-aware scan scheduler, image hash + perceptual hash, slip validation, QR recovery (rotate/brighten/contrast retries), image enhancement, a per-field OCR engine, a slip classifier, a bank template engine, a graded-probability duplicate engine, an import conflict resolver, a background worker, a scan-progress dashboard, import history, a performance monitor, a recovery system, a security audit layer, dev tools; and the deterministic, advisory AI layers (GS-041–GS-050) — slip verification, fraud detection, transaction categorization with learning, merchant intelligence, a smart learning engine, a confidence engine, transaction linking, spending intelligence, quality review, and a financial intelligence report. The `PLT` platform epic landed alongside it: genuinely-new frameworks (Event Bus, Feature Flags, Command Palette, Local Telemetry, `src/platform/`) plus the rest mapped to existing systems (see [../tasks/Platform/PLATFORM_DESIGN.md](../tasks/Platform/PLATFORM_DESIGN.md)), certified at PLT-020.
 
@@ -111,7 +128,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 
 - **Permission Manager (SEC-001).** A single dedicated view of every OS-level permission Nexus requests — Gallery/Photos, Location, Local Notifications, and Notification Access — previously each checked/requested inline by its own feature with no central place to review them. Reuses each permission's existing check function rather than reimplementing any of them, normalized onto the Gallery Scanner's own pre-existing 6-value status union. Adds one small new native capability, `AppSettingsPlugin.java`, opening the app's generic system Settings screen — the one in-app recovery path that didn't exist before for a permanently-denied permission (mirrors the existing single-purpose `openAccessSettings()` Notification Access already had).
 
-- **Sync engine — a second hardening round.** The root cause of a real cross-device data mismatch (a transaction present on one device but never reaching the server) was traced to a subtle push-cursor bug: `pullTable()`'s cursor-advance nudge could push a device's own push cursor past a local, not-yet-pushed row, silently excluding it from every future sync pass with no error ever surfaced. Fixed at the source, plus a one-time, per-device self-healing migration that repairs any cursor already left stuck by the old behavior (safe to run unconditionally — re-pushing an already-synced row is a harmless idempotent upsert). Separately, duplicate account/category records left behind when two devices each seed their own defaults before ever syncing — previously only fixed by manually pressing "Merge Duplicates" in Settings — now merge automatically on every sync pass.
+- **Sync engine — a second hardening round.** The root cause of a real cross-device data mismatch (a transaction present on one device but never reaching the server) was traced to a subtle push-cursor bug: `pullTable()`'s cursor-advance nudge could push a device's own push cursor past a local, not-yet-pushed row, silently excluding it from every future sync pass with no error ever surfaced. Fixed at the source, plus a one-time, per-device self-healing migration that repairs any cursor already left stuck by the old behavior; reconsidered rows are protected by the atomic live-version guard and terminal tombstones. Separately, duplicate account/category records left behind when two devices each seed their own defaults before ever syncing — previously only fixed by manually pressing "Merge Duplicates" in Settings — now merge automatically on every sync pass.
 
 - **Merchant Database management (schema v5's table, previously seed-only).** Full CRUD (`merchantService`/`merchantStore`/`MerchantForm`/`MerchantTable`, `/merchants` route) mirroring Category's own entity pattern most closely — deliberately kept local-only/unsynced/unencrypted like the table already was, since it's bundled reference data, not personal content.
 

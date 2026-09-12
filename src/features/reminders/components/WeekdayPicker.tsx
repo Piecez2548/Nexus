@@ -37,7 +37,7 @@ export default function WeekdayPicker({ value, onChange }: Props) {
             aria-pressed={selected}
             className={`h-9 w-9 rounded-full text-sm font-medium transition ${
               selected
-                ? "bg-brand-600 text-white"
+                ? "nexus-primary-action"
                 : "border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-brand-500"
             }`}
           >

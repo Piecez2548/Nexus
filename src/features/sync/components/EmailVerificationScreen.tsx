@@ -3,7 +3,7 @@ import { MailCheck } from "lucide-react";
 
 import { useAuthStore } from "@/features/sync/store/authStore";
 import { useToastStore } from "@/store/toastStore";
-import { useTranslation } from "@/i18n/useTranslation";
+import { useEntryTranslation } from "@/i18n/useEntryTranslation";
 import FormField from "@/components/ui/FormField";
 
 const inputClassName =
@@ -16,7 +16,7 @@ const inputClassName =
 export default function EmailVerificationScreen() {
   const { pendingVerificationEmail, emailVerificationError, loading, verifyEmailOtp, resendEmailVerification, cancelEmailVerification } =
     useAuthStore();
-  const { t } = useTranslation();
+  const { t } = useEntryTranslation();
 
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -78,7 +78,7 @@ export default function EmailVerificationScreen() {
       <button
         type="submit"
         disabled={submitting || loading}
-        className="w-full rounded-2xl bg-brand-600 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-600/30 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
+        className="w-full rounded-2xl py-3.5 text-base font-semibold shadow-lg shadow-brand-600/25 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-brand-600/30 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none nexus-primary-action"
       >
         {submitting ? t("settings.processing") : t("login.verifyEmailButton")}
       </button>

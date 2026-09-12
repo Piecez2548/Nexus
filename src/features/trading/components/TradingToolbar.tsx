@@ -70,6 +70,7 @@ export default function TradingToolbar({
 
         <select
           value={filterDirection}
+          aria-label={t("trading.allDirections")}
           onChange={(e) => setFilterDirection(e.target.value)}
           className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-brand-500"
         >
@@ -83,6 +84,7 @@ export default function TradingToolbar({
 
         <select
           value={filterResult}
+          aria-label={t("trading.allResults")}
           onChange={(e) => setFilterResult(e.target.value)}
           className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-brand-500"
         >

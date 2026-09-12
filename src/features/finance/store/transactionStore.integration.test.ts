@@ -53,6 +53,8 @@ describe("transactionStore (Dexie integration)", () => {
       account: "Cash",
       date: "2026-07-21",
       status: "completed",
+      syncId: "stable-coffee-sync-id",
+      updatedAt: "2026-07-21T00:00:00.000Z",
     });
 
     await useTransactionStore.getState().updateTransaction(id, {
@@ -68,6 +70,8 @@ describe("transactionStore (Dexie integration)", () => {
     const updated = await db.transactions.get(id);
     expect(updated?.title).toBe("Coffee (large)");
     expect(updated?.amount).toBe(150);
+    expect(updated?.syncId).toBe("stable-coffee-sync-id");
+    expect(updated?.updatedAt).not.toBe("2026-07-21T00:00:00.000Z");
 
     expect(useTransactionStore.getState().transactions[0].amount).toBe(150);
   });

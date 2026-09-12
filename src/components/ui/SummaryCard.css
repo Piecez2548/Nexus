@@ -1,0 +1,26 @@
+.nexus-summary-card {
+  --summary-tint: 10%;
+  border: 1px solid color-mix(in srgb, var(--summary-color) 34%, var(--nexus-line));
+  border-top: 3px solid var(--summary-color);
+  background: linear-gradient(120deg,
+    color-mix(in srgb, var(--summary-color) var(--summary-tint), var(--nexus-surface)),
+    var(--nexus-surface));
+  color: var(--nexus-ink);
+  transition: border-color 160ms ease;
+}
+.dark .nexus-summary-card { --summary-tint: 23%; }
+.nexus-summary-card:hover { border-color: var(--summary-color); }
+.nexus-summary-card h2 { font-variant-numeric: tabular-nums; }
+.nexus-summary-icon {
+  background: color-mix(in srgb, var(--summary-color) 12%, var(--nexus-surface));
+  color: var(--nexus-ink);
+  border: 1px solid color-mix(in srgb, var(--summary-color) 55%, var(--nexus-line));
+}
+.dark .nexus-summary-icon {
+  background: color-mix(in srgb, var(--summary-color) 30%, var(--nexus-surface));
+  color: color-mix(in srgb, var(--summary-color) 35%, white);
+}
+.mono .nexus-summary-card { --summary-color: #71717a !important; --summary-tint: 5%; }
+@media (prefers-reduced-motion: reduce) {
+  .nexus-summary-card { transition: none; }
+}

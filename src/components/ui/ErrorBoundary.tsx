@@ -1,8 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RotateCcw } from "lucide-react";
-import * as Sentry from "@sentry/react";
+import { captureError } from "@/lib/sentry";
 
-import { translations } from "@/i18n/translations";
+import { coreTranslations as translations } from "@/i18n/locales/core";
 import { useLanguageStore } from "@/store/languageStore";
 
 interface Props {
@@ -27,7 +27,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     console.error("Unhandled error caught by ErrorBoundary:", error, info.componentStack);
     // A no-op if Sentry was never initialized (no DSN configured) — safe
     // to call unconditionally.
-    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
+    captureError(error, { componentStack: info.componentStack });
   }
 
   render() {
@@ -50,7 +50,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
         <button
           onClick={() => window.location.reload()}
-          className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 font-medium text-white transition hover:bg-brand-700"
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 font-medium transition nexus-primary-action"
         >
           <RotateCcw size={16} />
           {t.reload}

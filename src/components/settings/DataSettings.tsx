@@ -4,7 +4,7 @@ import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 
-import { exportBackup, importBackup } from "@/database/backupService";
+import { exportBackup, importBackup, MAX_BACKUP_BYTES } from "@/database/backupService";
 import { dedupeAccountsAndCategories } from "@/features/finance/utils/dedupeAccountsAndCategories";
 import {
   findTransactionDuplicates,
@@ -121,6 +121,13 @@ export default function DataSettings() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+
+    if (file.size > MAX_BACKUP_BYTES) {
+      const message = t("settings.backupTooLarge");
+      setError(message);
+      toast.error(message);
+      return;
+    }
 
     const confirmed = window.confirm(t("settings.importConfirmDialog"));
     if (!confirmed) return;
@@ -325,7 +332,7 @@ export default function DataSettings() {
                 type="button"
                 onClick={handleConfirmMergeTransactions}
                 disabled={busy || selectedGroups.length === 0}
-                className="flex-1 rounded-xl bg-brand-600 py-2.5 font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 rounded-xl py-2.5 font-medium transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
               >
                 {t("settings.confirmMergeTransactions", { count: selectedGroups.length })}
               </button>

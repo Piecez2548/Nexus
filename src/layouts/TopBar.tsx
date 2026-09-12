@@ -13,7 +13,8 @@ import UserMenu from "./UserMenu";
 import LevelBadge from "./LevelBadge";
 
 export default function TopBar() {
-  const { themeMode, setThemeMode } = useAppSettingsStore();
+  const themeMode = useAppSettingsStore((s) => s.themeMode);
+  const setThemeMode = useAppSettingsStore((s) => s.setThemeMode);
   const isDark = useResolvedTheme(themeMode);
   const { t } = useTranslation();
 
@@ -30,15 +31,16 @@ export default function TopBar() {
 
   return (
     <header
-      className="flex h-16 items-center justify-between gap-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-4 md:px-8"
-      style={{ paddingTop: "env(safe-area-inset-top)", height: "calc(4rem + env(safe-area-inset-top))" }}
+      data-shell-audit="header"
+      className="main-topbar flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-4 py-2 md:px-8"
+      style={{ paddingTop: "calc(.5rem + env(safe-area-inset-top))", minHeight: "calc(4rem + env(safe-area-inset-top))" }}
     >
 
-      <div className="hidden min-w-0 flex-1 md:block">
+      <div className="hidden min-w-0 basis-48 grow md:block">
         <GlobalSearch />
       </div>
 
-      <div className="ml-auto flex items-center gap-2 md:gap-4">
+      <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-2 md:gap-4">
 
         <LevelBadge />
 
@@ -46,7 +48,7 @@ export default function TopBar() {
           type="button"
           onClick={() => setThemeMode(isDark ? "light" : "dark")}
           aria-label={t("topbar.toggleDarkMode")}
-          className="rounded-xl p-3 transition hover:bg-zinc-100 dark:hover:bg-zinc-900"
+          className="min-h-11 min-w-11 rounded-xl p-3 transition hover:bg-zinc-100 dark:hover:bg-zinc-900"
         >
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
         </button>

@@ -1,10 +1,27 @@
 # Security
 
-**Last Updated:** 2026-08-21
+## Automatic on-device slip scan
+
+On Android, opening Transactions can trigger an incremental gallery scan after the user grants photo access. Image bytes are processed locally by the existing QR/OCR pipeline and are not uploaded for recognition. The scan cache stores asset identifiers and hashes so previously processed images are skipped. Results require confirmation in Import Preview before Smart Import writes transactions, and the existing duplicate resolver remains authoritative.
+
+**Last Updated:** 2026-09-12
+
+Account/PIN recovery now rejects failed reauthentication even with a stale signed-in user, checks account continuity during key retrieval, and validates the recovered key against existing local ciphertext before replacing the local PIN wrap. Password reset does not automatically repair escrow. See [account recovery verification](ACCOUNT_RECOVERY_VERIFICATION_2026-09-12.md) for the tested boundaries, recovery procedure and unverified live cases.
 
 ## Overview
 
-Security in Nexus is layered and mostly **optional-by-design**, matching the local-first philosophy (see [DECISIONS.md](DECISIONS.md)): the app is fully usable with zero security configuration, and each layer below (App Lock, cloud sync auth, encryption-at-rest) activates only once a user opts into it. This document deliberately does not frame Authentication or Encryption as "Future" — both are already implemented — and instead documents what exists today plus the specific, real gaps found.
+The published Main/All browser application requires an authenticated Supabase account. Anonymous Main navigation returns to All sign-in; an existing account session does not bypass a configured Main PIN. Published builds fail closed if authentication configuration is missing. Local-only operation remains available in development, explicit E2E mode and installed native wrappers. Never deploy an E2E-mode build.
+
+Nexus Tools' local catalogue and file utilities are public. Optional account/cloud functions verify identity and MFA independently; private server APIs verify authorization on every request. Public tools do not grant access to Main or private cloud data.
+
+| Entry | Account | PIN |
+|---|---|---|
+| All `/projects` | Required on published web | Required after explicit account lock when configured |
+| Main, direct or through All | Required; existing session reused | Required when configured and locked |
+| Tools local utilities | Not required | Not required |
+| Tools private cloud operations | Verified account and enrolled MFA | Main PIN is not used |
+
+Explicit PIN locks invalidate older same-origin tab sessions through a persisted generation and storage/focus/visibility synchronization. Other tabs clear their in-memory DEK and show PIN; stale Remember/session flags cannot bypass a reload. No PIN, auth token or DEK is broadcast. This is browser-origin-local locking, not cross-device or cross-origin global logout. Storage-disabled browsers cannot synchronize tabs; current-tab locking still works.
 
 ## Current Security — three independent layers
 
@@ -13,7 +30,7 @@ Layer 1 — App Lock (device-local, optional)
   PIN (SHA-256 hash, unstretched) + optional biometric unlock
   Threat model: someone glancing at / picking up an unlocked device
 
-Layer 2 — Cloud sync authentication (optional, requires Supabase configured)
+Layer 2 — Account authentication (required on published Main/All web)
   Supabase email/password with mandatory OTP email verification at sign-up,
   optional TOTP two-factor authentication, and one-time backup codes — no
   OAuth, no magic link
@@ -25,15 +42,18 @@ Layer 3 — Encryption-at-rest (optional, requires Layer 1 + Layer 2)
   Threat model: a compromised or subpoenaed Supabase database
 ```
 
-These are independent and stackable — a user can run fully local with no lock, local with just a PIN, synced with just Supabase auth, or synced + encrypted. Encryption specifically requires both an App Lock PIN (Layer 1, for day-to-day unlock) and a signed-in Supabase account (Layer 2, for the recovery escrow) to be enabled first.
+PIN and encryption remain opt-in layers; signing in does not automatically enable either or upload Tools' local data. Local/native configurations can operate without cloud authentication, while published Main/All web follows the access matrix above. Encryption requires both an App Lock PIN and a signed-in account for recovery escrow.
 
 ## Layer 1 — App Lock (`src/features/lock/`)
 
 - **PIN hash:** SHA-256, salted with a random per-installation 16-byte hex salt, **not** stretched with PBKDF2/bcrypt/argon2. This is a deliberate, explicitly-documented choice: `pinHash.ts`'s own comment states this is "a local-only privacy gate (no server, no real authentication)... proportionate against 'someone glancing at the screen' or a shared/borrowed device, not against offline brute-forcing of localStorage contents." **A 4–6 digit PIN protected only by unstretched SHA-256 is not resistant to offline brute force** if an attacker extracts the `nexus-app-lock` localStorage blob — this is a known, accepted tradeoff, not an oversight (see [DECISIONS.md](DECISIONS.md) for why it wasn't made as strong as the DEK's own protection).
 - **Biometric unlock:** native-only (Capacitor `@capgo/capacitor-native-biometric`), stores the literal PIN behind a hardware-backed, biometric-gated Android/iOS Keystore credential. Requires **"strong" biometry** specifically (`strongBiometryIsAvailable`, not just `isAvailable`) — checked because weak biometry (some face-unlock implementations) has been observed to crash the crypto-bound `BiometricPrompt`.
-- **Auto-lock:** configurable idle timeout (never/5/15/30/60 min), tracked via mouse/keyboard/touch/click activity listeners, checked every 30 seconds. "Remember me" allows skipping the PIN for 7 days, but this **never** substitutes for re-deriving the encryption DEK on a fresh tab — the DEK lives only in memory and is never resurrected from "remember me" state alone, specifically to prevent a reload from silently exposing encrypted data without a real unlock.
+- **Auto-lock:** configurable idle timeout (never/5/15/30/60 min), tracked via mouse/keyboard/touch/click activity listeners and checked every 30 seconds. The deadline applies to effective access from either a tab session or a valid 7-day "Remember me" generation, including a newly opened tab. "Remember me" never substitutes for re-deriving the encryption DEK on a fresh tab — the DEK lives only in memory and is never resurrected from remembered state alone.
+- **QR device unlock:** a locked desktop can display a one-time request that expires after two minutes. An already-unlocked Android device scans it and encrypts its in-memory DEK with a 256-bit secret carried only in the QR. Supabase relays the AES-GCM ciphertext under same-account RLS, never receives the QR secret, and deletes the request after use. This unlocks only the current desktop session and never uploads or replaces either device's PIN.
 
 ## Layer 2 — Cloud Sync Authentication (`src/features/sync/`)
+
+- **Cross-device deletion is terminal per `syncId`:** once a row is tombstoned, a stale copy from another device cannot restore that same cloud identity. The client treats every server tombstone as authoritative without comparing device clocks, and the `set_synced_records_updated_at` database trigger preserves the tombstone if an older client attempts a live upsert. Re-creating an item remains possible and receives a fresh `syncId`.
 
 - **Email/password** — confirmed via `LoginScreen.tsx`: no OAuth/social login, no magic link. Minimum password length: 6 characters.
 - **OTP email verification at sign-up.** `signUp()` no longer completes with a clickable confirmation link — the account stays unusable until the emailed 6-digit code is entered on `EmailVerificationScreen.tsx` (shown by `AuthGate.tsx` in place of `LoginScreen` while `authStore.ts`'s `emailVerificationPending` is true), verified via Supabase Auth's own `auth.verifyOtp({ email, token, type: "signup" })` — no new backend, same "Supabase Auth already is the backend" pattern as TOTP below. Requires the Supabase Dashboard's "Confirm signup" email template to include `{{ .Token }}` (see [DEPLOYMENT.md](DEPLOYMENT.md)) — a Dashboard-only setting this repo cannot configure.
@@ -42,7 +62,7 @@ These are independent and stackable — a user can run fully local with no lock,
 - **Access control:** Postgres Row-Level Security (`auth.uid() = user_id`) on `synced_records`, `user_encryption_keys`, and `mfa_backup_codes` — the only access-control mechanism; there is no application-level authorization layer beyond it.
 - **Optional TOTP two-factor authentication**, using Supabase Auth's native MFA API directly (`supabase.auth.mfa.*`) — no new backend, since Supabase Auth already is the backend. Enrollment (`EnrollMfaForm.tsx`) shows a QR code and setup secret from `auth.mfa.enroll()`, confirmed via `auth.mfa.challengeAndVerify()`; the same primitive verifies a code at sign-in (`MfaChallengeScreen.tsx`, shown by `AuthGate.tsx` in place of `LoginScreen` whenever a password step succeeds but the account has a verified factor this browser session hasn't satisfied yet). Successful verification also promotes the Supabase session itself to `aal2` and — per Supabase's own documented behavior — signs out every other session on the account.
   - **Session-gating is tracked by the app itself, not solely by Supabase's own AAL**, specifically to support backup codes correctly (see below): `src/features/sync/mfaSession.ts` sets a `sessionStorage`-scoped "verified" flag (cleared on sign-out, never persisted to `localStorage`) once either a TOTP code or a backup code is accepted. `resolveMfaAccess()` (`src/features/sync/mfa.ts`) is the single gate — called from every place `authStore.ts` can set `user` (the initial `getSession()` check, the `onAuthStateChange` listener, and `signIn()` itself) — so a password-only session can never race past the challenge no matter which of those three paths a given sign-in happens to go through.
-  - **Backup/recovery codes** (`src/features/sync/backupCodes.ts`) are a custom mechanism, since Supabase's native MFA API has no recovery-code feature of its own: 10 codes generated client-side (`crypto.getRandomValues`, no ambiguous characters), hashed with the same salted-SHA-256 approach as the App Lock PIN (`src/features/lock/utils/pinHash.ts`, reused directly — appropriate here since a backup code, unlike a human-chosen PIN, is already a high-entropy random secret) and stored in a new `public.mfa_backup_codes` table (`supabase/schema.sql`), RLS-scoped per user. Verified entirely client-side (fetch this user's unused hashes, hash the entered code, compare) — the same pattern every other client-verified secret in this app already follows, since Nexus has no custom server-side business logic at all. A backup code is shown in plaintext exactly once, at generation time, then only ever exists as a hash. Losing the authenticator device only costs cloud-sync access, never local data — Nexus stays fully usable offline regardless (see Layer 1).
+  - **Backup/recovery codes** (`src/features/sync/backupCodes.ts`) are a custom mechanism, since Supabase's native MFA API has no recovery-code feature of its own: 10 high-entropy codes are generated client-side (`crypto.getRandomValues`, no ambiguous characters) and shown in plaintext exactly once. Management policies require the account owner at `aal2`. Redemption sends only a normalized candidate to the rate-limited `redeem_mfa_backup_code` security-definer RPC; PostgreSQL derives the owner from `auth.uid()`, hashes the candidate, atomically deletes a matching unused row and never exposes stored salts or hashes to an `aal1` client. Successful recovery unlocks the Nexus application session but does not promote the Supabase JWT to `aal2`, so DataLens still requires native TOTP. Losing the authenticator device only costs protected cloud capabilities, never local data — Nexus stays usable offline regardless (see Layer 1).
 
 ## Layer 3 — Encryption-at-Rest (`src/features/encryption/`)
 
@@ -166,9 +186,15 @@ A server-computed weekly financial summary, generated on a schedule (`pg_cron`) 
 - If the AI Gateway (`src/ai/`) is ever wired to a real remote LLM provider, an API key must be proxied through a backend rather than embedded client-side — this is already correctly identified as a blocker in the codebase's own design (see [DECISIONS.md](DECISIONS.md)), just flagged here as a hard requirement, not a nice-to-have.
 - Wire the Gallery Scanner's own original audit event types (permission/import/scan/delete/validation/suspicious) into their real call sites — the mechanism and persistence are both real now, but nothing in the scanner actually calls `recordAudit` yet, same as before this Audit Log work.
 
+## MFA backup-code boundary
+
+Backup-code management is restricted by RLS to the account owner at authenticator assurance level `aal2`. During account recovery, an `aal1` session can submit a candidate only to the `redeem_mfa_backup_code` security-definer function. The function derives ownership from `auth.uid()`, normalizes and hashes the candidate inside PostgreSQL, consumes a match atomically, and permits at most five failed attempts per rolling 15-minute window. It never returns stored hashes or accepts a caller-supplied user ID.
+
+A redeemed backup code unlocks the Nexus application session through a short-lived, tab-scoped recovery marker; it does **not** change the Supabase JWT authenticator assurance level from `aal1` to `aal2`. DataLens deliberately requires a native Supabase `aal2` session, so a user who recovered Nexus with a backup code must still complete TOTP before opening DataLens. Do not describe backup-code recovery as equivalent to a native MFA challenge or reuse the application marker as authorization for another service.
+
 ## Current Status
 
-All three security layers are fully implemented and independently optional, including the disable-encryption flow (SEC-005).
+All three security layers are implemented. Account authentication is mandatory on the published Main/All web application; PIN and encryption remain independently optional.
 
 ## Future Improvements
 

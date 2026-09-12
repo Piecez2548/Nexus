@@ -102,7 +102,7 @@ export default function HabitCard({ habit, onEdit }: Props) {
         className={`flex w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-semibold transition ${
           doneToday
             ? "cursor-default bg-green-500/15 text-green-500"
-            : "bg-brand-600 text-white hover:bg-brand-700"
+            : "nexus-primary-action"
         }`}
       >
         <Check size={16} />

@@ -9,10 +9,9 @@ interface Props {
   onCancel: () => void;
 }
 
-// Pause/Resume/Cancel buttons for an in-progress orchestrator-backed scan --
-// extracted from FullGalleryScanPanel so GalleryScanFlow (which needs to
-// trigger the scan itself, after bank selection, rather than own a "Start"
-// button) can reuse the same controls instead of re-implementing them. Only
+// Pause/Resume/Cancel buttons for an in-progress orchestrator-backed scan.
+// GalleryScanFlow triggers the scan after bank selection and reuses these
+// controls instead of mixing control rendering with orchestration. Only
 // rendered by the parent while the scan is actually running/paused; status
 // messages (error, cancelled) are the parent's own concern since whether
 // they're shown doesn't depend on whether these buttons are.

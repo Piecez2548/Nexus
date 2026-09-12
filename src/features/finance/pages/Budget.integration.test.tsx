@@ -1,3 +1,4 @@
+import { toLocalDateString } from "@/utils/localDate";
 import { describe, expect, it, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -8,7 +9,7 @@ import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
 
-const today = new Date().toISOString().slice(0, 10);
+const today = toLocalDateString(new Date());
 
 describe("Budget page", () => {
   beforeEach(async () => {

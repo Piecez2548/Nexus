@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import MobileTabBar from "./MobileTabBar";
 import MobileMoreMenu from "./MobileMoreMenu";
+import RouteAccessibility from "./RouteAccessibility";
 import ToastContainer from "@/components/ui/ToastContainer";
 import CommandPalette from "@/platform/commandPalette/CommandPalette";
 import ScanRecoveryNotice from "@/features/finance/slipScanner/components/ScanRecoveryNotice";
@@ -29,6 +30,7 @@ const TransactionDrawer = lazy(() => import("@/features/finance/components/Trans
 const TradeDrawer = lazy(() => import("@/features/trading/components/TradeDrawer"));
 
 export default function MainLayout() {
+  const reducedMotion = useReducedMotion();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const location = useLocation();
   const { t } = useTranslation();
@@ -47,25 +49,27 @@ export default function MainLayout() {
   }, [isTradeDrawerOpen]);
 
   return (
-    <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white">
+    <div className="nexus-main flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white">
+      <a className="main-skip-link" href="#main-content">{t("common.skipToContent")}</a>
       <Sidebar />
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
 
-        <main className="flex-1 overflow-auto p-4 pb-24 md:p-8 md:pb-8">
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto p-4 pb-24 md:p-8 md:pb-8">
           <Suspense fallback={<LoadingState label={t("common.loading")} />}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={location.pathname}
-                initial={{ opacity: 0, y: 6 }}
+                initial={{ opacity: 0, y: reducedMotion ? 0 : 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
+                exit={{ opacity: 0, y: reducedMotion ? 0 : -6 }}
                 transition={{ duration: 0.15, ease: "easeOut" }}
               >
                 <Outlet />
               </motion.div>
             </AnimatePresence>
+            <RouteAccessibility />
           </Suspense>
         </main>
       </div>

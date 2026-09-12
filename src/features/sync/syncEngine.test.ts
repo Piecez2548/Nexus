@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { db } from "@/database/db";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
+import { transactionService } from "@/features/finance/services/transactionService";
 
 const mockUpsert = vi.fn();
 const mockFrom = vi.fn();
@@ -502,35 +503,37 @@ describe("syncEngine", () => {
     expect(stored.find((t) => t.syncId === "deleted-on-a")).toBeUndefined();
   });
 
-  it("still pushes a local edit that is genuinely newer than an existing server-side tombstone (an intentional undelete)", async () => {
+  it("does not resurrect a server tombstone when the stale device clock is ahead", async () => {
     await db.transactions.add({
-      title: "Re-added after the deletion",
+      title: "Stale desktop copy with a clock ahead of the phone",
       amount: 100,
       type: "expense",
       account: "Cash",
       date: "2026-07-21",
       status: "completed",
-      syncId: "undeleted",
-      updatedAt: "2026-07-21T12:00:00.000Z", // after the tombstone below
+      syncId: "deleted-on-phone",
+      updatedAt: "2026-07-22T12:00:00.000Z", // misleadingly after the tombstone
     });
 
     mockFrom.mockImplementation(() => ({
       upsert: mockUpsert,
       ...selectResultBuilder(
         { data: [], error: null },
-        { data: [{ id: "undeleted", deleted_at: "2026-07-21T11:00:00.000Z" }], error: null }
+        { data: [{ id: "deleted-on-phone", deleted_at: "2026-07-21T11:00:00.000Z" }], error: null }
       ),
     }));
 
     await runFullSync(USER_ID);
 
-    const push = mockUpsert.mock.calls
+    const resurrectingPush = mockUpsert.mock.calls
       .flatMap((call) => call[0])
-      .find((p: { id: string; table_name: string }) => p.id === "undeleted" && p.table_name === "transactions");
-    expect(push).toMatchObject({ deleted_at: null });
+      .find((p: { id: string; table_name: string; deleted_at: string | null }) =>
+        p.id === "deleted-on-phone" && p.table_name === "transactions" && p.deleted_at === null
+      );
+    expect(resurrectingPush).toBeUndefined();
 
     const stored = await db.transactions.toArray();
-    expect(stored.find((t) => t.syncId === "undeleted")).toBeDefined();
+    expect(stored.find((t) => t.syncId === "deleted-on-phone")).toBeUndefined();
   });
 
   it("uses an inclusive (>=) pull cursor so a row sharing the last-seen updatedAt isn't silently skipped forever", async () => {
@@ -1002,6 +1005,100 @@ describe("syncEngine", () => {
     loadHabits.mockRestore();
   });
 
+  it("refreshes an applied transaction before an unrelated later table finishes pulling", async () => {
+    const loadTransactions = vi.spyOn(useTransactionStore.getState(), "loadTransactions");
+    let releaseEconomicEvents!: () => void;
+    const economicEventsBlocked = new Promise<void>((resolve) => {
+      releaseEconomicEvents = resolve;
+    });
+
+    mockFrom.mockImplementation(() => {
+      let currentTableName: string | undefined;
+      let isInQuery = false;
+
+      const builder = {
+        select: vi.fn(() => builder),
+        eq: vi.fn((column: string, value: string) => {
+          if (column === "table_name") currentTableName = value;
+          return builder;
+        }),
+        order: vi.fn(() => builder),
+        in: vi.fn(() => {
+          isInQuery = true;
+          return builder;
+        }),
+        not: vi.fn(() => builder),
+        gte: (...args: unknown[]) => {
+          mockGte(...args);
+          return builder;
+        },
+        upsert: mockUpsert,
+        then: async (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (isInQuery) {
+            resolve({ data: [], error: null });
+            return;
+          }
+
+          if (currentTableName === "economicEvents") {
+            await economicEventsBlocked;
+            resolve({ data: [], error: null });
+            return;
+          }
+
+          if (currentTableName !== "transactions") {
+            resolve({ data: [], error: null });
+            return;
+          }
+
+          resolve({
+            data: [
+              {
+                id: "remote-transaction-before-slow-table",
+                table_name: "transactions",
+                data: {
+                  title: "Visible before unrelated pull",
+                  amount: 25,
+                  type: "expense",
+                  category: "Others",
+                  account: "Cash",
+                  date: "2026-09-13",
+                  status: "completed",
+                  syncId: "remote-transaction-before-slow-table",
+                  updatedAt: "2026-09-13T00:00:00.000Z",
+                },
+                updated_at: "2026-09-13T00:00:00.000Z",
+                deleted_at: null,
+              },
+            ],
+            error: null,
+          });
+        },
+      };
+
+      return builder;
+    });
+
+    let syncFinished = false;
+    const syncPromise = runFullSync(USER_ID).finally(() => {
+      syncFinished = true;
+    });
+
+    await vi.waitFor(() => expect(loadTransactions).toHaveBeenCalledTimes(1));
+    expect(syncFinished).toBe(false);
+    expect(useTransactionStore.getState().transactions).toEqual([
+      expect.objectContaining({
+        title: "Visible before unrelated pull",
+        amount: 25,
+      }),
+    ]);
+
+    releaseEconomicEvents();
+    await syncPromise;
+    expect(syncFinished).toBe(true);
+
+    loadTransactions.mockRestore();
+  });
+
   it("does not re-push a row it only ever received via pull, even across multiple later passes", async () => {
     // Simulates the "edit reverts / delete doesn't stick" bug reported when
     // two devices are open at once: this device (call it Device B) pulls a
@@ -1259,5 +1356,175 @@ describe("syncEngine", () => {
     const categories = await db.categories.toArray();
     expect(categories).toHaveLength(1);
     expect(categories[0].id).toBe(canonicalId);
+  });
+
+  it("propagates create, update, and delete in both directions between desktop and mobile", async () => {
+    type CloudRecord = {
+      id: string;
+      table_name: string;
+      user_id: string;
+      data: Record<string, unknown>;
+      updated_at: string;
+      deleted_at: string | null;
+    };
+
+    const cloud = new Map<string, CloudRecord>();
+
+    mockFrom.mockImplementation(() => {
+      let userFilter: string | undefined;
+      let tableFilter: string | undefined;
+      let idFilter: Set<string> | undefined;
+      let updatedAtFloor: string | undefined;
+      let deletedOnly = false;
+
+      const builder = {
+        select: vi.fn(() => builder),
+        eq: vi.fn((column: string, value: string) => {
+          if (column === "user_id") userFilter = value;
+          if (column === "table_name") tableFilter = value;
+          return builder;
+        }),
+        order: vi.fn(() => builder),
+        in: vi.fn((_column: string, values: string[]) => {
+          idFilter = new Set(values);
+          return builder;
+        }),
+        not: vi.fn((column: string) => {
+          if (column === "deleted_at") deletedOnly = true;
+          return builder;
+        }),
+        gte: vi.fn((_column: string, value: string) => {
+          updatedAtFloor = value;
+          return builder;
+        }),
+        upsert: vi.fn(async (payload: CloudRecord[]) => {
+          for (const record of payload) {
+            cloud.set(`${record.table_name}:${record.id}`, structuredClone(record));
+          }
+          return { error: null };
+        }),
+        then: (resolve: (value: { data: CloudRecord[]; error: null }) => void) => {
+          const rows = [...cloud.values()]
+            .filter((record) => !userFilter || record.user_id === userFilter)
+            .filter((record) => !tableFilter || record.table_name === tableFilter)
+            .filter((record) => !idFilter || idFilter.has(record.id))
+            .filter((record) => !deletedOnly || record.deleted_at !== null)
+            .filter((record) => !updatedAtFloor || record.updated_at >= updatedAtFloor)
+            .sort((a, b) => a.updated_at.localeCompare(b.updated_at));
+          resolve({ data: structuredClone(rows), error: null });
+        },
+      };
+
+      return builder;
+    });
+
+    const snapshotDevice = async () => ({
+      transactions: await db.transactions.toArray(),
+      syncState: await db.syncState.toArray(),
+      tombstones: await db.syncTombstones.toArray(),
+    });
+    type DeviceState = Awaited<ReturnType<typeof snapshotDevice>>;
+
+    const restoreDevice = async (state: DeviceState) => {
+      await db.transaction("rw", db.transactions, db.syncState, db.syncTombstones, async () => {
+        await db.transactions.clear();
+        await db.syncState.clear();
+        await db.syncTombstones.clear();
+        if (state.transactions.length > 0) await db.transactions.bulkPut(structuredClone(state.transactions));
+        if (state.syncState.length > 0) await db.syncState.bulkPut(structuredClone(state.syncState));
+        if (state.tombstones.length > 0) await db.syncTombstones.bulkPut(structuredClone(state.tombstones));
+      });
+    };
+
+    const emptyDevice = await snapshotDevice();
+    let desktop = structuredClone(emptyDevice);
+    let mobile = structuredClone(emptyDevice);
+
+    // Desktop creates; mobile receives and edits; desktop receives and deletes.
+    await restoreDevice(desktop);
+    await transactionService.create({
+      title: "Created on desktop",
+      amount: 100,
+      type: "expense",
+      category: "Food",
+      account: "Cash",
+      date: "2026-09-12",
+      status: "completed",
+    });
+    await runFullSync(USER_ID);
+    desktop = await snapshotDevice();
+
+    await restoreDevice(mobile);
+    await runFullSync(USER_ID);
+    let mobileRow = (await db.transactions.toArray()).find((row) => row.title === "Created on desktop");
+    expect(mobileRow).toBeDefined();
+    await transactionService.update(mobileRow!.id!, {
+      title: "Edited on mobile",
+      amount: 125,
+      type: mobileRow!.type,
+      category: mobileRow!.category,
+      account: mobileRow!.account,
+      date: mobileRow!.date,
+      status: mobileRow!.status,
+    });
+    await runFullSync(USER_ID);
+    mobile = await snapshotDevice();
+
+    await restoreDevice(desktop);
+    await runFullSync(USER_ID);
+    let desktopRow = (await db.transactions.toArray()).find((row) => row.title === "Edited on mobile");
+    expect(desktopRow?.amount).toBe(125);
+    expect(await db.transactions.toArray()).toHaveLength(1);
+    await transactionService.remove(desktopRow!.id!);
+    await runFullSync(USER_ID);
+    desktop = await snapshotDevice();
+
+    await restoreDevice(mobile);
+    await runFullSync(USER_ID);
+    expect(await db.transactions.toArray()).toHaveLength(0);
+    mobile = await snapshotDevice();
+
+    // Mobile creates; desktop receives and edits; mobile receives and deletes.
+    await restoreDevice(mobile);
+    await transactionService.create({
+      title: "Created on mobile",
+      amount: 300,
+      type: "income",
+      category: "Salary",
+      account: "Cash",
+      date: "2026-09-12",
+      status: "completed",
+    });
+    await runFullSync(USER_ID);
+    mobile = await snapshotDevice();
+
+    await restoreDevice(desktop);
+    await runFullSync(USER_ID);
+    desktopRow = (await db.transactions.toArray()).find((row) => row.title === "Created on mobile");
+    expect(desktopRow).toBeDefined();
+    await transactionService.update(desktopRow!.id!, {
+      title: "Edited on desktop",
+      amount: 350,
+      type: desktopRow!.type,
+      category: desktopRow!.category,
+      account: desktopRow!.account,
+      date: desktopRow!.date,
+      status: desktopRow!.status,
+    });
+    await runFullSync(USER_ID);
+    desktop = await snapshotDevice();
+
+    await restoreDevice(mobile);
+    await runFullSync(USER_ID);
+    mobileRow = (await db.transactions.toArray()).find((row) => row.title === "Edited on desktop");
+    expect(mobileRow?.amount).toBe(350);
+    expect(await db.transactions.toArray()).toHaveLength(1);
+    await transactionService.remove(mobileRow!.id!);
+    await runFullSync(USER_ID);
+    mobile = await snapshotDevice();
+
+    await restoreDevice(desktop);
+    await runFullSync(USER_ID);
+    expect(await db.transactions.toArray()).toHaveLength(0);
   });
 });

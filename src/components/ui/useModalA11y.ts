@@ -1,5 +1,7 @@
 import { useEffect, useRef, type RefObject } from "react";
 
+const activeModals: HTMLElement[] = [];
+
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -36,12 +38,14 @@ export function useModalA11y({ open, onClose, containerRef }: UseModalA11yOption
     triggerRef.current = document.activeElement as HTMLElement | null;
 
     const container = containerRef.current;
+    if (container) activeModals.push(container);
     if (container) {
       const [first] = focusableElements(container);
       (first ?? container).focus();
     }
 
     function handleKeyDown(e: KeyboardEvent) {
+      if (!container || activeModals.at(-1) !== container) return;
       if (e.key === "Escape") {
         onClose();
         return;
@@ -67,7 +71,12 @@ export function useModalA11y({ open, onClose, containerRef }: UseModalA11yOption
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      triggerRef.current?.focus();
+      const wasTop = activeModals.at(-1) === container;
+      if (container) {
+        const index = activeModals.lastIndexOf(container);
+        if (index !== -1) activeModals.splice(index, 1);
+      }
+      if (wasTop && triggerRef.current?.isConnected) triggerRef.current.focus();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onClose intentionally not a dep: re-running this effect on every render would re-capture the trigger and re-focus the container each time
   }, [open, containerRef]);

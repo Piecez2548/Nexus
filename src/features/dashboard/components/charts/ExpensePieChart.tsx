@@ -9,6 +9,8 @@ import {
 import { useExpenseByCategory } from "@/features/dashboard/hooks/useExpenseByCategory";
 import type { DashboardPeriodGranularity } from "@/features/dashboard/utils/dashboardPeriodRange";
 import { useTranslation } from "@/i18n/useTranslation";
+import { ChartPie } from "lucide-react";
+import "../../dashboard.css";
 
 const COLORS = [
     "#8b5cf6",
@@ -31,7 +33,8 @@ export default function ExpensePieChart({ granularity }: Props) {
 
     if (data.length === 0) {
         return (
-            <div className="flex h-[320px] items-center justify-center text-zinc-600 dark:text-zinc-500">
+            <div className="dashboard-chart-empty">
+                <ChartPie size={32} strokeWidth={1.5} aria-hidden="true" />
                 {t("dashboard.noExpenseData")}
             </div>
         );

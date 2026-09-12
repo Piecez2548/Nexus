@@ -43,7 +43,7 @@ export default function BackupCodesDisplay({ codes, onDone }: Props) {
       <button
         type="button"
         onClick={onDone}
-        className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700"
+        className="w-full rounded-xl py-3 font-semibold transition nexus-primary-action"
       >
         {t("mfa.backupCodesSavedConfirm")}
       </button>

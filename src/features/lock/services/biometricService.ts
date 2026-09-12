@@ -34,6 +34,22 @@ export async function isBiometricAvailable(): Promise<boolean> {
   }
 }
 
+// Reconciles the persisted web flag with the native credential store after an
+// APK/web-asset update. This does not read or decrypt the PIN and therefore
+// does not show a biometric prompt.
+export async function hasBiometricCredential(): Promise<boolean> {
+  if (!Capacitor.isNativePlatform()) return false;
+  try {
+    const [available, saved] = await Promise.all([
+      isBiometricAvailable(),
+      NativeBiometric.isCredentialsSaved({ server: CREDENTIAL_SERVER }),
+    ]);
+    return available && saved.isSaved;
+  } catch {
+    return false;
+  }
+}
+
 // Stores `pin` (the App Lock PIN's literal plaintext) behind a
 // hardware-backed, biometric-gated Keystore key. BIOMETRY_ANY (not
 // BIOMETRY_CURRENT_SET) so enrolling an *additional* fingerprint doesn't

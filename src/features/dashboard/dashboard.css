@@ -1,0 +1,38 @@
+.nexus-dashboard .dashboard-heading {
+  padding: clamp(20px, 3vw, 32px);
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--main-accent-text) 35%, var(--nexus-line));
+  background: linear-gradient(110deg,
+    color-mix(in srgb, var(--main-accent-text) 16%, var(--nexus-surface)),
+    var(--nexus-surface) 85%);
+}
+.nexus-dashboard .dashboard-heading h1 { letter-spacing: -.025em; }
+.nexus-dashboard .dashboard-cashflow > :first-child > div {
+  border-color: color-mix(in srgb, var(--main-accent-text) 40%, var(--nexus-line));
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--main-accent-text) 9%, var(--nexus-surface)),
+    var(--nexus-surface) 65%);
+}
+.nexus-dashboard .dashboard-cashflow > :last-child {
+  border-color: color-mix(in srgb, var(--main-accent-text) 30%, var(--nexus-line));
+}
+.dashboard-chart-empty {
+  display: flex;
+  min-height: 240px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+  color: var(--nexus-muted);
+}
+.dashboard-chart-empty > svg {
+  box-sizing: content-box;
+  padding: 18px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--main-accent-text) 12%, var(--nexus-surface));
+  color: var(--main-accent-text);
+}
+@media (max-width: 639px) {
+  .dashboard-chart-empty { min-height: 200px; }
+}

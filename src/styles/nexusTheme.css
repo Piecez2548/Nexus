@@ -1,0 +1,102 @@
+/* Shared Nexus theme. Canonical source for Main, All, login and Tools. */
+@font-face{font-family:Manrope;src:url('/projects/assets/manrope-latin.woff2') format('woff2');font-weight:200 800;font-display:optional}
+@font-face{font-family:'Noto Sans Thai';src:url('/projects/assets/noto-sans-thai.woff2') format('woff2');font-weight:100 900;font-display:optional;unicode-range:U+0E00-0E7F}
+
+:root {
+  font-family: Manrope, 'Noto Sans Thai', sans-serif;
+  --main-action-bg: #6d28d9;
+  --main-action-ink: #ffffff;
+  --main-focus: #6d28d9;
+  --main-accent-text: #6d28d9;
+  --main-warning-text: #854d0e;
+  --main-warning-bg: #fef3c7;
+  --main-warning-border: #a16207;
+  --main-control-border: #807389;
+  --main-header-wash: #eeebf3;
+}
+
+:root:not(.mono) {
+  --color-brand-400: #b69aff;
+  --color-brand-500: #7c3aed;
+  --color-brand-600: #6d28d9;
+  --color-brand-700: #5521aa;
+  --color-brand-glow: #7c3aed;
+  --color-zinc-50: #f7f5fa;
+  --color-zinc-100: #eeebf3;
+  --color-zinc-200: #dfdbe7;
+  --color-zinc-300: #c1bacd;
+  --color-zinc-400: #a39aac;
+  --color-zinc-500: #6b6178;
+  --color-zinc-600: #5e546c;
+  --color-zinc-700: #3c3548;
+  --color-zinc-800: #2b2535;
+  --color-zinc-900: #19171f;
+  --color-zinc-950: #0c0b10;
+}
+
+:root.dark, :root[data-tools-theme="dark"] {
+  --color-zinc-400: #bcb7c7;
+  --color-zinc-500: #a39aac;
+  --main-action-bg: #b69aff;
+  --main-action-ink: #211337;
+  --main-focus: #d1bbff;
+  --main-accent-text: #b69aff;
+  --main-warning-text: #fcd34d;
+  --main-warning-bg: #332811;
+  --main-warning-border: #a27822;
+  --main-control-border: #85788f;
+  --main-header-wash: #19171f;
+}
+
+:root.mono {
+  --color-zinc-500: #66666f;
+  --main-action-bg: #18181b;
+  --main-action-ink: #ffffff;
+  --main-focus: #3f3f46;
+  --main-accent-text: #18181b;
+  --main-warning-text: #27272a;
+  --main-warning-bg: #f4f4f5;
+  --main-warning-border: #71717a;
+  --main-control-border: #71717a;
+  --main-header-wash: #f4f4f5;
+}
+
+
+:root {
+  color-scheme: light;
+  --nexus-bg: #f7f5fa;
+  --nexus-surface: #ffffff;
+  --nexus-surface-alt: #eeebf3;
+  --nexus-ink: #251c31;
+  --nexus-muted: #5e546c;
+  --nexus-line: #c1bacd;
+  --nexus-accent-hover: #5521aa;
+  --nexus-shadow: 0 24px 70px #251c311f;
+  --nexus-font: Manrope, 'Noto Sans Thai', sans-serif;
+  font-family: var(--nexus-font);
+  font-synthesis: none;
+}
+:root.dark, :root[data-tools-theme="dark"] {
+  color-scheme: dark;
+  --nexus-bg: #0c0b10;
+  --nexus-surface: #19171f;
+  --nexus-surface-alt: #15131b;
+  --nexus-ink: #f4f1f8;
+  --nexus-muted: #bcb7c7;
+  --nexus-line: #3c3548;
+  --nexus-accent-hover: #c9b2ff;
+  --nexus-shadow: 0 24px 70px #0007;
+}
+:root.mono {
+  --nexus-bg: #fafafa;
+  --nexus-surface: #ffffff;
+  --nexus-surface-alt: #f4f4f5;
+  --nexus-ink: #18181b;
+  --nexus-muted: #52525b;
+  --nexus-line: #d4d4d8;
+  --nexus-accent-hover: #3f3f46;
+}
+body { background: var(--nexus-bg); color: var(--nexus-ink); font-family: var(--nexus-font); }
+:root { scrollbar-color: var(--nexus-muted) var(--nexus-bg); }
+::selection { background: var(--main-action-bg); color: var(--main-action-ink); }
+input, textarea { caret-color: var(--main-focus); }

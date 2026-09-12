@@ -1,4 +1,5 @@
 node_modules
+.codex-tools/
 
 .next
 
@@ -26,3 +27,12 @@ coverage
 
 Thumbs.db
 .vercel
+
+# Local AI/design tooling and generated review evidence
+.agents/
+.claude/
+.codex/
+.impeccable/
+.github/agents/
+.github/hooks/
+.github/skills/

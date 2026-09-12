@@ -31,8 +31,8 @@ drop policy if exists "Users can manage their own records" on public.synced_reco
 create policy "Users can manage their own records"
   on public.synced_records
   for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- The client always sends its own `updated_at` in the upsert payload (its
 -- own device clock), which bypasses the `default now()` above entirely —
@@ -47,10 +47,30 @@ create policy "Users can manage their own records"
 create or replace function public.set_synced_records_updated_at()
 returns trigger as $$
 begin
+  -- A deletion is terminal for a syncId. Older clients and devices whose
+  -- clocks run ahead must not turn a tombstone back into a live row. A user
+  -- who creates a new record receives a new syncId, so this does not block a
+  -- supported restore/re-create action.
+  if tg_op = 'UPDATE' then
+    if old.deleted_at is not null and new.deleted_at is null then
+      new.data = old.data;
+      new.deleted_at = old.deleted_at;
+    -- Live records use the canonical ISO `data.updatedAt` value as their
+    -- version. Reject an older payload atomically so reconnect order cannot
+    -- let a stale device overwrite a newer edit between preflight and upsert.
+    elsif old.deleted_at is null
+      and new.deleted_at is null
+      and old.data ->> 'updatedAt' is not null
+      and new.data ->> 'updatedAt' is not null
+      and old.data ->> 'updatedAt' > new.data ->> 'updatedAt' then
+      new.data = old.data;
+    end if;
+  end if;
   new.updated_at = now();
   return new;
 end;
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = '';
 
 drop trigger if exists set_synced_records_updated_at on public.synced_records;
 
@@ -86,7 +106,31 @@ alter table public.user_encryption_keys enable row level security;
 drop policy if exists "Users manage their own key" on public.user_encryption_keys;
 
 create policy "Users manage their own key" on public.user_encryption_keys
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  for all using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+
+-- Short-lived, end-to-end encrypted hand-off used when an unlocked phone
+-- scans the QR shown by a locked desktop. The QR secret never reaches this
+-- table; Supabase only relays an AES-GCM encrypted DEK and cannot decrypt it.
+create table if not exists public.device_pairing_requests (
+  id uuid primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  secret_hash text not null,
+  status text not null default 'pending' check (status in ('pending', 'approved', 'consumed')),
+  encrypted_dek text,
+  dek_iv text,
+  expires_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  approved_at timestamptz
+);
+
+create index if not exists device_pairing_requests_user_expires_idx
+  on public.device_pairing_requests (user_id, expires_at);
+
+alter table public.device_pairing_requests enable row level security;
+drop policy if exists "Users manage their own pairing requests" on public.device_pairing_requests;
+create policy "Users manage their own pairing requests"
+  on public.device_pairing_requests for all
+  using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
 -- Two-factor authentication: TOTP backup/recovery codes. Generated once at
 -- enrollment (and on regeneration), shown to the user exactly once in
@@ -113,9 +157,53 @@ create index if not exists mfa_backup_codes_user_idx on public.mfa_backup_codes 
 alter table public.mfa_backup_codes enable row level security;
 
 drop policy if exists "Users manage their own backup codes" on public.mfa_backup_codes;
+drop policy if exists "AAL2 users read their own backup codes" on public.mfa_backup_codes;
+drop policy if exists "AAL2 users insert their own backup codes" on public.mfa_backup_codes;
+drop policy if exists "AAL2 users delete their own backup codes" on public.mfa_backup_codes;
 
-create policy "Users manage their own backup codes" on public.mfa_backup_codes
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "AAL2 users read their own backup codes" on public.mfa_backup_codes
+  for select using ((select auth.uid()) = user_id and (select auth.jwt() ->> 'aal') = 'aal2');
+create policy "AAL2 users insert their own backup codes" on public.mfa_backup_codes
+  for insert with check ((select auth.uid()) = user_id and (select auth.jwt() ->> 'aal') = 'aal2');
+create policy "AAL2 users delete their own backup codes" on public.mfa_backup_codes
+  for delete using ((select auth.uid()) = user_id and (select auth.jwt() ->> 'aal') = 'aal2');
+
+create table if not exists public.mfa_backup_code_attempts (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  window_started_at timestamptz not null default now(),
+  attempt_count integer not null default 0 check (attempt_count >= 0)
+);
+alter table public.mfa_backup_code_attempts enable row level security;
+
+create or replace function public.redeem_mfa_backup_code(p_code text)
+returns boolean language plpgsql security definer set search_path = '' as $$
+declare
+  current_user_id uuid := (select auth.uid());
+  normalized_code text := upper(regexp_replace(trim(p_code), '[[:space:]-]', '', 'g'));
+  current_attempt_count integer;
+  matched_id uuid;
+begin
+  if current_user_id is null or normalized_code !~ '^[A-HJ-NP-Z2-9]{10}$' then return false; end if;
+  insert into public.mfa_backup_code_attempts (user_id, window_started_at, attempt_count)
+  values (current_user_id, now(), 1)
+  on conflict (user_id) do update
+    set window_started_at = case when public.mfa_backup_code_attempts.window_started_at < now() - interval '15 minutes' then now() else public.mfa_backup_code_attempts.window_started_at end,
+        attempt_count = case when public.mfa_backup_code_attempts.window_started_at < now() - interval '15 minutes' then 1 else public.mfa_backup_code_attempts.attempt_count + 1 end
+  returning attempt_count into current_attempt_count;
+  if current_attempt_count > 5 then return false; end if;
+  delete from public.mfa_backup_codes
+    where user_id = current_user_id and used_at is null
+      and code_hash = encode(extensions.digest(salt || ':' || normalized_code, 'sha256'), 'hex')
+    returning id into matched_id;
+  if matched_id is not null then
+    delete from public.mfa_backup_code_attempts where user_id = current_user_id;
+    return true;
+  end if;
+  return false;
+end;
+$$;
+revoke all on function public.redeem_mfa_backup_code(text) from public, anon;
+grant execute on function public.redeem_mfa_backup_code(text) to authenticated;
 
 -- AI Coach -- Anthropic Claude fallback (see supabase/functions/ai-coach).
 -- Tracks how many ai-coach requests each user has made today, so the Edge
@@ -141,8 +229,8 @@ drop policy if exists "Users manage their own AI Coach usage" on public.ai_coach
 create policy "Users manage their own AI Coach usage"
   on public.ai_coach_daily_usage
   for all
-  using (auth.uid() = user_id)
-  with check (auth.uid() = user_id);
+  using ((select auth.uid()) = user_id)
+  with check ((select auth.uid()) = user_id);
 
 -- Atomic increment-and-return: a single upsert, so concurrent requests from
 -- the same user serialize on Postgres's own row lock instead of racing a
@@ -244,6 +332,13 @@ begin
   on conflict (user_id, period_start) do nothing;
 end;
 $$;
+
+-- New Postgres functions are executable by PUBLIC unless explicitly
+-- revoked. This SECURITY DEFINER routine is a cron entry point only; browser
+-- clients must never be able to invoke its cross-user aggregation context.
+revoke execute on function public.generate_weekly_digests() from public;
+revoke execute on function public.generate_weekly_digests() from anon;
+revoke execute on function public.generate_weekly_digests() from authenticated;
 
 -- Requires the pg_cron extension (Supabase Dashboard -> Database ->
 -- Extensions -> pg_cron, one toggle, no external account). Wrapped so

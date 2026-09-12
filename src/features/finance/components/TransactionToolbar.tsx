@@ -104,6 +104,7 @@ export default function TransactionToolbar({
 
         <select
           value={filterType}
+          aria-label={t("common.type")}
           onChange={(e) =>
             setFilterType(e.target.value)
           }
@@ -138,6 +139,7 @@ export default function TransactionToolbar({
 
         <select
           value={filterCategory}
+          aria-label={t("transactions.allCategories")}
           onChange={(e) => setFilterCategory(e.target.value)}
           className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-brand-500"
         >
@@ -156,6 +158,7 @@ export default function TransactionToolbar({
 
         <select
           value={filterAccount}
+          aria-label={t("transactions.allAccounts")}
           onChange={(e) => setFilterAccount(e.target.value)}
           className="rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-4 py-3 outline-none transition focus:border-brand-500"
         >

@@ -1,14 +1,16 @@
 # Routing
 
-**Last Updated:** 2026-08-21
+On Capacitor Android, the exact `/` route opens Nexus All so tapping the installed unified app always starts at the workspace hub. Explicit routes such as `/dashboard` continue through `MainRoute` and its PIN/encryption gate. The web `/` route remains the Main dashboard; direct web Main access therefore retains its existing account/PIN policy.
+
+**Last Updated:** 2026-09-01
 
 ## Overview
 
-Routing uses **React Router 7**'s `createBrowserRouter`, defined in `src/router/router.tsx`, with every route component lazy-loaded via `src/router/lazyPages.ts`. There is a single top-level layout route (`MainLayout`) wrapping every page — there is no separate "auth" route tree, since auth/lock gating happens *above* the router entirely (see Protected Routes below).
+Routing uses **React Router 7**'s `createBrowserRouter`, defined in `src/router/router.tsx`, with page components lazy-loaded via `src/router/lazyPages.ts`. AccountRouteGate wraps the route tree; All is a sibling of lazy MainRoute, which mounts Main's PIN/encryption gate, SyncProvider and MainLayout.
 
 ## Routes
 
-All routes are children of one root layout route (`path: "/"`, element `<MainLayout />`):
+The Main routes below are children of the root MainRoute. `/projects` and `/projects/index.html` are separate All entries under AccountRouteGate:
 
 | Path | Page | Nav section |
 |---|---|---|
@@ -85,20 +87,18 @@ personalMenus: MenuItem[]  // 6 items — executive, todo, habits, schedule, vau
 
 ## Protected Routes
 
-**There is no per-route protection in the router itself** — no route has an auth/lock guard attached in `router.tsx`. Instead, the *entire* `RouterProvider` is wrapped by two sequential gates in `App.tsx`:
+AccountRouteGate protects published All/Main browser entry. Anonymous Main visits return to All sign-in with a validated local return destination. The route structure is:
 
 ```tsx
-<ErrorBoundary>
-  <AuthGate>          {/* Supabase sign-in — only active if sync is configured, see SECURITY.md */}
-    <AppLockGate>      {/* device PIN/biometric lock, and the encryption catch-up/recovery flow */}
-      <SyncProvider />
-      <RouterProvider router={router} />
-    </AppLockGate>
-  </AuthGate>
-</ErrorBoundary>
+AccountRouteGate
+  ProjectHub                 // All; adds AppLockGate after explicit account lock
+  MainRoute
+    AppLockGate              // configured PIN, biometric and encryption recovery
+      SyncProvider
+        MainLayout
 ```
 
-`AuthGate` renders its children with **no gate at all** if Supabase env vars are absent (`isSyncConfigured === false`) — this is deliberate, so the app never locks a user out with no configured way to sign in. When configured, it shows a spinner during session check, then `LoginScreen` if unauthenticated, else children. `AppLockGate` similarly only shows a PIN screen if App Lock has been enabled by the user. **Net effect: every route is reachable with zero configuration**, and protection only activates for features the user has explicitly opted into (sync, app lock). See [SECURITY.md](SECURITY.md) for the full gate logic.
+Published browser builds fail closed without account configuration. Development, explicit E2E mode and installed wrappers retain local-only operation and must not be confused with published web policy. A valid account session never bypasses a configured Main PIN. All account locks invalidate older same-origin tab sessions, including reloads. Tools is a separate public utility origin; private cloud actions require independent authorization. See [SECURITY.md](SECURITY.md).
 
 ## Lazy Loading
 

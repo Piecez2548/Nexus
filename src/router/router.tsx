@@ -1,6 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { Capacitor } from "@capacitor/core";
 
-import MainLayout from "@/layouts/MainLayout";
+import AccountRouteGate from "./AccountRouteGate";
 import {
   Dashboard,
   FinanceDashboard,
@@ -30,17 +32,30 @@ import {
   Workouts,
   Settings,
   NotFound,
+  ProjectHub,
 } from "./lazyPages";
 
+import PasswordRecoveryScreen from "@/features/sync/components/PasswordRecoveryScreen";
+const projectHub = <Suspense fallback={null}><ProjectHub /></Suspense>;
+const MainRoute = lazy(() => import("./MainRoute"));
+const native = Capacitor.isNativePlatform();
+
 export const router = createBrowserRouter([
+  { path: "/forgot-password", element: <Suspense fallback={null}><PasswordRecoveryScreen /></Suspense> },
+  { element: <AccountRouteGate />, children: [
+  { path: "/projects", element: projectHub },
+  { path: "/projects/index.html", element: projectHub },
+  ...(native ? [{ path: "/", element: projectHub }] : []),
   {
-    path: "/",
-    element: <MainLayout />,
+    // Native reserves the exact root for All while retaining every explicit
+    // Main child route under this pathless layout. Web keeps its existing root.
+    path: native ? undefined : "/",
+    element: <Suspense fallback={null}><MainRoute /></Suspense>,
     children: [
-      {
+      ...(!native ? [{
         index: true,
         element: <Dashboard />,
-      },
+      }] : []),
       {
         path: "dashboard",
         element: <Dashboard />,
@@ -155,4 +170,5 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  ] },
 ]);

@@ -6,16 +6,18 @@ import LoginScreen from "@/features/sync/components/LoginScreen";
 import MfaChallengeScreen from "@/features/sync/components/MfaChallengeScreen";
 import EmailVerificationScreen from "@/features/sync/components/EmailVerificationScreen";
 import AuthBackdrop from "@/components/ui/AuthBackdrop";
+import ErrorState from "@/components/ui/ErrorState";
+import { useEntryTranslation } from "@/i18n/useEntryTranslation";
+import { allowsLocalOnlyAccess } from "../authAccessPolicy";
 
 interface Props {
   children: ReactNode;
+  loginFallback?: ReactNode;
 }
 
-// Requiring sign-in only makes sense when cloud sync is actually configured
-// (there's no account system to log into otherwise) — without it, the app
-// falls back to its original local-only behavior so it never locks anyone
-// out with no way in.
-export default function AuthGate({ children }: Props) {
+// Main and the project hub share this gate and the same Supabase session.
+export default function AuthGate({ children, loginFallback }: Props) {
+  const { t } = useEntryTranslation();
   const user = useAuthStore((s) => s.user);
   const sessionChecked = useAuthStore((s) => s.sessionChecked);
   const mfaPending = useAuthStore((s) => s.mfaPending);
@@ -26,7 +28,11 @@ export default function AuthGate({ children }: Props) {
   }, []);
 
   if (!isSyncConfigured) {
-    return <>{children}</>;
+    return allowsLocalOnlyAccess() ? <>{children}</> : (
+      <AuthBackdrop>
+        <ErrorState message={t("common.authUnavailable")} onRetry={() => window.location.reload()} />
+      </AuthBackdrop>
+    );
   }
 
   if (!sessionChecked) {
@@ -36,6 +42,9 @@ export default function AuthGate({ children }: Props) {
       </AuthBackdrop>
     );
   }
+
+  // Route all account challenges to All; the fallback never grants access.
+  if (!user && loginFallback) return loginFallback;
 
   if (!user && mfaPending) {
     return (
@@ -54,11 +63,7 @@ export default function AuthGate({ children }: Props) {
   }
 
   if (!user) {
-    return (
-      <AuthBackdrop>
-        <LoginScreen />
-      </AuthBackdrop>
-    );
+    return loginFallback ?? <LoginScreen />;
   }
 
   return <>{children}</>;

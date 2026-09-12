@@ -57,7 +57,7 @@ test.describe("executive dashboard (mobile)", () => {
   test("is reachable from the More menu and renders on a narrow viewport", async ({ page }) => {
     await page.goto("/");
 
-    await page.getByRole("button", { name: "More" }).click();
+    await page.getByRole("button", { name: "More", exact: true }).click();
     await page.getByRole("link", { name: "Executive" }).click();
 
     await expect(page.getByRole("heading", { name: "Executive Dashboard" })).toBeVisible();

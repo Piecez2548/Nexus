@@ -1,0 +1,43 @@
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import HubAccountMenu from "./HubAccountMenu";
+import AppLockGate from "@/features/lock/components/AppLockGate";
+import { useAppLockStore } from "@/store/appLockStore";
+import { useAuthStore } from "@/features/sync/store/authStore";
+import markup from "./projectHub.html?raw";
+import "./projectHub.css";
+import { initializeMonogramTilt } from "./monogramTilt";
+
+const trustedMarkup = { __html: markup };
+
+export default function ProjectHub() {
+  const hubLockRequired = useAppLockStore(s => s.hubLockRequired);
+  return hubLockRequired ? <AppLockGate><ProjectHubContent /></AppLockGate> : <ProjectHubContent />;
+}
+
+function ProjectHubContent() {
+  const user = useAuthStore((state) => state.user);
+  const [accountSlot, setAccountSlot] = useState<Element | null>(null);
+  const metadata = user?.user_metadata;
+  const profileName = [metadata?.first_name, metadata?.last_name].filter((value) => typeof value === "string" && value.trim()).join(" ");
+  const accountName = profileName || (typeof metadata?.full_name === "string" ? metadata.full_name.trim() : "") || user?.email || "บัญชีของฉัน";
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    setAccountSlot(root.current?.querySelector("[data-account-slot]") ?? null);
+    const previousTitle = document.title;
+    document.title = "Nexus All — Projects";
+    const cleanupTilt = initializeMonogramTilt(root.current!);
+    return () => {
+      cleanupTilt();
+      document.title = previousTitle;
+    };
+  }, []);
+
+  // Trusted, bundled presentation only. Never interpolate user data or URLs
+  // here. AuthGate mounts this route only after session + MFA checks complete.
+  return <>
+    <div id="top" className="project-hub" ref={root} dangerouslySetInnerHTML={trustedMarkup} />
+    {accountSlot && user && createPortal(
+      <HubAccountMenu name={accountName} />, accountSlot)}
+  </>;
+}

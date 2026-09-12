@@ -192,7 +192,7 @@ describe("Transactions page (add / edit / delete flow)", () => {
 
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
 
-    await user.selectOptions(await screen.findByLabelText("Type"), "transfer");
+    await user.selectOptions(await screen.findByLabelText("Type", { selector: "#transaction-type" }), "transfer");
     await user.type(screen.getByLabelText("Item name"), "Move to bank");
     await user.clear(screen.getByLabelText("Amount"));
     await user.type(screen.getByLabelText("Amount"), "500");

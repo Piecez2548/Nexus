@@ -48,6 +48,24 @@ const { generateDek, decryptField } = await import("@/features/encryption/crypto
 
 const t = (key: string) => key;
 
+it("encryption and decryption migrations remain newer than a future push cursor", async () => {
+  await clearAllSyncedTables();
+  const future = "2099-01-01T00:00:00.000Z";
+  await db.transactions.add(transactionFixture({ updatedAt: future }) as never);
+  await db.syncState.put({ key: "push:transactions", value: future });
+  const dek = await generateDek();
+  await migrateTable("transactions", dek);
+  const encrypted = (await db.transactions.toArray())[0];
+  expect(encrypted.updatedAt! > future).toBe(true);
+  expect(encrypted).toHaveProperty("encryptedContent");
+  await db.syncState.put({ key: "push:transactions", value: encrypted.updatedAt! });
+  await decryptTable("transactions", dek);
+  const decrypted = (await db.transactions.toArray())[0];
+  expect(decrypted.updatedAt! > encrypted.updatedAt!).toBe(true);
+  expect(decrypted).not.toHaveProperty("encryptedContent");
+  expect(decrypted.amount).toBe(120);
+});
+
 // See enableEncryption.test.ts's own comment on this same list -- kept as a
 // local, explicit list since the real SYNCED_TABLES isn't exported.
 const SYNCED_TABLES = [

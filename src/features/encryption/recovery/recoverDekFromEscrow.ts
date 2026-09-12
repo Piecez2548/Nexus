@@ -30,10 +30,20 @@ export async function recoverDekFromEscrow(email: string, password: string, tran
     throw new RecoveryNotAvailableError(translate("lock.recoverSyncRequired"));
   }
 
-  await useAuthStore.getState().signIn(email, password);
-  const { user, error: signInError } = useAuthStore.getState();
-  if (!user) {
+  const previousUser = useAuthStore.getState().user;
+  const normalizedEmail = email.trim();
+  if (previousUser?.email && previousUser.email.toLowerCase() !== normalizedEmail.toLowerCase()) {
+    throw new RecoveryNotAvailableError(translate("lock.recoverAccountMismatch"));
+  }
+
+  await useAuthStore.getState().signIn(normalizedEmail, password);
+  const { user, error: signInError, mfaPending } = useAuthStore.getState();
+  // Failed reauthentication can leave a previous user in the auth store.
+  if (signInError || !user || mfaPending) {
     throw new RecoveryNotAvailableError(signInError ?? translate("lock.recoverInvalidCredentials"));
+  }
+  if (previousUser && previousUser.id !== user.id) {
+    throw new RecoveryNotAvailableError(translate("lock.recoverAccountMismatch"));
   }
 
   const { data, error: fetchError } = await supabase
@@ -50,9 +60,15 @@ export async function recoverDekFromEscrow(email: string, password: string, tran
 
   const escrowKek = await deriveKek(password, base64ToBytes(record.escrow_salt), record.escrow_iterations);
 
+  let dek: CryptoKey;
   try {
-    return await unwrapDek({ wrapped: record.wrapped_dek, iv: record.dek_iv }, escrowKek);
+    dek = await unwrapDek({ wrapped: record.wrapped_dek, iv: record.dek_iv }, escrowKek);
   } catch {
     throw new RecoveryNotAvailableError(translate("lock.recoverUnwrapFailed"));
   }
+  const currentAuth = useAuthStore.getState();
+  if (currentAuth.user?.id !== user.id || currentAuth.mfaPending || currentAuth.error) {
+    throw new RecoveryNotAvailableError(translate("lock.recoverAccountMismatch"));
+  }
+  return dek;
 }

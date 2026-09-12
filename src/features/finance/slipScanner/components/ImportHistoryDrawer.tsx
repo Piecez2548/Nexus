@@ -77,7 +77,7 @@ export default function ImportHistoryDrawer({ open, onClose }: Props) {
               aria-pressed={history.statusFilter === filter}
               className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                 history.statusFilter === filter
-                  ? "bg-brand-600 text-white"
+                  ? "nexus-primary-action"
                   : "border border-zinc-300 dark:border-zinc-700 hover:border-brand-500"
               }`}
             >

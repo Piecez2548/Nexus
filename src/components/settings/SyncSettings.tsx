@@ -91,7 +91,7 @@ export default function SyncSettings() {
             type="button"
             onClick={handleSyncNow}
             disabled={syncing}
-            className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
           >
             <RefreshCw size={16} className={syncing ? "animate-spin" : ""} />
             {t("settings.syncNow")}
@@ -149,7 +149,7 @@ export default function SyncSettings() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
         >
           {loading ? t("settings.processing") : mode === "signUp" ? t("settings.signUp") : t("settings.signIn")}
         </button>

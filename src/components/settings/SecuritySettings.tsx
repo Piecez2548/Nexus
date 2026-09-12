@@ -54,7 +54,7 @@ export default function SecuritySettings() {
         <button
           type="button"
           onClick={() => setDrawerContent("setup")}
-          className="flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2 text-white transition hover:bg-brand-700"
+          className="flex items-center gap-2 rounded-xl px-4 py-2 transition nexus-primary-action"
         >
           <Lock size={16} />
           {t("settings.enableAppLock")}

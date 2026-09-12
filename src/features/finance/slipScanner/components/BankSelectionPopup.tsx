@@ -164,7 +164,7 @@ export default function BankSelectionPopup({
           type="button"
           onClick={() => onConfirm(selection.selectedIds)}
           disabled={selection.noneSelected}
-          className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
         >
           {t("slipScanner.bankSelect.startScan")}
         </button>

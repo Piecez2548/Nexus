@@ -70,7 +70,7 @@ export default function ImportPreview({ open, onClose, candidates, onImport }: P
                 aria-pressed={preview.duplicateFilter === filter}
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
                   preview.duplicateFilter === filter
-                    ? "bg-brand-600 text-white"
+                    ? "nexus-primary-action"
                     : "border border-zinc-300 dark:border-zinc-700 hover:border-brand-500"
                 }`}
               >
@@ -194,7 +194,7 @@ export default function ImportPreview({ open, onClose, candidates, onImport }: P
           type="button"
           onClick={() => onImport(preview.selectedCandidates)}
           disabled={preview.selectedCount === 0}
-          className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
         >
           {t("slipScanner.importPreview.importSelected", { count: preview.selectedCount })}
         </button>

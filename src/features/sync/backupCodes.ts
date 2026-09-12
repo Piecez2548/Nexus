@@ -7,10 +7,8 @@ import { recordAudit } from "@/features/security/auditLog";
 // human-chosen PIN, so reusing hashPin/generateSalt's salted-SHA-256
 // approach here is appropriate (unlike for a PIN, there's no
 // low-iteration-count-vs-offline-brute-force tradeoff to worry about: the
-// code's own entropy is what resists guessing). Verified entirely
-// client-side against the `mfa_backup_codes` table (supabase/schema.sql) --
-// this app has no custom backend, so every other client-verified secret
-// works the same way.
+// code's own entropy is what resists guessing). Redemption happens only in
+// the database RPC so an aal1 session cannot read, insert, or replace hashes.
 
 const CODE_LENGTH = 10;
 const BACKUP_CODE_COUNT = 10;
@@ -70,26 +68,11 @@ export async function redeemBackupCode(userId: string, code: string): Promise<bo
   const normalized = normalizeBackupCode(code);
   if (!normalized) return false;
 
-  const { data, error } = await supabase
-    .from("mfa_backup_codes")
-    .select("id, code_hash, salt")
-    .eq("user_id", userId)
-    .is("used_at", null);
-
-  if (error || !data) return false;
-
-  for (const row of data as { id: string; code_hash: string; salt: string }[]) {
-    const candidateHash = await hashPin(normalized, row.salt);
-    if (candidateHash !== row.code_hash) continue;
-
-    const { error: updateError } = await supabase
-      .from("mfa_backup_codes")
-      .update({ used_at: new Date().toISOString() })
-      .eq("id", row.id);
-    return !updateError;
-  }
-
-  return false;
+  // userId remains in the public signature for callers/tests, but ownership
+  // is derived from auth.uid() inside the SECURITY DEFINER function.
+  void userId;
+  const { data, error } = await supabase.rpc("redeem_mfa_backup_code", { p_code: normalized });
+  return !error && data === true;
 }
 
 export async function countRemainingBackupCodes(userId: string): Promise<number> {

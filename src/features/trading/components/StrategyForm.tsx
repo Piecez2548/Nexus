@@ -149,7 +149,7 @@ export default function StrategyForm({ strategy, onDone }: Props) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-zinc-900 dark:text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
       >
         {isSubmitting ? t("strategies.saving") : t("common.save")}
       </button>

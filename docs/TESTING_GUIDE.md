@@ -1,6 +1,28 @@
 # Testing Guide
 
-**Last Updated:** 2026-08-29
+**Last Updated:** 2026-09-13
+
+## Current regression groups
+
+`npx vitest run src/features/sync/syncConflict.test.ts --maxWorkers=1` executes the synthetic offline/conflict/outage drill: **17/17 pass without expected failures**, including both reconnect orders, clock rollback, encrypted peer convergence, failed-upload retry, malformed remote data, edits during pull and v2 repair of an existing stuck cursor. Run `src/database/localSyncWrite.test.ts` for restart, two-connection concurrency, cursor floors and failed-batch rollback. Encryption migration tests cover version monotonicity when switching storage format. See [SC-003 evidence](SYNC_CONFLICT_FIX_003_2026-09-12.md) for current validation.
+
+The counts dated August 29 below are historical. Current remediation evidence is in [AUDIT_REMEDIATION_2026-09-01.md](AUDIT_REMEDIATION_2026-09-01.md).
+
+- `npm test`: unit/integration suite, bounded to four workers to avoid worker startup saturation.
+- `npx playwright test --workers=2`: local functional E2E build; excludes dedicated auth/login configurations and skips timing benchmarks.
+- `npx playwright test --config=e2e/auth-entry.config.ts`: synthetic authenticated build, account/PIN and multi-tab lock regressions.
+- `npx playwright test --config=e2e/login.config.ts`: login accessibility/validation on the same synthetic-config build, no fixed dev port.
+- `npx cross-env NEXUS_PERFORMANCE=1 playwright test e2e/release-readiness.spec.ts --grep "mobile constrained" --workers=1`: isolated existing performance budget. Do not run concurrently with builds or large test pools. CI runs it as a separate step.
+- `npx playwright test --config=e2e/production-smoke.config.ts --grep "preserves anonymous"`: read-only published Main/All login, public Tools catalogue and unauthenticated private cloud API rejection.
+- `npx playwright test e2e/core-smoke.spec.ts`: local production-build smoke covering Dashboard entry, synthetic income/expense creation, summary totals, reload persistence and navigation to the saved transaction rows.
+- `npx playwright test e2e/mobile.spec.ts e2e/transactions.spec.ts`: desktop and 390px mobile transaction CRUD, including mobile reload persistence.
+- `npx vitest run src/features/sync/syncEngine.test.ts src/features/sync/components/SyncProvider.test.tsx src/features/sync/tombstones.test.ts src/features/sync/store/authStore.test.ts`: sync propagation, deletion safety, signed-in orchestration and the five-second/background-online triggers. The two-device regression alternates isolated desktop/mobile local states against one stateful cloud relay in both directions.
+- `syncEngine.test.ts` also blocks a later unrelated `economicEvents` pull and asserts that a successfully applied transaction has already refreshed its store while `runFullSync()` is still pending. This protects the early-refresh latency fix without weakening the final post-dedupe refresh.
+- `encryptedRepository.test.ts` verifies unchanged encrypted envelopes reuse their decrypted content without sharing mutable return values, an updated envelope is decrypted again, and a replacement session DEK cannot reuse plaintext cached under the previous key.
+
+Use local-date helpers for date-only fixtures; do not generate local-month budget fixtures by UTC truncation. Select form controls with exact labels or specific IDs when filter labels overlap. Do not weaken contrast assertions or benchmark thresholds to hide failures. Diagnostic artifacts belong under `.impeccable/e2e/`, excluded from Vitest.
+
+For account/PIN recovery, run `npx vitest run src/features/encryption src/features/lock src/features/sync src/store/appLockStore.test.ts src/store/appLock/lockSignal.test.ts src/database/encryptedRepository.test.ts src/database/backupService.test.ts --maxWorkers=4` and `npx playwright test --config=e2e/auth-entry.config.ts --grep "account recovery"`. Successful recovery fixtures must use real ciphertext encrypted with the recovered key. Negative cases must preserve the previous PIN/key wrap and data. Browser tests cover 390px and 1280px against intercepted synthetic auth/escrow endpoints; they must never reset a real user's credentials. See [verification](ACCOUNT_RECOVERY_VERIFICATION_2026-09-12.md).
 
 ## Overview
 
@@ -13,6 +35,8 @@ Three layers, each with a distinct purpose (see [CODING_STANDARDS.md](CODING_STA
 1. **Unit tests** (`*.test.ts(x)`) — one function, hook, or store tested in isolation, collaborators mocked via `vi.mock`. These form the large majority of the 436-file Vitest suite and are most heavily concentrated in `src/features/finance/aiAnalytics/engine/`; repositories, services, stores, schemas, hooks, and utilities across the other modules are covered as well. Some plain `.test.ts` files intentionally exercise real fake-indexeddb-backed Dexie behavior and are functionally integration-style despite their filename.
 2. **Integration tests** (`*.integration.test.ts(x)`) — no mocking. Either exercises a store against the real Dexie instance (via `fake-indexeddb`), or renders a full page component with Testing Library and interacts with it as a user would (`Transactions.integration.test.tsx`, `Dashboard.integration.test.tsx`, `RecipientLearning.integration.test.tsx`, etc.).
 3. **End-to-end tests** (Playwright, `e2e/*.spec.ts`) — a real Chromium browser against a real built-and-served app, covering full user flows across page boundaries (navigation, mobile layout, cross-feature flows like "add a transaction, see it reflected on the dashboard").
+
+`backupService.test.ts` includes the application-level disaster-recovery contract. Its complete drill imports one synthetic row into every user-content table with encryption enabled, verifies encrypted storage, exports portable JSON, clears every content table, restores the backup, and compares all restored values and row counts. Keep the explicit 25-table oracle current when a new user-content table is added; device-local operational tables remain deliberately excluded.
 
 ## Unit Testing
 
@@ -42,6 +66,8 @@ Same Vitest runner, same config — the distinction from unit tests is purely ab
 ## Manual Testing
 
 Used during active development for anything Playwright/Vitest can't easily cover — primarily the Capacitor Android build (biometric unlock, native reminders, real device sizing) and visual/design review against `UI_DESIGN_SYSTEM.md`. Not a formalized checklist in the repo; relies on the developer running `npm run dev` or a built APK and exercising the change directly. See [DEPLOYMENT.md](DEPLOYMENT.md) for how to produce a testable Android build.
+
+For cross-device sync acceptance, use two independently persisted clients signed in to the same account. Record a shared baseline, then create, edit and delete in each direction. After every edit, verify both the visible field values and that the receiving client still contains exactly one row for the record. Repository-level test payloads must match the real form shape and must not copy stored `syncId` or `updatedAt` into the update request; otherwise the test can hide identity-generation defects. Remove all synthetic records and confirm both clients return to the baseline.
 
 ## CI Enforcement
 

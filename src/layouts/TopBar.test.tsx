@@ -1,3 +1,4 @@
+import { toLocalDateString } from "@/utils/localDate";
 import { describe, expect, it, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -62,7 +63,7 @@ describe("TopBar", () => {
       type: "expense",
       category: "Food",
       account: "Cash",
-      date: new Date().toISOString().slice(0, 10),
+      date: toLocalDateString(new Date()),
       status: "completed",
     });
 
@@ -160,7 +161,7 @@ describe("TopBar", () => {
   });
 
   it("shows the current level and streak, with XP progress in the popover", async () => {
-    useGamificationStore.setState({ xp: 150, streak: 3, lastActiveDate: new Date().toISOString().slice(0, 10) });
+    useGamificationStore.setState({ xp: 150, streak: 3, lastActiveDate: toLocalDateString(new Date()) });
 
     const user = userEvent.setup();
     renderTopBar();

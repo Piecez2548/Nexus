@@ -66,7 +66,7 @@ export default function TodoItem({ todo, onEdit }: Props) {
           }
           className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition ${
             todo.completed
-              ? "border-brand-600 bg-brand-600 text-white"
+              ? "border-brand-600 nexus-primary-action"
               : "border-zinc-300 dark:border-zinc-600"
           }`}
         >

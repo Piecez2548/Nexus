@@ -1,6 +1,8 @@
 # Project Architecture
 
-**Last Updated:** 2026-08-21
+**Last Updated:** 2026-09-01
+
+Current browser access is described in [SECURITY.md](SECURITY.md) and [ROUTING.md](ROUTING.md): AccountRouteGate wraps All/Main; MainRoute retains PIN/encryption gating; explicit All lock synchronizes same-origin tab lock generations through the existing app-lock store. Tools local utilities are public, while its private cloud APIs verify account/MFA independently. No domain store/service/repository architecture was replaced by this hardening.
 
 ## Overview
 
@@ -74,13 +76,13 @@ Every `src/features/<name>/` module owns one domain end-to-end (types, schema, r
 
 ## Data Flow
 
-**Read path:** Page mounts → calls `store.load*()` → store calls `service.list()` → service calls `repository.getAll()` → repository reads the Dexie table and, if encryption is enabled, decrypts each row's `encryptedContent` blob → store sets state → page/hook renders it.
+**Read path:** Page mounts → calls `store.load*()` → store calls `service.list()` → service calls `repository.getAll()` → repository reads the Dexie table and, if encryption is enabled, decrypts each row's `encryptedContent` blob → store sets state → page/hook renders it. Within an unlocked session, each encrypted repository keeps a DEK-scoped in-memory cache keyed by the complete encrypted envelope. Repeated reads reuse only unchanged decrypted content, return fresh objects, and decrypt a changed envelope again; replacing the session DEK necessarily starts with a separate cache.
 
-**Write path:** Form submits → component calls a store action (`addTransaction`, `updateHabit`, ...) → store calls `service.create/update/remove()` → service calls `repository.add/update/remove()` → repository stamps `syncId`/`updatedAt` (`withSyncMeta`), encrypts if enabled, writes to Dexie, and on delete records a `Tombstone` row → store re-`list()`s to refresh.
+**Write path:** Form submits → component calls a store action (`addTransaction`, `updateHabit`, ...) → store calls `service.create/update/remove()` → service calls `repository.add/update/remove()` → repository assigns/preserves `syncId`, encrypts if enabled, then `writeLocalSyncRows` allocates a monotonic `updatedAt` and persists the row with its per-table clock in one Dexie transaction. The version exceeds the saved clock, push cursor and newest stored row, so clock rollback and same-millisecond edits cannot hide new writes behind the cursor. Delete records a `Tombstone` row → store re-`list()`s to refresh. Cloud pulls and backup restores retain their existing versions.
 
 **Analytics read path:** `AiAnalytics.tsx` loads the same finance stores as every other finance page, then `useFinancialAnalysis()` runs the entire local statistical engine (13 legacy analyzers → 6 synthesis engines, see [AI_ANALYTICS.md](AI_ANALYTICS.md)) synchronously in a `useEffect` against the in-memory data already held by those stores — it never queries Dexie directly, and never leaves the device.
 
-**Sync path** (opt-in): every ~5s, or on the browser `online` event, `SyncProvider` calls `runFullSync(userId)`, which pushes locally-changed rows (`updatedAt` past the last push cursor) and tombstones to one generic Supabase table, then pulls remote changes past the last pull cursor, applying a last-write-wins guard and a malformed-row structural check, then refreshes only the Zustand stores for tables that actually changed. See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) and [SECURITY.md](SECURITY.md).
+**Sync path** (opt-in): every ~5s, or on the browser `online` event, `SyncProvider` calls `runFullSync(userId)`, which pushes locally-changed rows (`updatedAt` at/above the last push cursor) and tombstones to one generic Supabase table, then pulls remote changes with version and structural checks. Pull tracks only successfully applied versions; it caps push-cursor advancement at any still-pending local version, querying and updating that cursor in one transaction with the entity table. The v2 one-time repair clears previously corrupted push cursors on existing installations. After a table applies remote changes, its Zustand store refreshes immediately instead of waiting for all later pulls. A final refresh still runs after account/category deduplication to reconcile dependent finance views. See [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md), [SC-003](SYNC_CONFLICT_FIX_003_2026-09-12.md) and [the latency fix](SYNC_LATENCY_FIX_2026-09-13.md).
 
 ## Design Principles
 
@@ -115,3 +117,11 @@ Fully implemented: the entire layered architecture described above, for all 16 f
 
 - A real backend/API layer, if multi-user or server-side features are ever required (see "Future Backend Architecture" above).
 - **Done for one provider/one feature:** `src/ai/`'s Gateway is wired to a real Claude provider (`ClaudeProvider`, `supabase/functions/ai-coach`), used as an opt-in fallback for the AI Coach's `"unknown"`-intent questions only — every other AI surface (scoring, analysis, recommendations, forecasting) stays deliberately rule-based, per [DECISIONS.md](DECISIONS.md)'s "Why is Rule-based, not LLM-based, AI?" reasoning, which remains the app's default philosophy. Wiring further AI surfaces (or another provider) to the Gateway is a config/wiring change, not a redesign, thanks to the interface seam.
+
+### Shared interface theme (2026-08-31)
+
+Root `src/styles/nexusTheme.css` supplies the Main, All and authentication palettes; Nexus Tools vendors the same tokens and fonts for independent builds. Existing theme stores remain unchanged. See [SHARED_THEME.md](SHARED_THEME.md) for synchronization and scope.
+
+### Central account entry and Main-only PIN (2026-08-31)
+
+`AccountRouteGate` wraps the route tree and reuses `AuthGate`. Account forms live at All; anonymous Main navigation redirects to All and restores a validated internal return path after login. All stays outside the PIN gate. Only the Main route branch mounts `AppLockGate`, followed by `SyncProvider` and the Main shell. Tools verifies the existing cross-origin SSO handoff and redirects unverified direct visitors to All. See [PROJECT_HUB_AUTH.md](PROJECT_HUB_AUTH.md).

@@ -1,18 +1,16 @@
 @import "tailwindcss";
+@import "./nexusTheme.css";
+@import "./mainTheme.css";
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant mono (&:where(.mono, .mono *));
 
-/* Brand/accent tokens — defined to exactly equal the violet/fuchsia shades
-   they replace, so Light/Dark/System render pixel-identical to before this
-   layer existed. `.mono` overrides them with the app's own zinc neutral
-   scale, so the "monochrome" theme's accent literally is the achromatic
-   scale already used everywhere else for text/borders. */
+/* Shared emerald utility palette. Monochrome retains neutral accents. */
 @theme {
-    --color-brand-400: oklch(70.2% 0.183 293.541);
-    --color-brand-500: oklch(60.6% 0.25 292.717);
-    --color-brand-600: oklch(54.1% 0.281 293.009);
-    --color-brand-700: oklch(49.1% 0.27 292.581);
-    --color-brand-glow: oklch(59.1% 0.293 322.896);
+    --color-brand-400: #55d995;
+    --color-brand-500: #19804a;
+    --color-brand-600: #176b3b;
+    --color-brand-700: #12532f;
+    --color-brand-glow: #19804a;
 }
 
 .mono {
@@ -30,7 +28,7 @@
    that opt out of the browser default. Uses the brand accent (which the
    `.mono` theme already remaps) so the ring matches every theme. */
 :focus-visible {
-    outline: 2px solid var(--color-brand-500);
+    outline: 3px solid var(--main-focus);
     outline-offset: 2px;
 }
 
@@ -44,3 +42,19 @@ body,
 body {
     margin: 0;
 }
+
+/* Shared operational surfaces use All's palette, including outside MainLayout. */
+.nexus-auth-backdrop { background: var(--nexus-bg); color: var(--nexus-ink); }
+.nexus-auth-panel { background: var(--nexus-surface); color: var(--nexus-ink); border: 1px solid var(--nexus-line); border-radius: 16px; padding: clamp(24px, 5vw, 36px); }
+.nexus-auth-panel input { color: var(--nexus-ink); }
+.nexus-auth-wordmark { font-size: 2rem; font-weight: 800; letter-spacing: -.04em; }
+.nexus-auth-wordmark span { color: var(--main-action-bg); }
+.nexus-primary-action { background: var(--main-action-bg); color: var(--main-action-ink); min-height: 48px; border-radius: 12px; font-weight: 600; }
+.nexus-primary-action:hover:not(:disabled) { background: var(--nexus-accent-hover); }
+.nexus-update-notice { position: fixed; inset: auto 16px 16px auto; z-index: 10000; display: flex; flex-wrap: wrap; gap: 12px; max-width: min(520px, calc(100vw - 32px)); padding: 16px; border: 1px solid var(--nexus-line); border-radius: 12px; background: var(--nexus-surface); color: var(--nexus-ink); box-shadow: 0 8px 28px #0003; }
+.nexus-update-notice p { width: 100%; margin: 0; }
+.nexus-update-notice button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--main-control-border); border-radius: 8px; cursor: pointer; }
+.nexus-update-notice button:first-of-type { background: var(--main-action-bg); color: var(--main-action-ink); }
+.nexus-update-notice button:focus-visible { outline: 3px solid var(--main-focus); outline-offset: 3px; }
+.nexus-auth-panel input:not([type='checkbox']) { background: var(--nexus-bg); border-color: var(--main-control-border); box-shadow: none; }
+.nexus-auth-panel input:not([type='checkbox']):focus { border-color: var(--main-focus); }

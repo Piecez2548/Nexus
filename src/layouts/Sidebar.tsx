@@ -6,7 +6,6 @@ import {
   ListChecks,
   Settings,
   ChevronDown,
-  Zap,
 } from "lucide-react";
 
 import { NavLink, useLocation } from "react-router-dom";
@@ -26,7 +25,7 @@ function NavItem({ icon: Icon, labelKey, path }: MenuItem) {
       className={({ isActive }) =>
         `flex items-center gap-3 rounded-xl px-4 py-3 transition-all ${
           isActive
-            ? "bg-brand-600 text-white shadow-lg"
+            ? "main-nav-active"
             : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-white"
         }`
       }
@@ -89,28 +88,20 @@ function NavGroup({ icon: Icon, labelKey, items, isActive }: GroupProps) {
 export default function Sidebar() {
   const location = useLocation();
   const { t } = useTranslation();
-
   const isFinanceActive = financeMenus.some((item) => location.pathname.startsWith(item.path));
   const isTradingActive = tradingMenus.some((item) => location.pathname.startsWith(item.path));
   const isPersonalActive = personalMenus.some((item) => location.pathname.startsWith(item.path));
 
   return (
-    <aside className="hidden h-screen w-72 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 md:flex">
+    <aside data-shell-audit="sidebar" className="sticky top-0 hidden h-dvh w-72 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 md:flex">
 
       {/* Logo */}
 
       <div className="border-b border-zinc-200 dark:border-zinc-800 p-6">
 
         <div className="flex items-center gap-3">
-          <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center bg-gradient-to-br from-brand-500 to-brand-glow"
-            style={{ clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)" }}
-          >
-            <Zap size={18} className="text-white" fill="currentColor" />
-          </div>
-
           <div>
-            <h1 className="text-2xl font-bold tracking-wide">NEXUS</h1>
+            <p className="main-wordmark text-3xl">nexus<span>.</span></p>
             <p className="text-sm text-zinc-600 dark:text-zinc-500">{t("nav.tagline")}</p>
           </div>
         </div>
@@ -119,7 +110,7 @@ export default function Sidebar() {
 
       {/* Menu */}
 
-      <nav className="flex-1 space-y-2 overflow-y-auto p-4">
+      <nav aria-label={t("common.mainNavigation")} className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
 
         <NavItem icon={LayoutDashboard} labelKey="nav.dashboard" path="/dashboard" />
 

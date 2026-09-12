@@ -6,6 +6,8 @@ export interface PinLockSlice {
   autoLockMinutes: number;
   rememberUntil: number | null;
   sessionUnlocked: boolean;
+  hubLockRequired: boolean;
+  unlockGeneration: string | null;
   lastActivityAt: number;
 
   isEnabled: () => boolean;
@@ -13,7 +15,9 @@ export interface PinLockSlice {
 
   setupPin: (pin: string, remember: boolean) => Promise<void>;
   unlock: (pin: string, remember: boolean) => Promise<boolean>;
+  unlockWithPairedDevice: (dek: CryptoKey) => void;
   lock: () => void;
+  lockHub: () => void;
   changePin: (currentPin: string, newPin: string) => Promise<boolean>;
   disableLock: (currentPin: string) => Promise<boolean>;
   setAutoLockMinutes: (minutes: number) => void;
@@ -33,6 +37,10 @@ export interface BiometricSlice {
   // biometric-gated Keystore credential — a faster alternative to typing
   // the PIN, never a replacement for it (the PIN itself is unaffected).
   biometricEnabled: boolean;
+
+  // Repairs a WebView/localStorage flag lost during an app update when the
+  // hardware-protected credential is still present in the native keystore.
+  restoreBiometricState: () => Promise<boolean>;
 
   // Re-verifies the PIN, then stores it behind biometric-gated Keystore
   // storage. Only flips biometricEnabled on success.

@@ -4,7 +4,7 @@ import { recordTombstone } from "@/features/sync/tombstones";
 import { createEncryptedRepository } from "@/database/encryptedRepository";
 import type { GoalMilestoneEvent } from "../types";
 
-const encrypted = createEncryptedRepository<GoalMilestoneEvent>(db.goalMilestoneEvents);
+const encrypted = createEncryptedRepository<GoalMilestoneEvent>(db.goalMilestoneEvents, { stampLocalWrites: true });
 
 export const goalMilestoneEventRepository = {
   getAll: () => encrypted.getAll(),

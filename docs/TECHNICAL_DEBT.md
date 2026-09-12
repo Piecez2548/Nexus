@@ -1,6 +1,22 @@
 # Technical Debt
 
-**Last Updated:** 2026-08-30
+**Last Updated:** 2026-09-12
+
+## September 12 sync-conflict findings — three implementation fixes
+
+The isolated [SYNC-CONFLICT-001 drill](SYNC_CONFLICT_VERIFICATION_2026-09-12.md) reproduced three High-priority data-integrity defects. [SC-001](SYNC_CONFLICT_FIX_001_2026-09-12.md) adds a deployed atomic server live-version guard. [SC-002](SYNC_CONFLICT_FIX_002_2026-09-12.md) allocates durable monotonic local versions. [SC-003](SYNC_CONFLICT_FIX_003_2026-09-12.md) compares actually applied versions and advances the push cursor transactionally, with v2 repair for previously skipped rows. The expanded drill passes 17/17 with no expected failures. Physical offline/reconnect verification of the combined fixes remains planned; equal-timestamp conflicts across independently edited devices retain the documented protocol limitation. No global engineering score was recalculated.
+
+## September 12 supply-chain evidence
+
+Nexus, Nexus Tools and the DataLens frontend now generate validated, reproducible CycloneDX production-dependency SBOMs in their CI workflows and retain each run's SBOM artifact for 90 days. This closes the stale-SBOM automation gap. It does not resolve source/asset chain of title, legal licence selection or required attribution notices; those decisions require the accountable operator and legal review.
+
+## September 8 executive-readiness closure
+
+The obsolete, unconsumed `FullGalleryScanPanel` prototype and its isolated test were removed after confirming that the shipping `GalleryScanFlow` already owns the complete `useFullGalleryScan` orchestration path. Product lint now excludes generated output and duplicated agent/skill tooling, while retaining source and E2E coverage. Release builds enforce a 500 KiB per-JavaScript-chunk and 4 MiB total-JavaScript budget in CI. The verified build is below both limits. Dependency audit reports zero known vulnerabilities. These close the P2 items recorded in `SYSTEM_RESTORATION_AUDIT_2026-09-08.md` without altering user data, database schema, or scanner business logic.
+
+## September 1 audit remediation
+
+The six finding groups AUD-001–006 from SYSTEM_AUDIT_2026-09-01.md have implementation fixes and regression coverage in the current working tree; final verification/deployment is tracked in [AUDIT_REMEDIATION_2026-09-01.md](AUDIT_REMEDIATION_2026-09-01.md). These cover cross-tab lock, command contrast, public Tools, stale test fixtures/selectors, compatible dependency patches, and security/routing documentation. The historical audit score is not automatically promoted to 20/20. Storage-unavailable cross-tab synchronization, native-device validation and field performance remain limitations, not claimed guarantees.
 
 ## Overview
 

@@ -1,10 +1,14 @@
 # Nexus — Documentation
 
-**Last Updated:** 2026-08-19
+**Last Updated:** 2026-09-12
 
 ## Overview
 
-Nexus is a local-first personal finance, trading journal, and productivity app. It tracks transactions, budgets, savings goals, trading positions, an investment portfolio, todos, habits, and a recurring daily schedule — all stored on-device in IndexedDB, with an optional, fully opt-in Supabase-backed sync and end-to-end encryption layer for multi-device use. A large rule-based "AI Analytics" subsystem computes financial health scores, behavior insights, forecasts, and recommendations entirely on-device, with **no LLM and no network calls** for any of it.
+Nexus is a local-first personal finance, trading journal, and productivity app. It tracks transactions, budgets, savings goals, trading positions, an investment portfolio, todos, habits, and a recurring daily schedule — all stored on-device in IndexedDB, with optional Supabase-backed sync and optional client-side encryption for multi-device use. The primary "AI Analytics" subsystem computes financial health scores, behavior insights, forecasts, and recommendations with deterministic rules on-device. An independently opt-in AI Coach fallback can call the configured server-side LLM for questions the rule engine cannot classify; that path is off by default and sends only its documented aggregate allow-list.
+
+The product direction is finance-first for Thai salaried workers and freelancers. The current navigation exposes the complete implemented workspace; proposed commercial packaging does not hide product areas. Start with [EXECUTIVE_FINAL_STATUS_AND_NEXT_ACTIONS_2026-09-12.md](EXECUTIVE_FINAL_STATUS_AND_NEXT_ACTIONS_2026-09-12.md) for the current decision, evidence and complete action register. Supporting records include [COMMERCIAL_READINESS.md](COMMERCIAL_READINESS.md), [COMMERCIAL_DUE_DILIGENCE_2026-09-09.md](COMMERCIAL_DUE_DILIGENCE_2026-09-09.md), [USER_RESEARCH_PLAN.md](USER_RESEARCH_PLAN.md), [PRIVACY_NOTICE_DRAFT.md](PRIVACY_NOTICE_DRAFT.md), and [TERMS_DRAFT.md](TERMS_DRAFT.md). Draft legal documents are review inputs, not published legal advice.
+
+For the current release worklist, use the [Release Blocker Registry](RELEASE_BLOCKER_REGISTRY_2026-09-12.md): 24 open blockers (22 Planned; RB-001 Blocked awaiting operator input; RB-002 In Progress pending appointed-reviewer acceptance). The [Operator/accountability record](OPERATOR_AND_ACCOUNTABILITY_RECORD_2026-09-12.md) is prepared for factual inputs and appointments. The [Data Inventory](DATA_INVENTORY_2026-09-12.md) and [Data Flow Map](DATA_FLOW_MAP_2026-09-12.md) cover 55 assets and 20 flows from local source, with provider/legal unknowns tracked. The [Release Baseline](RELEASE_BASELINE_2026-09-12.md) records TEST-STABILITY-001 resolved and 2,782/2,782 tests passing; production release remains NO-GO pending the applicable blockers.
 
 This `/docs` folder is the single source of truth for how the codebase is actually built today. It is generated from a direct reading of the source tree, not from planning documents — where something is planned but not built, it is explicitly marked **Planned**.
 

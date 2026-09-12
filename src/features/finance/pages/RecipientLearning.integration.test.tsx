@@ -63,15 +63,16 @@ describe("Rule Engine / Learning Engine (end to end through the real UI)", () =>
     expect(profile.transactionCount).toBe(1);
 
     // --- Second transaction: same recipient, different title — category should auto-fill. ---
-    // In jsdom, the Drawer's framer-motion exit transition never actually
-    // completes synchronously, so the same TransactionForm instance (and
-    // its local "More" state) survives the close/reopen here — unlike a
-    // real browser, where the drawer fully unmounts and resets it (covered
-    // by e2e/recipient-learning.spec.ts instead). No second click needed.
+    // Depending on scheduler load, the Drawer's exit animation may still
+    // retain the previous form or may finish and mount a fresh collapsed
+    // form. Open the optional recipient field only when it reset.
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
     await user.type(await screen.findByLabelText("Item name"), "เที่ยงวันนี้");
     await user.type(screen.getByLabelText("Amount"), "65");
-    await user.type(screen.getByLabelText("Recipient / Phone / PromptPay"), "0812345678");
+    if (!screen.queryByLabelText("Recipient / Phone / PromptPay")) {
+      await user.click(screen.getByRole("button", { name: "More" }));
+    }
+    await user.type(await screen.findByLabelText("Recipient / Phone / PromptPay"), "0812345678");
 
     await waitFor(() => {
       expect(screen.getByLabelText("Category")).toHaveValue("Food");

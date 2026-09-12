@@ -1,4 +1,4 @@
-import { useTranslation } from "@/i18n/useTranslation";
+import { useEntryTranslation } from "@/i18n/useEntryTranslation";
 
 interface Props {
   message: string;
@@ -6,7 +6,7 @@ interface Props {
 }
 
 export default function ErrorState({ message, onRetry }: Props) {
-  const { t } = useTranslation();
+  const { t } = useEntryTranslation();
 
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-red-900/50 bg-red-950/30 p-6 text-center">

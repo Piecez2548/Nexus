@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import "../dashboard.css";
 
 import DashboardHeader from "@/features/dashboard/components/DashboardHeader";
 import DashboardPeriodSelector from "@/features/dashboard/components/DashboardPeriodSelector";
@@ -60,7 +61,7 @@ export default function Dashboard() {
   }, [loadTransactions, loadBudgets, loadCategories, loadTrades]);
 
   return (
-    <div className="space-y-8">
+    <div className="nexus-dashboard space-y-8">
 
       <DashboardHeader onAddTransaction={() => openTransactionDrawer()} />
 

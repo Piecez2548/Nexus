@@ -19,6 +19,21 @@ function renderPalette(commands: Command[]) {
 beforeEach(() => useLanguageStore.setState({ language: "en" }));
 
 describe("CommandPalette", () => {
+  it("names the dialog, traps Tab, and returns focus after Escape", async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><button>Origin</button><CommandPalette commands={[{ id: "a", title: "Transactions", run: vi.fn() }]} /></MemoryRouter>);
+    await user.click(screen.getByText("Origin"));
+    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
+    expect(screen.getByRole("dialog")).toHaveAccessibleName("Commands and navigation");
+    expect(screen.getByRole("textbox")).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(screen.getByRole("button", { name: "Transactions" })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("textbox")).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("Origin")).toHaveFocus();
+  });
   it("is closed until Ctrl+K, then opens", () => {
     renderPalette([{ id: "a", title: "Transactions", run: vi.fn() }]);
     expect(screen.queryByPlaceholderText("Type a command or search…")).not.toBeInTheDocument();
@@ -39,7 +54,7 @@ describe("CommandPalette", () => {
     await user.type(screen.getByPlaceholderText("Type a command or search…"), "trans");
     expect(screen.queryByText("Budget")).not.toBeInTheDocument();
 
-    await user.click(screen.getByText("Transactions"));
+    await user.click(screen.getByRole("button", { name: "Transactions" }));
     expect(run).toHaveBeenCalledTimes(1);
     // Palette closes after running.
     expect(screen.queryByPlaceholderText("Type a command or search…")).not.toBeInTheDocument();

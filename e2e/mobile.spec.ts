@@ -28,11 +28,36 @@ test.describe("mobile layout", () => {
   test("the More menu surfaces the rest of the navigation", async ({ page }) => {
     await page.goto("/");
 
-    await page.getByRole("button", { name: "More" }).click();
+    await page.getByRole("button", { name: "More", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Menu" })).toBeVisible();
 
     await page.getByRole("link", { name: "Todo" }).click();
     await expect(page.getByRole("heading", { name: "Todo" })).toBeVisible();
+  });
+
+  test("adds, edits, reloads, and deletes a transaction from the mobile UI", async ({ page }) => {
+    await page.goto("/transactions");
+    const mobileList = page.locator(".space-y-3.md\\:hidden");
+
+    await page.getByRole("button", { name: "Add Transaction" }).click();
+    await page.getByLabel("Item name").fill("Mobile CRUD check");
+    await page.getByLabel("Amount").fill("250");
+    await page.getByLabel("Category").selectOption({ label: "Food" });
+    await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
+    await page.getByRole("button", { name: "Save" }).click();
+
+    await expect(mobileList.getByText("Mobile CRUD check", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Edit Mobile CRUD check" }).click();
+    await page.getByLabel("Amount").fill("275");
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(mobileList.getByText("฿275", { exact: true })).toBeVisible();
+
+    await page.reload();
+    await expect(mobileList.getByText("Mobile CRUD check", { exact: true })).toBeVisible();
+    await expect(mobileList.getByText("฿275", { exact: true })).toBeVisible();
+
+    await page.getByRole("button", { name: "Delete Mobile CRUD check" }).click();
+    await expect(mobileList.getByText("Mobile CRUD check", { exact: true })).toHaveCount(0);
   });
 
   // Representative check for the Deeper Trading Analytics batch's new

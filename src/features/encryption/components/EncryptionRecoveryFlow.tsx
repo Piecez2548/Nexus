@@ -4,6 +4,7 @@ import { Lock, Mail, KeyRound } from "lucide-react";
 import { useAppLockStore } from "@/store/appLockStore";
 import { recoverDekFromEscrow, RecoveryNotAvailableError } from "@/features/encryption/recovery/recoverDekFromEscrow";
 import { useTranslation } from "@/i18n/useTranslation";
+import { RecoveryKeyMismatchError } from "@/features/encryption/recovery/validateRecoveryKey";
 
 const inputClassName =
   "w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 p-3 text-center text-lg tracking-[0.5em] outline-none focus:border-brand-500";
@@ -49,6 +50,7 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
     try {
       const dek = await recoverDekFromEscrow(email, accountPassword, t);
       setRecoveredDek(dek);
+      setAccountPassword("");
       setStep("new-pin");
     } catch (err) {
       if (err instanceof RecoveryNotAvailableError) {
@@ -80,9 +82,25 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
     }
 
     setSubmitting(true);
-    await completeRecovery(newPin, recoveredDek);
-    setSubmitting(false);
-    onDone();
+    try {
+      await completeRecovery(newPin, recoveredDek);
+      setRecoveredDek(null);
+      setNewPin("");
+      setNewPinConfirm("");
+      onDone();
+    } catch (err) {
+      if (err instanceof RecoveryKeyMismatchError) {
+        setError(t("lock.recoverLocalKeyMismatch"));
+        setRecoveredDek(null);
+        setNewPin("");
+        setNewPinConfirm("");
+        setStep("credentials");
+      } else {
+        setError(t("lock.recoverySaveFailed"));
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (step === "new-pin") {
@@ -128,12 +146,12 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
           />
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
 
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
         >
           {submitting ? t("lock.saving") : t("lock.recoverySetNewPinTitle")}
         </button>
@@ -182,12 +200,12 @@ export default function EncryptionRecoveryFlow({ onDone, onCancel, title, descri
         />
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-500">{error}</p>}
 
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-xl bg-brand-600 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
       >
         {submitting ? t("lock.recovering") : t("lock.recoverButton")}
       </button>

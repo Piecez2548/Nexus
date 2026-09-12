@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import "./SummaryCard.css";
 import ChangeBadge from "@/components/ui/ChangeBadge";
 import { useTranslation } from "@/i18n/useTranslation";
 
@@ -26,7 +27,7 @@ export default function SummaryCard({
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 transition hover:border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+    <div className="nexus-summary-card rounded-2xl p-5" style={{ "--summary-color": color } as CSSProperties}>
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
           {title}
@@ -34,8 +35,7 @@ export default function SummaryCard({
         </span>
 
         <div
-          className="flex h-10 w-10 items-center justify-center rounded-xl"
-          style={{ backgroundColor: color }}
+          className="nexus-summary-icon flex h-10 w-10 items-center justify-center rounded-xl"
         >
           {icon}
         </div>

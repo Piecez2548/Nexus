@@ -133,7 +133,7 @@ export default function WhatIfScenarioPanel({ goalProgress, spendingAnalysis, su
             aria-pressed={activeType === type}
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
               activeType === type
-                ? "bg-brand-600 text-white"
+                ? "nexus-primary-action"
                 : disabledByType[type]
                   ? "cursor-not-allowed bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600"
                   : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
@@ -226,7 +226,7 @@ export default function WhatIfScenarioPanel({ goalProgress, spendingAnalysis, su
                   onClick={() => setReduceCoffeePercent(step)}
                   aria-pressed={reduceCoffeePercent === step}
                   className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                    reduceCoffeePercent === step ? "bg-brand-600 text-white" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                    reduceCoffeePercent === step ? "nexus-primary-action" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
                   }`}
                 >
                   {step}%

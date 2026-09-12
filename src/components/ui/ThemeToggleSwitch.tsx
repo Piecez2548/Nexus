@@ -4,7 +4,8 @@ import { useResolvedTheme } from "@/hooks/useResolvedTheme";
 import { useTranslation } from "@/i18n/useTranslation";
 
 export default function ThemeToggleSwitch() {
-  const { themeMode, setThemeMode } = useAppSettingsStore();
+  const themeMode = useAppSettingsStore((s) => s.themeMode);
+  const setThemeMode = useAppSettingsStore((s) => s.setThemeMode);
   const isDark = useResolvedTheme(themeMode);
   const { t } = useTranslation();
 
@@ -25,15 +26,17 @@ export default function ThemeToggleSwitch() {
         aria-checked={isDark}
         aria-label={t("topbar.toggleDarkMode")}
         onClick={handleToggle}
-        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-          isDark ? "bg-brand-600" : "bg-zinc-300 dark:bg-zinc-700"
-        }`}
+        className="relative h-11 w-11 shrink-0 rounded-lg"
       >
+        <span aria-hidden="true" className={`absolute left-1 top-3 h-5 w-9 rounded-full transition-colors ${
+          isDark ? "bg-brand-600" : "bg-zinc-300 dark:bg-zinc-700"
+        }`}>
         <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+          className={`absolute left-0 top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
             isDark ? "translate-x-4" : "translate-x-0.5"
           }`}
         />
+        </span>
       </button>
     </div>
   );

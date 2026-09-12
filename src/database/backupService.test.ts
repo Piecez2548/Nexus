@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { exportBackup, importBackup, resetAllData } from "./backupService";
+import { exportBackup, importBackup, MAX_BACKUP_BYTES, MAX_BACKUP_ROWS, resetAllData } from "./backupService";
 import { db } from "./db";
 import { useAppLockStore } from "@/store/appLockStore";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
@@ -24,6 +24,7 @@ describe("backupService", () => {
       db.habits.clear(),
       db.holdings.clear(),
       db.calendarEvents.clear(),
+      db.scheduleItems.clear(),
       db.goalMilestoneEvents.clear(),
       db.vaultEntries.clear(),
       db.workoutExercises.clear(),
@@ -98,6 +99,101 @@ describe("backupService", () => {
     expect(accounts).toHaveLength(1);
     expect(accounts[0].name).toBe("Bank");
     expect(categories).toHaveLength(1);
+  });
+
+  it("completes an encrypted disaster-recovery drill across every user-content table", async () => {
+    const contentTables = [
+      "transactions",
+      "accounts",
+      "categories",
+      "trades",
+      "recipientProfiles",
+      "merchants",
+      "budgets",
+      "goals",
+      "transactionTemplates",
+      "todos",
+      "habits",
+      "holdings",
+      "calendarEvents",
+      "scheduleItems",
+      "goalMilestoneEvents",
+      "vaultEntries",
+      "workoutExercises",
+      "workoutEntries",
+      "netWorthItems",
+      "netWorthSnapshots",
+      "subscriptions",
+      "budgetPeriodSnapshots",
+      "strategies",
+      "watchlistItems",
+      "economicEvents",
+    ] as const;
+
+    const syncedTables = contentTables.filter((table) => table !== "merchants");
+    const data = Object.fromEntries(
+      contentTables.map((table, index) => {
+        const marker = `BACKUP-RESTORE-001:${table}`;
+        return [
+          table,
+          [
+            {
+              id: index + 101,
+              marker,
+              name: `${marker}:name`,
+              title: `${marker}:title`,
+              recipientKey: `${marker}:recipient`,
+              category: `${marker}:category`,
+              symbol: `T${index}`,
+              date: "2026-09-12",
+              eventDate: "2026-09-12",
+              parentRef: "BACKUP-RESTORE-001:shared-parent",
+              ...(table === "merchants"
+                ? {}
+                : {
+                    syncId: `backup-restore-001-${table}`,
+                    updatedAt: "2026-09-12T12:00:00.000Z",
+                  }),
+            },
+          ],
+        ];
+      })
+    );
+    const fixture = JSON.stringify({
+      version: 1,
+      exportedAt: "2026-09-12T12:00:00.000Z",
+      data,
+    });
+
+    const dek = await generateDek();
+    useAppLockStore.setState({ encryptionEnabled: true });
+    useEncryptionSessionStore.getState().setDek(dek);
+
+    await importBackup(fixture, t);
+
+    for (const table of syncedTables) {
+      const [raw] = (await db.table(table).toArray()) as Array<Record<string, unknown>>;
+      expect(raw.encryptedContent, `${table} should be encrypted at rest`).toBeDefined();
+      expect(raw.marker, `${table} marker should not remain plaintext`).toBeUndefined();
+    }
+    const [rawMerchant] = (await db.merchants.toArray()) as unknown as Array<Record<string, unknown>>;
+    expect(rawMerchant.marker).toBe("BACKUP-RESTORE-001:merchants");
+
+    const exportedBeforeLoss = JSON.parse(await exportBackup()) as { data: Record<string, unknown[]> };
+    expect(Object.keys(exportedBeforeLoss.data).sort()).toEqual([...contentTables].sort());
+
+    await Promise.all(contentTables.map((table) => db.table(table).clear()));
+    expect(await Promise.all(contentTables.map((table) => db.table(table).count()))).toEqual(
+      contentTables.map(() => 0)
+    );
+
+    await importBackup(JSON.stringify(exportedBeforeLoss), t);
+    const exportedAfterRestore = JSON.parse(await exportBackup()) as { data: Record<string, unknown[]> };
+
+    expect(exportedAfterRestore.data).toEqual(exportedBeforeLoss.data);
+    expect(await Promise.all(contentTables.map((table) => db.table(table).count()))).toEqual(
+      contentTables.map(() => 1)
+    );
   });
 
   it("imports a legacy backup file that predates transactionTemplates/todos", async () => {
@@ -264,6 +360,20 @@ describe("backupService", () => {
 
     const accounts = await db.accounts.toArray();
     expect(accounts).toHaveLength(1);
+  });
+
+  it("rejects oversized, unsupported, invalid-date, primitive-row, and excessive-row backups", async () => {
+    const base = {
+      version: 1,
+      exportedAt: "2026-09-09T00:00:00.000Z",
+      data: { transactions: [], accounts: [], categories: [], trades: [], recipientProfiles: [], merchants: [], budgets: [], goals: [] },
+    };
+
+    await expect(importBackup("x".repeat(MAX_BACKUP_BYTES + 1), t)).rejects.toThrow("settings.backupTooLarge");
+    await expect(importBackup(JSON.stringify({ ...base, version: 2 }), t)).rejects.toThrow("settings.backupInvalidStructure");
+    await expect(importBackup(JSON.stringify({ ...base, exportedAt: "not-a-date" }), t)).rejects.toThrow("settings.backupInvalidStructure");
+    await expect(importBackup(JSON.stringify({ ...base, data: { ...base.data, accounts: ["invalid"] } }), t)).rejects.toThrow("settings.backupInvalidStructure");
+    await expect(importBackup(JSON.stringify({ ...base, data: { ...base.data, accounts: Array(MAX_BACKUP_ROWS + 1).fill({}) } }), t)).rejects.toThrow("settings.backupInvalidStructure");
   });
 
   it("resetAllData clears everything (including templates/todos) then reseeds defaults", async () => {

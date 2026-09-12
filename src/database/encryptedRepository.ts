@@ -4,6 +4,7 @@ import { encryptField, decryptField, type EncryptedEnvelope } from "@/features/e
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
 import { useAppLockStore } from "@/store/appLockStore";
 import type { SyncMeta } from "@/utils/syncMeta";
+import { writeLocalSyncRows } from "@/database/localSyncWrite";
 
 // Thrown when encryption is enabled but no session DEK is resident (the
 // app is locked, or somehow got into this state without unlocking first).
@@ -25,6 +26,9 @@ export interface EncryptedRow {
 }
 
 interface EncryptedRepositoryOptions<T> {
+  // Opt in for local synced repositories; bare encryption adapters preserve
+  // caller metadata for import/compatibility use cases.
+  stampLocalWrites?: boolean;
   // Fields kept as plaintext top-level columns instead of folded into
   // encryptedContent — for fields a Dexie `&`-unique index or `.where()`
   // lookup still needs to query directly (e.g. recipientKey, budgets'
@@ -97,6 +101,36 @@ export async function decryptRow<T>(dek: CryptoKey, row: EncryptedRow): Promise<
   return { ...plaintextAndPlumbing, ...content } as T;
 }
 
+type DecryptedContent = Record<string, unknown>;
+
+function envelopeCacheKey(envelope: EncryptedEnvelope): string {
+  return `${envelope.v}:${envelope.iv}:${envelope.ct}`;
+}
+
+async function decryptRowWithCache<T>(
+  dek: CryptoKey,
+  row: EncryptedRow,
+  cache: Map<string, DecryptedContent>
+): Promise<T> {
+  if (row.encryptedContent === undefined) {
+    return row as unknown as T;
+  }
+
+  const { encryptedContent, ...plaintextAndPlumbing } = row;
+  const cacheKey = envelopeCacheKey(encryptedContent);
+  let content = cache.get(cacheKey);
+
+  if (content === undefined) {
+    content = await decryptField<DecryptedContent>(dek, encryptedContent);
+    cache.set(cacheKey, content);
+  }
+
+  // Repository reads have always returned fresh objects. Clone cached JSON
+  // content so a consumer cannot mutate the next read through a shared
+  // reference while still avoiding the expensive WebCrypto operation.
+  return { ...plaintextAndPlumbing, ...structuredClone(content) } as T;
+}
+
 /**
  * Wraps a Dexie table with transparent encryption for its non-plumbing
  * fields, matching the existing repositories' `{getAll, add, update}`
@@ -113,21 +147,56 @@ export function createEncryptedRepository<T extends SyncMeta & { id?: number }>(
   options: EncryptedRepositoryOptions<T> = {}
 ) {
   const plaintextKeys = options.plaintextKeys ?? [];
+  // The DEK object scopes cached plaintext to the active unlocked session.
+  // A recovered/replaced key gets a different WeakMap entry and must prove it
+  // can decrypt every envelope itself. WeakMap also lets a cleared DEK and its
+  // plaintext cache be reclaimed once no session code retains that key.
+  const decryptedContentByDek = new WeakMap<CryptoKey, Map<string, DecryptedContent>>();
+
+  function cacheFor(dek: CryptoKey): Map<string, DecryptedContent> {
+    const existing = decryptedContentByDek.get(dek);
+    if (existing !== undefined) return existing;
+
+    const created = new Map<string, DecryptedContent>();
+    decryptedContentByDek.set(dek, created);
+    return created;
+  }
+
+  async function persist(entity: T, mode: "add" | "put"): Promise<number> {
+    if (options.stampLocalWrites) {
+      return (await writeLocalSyncRows(table, [entity], mode))[0];
+    }
+    return mode === "add" ? table.add(entity) : table.put(entity);
+  }
 
   async function getAll(): Promise<T[]> {
     const rows = await table.toArray();
     if (!isEncryptionEnabled() && !anyRowEncrypted(rows)) return rows;
 
     const dek = requireSessionDek();
-    return Promise.all(rows.map((row) => decryptRow<T>(dek, row as unknown as EncryptedRow)));
+    const cache = cacheFor(dek);
+    const activeKeys = new Set(
+      rows.flatMap((row) => {
+        const envelope = (row as unknown as EncryptedRow).encryptedContent;
+        return envelope === undefined ? [] : [envelopeCacheKey(envelope)];
+      })
+    );
+
+    for (const key of cache.keys()) {
+      if (!activeKeys.has(key)) cache.delete(key);
+    }
+
+    return Promise.all(
+      rows.map((row) => decryptRowWithCache<T>(dek, row as unknown as EncryptedRow, cache))
+    );
   }
 
   async function add(entity: T): Promise<number> {
-    if (!isEncryptionEnabled()) return table.add(entity);
+    if (!isEncryptionEnabled()) return persist(entity, "add");
 
     const dek = requireSessionDek();
     const encrypted = await encryptRow(dek, entity, plaintextKeys);
-    return table.add(encrypted as unknown as T);
+    return persist(encrypted as unknown as T, "add");
   }
 
   async function update(id: number, entity: T): Promise<number> {
@@ -141,13 +210,13 @@ export function createEncryptedRepository<T extends SyncMeta & { id?: number }>(
       // downgrade it to plaintext.
       const existing = await table.get(id);
       if (existing === undefined || !anyRowEncrypted([existing])) {
-        return table.put(withId);
+        return persist(withId, "put");
       }
     }
 
     const dek = requireSessionDek();
     const encrypted = await encryptRow(dek, withId, plaintextKeys);
-    return table.put(encrypted as unknown as T);
+    return persist(encrypted as unknown as T, "put");
   }
 
   // For the rare repository method that queries the Dexie table directly
@@ -158,7 +227,7 @@ export function createEncryptedRepository<T extends SyncMeta & { id?: number }>(
     if (!isEncryptionEnabled() && !anyRowEncrypted([row])) return row;
 
     const dek = requireSessionDek();
-    return decryptRow<T>(dek, row as unknown as EncryptedRow);
+    return decryptRowWithCache<T>(dek, row as unknown as EncryptedRow, cacheFor(dek));
   }
 
   return { getAll, add, update, decryptOptional };

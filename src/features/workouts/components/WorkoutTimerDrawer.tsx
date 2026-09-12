@@ -126,7 +126,7 @@ export default function WorkoutTimerDrawer({ onFinish, onCancel }: Props) {
           <button
             type="button"
             onClick={() => timer.start(config)}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition nexus-primary-action"
           >
             <Play size={16} />
             {t("workouts.startTimer")}
@@ -177,7 +177,7 @@ export default function WorkoutTimerDrawer({ onFinish, onCancel }: Props) {
         <button
           type="button"
           onClick={handleStopAndLog}
-          className="flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700"
+          className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition nexus-primary-action"
         >
           <Square size={16} />
           {t("workouts.stopAndLog")}

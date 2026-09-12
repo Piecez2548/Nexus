@@ -1,0 +1,1 @@
+export default [{files:['**/public/projects/preview.js'],languageOptions:{ecmaVersion:'latest',sourceType:'module',globals:{document:'readonly',window:'readonly',IntersectionObserver:'readonly'}},rules:{'no-unused-vars':'error','no-undef':'error','no-unreachable':'error','no-constant-condition':'error','no-dupe-keys':'error','eqeqeq':'error','prefer-const':'error'}}];
