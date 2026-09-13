@@ -360,6 +360,8 @@ create table public.automation_weekly_digests (
 
 One generic `synced_records` row per (entity, table) holds the entity's data as an opaque JSONB blob (encrypted or not, depending on the client's local encryption state) — Postgres itself never has per-entity typed columns for transactions, trades, etc., and there is no plan to add them (see [DECISIONS.md](DECISIONS.md) for why). A true multi-user backend with typed tables and server-side business logic is **not built and not currently planned** — see [PROJECT_ARCHITECTURE.md](PROJECT_ARCHITECTURE.md)'s "Future Backend Architecture."
 
+The table uses `REPLICA IDENTITY FULL` so Supabase Realtime UPDATE and DELETE payloads retain stable routing columns such as `table_name` even when only the opaque encrypted payload changes. This lets the client perform a validated targeted pull while the periodic full pass remains the recovery boundary.
+
 ## Current Status
 
 Fully implemented through schema v27. All 24 sync-eligible tables + `merchants` + the 7 device-local operational tables (`syncTombstones`, `syncState`, `slipScanRuns`, `slipScanCache`, `slipImportHistory`, `auditLog`, `slipScanCandidates`) are live and in use except `calendarEvents` (orphaned, see above). Encryption and sync are both optional, additive layers on top of this schema, not separate schemas.

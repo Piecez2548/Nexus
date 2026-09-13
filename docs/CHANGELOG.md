@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-13 — Realtime UPDATE routing diagnosis
+
+- Applied `REPLICA IDENTITY FULL` to `public.synced_records` so Realtime UPDATE/DELETE payloads retain the stable `table_name` routing hint when only the opaque encrypted payload changes.
+- Fresh production-to-Android edit propagation emitted a targeted `transactions` pull and appeared in approximately 10.2 seconds; deletion removed the temporary row in approximately 8.0 seconds. Evidence: [SYNC-REALTIME-DIAG-001](SYNC_REALTIME_DIAG_001_2026-09-13.md).
+
 ## 2026-09-13 — Cross-device sync measurement
 
 - Desktop-to-Android edit propagation was measured end to end: the temporary transaction changed from ฿37 to ฿38 and appeared on the phone in approximately 12.2 seconds.

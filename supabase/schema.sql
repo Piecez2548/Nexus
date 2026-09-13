@@ -24,6 +24,10 @@ create table if not exists public.synced_records (
 create index if not exists synced_records_user_table_updated_idx
   on public.synced_records (user_id, table_name, updated_at);
 
+-- Keep stable routing columns (`table_name`, `user_id`) in Realtime UPDATE
+-- and DELETE payloads so a changed row can trigger a targeted pull.
+alter table public.synced_records replica identity full;
+
 do $$
 begin
   if not exists (

@@ -11,7 +11,7 @@ const { initialize, sync, getState, subscribeToAuthStore, realtime } = vi.hoiste
     on: vi.fn(),
     subscribe: vi.fn(),
     removeChannel: vi.fn(),
-    callback: null as ((payload?: { new?: { table_name?: string } | null; old?: { table_name?: string } | null }) => void) | null,
+    callback: null as ((payload?: { new?: { table_name?: string; updated_at?: string } | null; old?: { table_name?: string } | null }) => void) | null,
     authCallback: null as ((state: { user: { id: string } | null; syncing?: boolean }) => void) | null,
   },
 }));
@@ -110,6 +110,14 @@ describe("SyncProvider", () => {
     render(<SyncProvider />);
 
     act(() => realtime.callback?.({ new: { table_name: "budgets" }, old: null }));
+
+    expect(sync).toHaveBeenCalledWith("budgets");
+  });
+
+  it("routes an update when the table hint is present on the old row", () => {
+    render(<SyncProvider />);
+
+    act(() => realtime.callback?.({ new: { updated_at: "2026-09-13T03:00:00Z" }, old: { table_name: "budgets" } }));
 
     expect(sync).toHaveBeenCalledWith("budgets");
   });
