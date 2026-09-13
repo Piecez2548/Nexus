@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Technical quality audit
+
+- Completed a conservative Nexus All/Main frontend audit at 18/20 within the sampled scope. No new product defect was verified; external release accountability, full-suite runtime investigation and degraded detector dependencies remain tracked. Evidence: [Technical Quality Audit](TECHNICAL_QUALITY_AUDIT_2026-09-13.md).
+
 ## 2026-09-13 — Sync settings test stability
 
 - Completed the missing dynamic sync-engine mock and asynchronous assertion in `SyncSettings` coverage; the settings suite now passes 48/48. Evidence: [TEST-STABILITY-002](TEST_STABILITY_002_2026-09-13.md).
