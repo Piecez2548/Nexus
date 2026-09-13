@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, ScanLine } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useUIStore } from "@/features/finance/store/uiStore";
@@ -8,7 +8,6 @@ import { useAccountStore } from "@/features/finance/store/accountStore";
 
 import TransactionTable from "@/features/finance/components/TransactionTable";
 import TransactionToolbar from "@/features/finance/components/TransactionToolbar";
-import SlipScanner from "@/features/finance/components/SlipScanner";
 import GalleryScanFlow from "@/features/finance/slipScanner/components/GalleryScanFlow";
 import LoadingState from "@/components/ui/LoadingState";
 import ErrorState from "@/components/ui/ErrorState";
@@ -35,7 +34,6 @@ export default function Transactions() {
   const [filterAccount, setFilterAccount] = useState("all");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useEffect(() => {
     loadTransactions();
@@ -99,14 +97,6 @@ export default function Transactions() {
         </h1>
 
         <div className="flex gap-3">
-          <button
-            onClick={() => setIsScannerOpen(true)}
-            className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 px-4 py-2 transition hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          >
-            <ScanLine size={18} />
-            {t("transactions.scanSlip")}
-          </button>
-
           <GalleryScanFlow />
 
           <button
@@ -155,8 +145,6 @@ export default function Transactions() {
           transactions={filteredTransactions}
         />
       )}
-
-      <SlipScanner open={isScannerOpen} onClose={() => setIsScannerOpen(false)} />
 
     </div>
   );

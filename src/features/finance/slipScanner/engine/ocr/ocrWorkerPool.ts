@@ -14,7 +14,7 @@ function loadTesseract(): Promise<typeof import("tesseract.js")> {
 interface PooledWorker {
   // Tesseract's own Worker type (avoids a static import of tesseract.js here
   // so the WASM engine stays out of the bundle until first actually used —
-  // same reasoning as slipOcr.ts's dynamic import).
+  // same reasoning as the scanner OCR loader's dynamic import).
   worker: {
     recognize: (image: Blob, options?: object, output?: { text: boolean }) => Promise<{ data: { text: string } }>;
     terminate: () => Promise<unknown>;
@@ -27,9 +27,8 @@ interface PooledWorker {
 // immediately after (the original behavior) -- each worker init reloads the
 // "tha+eng" WASM engine + language data, by far the dominant per-image cost
 // when scanning a large gallery (most photos aren't slips, so nearly every
-// one falls through to OCR). slipOcr.ts's recognizeSlipTextBatch already
-// documents this exact tradeoff for the single-slip picker flow; this closes
-// the same gap for the gallery scanner engine (ocrRecognizer.ts).
+// one falls through to OCR). The pooled engine keeps this cost bounded for
+// both single-image and gallery scans.
 //
 // Sized to the scan queue's own concurrency (scanQueueConfig.ts) so N images
 // can still be OCR'd genuinely in parallel -- a single shared worker would

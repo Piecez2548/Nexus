@@ -87,7 +87,7 @@ Nexus เป็นศูนย์กลางข้อมูลส่วนบ�
 
 1. เริ่มที่ Nexus All เพื่ออธิบายแนวคิด “ทุกพื้นที่ทำงานเริ่มต้นที่เดียว”
 2. เปิด Executive Dashboard เพื่อแสดงภาพรวมเป้าหมาย งานเร่งด่วน การเงิน สุขภาพ และการลงทุน
-3. เปิด Transactions และสาธิตการสแกนสลิป/QR กับ Smart Import
+3. เปิด Transactions และสาธิตการสแกนแกลเลอรีสลิป/QR กับ Smart Import
 4. เปิด AI Analytics เพื่อแสดง insight ที่อธิบายที่มาได้
 5. เปิด Tools เพื่อแสดงผลิตภาพด้านเอกสารโดยไม่ขัดจังหวะด้วย login
 6. เปิด DataLens เพื่อแสดงการวิเคราะห์ CSV แบบ deterministic, provenance fingerprint และ approval workflow

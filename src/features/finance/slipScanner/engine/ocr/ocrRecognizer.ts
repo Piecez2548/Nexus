@@ -5,10 +5,9 @@ import { getOcrWorkerPool } from "@/features/finance/slipScanner/engine/ocr/ocrW
 // unit-testable with a fake recognizer and the heavy WASM engine stays out of
 // the code path (and the bundle) until a slip actually needs OCR. The default
 // routes through a small reused Tesseract worker pool (ocrWorkerPool.ts)
-// rather than slipOcr.ts's recognizeSlipText, which spins up (and tears
-// down) a fresh worker per call -- fine for the single-slip manual scanner
-// this app already had, but the dominant cost when scanning a whole gallery
-// of mostly-non-slip photos through this engine.
+// rather than spawning and tearing down a fresh worker for every call, which
+// is especially expensive when scanning a whole gallery of mostly-non-slip
+// photos through this engine.
 export interface OcrTextRecognizer {
   recognize(bytes: Uint8Array): Promise<string>;
 }

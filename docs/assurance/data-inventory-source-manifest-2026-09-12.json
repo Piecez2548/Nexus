@@ -179,11 +179,6 @@
     },
     {
       "repo": "Nexus",
-      "path": "src/features/finance/utils/slipOcr.ts",
-      "sha256": "aedc0b7bff9b8e4aad7d4a0af87ea2528249c3ba7b2c26e15e339c2e74d41adc"
-    },
-    {
-      "repo": "Nexus",
       "path": "src/features/habits/types/index.ts",
       "sha256": "a53b761176053f2f9b8e0d75b622a02435c4bbf6e3083f61413c18b0b1d8cbb7"
     },
@@ -2062,7 +2057,7 @@
       "area": "Gallery / OCR",
       "links": [
         "../android/app/src/main/java/com/nexus/app/gallery/GalleryMediaPlugin.java",
-        "../src/features/finance/utils/slipOcr.ts"
+        "../src/features/finance/slipScanner/engine/ocr/ocrRecognizer.ts"
       ]
     },
     {

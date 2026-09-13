@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Unified gallery scanning
+
+- Removed the standalone Scan Slip entry point and legacy single-slip scanner. GalleryScanFlow is now the sole scanner and handles both single-image and batch gallery scans, automatically importing extracted transactions.
+
 ## 2026-09-13 — Automatic gallery scan import
 
 - Gallery scans now send extracted, bank-filtered candidates through Smart Import automatically when scanning finishes. Duplicate detection, validation and Import History remain active; the separate review drawer is no longer required for this workflow. GalleryScanFlow tests, the slip-scanner suite, TypeScript, lint and the release build passed.
