@@ -1150,6 +1150,45 @@ describe("syncEngine", () => {
     ]);
   });
 
+  it("pulls a Realtime-preferred table in the first deterministic batch", async () => {
+    const startedTables: string[] = [];
+
+    mockFrom.mockImplementation(() => {
+      let currentTableName: string | undefined;
+      let isPreflightQuery = false;
+      const builder = {
+        select: vi.fn(() => builder),
+        eq: vi.fn((column: string, value: string) => {
+          if (column === "table_name") currentTableName = value;
+          return builder;
+        }),
+        order: vi.fn(() => builder),
+        in: vi.fn(() => {
+          isPreflightQuery = true;
+          return builder;
+        }),
+        not: vi.fn(() => builder),
+        gt: vi.fn(() => builder),
+        gte: vi.fn(() => builder),
+        upsert: mockUpsert,
+        then: (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (!isPreflightQuery) startedTables.push(currentTableName ?? "unknown");
+          resolve({ data: [], error: null });
+        },
+      };
+      return builder;
+    });
+
+    await runFullSync(USER_ID, "budgets");
+
+    expect(startedTables.slice(0, 4)).toEqual([
+      "budgets",
+      "transactions",
+      "accounts",
+      "categories",
+    ]);
+  });
+
   it("does not re-push a row it only ever received via pull, even across multiple later passes", async () => {
     // Simulates the "edit reverts / delete doesn't stick" bug reported when
     // two devices are open at once: this device (call it Device B) pulls a

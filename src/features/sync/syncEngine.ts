@@ -3,7 +3,7 @@ import { supabase, isSyncConfigured } from "@/lib/supabaseClient";
 import { withSyncMeta } from "@/utils/syncMeta";
 import { writeLocalSyncRows } from "@/database/localSyncWrite";
 import { dedupeAccountsAndCategories } from "@/features/finance/utils/dedupeAccountsAndCategories";
-import type { SyncTableName } from "@/features/sync/types";
+import { SYNC_TABLE_NAMES, type SyncTableName } from "@/features/sync/types";
 
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useAccountStore } from "@/features/finance/store/accountStore";
@@ -29,32 +29,7 @@ import { useStrategyStore } from "@/features/trading/store/strategyStore";
 import { useWatchlistStore } from "@/features/trading/store/watchlistStore";
 import { useEconomicEventStore } from "@/features/trading/store/economicEventStore";
 
-const SYNCED_TABLES: SyncTableName[] = [
-  "transactions",
-  "accounts",
-  "categories",
-  "recipientProfiles",
-  "budgets",
-  "goals",
-  "transactionTemplates",
-  "trades",
-  "todos",
-  "habits",
-  "holdings",
-  "calendarEvents",
-  "scheduleItems",
-  "goalMilestoneEvents",
-  "vaultEntries",
-  "workoutExercises",
-  "workoutEntries",
-  "netWorthItems",
-  "netWorthSnapshots",
-  "subscriptions",
-  "budgetPeriodSnapshots",
-  "strategies",
-  "watchlistItems",
-  "economicEvents",
-];
+const SYNCED_TABLES = SYNC_TABLE_NAMES;
 
 // A mobile full pass is dominated by independent HTTPS pull round trips.
 // Keep a small fixed window so unrelated tables do not serialize all 24
@@ -451,7 +426,7 @@ async function refreshChangedStores(changedTables: Set<SyncTableName>) {
 // every step after it in the same pass, including deletions, which then
 // silently never reach the other device. Errors are collected and
 // re-thrown at the end so the caller still surfaces that something failed.
-export async function runFullSync(userId: string): Promise<void> {
+export async function runFullSync(userId: string, preferredTable?: SyncTableName): Promise<void> {
   if (!isSyncConfigured || !supabase) return;
 
   const errors: unknown[] = [];
@@ -492,8 +467,12 @@ export async function runFullSync(userId: string): Promise<void> {
 
   await attempt(() => pushTombstones(userId));
 
-  for (let start = 0; start < SYNCED_TABLES.length; start += PULL_CONCURRENCY) {
-    const batch = SYNCED_TABLES.slice(start, start + PULL_CONCURRENCY);
+  const pullOrder: SyncTableName[] = preferredTable
+    ? [preferredTable, ...SYNCED_TABLES.filter((table) => table !== preferredTable)]
+    : SYNCED_TABLES;
+
+  for (let start = 0; start < pullOrder.length; start += PULL_CONCURRENCY) {
+    const batch = pullOrder.slice(start, start + PULL_CONCURRENCY);
     const results = await Promise.all(
       batch.map(async (table) => {
         try {

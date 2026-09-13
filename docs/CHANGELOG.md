@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-13 — Realtime table pull priority
+
+- Realtime payloads now carry a validated sync-table hint into the existing full-sync engine.
+- The hinted table is pulled in the first deterministic batch of four, reducing time to the affected table without creating a second targeted-sync path or weakening the complete 24-table pass.
+- Added shared sync-table whitelist coverage and regressions for event parsing, preferred ordering and fallback behavior. Evidence: [SYNC-PULL-PRIORITY-001](SYNC_PULL_PRIORITY_001_2026-09-13.md).
+
 ## 2026-09-13 — Bounded full-sync pull window
 
 - Pulls independent sync tables in deterministic batches of four concurrent requests, while processing results, errors and store refreshes in the original table order.

@@ -11,7 +11,7 @@ const { initialize, sync, getState, subscribeToAuthStore, realtime } = vi.hoiste
     on: vi.fn(),
     subscribe: vi.fn(),
     removeChannel: vi.fn(),
-    callback: null as (() => void) | null,
+    callback: null as ((payload?: { new?: { table_name?: string } | null; old?: { table_name?: string } | null }) => void) | null,
     authCallback: null as ((state: { user: { id: string } | null; syncing?: boolean }) => void) | null,
   },
 }));
@@ -104,6 +104,14 @@ describe("SyncProvider", () => {
       }),
       expect.any(Function)
     );
+  });
+
+  it("passes the changed sync table as the preferred first pull", () => {
+    render(<SyncProvider />);
+
+    act(() => realtime.callback?.({ new: { table_name: "budgets" }, old: null }));
+
+    expect(sync).toHaveBeenCalledWith("budgets");
   });
 
   it("coalesces realtime events received during a sync into one immediate follow-up pass", async () => {

@@ -1,12 +1,15 @@
 # Roadmap
 
-**Last Updated:** 2026-09-08
+**Last Updated:** 2026-09-13
 
 ## Overview
 
 This roadmap replaces the previous version (last updated 2026-07-21), which was written before Trading, Portfolio, Todo, Habits, Life Schedule, Sync, Encryption, App Lock, and the entire AI Analytics engine existed in their current form — most of what it listed as "not started" is now built. This version is derived directly from the current source tree (see [MODULES.md](MODULES.md), [AI_ANALYTICS.md](AI_ANALYTICS.md)), not from an external blueprint document. Checkboxes are a backlog, not a commitment.
 
 ## Completed
+
+### Sync performance
+- [x] Realtime table pull priority (SYNC-PULL-PRIORITY-001) — validates the changed table against the shared sync-table whitelist and places it first in the initial four-request batch while retaining the complete deterministic 24-table pull, conflict guards, tombstones and final refresh.
 
 ### Finance
 - [x] Transactions (5 types: income/expense/transfer/refund/adjustment), Accounts, Categories — full CRUD, in-use delete guards, duplicate merge

@@ -6,6 +6,7 @@ import { recordAudit } from "@/features/security/auditLog";
 import { resolveMfaAccess, verifyTotpCode } from "@/features/sync/mfa";
 import { redeemBackupCode } from "@/features/sync/backupCodes";
 import { markMfaVerifiedThisSession, clearMfaSessionFlag } from "@/features/sync/mfaSession";
+import type { SyncTableName } from "@/features/sync/types";
 
 interface AuthState {
   user: User | null;
@@ -42,7 +43,7 @@ interface AuthState {
   signUp: (email: string, password: string, profile?: { firstName: string; lastName: string; phone: string }) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  sync: () => Promise<void>;
+  sync: (preferredTable?: SyncTableName) => Promise<void>;
   verifyMfaCode: (code: string) => Promise<void>;
   verifyBackupCode: (code: string) => Promise<void>;
   cancelMfaChallenge: () => Promise<void>;
@@ -177,7 +178,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ user: null, lastSyncedAt: null, mfaPending: false, mfaFactorId: null, mfaError: null });
   },
 
-  async sync() {
+  async sync(preferredTable?: SyncTableName) {
     const { user, syncing } = get();
     if (!user || syncing) return;
 
@@ -185,7 +186,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const { runFullSync } = await import("@/features/sync/syncEngine");
-      await runFullSync(user.id);
+      if (preferredTable) await runFullSync(user.id, preferredTable);
+      else await runFullSync(user.id);
       set({ syncing: false, lastSyncedAt: new Date().toISOString() });
     } catch (err) {
       set({ syncing: false, error: toErrorMessage(err, "Sync failed") });

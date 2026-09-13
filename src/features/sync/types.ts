@@ -26,6 +26,33 @@ export type SyncTableName =
   | "watchlistItems"
   | "economicEvents";
 
+export const SYNC_TABLE_NAMES: SyncTableName[] = [
+  "transactions",
+  "accounts",
+  "categories",
+  "recipientProfiles",
+  "budgets",
+  "goals",
+  "transactionTemplates",
+  "trades",
+  "todos",
+  "habits",
+  "holdings",
+  "calendarEvents",
+  "scheduleItems",
+  "goalMilestoneEvents",
+  "vaultEntries",
+  "workoutExercises",
+  "workoutEntries",
+  "netWorthItems",
+  "netWorthSnapshots",
+  "subscriptions",
+  "budgetPeriodSnapshots",
+  "strategies",
+  "watchlistItems",
+  "economicEvents",
+];
+
 export interface Tombstone {
   id?: number;
   table: SyncTableName;

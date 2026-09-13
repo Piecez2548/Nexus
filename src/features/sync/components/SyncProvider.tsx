@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/features/sync/store/authStore";
 import { supabase } from "@/lib/supabaseClient";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { SYNC_TABLE_NAMES, type SyncTableName } from "@/features/sync/types";
 
 const PERIODIC_SYNC_INTERVAL_MS = 5_000;
 
@@ -15,17 +16,23 @@ export function SyncProvider() {
     let realtimeChannel: RealtimeChannel | null = null;
     let subscribedUserId: string | null = null;
     let realtimeSyncQueued = false;
+    let realtimePreferredTable: SyncTableName | undefined;
 
-    function triggerSync(queueWhileBusy = false) {
+    function triggerSync(queueWhileBusy = false, preferredTable?: SyncTableName) {
       const { user, syncing, sync } = useAuthStore.getState();
       if (!user) return;
       if (syncing) {
-        if (queueWhileBusy) realtimeSyncQueued = true;
+        if (queueWhileBusy) {
+          realtimeSyncQueued = true;
+          realtimePreferredTable = preferredTable;
+        }
         return;
       }
 
       realtimeSyncQueued = false;
-      void sync();
+      const table = preferredTable ?? realtimePreferredTable;
+      realtimePreferredTable = undefined;
+      void sync(table);
     }
 
     function subscribeToUser(userId: string | null) {
@@ -49,7 +56,14 @@ export function SyncProvider() {
             table: "synced_records",
             filter: `user_id=eq.${userId}`,
           },
-          () => triggerSync(true)
+          (payload) => {
+            const table = (payload?.new as { table_name?: string } | null)?.table_name
+              ?? (payload?.old as { table_name?: string } | null)?.table_name;
+            const preferredTable = table && SYNC_TABLE_NAMES.includes(table as SyncTableName)
+              ? table as SyncTableName
+              : undefined;
+            triggerSync(true, preferredTable);
+          }
         )
         .subscribe();
     }
@@ -59,9 +73,12 @@ export function SyncProvider() {
       subscribeToUser(state.user?.id ?? null);
       if (!state.user) {
         realtimeSyncQueued = false;
+        realtimePreferredTable = undefined;
       } else if (!state.syncing && realtimeSyncQueued) {
         realtimeSyncQueued = false;
-        queueMicrotask(() => triggerSync());
+        const preferredTable = realtimePreferredTable;
+        realtimePreferredTable = undefined;
+        queueMicrotask(() => triggerSync(false, preferredTable));
       }
     });
 
