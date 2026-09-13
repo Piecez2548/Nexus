@@ -1,16 +1,94 @@
 # Nexus
 
-A local-first personal finance, trading journal, and productivity app. Transactions, budgets, savings goals, trading positions, an investment portfolio, todos, habits, and a recurring daily schedule — all stored on-device, with an optional end-to-end-encrypted sync layer for multi-device use. A rule-based "AI Analytics" engine computes financial health scores, behavior insights, forecasts, and recommendations entirely on-device — no LLM, no network calls.
+> A local-first personal finance and productivity workspace built with React, TypeScript, and Capacitor.
 
-## Getting started
+[![CI](https://github.com/Piecez2548/Nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/Piecez2548/Nexus/actions/workflows/ci.yml) [![Live preview](https://img.shields.io/badge/live%20preview-Vercel-black)](https://nexus-lemon-eight-32.vercel.app/)
 
-```bash
-npm install
-npm run dev          # Vite dev server, http://localhost:5173
+Nexus brings everyday finance, trading notes, and personal routines into one privacy-conscious application. Data is stored on the device by default. Cloud sync, client-side encryption, biometric unlock, and the Android shell are optional layers built on top of the same local-first data model.
+
+The repository is maintained as a personal/demo product and engineering portfolio. The [production preview](https://nexus-lemon-eight-32.vercel.app/) is authentication-gated; the app can also run locally without cloud credentials.
+
+## What this project demonstrates
+
+- A feature-first architecture with a consistent store → service → repository boundary.
+- Offline-first IndexedDB storage with optional end-to-end encrypted multi-device sync.
+- Explainable, deterministic financial analytics that run on-device.
+- Cross-platform delivery through Vite, Capacitor Android, and Electron.
+- Production-minded engineering: accessibility checks, bundle budgets, typed builds, integration tests, and CI release gates.
+
+## Capabilities
+
+| Area | Included workflows |
+| --- | --- |
+| Finance | Transactions, accounts, categories, budgets, goals, net worth, reports, CSV/PDF export |
+| Capture | Thai/English QR and OCR slip scanning, gallery scanning, payment-notification capture |
+| Trading | Trade journal, portfolio, strategies, watchlist, risk and performance analytics |
+| Productivity | Todos, habits, schedules, reminders, workouts, GPS route tracking |
+| Security | Local PIN/biometric lock, optional AES-GCM encryption, recovery, audit log |
+| Sync | Optional Supabase authentication, encrypted relay sync, tombstones, conflict handling |
+
+## Architecture
+
+```text
+React Router pages
+        ↓
+Feature components and hooks
+        ↓
+Zustand stores
+        ↓
+Domain services
+        ↓
+Dexie repositories (encryption + sync metadata)
+        ↓
+IndexedDB — the local source of truth
 ```
 
-The app works fully offline with no `.env` file — cloud sync and error monitoring are both optional and no-op cleanly when unconfigured.
+Each domain lives under `src/features/<name>/`. Shared UI and cross-cutting infrastructure live under `src/components`, `src/layouts`, `src/hooks`, `src/i18n`, and `src/platform`. The optional Supabase layer relays encrypted records between a user's own devices; it is not a server-side business-logic layer.
 
-## Documentation
+## Technology
 
-Full documentation — architecture, every feature module, database schema, security model, roadmap, and more — lives in [`/docs`](docs/README.md).
+- React 19, TypeScript 6, Vite 8, Tailwind CSS 4
+- Zustand, React Router, React Hook Form, Zod
+- Dexie/IndexedDB, Web Crypto API, Supabase (optional)
+- Tesseract.js, jsQR, Recharts, Leaflet
+- Capacitor 8 for Android and Electron for desktop
+- Vitest, Testing Library, Playwright, and Oxlint
+
+## Run locally
+
+```bash
+git clone https://github.com/Piecez2548/Nexus.git
+cd Nexus
+npm ci
+npm run dev
+```
+
+The app starts at `http://localhost:5173` and works without a `.env` file. Copy `.env.example` only when you need optional Supabase sync or Sentry monitoring.
+
+## Quality checks
+
+```bash
+npm run lint          # Oxlint
+npx tsc -b            # TypeScript project check
+npm test              # Unit and integration suite
+npm run build:release # Production build + bundle budget
+npm run test:e2e      # Playwright browser checks
+```
+
+CI runs the relevant checks on pushes and pull requests targeting `main`. See [docs/TESTING_GUIDE.md](docs/TESTING_GUIDE.md) for the test strategy and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for release procedures.
+
+## Repository guide
+
+- [Documentation index](docs/README.md) — architecture, feature modules, security, and evidence records
+- [Project architecture](docs/PROJECT_ARCHITECTURE.md) — layering and data flow
+- [Security model](docs/SECURITY.md) — authentication, encryption, sync, and known boundaries
+- [Roadmap](docs/ROADMAP.md) — shipped work and explicitly deferred scope
+- [Contributing](CONTRIBUTING.md) — local workflow and pull request expectations
+
+## Scope and responsible use
+
+Nexus is currently a personal/demo application. Legal, commercial, production-signing, and operational release work is tracked separately in the [release blocker registry](docs/RELEASE_BLOCKER_REGISTRY_2026-09-12.md) and must be completed before a public paid or real-data pilot. Do not use real credentials or personal financial data in tests, issues, or pull requests.
+
+## License
+
+This repository does not currently include an open-source license. Until a license is added, viewing the source does not grant permission to reuse, redistribute, or sell it.

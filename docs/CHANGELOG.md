@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Repository presentation baseline
+
+- Reworked the root README for portfolio and hiring review, added contribution and security entry points, and added GitHub pull-request and issue templates. The repository's personal/demo scope, optional services, current security boundaries, and lack of an open-source license are now explicit.
+
 ## 2026-09-13 — Daily navigation simplification
 
 - Desktop navigation now leads with Dashboard, Transactions and Budget under “Daily use”; all other routes remain under grouped “All features” sections. Mobile keeps the bottom quick-navigation bar and removes duplicate daily links from More. Full suite 451/451 files and 2,844/2,844 tests, TypeScript, lint, release build and bundle budget passed. See [daily navigation simplification](UX_DAILY_NAV_2026-09-13.md).
