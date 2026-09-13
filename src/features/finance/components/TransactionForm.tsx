@@ -57,6 +57,7 @@ export default function TransactionForm() {
   const { addTransaction, updateTransaction } = useTransactionStore();
 
   const {
+    isTransactionDrawerOpen,
     selectedTransaction,
     draftTransaction,
     closeTransactionDrawer,
@@ -120,11 +121,15 @@ export default function TransactionForm() {
     // <option>. Resetting while those arrays are still empty would set the
     // value on a mount that hasn't happened yet, and once the options
     // arrive later, nothing re-applies it — the field is left blank.
-    if (accounts.length === 0 || categories.length === 0) return;
+    if (accounts.length === 0 || categories.length === 0 || !isTransactionDrawerOpen) return;
 
     reset(selectedTransaction ?? { ...blankValues, ...draftTransaction });
     setSubmitError(null);
-  }, [selectedTransaction, draftTransaction, reset, accounts.length, categories.length]);
+    // Imported scans and template drafts already carry useful metadata (date,
+    // recipient, note), so keep those details visible for review. A blank
+    // add flow stays focused on the essential fields.
+    setShowAdvanced(Boolean(selectedTransaction || draftTransaction));
+  }, [isTransactionDrawerOpen, selectedTransaction, draftTransaction, reset, accounts.length, categories.length]);
 
   const type = watch("type");
   const needsCategory = type === "income" || type === "expense";
@@ -192,6 +197,12 @@ export default function TransactionForm() {
         {selectedTransaction ? t("transactions.editTransaction") : t("transactions.addTransaction")}
       </h2>
 
+      {!selectedTransaction && (
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          {t("transactions.quickEntryHint")}
+        </p>
+      )}
+
       <FormField label={t("common.type")} htmlFor="transaction-type">
         <select id="transaction-type" {...register("type")} className={inputClassName}>
           {Object.entries(TYPE_LABEL_KEYS).map(([value, labelKey]) => (
@@ -222,23 +233,6 @@ export default function TransactionForm() {
           className={inputClassName}
         />
       </FormField>
-
-      {needsCategory && (
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowAdvanced((v) => !v)}
-            className="flex items-center gap-1 text-sm text-brand-500"
-          >
-            <ChevronDown size={16} className={`transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
-            {t("transactions.showMore")}
-          </button>
-
-          <div className={showAdvanced ? "mt-3" : undefined}>
-            <RecipientSuggestionField register={register} watch={watch} setValue={setValue} showInput={showAdvanced} />
-          </div>
-        </div>
-      )}
 
       {needsCategory && (
         <FormField label={t("common.category")} htmlFor="transaction-category" error={errors.category?.message}>
@@ -280,29 +274,48 @@ export default function TransactionForm() {
         </FormField>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
-        <FormField label={t("common.date")} htmlFor="transaction-date">
-          <input
-            id="transaction-date"
-            type="date"
-            {...register("date")}
-            className={inputClassName}
-          />
-        </FormField>
+      {needsCategory && (
+        <RecipientSuggestionField register={register} watch={watch} setValue={setValue} showInput={showAdvanced} />
+      )}
 
-        <FormField label={t("transactions.time")} htmlFor="transaction-time">
-          <input
-            id="transaction-time"
-            type="time"
-            {...register("time")}
-            className={inputClassName}
-          />
-        </FormField>
-      </div>
+      <button
+        type="button"
+        onClick={() => setShowAdvanced((v) => !v)}
+        aria-expanded={showAdvanced}
+        aria-controls="transaction-advanced-fields"
+        className="flex min-h-11 items-center gap-1 rounded-xl px-2 text-sm font-medium text-brand-600 transition hover:bg-brand-600/10 dark:text-brand-400"
+      >
+        <ChevronDown size={16} className={`transition-transform ${showAdvanced ? "rotate-180" : ""}`} />
+        {showAdvanced ? t("transactions.showLess") : t("transactions.showMore")}
+      </button>
 
-      <TransactionMetaFields register={register} />
+      {showAdvanced && (
+        <div id="transaction-advanced-fields" className="space-y-4 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label={t("common.date")} htmlFor="transaction-date">
+              <input
+                id="transaction-date"
+                type="date"
+                {...register("date")}
+                className={inputClassName}
+              />
+            </FormField>
 
-      <RecurringField control={control} />
+            <FormField label={t("transactions.time")} htmlFor="transaction-time">
+              <input
+                id="transaction-time"
+                type="time"
+                {...register("time")}
+                className={inputClassName}
+              />
+            </FormField>
+          </div>
+
+          <TransactionMetaFields register={register} />
+
+          <RecurringField control={control} />
+        </div>
+      )}
 
       {submitError && (
         <p className="text-sm text-red-500">{submitError}</p>

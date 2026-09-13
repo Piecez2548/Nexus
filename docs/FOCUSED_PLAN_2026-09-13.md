@@ -11,6 +11,7 @@ The project is currently treated as a personal/demo application. This plan keeps
 3. **Core regression watch** — keep the already-passed CRUD, backup/recovery and cross-device sync checks as the regression gate for future code changes.
 4. **QR-only gallery scan fast path** — completed the scoped performance change: full-gallery scans filter non-QR images before candidate creation, skip OCR, and cap recovery attempts; the one-second per-image target still needs representative Android p50/p95 measurement before it can be treated as an SLA. [Evidence](QR_ONLY_GALLERY_SCAN_2026-09-13.md)
 5. **Daily navigation simplification** — completed the first usability pass: daily Dashboard/Transactions/Budget shortcuts are visible first while all existing routes remain grouped below. [Evidence](UX_DAILY_NAV_2026-09-13.md)
+6. **Quick Add transaction entry** — completed the second usability pass: new entries start with essential fields while optional metadata stays available through progressive disclosure; scan/template drafts remain reviewable. [Evidence](UX_QUICK_ADD_2026-09-13.md)
 
 The current focused cycle includes the navigation usability pass. Continue with the next usability slice only after this change is released and observed.
 

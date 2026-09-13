@@ -87,7 +87,7 @@ Current work: `FOCUS-PLAN-001` is active with Luna. Only the full-suite runtime 
 | Testing | 3 | 3 | 0 | 0 | 0 |
 | Accessibility | 2 | 2 | 0 | 0 | 0 |
 | Performance | 2 | 2 | 0 | 0 | 0 |
-| UX | 3 | 3 | 0 | 0 | 0 |
+| UX | 4 | 4 | 0 | 0 | 0 |
 | Gallery Scanner (GS) | 50 | 50 | 0 | 0 | 0 |
 | Platform (PLT) | 20 | 20 | 0 | 0 | 0 |
 | Executive | 1 | 1 | 0 | 0 | 0 |
@@ -356,6 +356,7 @@ AI Analytics user-experience fixes.
 | UX-001 | UX | Replace Full Page Reload with Analysis Re-run | Low | Completed | — |
 | UX-002 | UX | Harden AI Analytics Retry & Error Handling | Medium | Completed | UX-001 |
 | UX-003 | UX | Put daily-use navigation before grouped features | High | Completed | — |
+| UX-004 | UX | Simplify new transaction entry with progressive disclosure | High | Completed | — |
 
 > UX-002 fixed the synchronous-engine-throw hang (a sync throw now surfaces as an error state instead of leaving the page on `loading`) and made retry re-fetch the finance data before re-analysing. Remaining: surfacing store-level data-load errors as their own `ErrorState` — they currently fall through to the empty state — which is not yet a registered task.
 

@@ -59,6 +59,10 @@ describe("Transactions page (add / edit / delete flow)", () => {
 
     await user.click(screen.getByRole("button", { name: /add transaction/i }));
 
+    expect(screen.queryByLabelText("Date")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "More" }));
+    expect(screen.getByLabelText("Date")).toBeInTheDocument();
+
     await user.type(await screen.findByLabelText("Item name"), "Coffee");
     await user.clear(screen.getByLabelText("Amount"));
     await user.type(screen.getByLabelText("Amount"), "120");

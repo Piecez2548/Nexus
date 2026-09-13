@@ -119,6 +119,8 @@ The active scope is an ordinary personal/demo project. See the [Focused project 
 
 ## Recently Shipped (detailed)
 
+- **Quick Add transaction entry (2026-09-13).** New transactions begin with the essential fields while date, time, recipient, notes and recurring settings remain available under “More”. Existing and imported/template drafts keep metadata visible for review, and category suggestions continue to run while recipient input is collapsed. [Evidence](UX_QUICK_ADD_2026-09-13.md).
+
 - **Daily navigation simplification (2026-09-13).** Desktop now surfaces Dashboard, Transactions and Budget first, while every other route remains reachable under grouped “All features” sections. Mobile preserves its bottom quick-navigation bar and removes duplicate daily links from More. [Evidence](UX_DAILY_NAV_2026-09-13.md).
 
 - **Bounded full-sync pull window (2026-09-13).** Independent table pulls now run in deterministic batches of four, reducing the physical 24-table pass to 2,212.9 ms while retaining the complete validation, cursor, tombstone, dedupe and final-refresh path. The changed transaction appeared in 1,208.0 ms on the final Android build. [Evidence](SYNC_PASS_PERF_001_2026-09-13.md).

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Quick Add transaction entry
+
+- New transaction forms now show only the essential fields first; date, time, recipient, notes, and recurring settings are grouped under “More”. Editing and imported/template drafts keep metadata visible for review, and background merchant/recipient category suggestions remain active. Full suite 451/451 files and 2,844/2,844 tests passed. See [Quick Add transaction entry](UX_QUICK_ADD_2026-09-13.md).
+
 ## 2026-09-13 — Repository presentation baseline
 
 - Reworked the root README for portfolio and hiring review, added contribution and security entry points, and added GitHub pull-request and issue templates. The repository's personal/demo scope, optional services, current security boundaries, and lack of an open-source license are now explicit.
