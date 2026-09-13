@@ -5,7 +5,7 @@
 **ขอบเขต:** Nexus All/Main, Tools, DataLens, Supabase และ Android  
 **สถานะ release:** real-data pilot / public / paid / organizational launch = **NO-GO**
 
-ทะเบียนนี้แปลงข้อค้นพบภายในเป็นงานที่ติดตามได้ ไม่ใช่การวินิจฉัยกฎหมายใหม่หรือหลักฐานว่าปิดข้อค้นพบแล้ว RB-001 เป็น **Blocked** รอข้อมูลผู้ประกอบการ/การแต่งตั้งและ contact evidence; RB-002 เป็น **In Progress** เฉพาะรอ named reviewer acceptance; การทำ evidence ทางวิศวกรรมต่อในวันที่ 2026-09-13 ทำให้ RB-006, RB-011, RB-012, RB-015, RB-016, RB-017, RB-018, RB-019, RB-020, RB-021, RB-022 และ RB-023 เป็น **In Progress** โดยยังไม่มีรายการใด Closed. การอนุมัติจาก Legal หมายถึงผู้เชี่ยวชาญที่ผู้ประกอบการแต่งตั้ง ไม่ใช่โมเดล AI
+ทะเบียนนี้แปลงข้อค้นพบภายในเป็นงานที่ติดตามได้ ไม่ใช่การวินิจฉัยกฎหมายใหม่หรือหลักฐานว่าปิดข้อค้นพบแล้ว สำหรับขอบเขตปัจจุบันที่ผู้ใช้ยืนยันว่าเป็นโปรเจคส่วนตัว/เดโมและไม่เปิด public, paid หรือ real-data pilot: RB-001 ถูกกำหนดเป็น **Not Applicable** และจะเปิดกลับทันทีเมื่อเปลี่ยนขอบเขต. RB-002 เป็น **In Progress** เฉพาะรอ named reviewer acceptance; การทำ evidence ทางวิศวกรรมต่อในวันที่ 2026-09-13 ทำให้ RB-006, RB-011, RB-012, RB-015, RB-016, RB-017, RB-018, RB-019, RB-020, RB-021, RB-022 และ RB-023 เป็น **In Progress** โดยยังไม่มีรายการใด Closed. การอนุมัติจาก Legal หมายถึงผู้เชี่ยวชาญที่ผู้ประกอบการแต่งตั้ง ไม่ใช่โมเดล AI
 
 ## 1. วิธีอ่านสถานะและหลักฐาน
 
@@ -16,7 +16,7 @@
 - หลักฐานต้องระบุ ID, วันที่, ผู้จัดทำ/ผู้ตรวจ, repository + commit/build/deployment/configuration ที่ตรวจ, ผลจริง, ข้อจำกัด และที่เก็บที่ผู้ตรวจเข้าถึงได้ เก็บสัญญา ข้อมูลบุคคล และรายละเอียด pentest ในพื้นที่ควบคุมสิทธิ์; ใน Git เก็บเพียง reference ที่ไม่เปิดเผยข้อมูล
 - เปลี่ยน source, provider, data flow หรือขอบเขตหลังตรวจ ต้องประเมินผลกระทบและเปิดรายการที่เกี่ยวข้องใหม่ หลักฐานของรุ่นเดิมไม่ปิดรุ่นใหม่โดยอัตโนมัติ
 
-**ทะเบียนปัจจุบัน (อัปเดต 2026-09-13):** 24 รายการเปิด — P0 15, P1 9; Planned 10, In Progress 13, Blocked 1, Closed 0, Not Applicable 0. TEST-STABILITY-001 อยู่ในหลักฐานที่เสร็จแล้ว ไม่รวมใน 24 รายการ
+**ทะเบียนปัจจุบัน (อัปเดต 2026-09-13):** 23 รายการที่ยังเกี่ยวข้องกับ release — P0 14, P1 9; Planned 10, In Progress 13, Blocked 0, Closed 0, Not Applicable 1. RB-001 ถูกตัดออกจากขอบเขต ordinary personal/demo ตามคำสั่งผู้ใช้ และมี reopen trigger เมื่อเปลี่ยนเป็น public, paid หรือ real-data use. TEST-STABILITY-001 อยู่ในหลักฐานที่เสร็จแล้ว ไม่รวมในรายการ release
 
 ## 2. แหล่งอ้างอิงและขอบเขตความเชื่อมั่น
 
@@ -47,7 +47,7 @@ S2 บันทึกผลล่าสุดหลัง TEST-STABILITY-001: **
 
 | ID | P | งานและขอบเขตที่ขวาง | Owner ที่เสนอ | ต้องมีผลก่อนปิด | สถานะ | ต้นทาง |
 | --- | --- | --- | --- | --- | --- | --- |
-| RB-001 | P0 | ผู้ประกอบการ ช่องทางติดต่อ และแต่งตั้ง accountable owners — Pilot/Launch | CEO | — | Blocked | S12 partially filled: individual operator, supplied name Piece; remaining facts, appointments and contact evidence pending |
+| RB-001 | P0 | ผู้ประกอบการ ช่องทางติดต่อ และแต่งตั้ง accountable owners — Pilot/Launch | CEO | — | Not Applicable | ขอบเขตปัจจุบันเป็นโปรเจคส่วนตัว/เดโม ไม่เปิด public, paid หรือรับข้อมูลจริง; reopen เมื่อ scope เปลี่ยน |
 | RB-002 | P1 | Data Inventory / Data Flow Map — Pilot/Launch | Engineering lead + Privacy owner | RB-001 | In Progress | S11: engineering deliverable complete; named reviewer acceptance pending RB-001 |
 | RB-003 | P0 | Privacy Notice / Terms ไทย–อังกฤษฉบับอนุมัติ — Pilot/Launch | Legal | RB-001, RB-002, RB-005, RB-006, RB-007, RB-013, RB-017, RB-019, RB-023 | Planned | S1 P0/2; S8 |
 | RB-004 | P0 | เผยแพร่เอกสารและ versioned acceptance แยก optional consent — Pilot/Launch | Engineering lead | RB-003 | Planned | S1 P0/3 |
@@ -188,7 +188,7 @@ Release authority, Legal/Privacy, Security และ Operations ลงชื่�
 
 ## 5. ลำดับทำทีละงาน
 
-งานหลัก **RB-001 — Operator และ accountable owners** ยังคง **Blocked** เพราะยังรอข้อเท็จจริง/การแต่งตั้งจากผู้ประกอบการ. ระหว่างรอ ผู้ใช้สั่งให้เดินหน้าหลักฐานทางวิศวกรรมที่ทำได้เองด้วย Luna จึงจัดทำ RB-006, RB-011, RB-012, RB-015–023 ตาม records ลงวันที่ 2026-09-13; งานเหล่านี้ยังไม่ปิดจนกว่าจะมี owner/reviewer และการอนุมัติที่กำหนด. DATA-INVENTORY-001 ส่งมอบแล้วและรอผู้ตรวจที่แต่งตั้งรับรองตามกติกา release.
+RB-001 ถูกตัดออกจาก scope ปัจจุบันตามคำสั่งผู้ใช้ เนื่องจากเป็นโปรเจคส่วนตัว/เดโม. งานที่ยังเป็น release-only จะถูกพักไว้และเปิดกลับเมื่อมี public, paid หรือ real-data scope; หลักฐาน RB-006, RB-011, RB-012, RB-015–023 ที่จัดทำด้วย Luna ยังไม่ปิดจนกว่าจะมี owner/reviewer และการอนุมัติตามเกณฑ์. DATA-INVENTORY-001 ส่งมอบแล้วและยังรอผู้ตรวจที่แต่งตั้งรับรองหากเปิด release scope.
 
 ลำดับเดิมต่อไปนี้ใช้ติดตามความคืบหน้า; รายการที่ยัง Planned ไม่ได้เริ่มหรือมอบหมายจริง:
 

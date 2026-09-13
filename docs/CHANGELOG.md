@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Scope change: RB-001 removed from ordinary project plan
+
+- Per user direction, RB-001 operator/accountability work is now **Not Applicable for the current personal/demo scope**. It must reopen before any public, paid or real-data pilot; the release blockers and evidence records remain preserved for that future scope.
+
 ## 2026-09-13 — RB-012 Android signing baseline
 
 - Confirmed the Android release build has no production signing configuration. A no-install release build attempt was blocked by a local Gradle loopback-runtime error; no signing material was created or accessed. Evidence: [RB-012 Android release signing baseline](RB_012_ANDROID_RELEASE_SIGNING_BASELINE_2026-09-13.md).

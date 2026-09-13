@@ -13,7 +13,7 @@ These coordination records are separate from the historical implementation-epic 
 | TEST-STABILITY-001 | High | Completed | Recipient Learning animation timing assumption removed; full suite 448/448 files and 2,782/2,782 tests passed. [Baseline](../docs/RELEASE_BASELINE_2026-09-12.md). |
 | RBR-001 | High | Completed | Release Blocker Registry created with 24 blockers (15 P0, 9 P1), evidence/closure requirements and sequential execution order. Current blocker status lives in that registry. |
 | DATA-INVENTORY-001 | High | Completed | [Data Inventory](../docs/DATA_INVENTORY_2026-09-12.md) and [Data Flow Map](../docs/DATA_FLOW_MAP_2026-09-12.md): 55 assets / 20 flows with source hashes; 32 Dexie tables, 24 sync tables, 7 cloud tables. Engineering deliverable complete; RB-002 release acceptance awaits an appointed reviewer under RB-001. |
-| RB-001 | Critical | Blocked | [Operator/accountability record](../docs/OPERATOR_AND_ACCOUNTABILITY_RECORD_2026-09-12.md) partially filled: user confirmed individual operator and supplied name Piece. Contracting full name, remaining facts, appointments and contact-test evidence pending; no appointments or external messages made. |
+| RB-001 | Critical | Not Applicable (current scope) | User scoped the project as a personal/demo project with no public, paid or real-data pilot. Reopen this task before any scope change; the prior partial operator record remains preserved for that case. |
 | CORE-SMOKE-001 | High | Completed | Added a production-build browser flow covering Dashboard → synthetic income/expense entry → calculated totals → reload persistence → Transactions navigation. Targeted E2E 9/9 and related integration 26/26 passed. |
 | MOBILE-DESKTOP-SYNC-001 | High | Completed | Verified transaction add/edit/delete on desktop and 390px mobile, plus create/update/delete propagation in both directions through isolated device states and a stateful cloud relay. E2E 10/10 and sync-related tests 63/63 passed. [Verification](../docs/MOBILE_DESKTOP_SYNC_VERIFICATION_2026-09-12.md). |
 | LIVE-SYNC-001 | High | Completed | Fixed real form edits generating a new `syncId`. Bidirectional regression asserts one-row convergence; production desktop-to-Android create/edit passed without duplicates. Targeted 46/46, broader related 152/152, E2E 10/10, production smoke 2/2, TypeScript, lint, release build, Android build and production deployment passed. Reverse physical repetition was unavailable after USB/ADB disconnected. [Fix verification](../docs/LIVE_SYNC_FIX_VERIFICATION_2026-09-12.md). |
@@ -65,7 +65,7 @@ Current work: `RB-022-VERIFY-001` has complete engineering evidence with Luna; r
 ## Legend
 
 - **Priority:** `Critical` · `High` · `Medium` · `Low`
-- **Status:** `Todo` · `In Progress` · `Completed` · `Blocked`
+- **Status:** `Todo` · `In Progress` · `Completed` · `Blocked` · `Not Applicable (current scope)`
 - `Completed` reflects the **current implementation state** verified against `/docs` — this registry is both a backlog and an honest as-built view. Items marked `Todo` are genuinely not yet in the codebase (confirmed by direct code check, per the project rule to never claim features that don't exist).
 
 ## Status Summary
