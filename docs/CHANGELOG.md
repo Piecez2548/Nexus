@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Normal production sync observation
+
+- Observed 16 successful full-sync passes in an unlocked Android production session with zero typed sync or Realtime errors. Evidence: [SYNC-REALTIME-OBS-003](SYNC_REALTIME_OBS_003_2026-09-13.md).
+
 ## 2026-09-13 — Expected locked-startup sync classification
 
 - Classified `EncryptionLockedError` during app-lock startup as an expected retry state, removing the false-positive operational error while preserving telemetry for genuine sync failures. Evidence: [SYNC-REALTIME-ERROR-CLASSIFY-001](SYNC_REALTIME_ERROR_CLASSIFY_001_2026-09-13.md).

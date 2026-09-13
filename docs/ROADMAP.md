@@ -16,6 +16,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Realtime UPDATE routing diagnosis (SYNC-REALTIME-DIAG-001) — applied `REPLICA IDENTITY FULL` to `synced_records`, then verified a fresh Android install received a production edit through a targeted `transactions` pull in approximately 10.2 seconds; the complete timer pass remains the recovery boundary.
 - [x] Runtime telemetry inspection (SYNC-REALTIME-OBS-002) — exposed a read-only aggregate snapshot for production/WebView diagnostics and verified it on the installed Android build without exposing account or entity data.
 - [x] Expected locked-startup sync classification (SYNC-REALTIME-ERROR-CLASSIFY-001) — excludes the normal app-lock race from operational error counters while retaining typed reporting for genuine sync failures.
+- [x] Normal production sync observation (SYNC-REALTIME-OBS-003) — an unlocked Android session completed 16 full-sync passes with zero typed sync or Realtime errors; no further sync behavior change is indicated.
 
 ### Finance
 - [x] Transactions (5 types: income/expense/transfer/refund/adjustment), Accounts, Categories — full CRUD, in-use delete guards, duplicate merge
