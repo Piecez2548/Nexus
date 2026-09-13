@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  LayoutDashboard,
   Wallet,
   LineChart,
   ListChecks,
@@ -13,7 +12,13 @@ import { NavLink, useLocation } from "react-router-dom";
 import ThemeToggleSwitch from "@/components/ui/ThemeToggleSwitch";
 import NexusToolsLink from "./NexusToolsLink";
 import { useTranslation } from "@/i18n/useTranslation";
-import { financeMenus, tradingMenus, personalMenus, type MenuItem } from "./navItems";
+import {
+  dailyMenus,
+  secondaryFinanceMenus,
+  secondaryTradingMenus,
+  secondaryPersonalMenus,
+  type MenuItem,
+} from "./navItems";
 
 function NavItem({ icon: Icon, labelKey, path }: MenuItem) {
   const { t } = useTranslation();
@@ -37,7 +42,7 @@ function NavItem({ icon: Icon, labelKey, path }: MenuItem) {
 }
 
 interface GroupProps {
-  icon: typeof LayoutDashboard;
+  icon: typeof Wallet;
   labelKey: string;
   items: MenuItem[];
   isActive: boolean;
@@ -88,9 +93,9 @@ function NavGroup({ icon: Icon, labelKey, items, isActive }: GroupProps) {
 export default function Sidebar() {
   const location = useLocation();
   const { t } = useTranslation();
-  const isFinanceActive = financeMenus.some((item) => location.pathname.startsWith(item.path));
-  const isTradingActive = tradingMenus.some((item) => location.pathname.startsWith(item.path));
-  const isPersonalActive = personalMenus.some((item) => location.pathname.startsWith(item.path));
+  const isFinanceActive = secondaryFinanceMenus.some((item) => location.pathname.startsWith(item.path));
+  const isTradingActive = secondaryTradingMenus.some((item) => location.pathname.startsWith(item.path));
+  const isPersonalActive = secondaryPersonalMenus.some((item) => location.pathname.startsWith(item.path));
 
   return (
     <aside data-shell-audit="sidebar" className="sticky top-0 hidden h-dvh w-72 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 md:flex">
@@ -112,13 +117,21 @@ export default function Sidebar() {
 
       <nav aria-label={t("common.mainNavigation")} className="min-h-0 flex-1 space-y-2 overflow-y-auto p-4">
 
-        <NavItem icon={LayoutDashboard} labelKey="nav.dashboard" path="/dashboard" />
+        <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          {t("nav.dailyUse")}
+        </p>
 
-        <NavGroup icon={Wallet} labelKey="nav.finance" items={financeMenus} isActive={isFinanceActive} />
+        {dailyMenus.map((item) => <NavItem key={item.path} {...item} />)}
 
-        <NavGroup icon={LineChart} labelKey="nav.trading" items={tradingMenus} isActive={isTradingActive} />
+        <p className="px-4 pb-1 pt-5 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          {t("nav.allFeatures")}
+        </p>
 
-        <NavGroup icon={ListChecks} labelKey="nav.personal" items={personalMenus} isActive={isPersonalActive} />
+        <NavGroup icon={Wallet} labelKey="nav.finance" items={secondaryFinanceMenus} isActive={isFinanceActive} />
+
+        <NavGroup icon={LineChart} labelKey="nav.trading" items={secondaryTradingMenus} isActive={isTradingActive} />
+
+        <NavGroup icon={ListChecks} labelKey="nav.personal" items={secondaryPersonalMenus} isActive={isPersonalActive} />
 
         <NavItem icon={Settings} labelKey="nav.settings" path="/settings" />
         <NexusToolsLink />

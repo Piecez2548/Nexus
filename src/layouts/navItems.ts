@@ -15,6 +15,7 @@ import {
   CalendarClock,
   Briefcase,
   ListChecks,
+  LayoutDashboard,
   Flame,
   Clock,
   Sparkles,
@@ -32,6 +33,14 @@ export interface MenuItem {
   labelKey: string;
   path: string;
 }
+
+// Keep the first layer focused on the three actions most people return to.
+// Every other route remains available in the grouped feature navigation below.
+export const dailyMenus: MenuItem[] = [
+  { icon: LayoutDashboard, labelKey: "nav.dashboard", path: "/dashboard" },
+  { icon: Wallet, labelKey: "nav.transactions", path: "/transactions" },
+  { icon: PiggyBank, labelKey: "nav.budget", path: "/budget" },
+];
 
 export const financeMenus: MenuItem[] = [
   { icon: ChartColumn, labelKey: "nav.financeDashboard", path: "/finance" },
@@ -66,3 +75,9 @@ export const personalMenus: MenuItem[] = [
   { icon: KeyRound, labelKey: "nav.vault", path: "/vault" },
   { icon: Dumbbell, labelKey: "nav.workouts", path: "/workouts" },
 ];
+
+const DAILY_PATHS = new Set(dailyMenus.map((item) => item.path));
+
+export const secondaryFinanceMenus = financeMenus.filter((item) => !DAILY_PATHS.has(item.path));
+export const secondaryTradingMenus = tradingMenus.filter((item) => !DAILY_PATHS.has(item.path));
+export const secondaryPersonalMenus = personalMenus.filter((item) => !DAILY_PATHS.has(item.path));

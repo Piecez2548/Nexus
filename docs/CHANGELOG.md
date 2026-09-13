@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Daily navigation simplification
+
+- Desktop navigation now leads with Dashboard, Transactions and Budget under “Daily use”; all other routes remain under grouped “All features” sections. Mobile keeps the bottom quick-navigation bar and removes duplicate daily links from More. Full suite 451/451 files and 2,844/2,844 tests, TypeScript, lint, release build and bundle budget passed. See [daily navigation simplification](UX_DAILY_NAV_2026-09-13.md).
+
 ## 2026-09-13 — QR-only gallery scan fast path
 
 - Full-gallery auto-scan now filters non-QR images before candidate creation, so OCR runs only for detected QR slips that need fallback fields; manual picked-image scanning is unchanged. QR recovery is bounded to two transformed attempts in the fast path. TypeScript, lint, targeted scanner tests (25/25) and production build passed. See [QR-only gallery scan](QR_ONLY_GALLERY_SCAN_2026-09-13.md).

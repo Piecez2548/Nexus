@@ -4,12 +4,17 @@ import { Settings } from "lucide-react";
 import Drawer from "@/components/ui/Drawer";
 import NexusToolsLink from "./NexusToolsLink";
 import { useTranslation } from "@/i18n/useTranslation";
-import { financeMenus, tradingMenus, personalMenus, type MenuItem } from "./navItems";
+import {
+  secondaryFinanceMenus,
+  secondaryTradingMenus,
+  secondaryPersonalMenus,
+  type MenuItem,
+} from "./navItems";
 
 const SECTIONS: { titleKey: string; items: MenuItem[] }[] = [
-  { titleKey: "nav.finance", items: financeMenus },
-  { titleKey: "nav.trading", items: tradingMenus },
-  { titleKey: "nav.personal", items: personalMenus },
+  { titleKey: "nav.finance", items: secondaryFinanceMenus },
+  { titleKey: "nav.trading", items: secondaryTradingMenus },
+  { titleKey: "nav.personal", items: secondaryPersonalMenus },
 ];
 
 interface Props {
@@ -30,6 +35,10 @@ export default function MobileMoreMenu({ open, onClose }: Props) {
     <Drawer open={open} onClose={onClose} label={t("nav.menu")}>
       <div className="space-y-6">
         <h2 className="pr-14 text-xl font-bold">{t("nav.menu")}</h2>
+
+        <p className="pr-14 text-sm text-zinc-600 dark:text-zinc-400">
+          {t("nav.allFeaturesHint")}
+        </p>
 
         {SECTIONS.map((section) => (
           <div key={section.titleKey}>

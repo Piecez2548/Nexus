@@ -10,8 +10,9 @@ The project is currently treated as a personal/demo application. This plan keeps
 2. **Cloud-sync security maintenance** — verified the linked schema lint and retained the existing migration/RLS baseline. Preserve the intentional backup-code RPC and deny-by-default attempt table behavior; advisor decisions remain deferred release work. [Maintenance record](CLOUD_SYNC_SECURITY_MAINTENANCE_2026-09-13.md)
 3. **Core regression watch** — keep the already-passed CRUD, backup/recovery and cross-device sync checks as the regression gate for future code changes.
 4. **QR-only gallery scan fast path** — completed the scoped performance change: full-gallery scans filter non-QR images before candidate creation, skip OCR, and cap recovery attempts; the one-second per-image target still needs representative Android p50/p95 measurement before it can be treated as an SLA. [Evidence](QR_ONLY_GALLERY_SCAN_2026-09-13.md)
+5. **Daily navigation simplification** — completed the first usability pass: daily Dashboard/Transactions/Budget shortcuts are visible first while all existing routes remain grouped below. [Evidence](UX_DAILY_NAV_2026-09-13.md)
 
-The 2026-09-13 focused cycle is complete for the current scope. No essential product-code change is pending. Resume engineering work only when a regression appears or the scope changes.
+The current focused cycle includes the navigation usability pass. Continue with the next usability slice only after this change is released and observed.
 
 ## Completed foundations
 
