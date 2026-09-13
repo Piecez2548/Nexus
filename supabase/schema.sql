@@ -24,6 +24,20 @@ create table if not exists public.synced_records (
 create index if not exists synced_records_user_table_updated_idx
   on public.synced_records (user_id, table_name, updated_at);
 
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'synced_records'
+  ) then
+    alter publication supabase_realtime add table public.synced_records;
+  end if;
+end;
+$$;
+
 alter table public.synced_records enable row level security;
 
 drop policy if exists "Users can manage their own records" on public.synced_records;

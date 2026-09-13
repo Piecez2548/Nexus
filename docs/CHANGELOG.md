@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-13 — Realtime foreground sync wake-up
+
+- Added a user-filtered Supabase Realtime subscription that wakes the existing deterministic sync engine when same-account cloud data changes; retained the five-second timer and online-event recovery paths.
+- Coalesces Realtime events received during an active sync into one immediate follow-up pass, after a physical overlapping-write trace exposed a discarded-event fallback delay.
+- Added and applied migration `20260913014500` to publish `public.synced_records` through `supabase_realtime` while retaining the table's row-level security.
+- Final physical Android cloud-write-to-UI traces were 1,038.4/1,209.5/2,693.3 ms (median 1,209.5 ms), 78.6% below the previous 5,654 ms median. Related suite 152/152, production smoke 2/2, TypeScript, lint, release/Android build, production deployment and verified in-place APK install passed. [Evidence](SYNC_TRIGGER_001_2026-09-13.md).
+
 ## 2026-09-13 — Earlier sync UI refresh
 
 - Refreshes an affected store immediately after its table pull succeeds, instead of keeping an already-applied transaction invisible until all 24 sequential table pulls finish.
