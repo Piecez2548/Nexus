@@ -14,7 +14,7 @@ Optional Sentry monitoring now receives structured sync failures from `authStore
 - Focused auth/provider tests: 37/37 passed.
 - TypeScript, Oxlint, release build and bundle budget passed.
 - Android debug build completed and APK installed in place on vivo V2348; first-install time remained `2026-07-24 01:35:06`.
-- Production deployment: `dpl_ADFko6yYCSh2cgUCnhkaN4ygnpVB` (READY).
+- Production deployment: `dpl_8VYcE89LQjqFfQ8GmsbaHFKxw77d` (READY).
 - Production alias returned HTTP 200 after deployment.
 
 The monitoring layer remains optional and does not change sync retry, timer fallback or local-first behavior.
