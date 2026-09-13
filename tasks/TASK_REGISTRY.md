@@ -39,8 +39,9 @@ These coordination records are separate from the historical implementation-epic 
 | SYNC-REALTIME-OBS-002 | Low | Completed | Added and verified the read-only `window.__NEXUS_TELEMETRY__` runtime snapshot hook on Android WebView; 6/6 snapshot tests, Android install and production smoke passed. [Report](../docs/SYNC_REALTIME_OBS_002_2026-09-13.md). |
 | SYNC-REALTIME-ERROR-CLASSIFY-001 | Low | Completed | Classified expected `EncryptionLockedError` startup races so they do not create operational sync errors; auth 31/31, related sync 160/160, Android locked-startup snapshot (`errors: 0`), install and production deployment passed. [Report](../docs/SYNC_REALTIME_ERROR_CLASSIFY_001_2026-09-13.md). |
 | SYNC-REALTIME-OBS-003 | Low | Completed | Observed an unlocked Android production session: 16 full-sync passes completed with zero typed sync or Realtime errors. No further sync behavior change is indicated. [Report](../docs/SYNC_REALTIME_OBS_003_2026-09-13.md). |
+| TEST-STABILITY-002 | Low | Completed | Fixed the `SyncSettings` test fixture for the dynamic sync-engine exports and awaited the async call; settings suite 48/48, lint and release build passed. Full-suite worker-one run remained active beyond seven minutes without a final report and was stopped. [Report](../docs/TEST_STABILITY_002_2026-09-13.md). |
 
-Current work: `SYNC-REALTIME-OBS-003` is complete with Luna. No further sync behavior change is indicated by the production observation. Release-readiness work is paused for the ordinary-project scope; resume RB-001 only if the project moves toward public, paid or real-data use.
+Current work: `TEST-STABILITY-002` is complete with Luna. No further sync behavior change is indicated by the production observation. Release-readiness work is paused for the ordinary-project scope; resume RB-001 only if the project moves toward public, paid or real-data use.
 
 ## September audit remediation
 

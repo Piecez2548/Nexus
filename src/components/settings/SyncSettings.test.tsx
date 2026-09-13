@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const mockSignUp = vi.fn();
@@ -8,6 +8,7 @@ const mockSignOut = vi.fn();
 const mockGetSession = vi.fn().mockResolvedValue({ data: { session: null } });
 const mockOnAuthStateChange = vi.fn();
 const mockRunFullSync = vi.fn().mockResolvedValue(undefined);
+const mockRunTargetedSync = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/lib/supabaseClient", () => ({
   isSyncConfigured: true,
@@ -24,6 +25,7 @@ vi.mock("@/lib/supabaseClient", () => ({
 
 vi.mock("@/features/sync/syncEngine", () => ({
   runFullSync: (...args: unknown[]) => mockRunFullSync(...args),
+  runTargetedSync: (...args: unknown[]) => mockRunTargetedSync(...args),
 }));
 
 const { useAuthStore } = await import("@/features/sync/store/authStore");
@@ -44,6 +46,7 @@ describe("SyncSettings", () => {
     mockSignInWithPassword.mockReset();
     mockSignOut.mockReset().mockResolvedValue({ error: null });
     mockRunFullSync.mockReset().mockResolvedValue(undefined);
+    mockRunTargetedSync.mockReset().mockResolvedValue(undefined);
   });
 
   it("shows a sign-in form when signed out", () => {
@@ -105,7 +108,7 @@ describe("SyncSettings", () => {
 
     await user.click(screen.getByRole("button", { name: /sync now/i }));
 
-    expect(mockRunFullSync).toHaveBeenCalledWith("u1");
+    await waitFor(() => expect(mockRunFullSync).toHaveBeenCalledWith("u1"));
   });
 
   it("signs out when the sign-out button is clicked", async () => {

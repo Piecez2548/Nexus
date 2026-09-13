@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Sync settings test stability
+
+- Completed the missing dynamic sync-engine mock and asynchronous assertion in `SyncSettings` coverage; the settings suite now passes 48/48. Evidence: [TEST-STABILITY-002](TEST_STABILITY_002_2026-09-13.md).
+
 ## 2026-09-13 — Normal production sync observation
 
 - Observed 16 successful full-sync passes in an unlocked Android production session with zero typed sync or Realtime errors. Evidence: [SYNC-REALTIME-OBS-003](SYNC_REALTIME_OBS_003_2026-09-13.md).
