@@ -326,6 +326,14 @@ describe("appLockStore", () => {
       expect(useAppLockStore.getState().biometricEnabled).toBe(true);
     });
 
+    it("clears a stale web flag when the native credential was removed", async () => {
+      useAppLockStore.setState({ biometricEnabled: true });
+      mockHasBiometricCredential.mockResolvedValue(false);
+
+      expect(await useAppLockStore.getState().restoreBiometricState()).toBe(false);
+      expect(useAppLockStore.getState().biometricEnabled).toBe(false);
+    });
+
     it("enableBiometric requires the correct PIN before storing a credential", async () => {
       await useAppLockStore.getState().setupPin("1234", false);
 

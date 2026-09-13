@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Biometric unlock recovery
+
+- Fixed native fingerprint state reconciliation across startup/update/resume, surfaced secure-storage setup failures, and made Android build scripts verify the committed biometric hardening patch. Focused tests 75/75, lint, TypeScript/build and Android debug build passed. See [biometric unlock fix](BIOMETRIC_UNLOCK_FIX_2026-09-13.md).
+
 ## 2026-09-13 — Full isolated-suite result
 
 - Completed the isolated Vitest stability check: 451/451 files and 2,837/2,837 tests pass in 307.27s with 16 workers. Confirmed `--no-isolate` causes state leakage, so the safe isolated configuration remains unchanged. See [test-suite runtime investigation](TEST_SUITE_RUNTIME_INVESTIGATION_2026-09-13.md).

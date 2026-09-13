@@ -26,7 +26,14 @@ export default function EnableBiometricForm({ onDone }: Props) {
     setError(null);
 
     setSubmitting(true);
-    const success = await enableBiometric(pin);
+    let success = false;
+    try {
+      success = await enableBiometric(pin);
+    } catch {
+      setSubmitting(false);
+      setError(t("settings.biometricEnableFailed"));
+      return;
+    }
     setSubmitting(false);
 
     if (!success) {

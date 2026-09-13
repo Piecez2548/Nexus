@@ -64,9 +64,9 @@ export default function AppLockScreen({ mode, onDone }: Props) {
   const hasAutoTriggered = useRef(false);
 
   useEffect(() => {
-    if (mode !== "unlock" || biometricEnabled || !Capacitor.isNativePlatform()) return;
+    if (mode !== "unlock" || !Capacitor.isNativePlatform()) return;
     void restoreBiometricState();
-  }, [mode, biometricEnabled, restoreBiometricState]);
+  }, [mode, restoreBiometricState]);
 
   useEffect(() => {
     if (mode !== "unlock" || !biometricEnabled || hasAutoTriggered.current) return;

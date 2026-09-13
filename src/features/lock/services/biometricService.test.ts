@@ -5,6 +5,7 @@ const mockIsAvailable = vi.fn();
 const mockSetCredentials = vi.fn();
 const mockGetSecureCredentials = vi.fn();
 const mockDeleteCredentials = vi.fn();
+const mockIsCredentialsSaved = vi.fn();
 
 vi.mock("@capacitor/core", () => ({
   Capacitor: { isNativePlatform: () => mockIsNativePlatform() },
@@ -16,6 +17,7 @@ vi.mock("@capgo/capacitor-native-biometric", () => ({
     setCredentials: (...args: unknown[]) => mockSetCredentials(...args),
     getSecureCredentials: (...args: unknown[]) => mockGetSecureCredentials(...args),
     deleteCredentials: (...args: unknown[]) => mockDeleteCredentials(...args),
+    isCredentialsSaved: (...args: unknown[]) => mockIsCredentialsSaved(...args),
   },
   AccessControl: { NONE: 0, BIOMETRY_CURRENT_SET: 1, BIOMETRY_ANY: 2 },
 }));
@@ -85,6 +87,30 @@ describe("biometricService", () => {
           accessControl: 2,
         })
       );
+    });
+  });
+
+  describe("hasBiometricCredential", () => {
+    it("returns false when not running on a native platform", async () => {
+      mockIsNativePlatform.mockReturnValue(false);
+      const { hasBiometricCredential } = await import("./biometricService");
+      expect(await hasBiometricCredential()).toBe(false);
+      expect(mockIsCredentialsSaved).not.toHaveBeenCalled();
+    });
+
+    it("restores a saved credential even while the sensor is temporarily unavailable", async () => {
+      mockIsNativePlatform.mockReturnValue(true);
+      mockIsCredentialsSaved.mockResolvedValue({ isSaved: true });
+      const { hasBiometricCredential } = await import("./biometricService");
+      expect(await hasBiometricCredential()).toBe(true);
+      expect(mockIsCredentialsSaved).toHaveBeenCalledWith({ server: "com.nexus.app" });
+    });
+
+    it("returns false when no native credential is saved", async () => {
+      mockIsNativePlatform.mockReturnValue(true);
+      mockIsCredentialsSaved.mockResolvedValue({ isSaved: false });
+      const { hasBiometricCredential } = await import("./biometricService");
+      expect(await hasBiometricCredential()).toBe(false);
     });
   });
 

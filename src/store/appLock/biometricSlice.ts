@@ -29,9 +29,12 @@ export const createBiometricSlice: StateCreator<AppLockState, [], [], BiometricS
   biometricEnabled: false,
 
   async restoreBiometricState() {
-    if (get().biometricEnabled) return true;
     const restored = await hasBiometricCredential();
-    if (restored) set({ biometricEnabled: true });
+    // Always reconcile both directions. A stale persisted `true` can remain
+    // after the native credential was cleared by the OS or an update; leaving
+    // it set suppresses future restoration attempts and makes fingerprint
+    // unlock appear permanently broken.
+    if (restored !== get().biometricEnabled) set({ biometricEnabled: restored });
     return restored;
   },
 

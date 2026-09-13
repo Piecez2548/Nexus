@@ -32,6 +32,8 @@ try {
   if (-not $SkipWebSync) {
     npm run build
     if ($LASTEXITCODE -ne 0) { throw "Web build failed." }
+    npx patch-package --check
+    if ($LASTEXITCODE -ne 0) { throw "Native biometric patch check failed." }
     npx cap sync android
     if ($LASTEXITCODE -ne 0) { throw "Capacitor sync failed." }
   }

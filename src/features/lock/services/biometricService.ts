@@ -36,15 +36,16 @@ export async function isBiometricAvailable(): Promise<boolean> {
 
 // Reconciles the persisted web flag with the native credential store after an
 // APK/web-asset update. This does not read or decrypt the PIN and therefore
-// does not show a biometric prompt.
+// does not show a biometric prompt. Availability is deliberately not part of
+// this check: Android can report a sensor temporarily unavailable (lockout,
+// resume race, or an interrupted prompt) while the protected credential is
+// still valid. Hiding the credential in that window strands the user on the
+// PIN form until the next app restart.
 export async function hasBiometricCredential(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
   try {
-    const [available, saved] = await Promise.all([
-      isBiometricAvailable(),
-      NativeBiometric.isCredentialsSaved({ server: CREDENTIAL_SERVER }),
-    ]);
-    return available && saved.isSaved;
+    const saved = await NativeBiometric.isCredentialsSaved({ server: CREDENTIAL_SERVER });
+    return saved.isSaved;
   } catch {
     return false;
   }

@@ -9,11 +9,13 @@ vi.mock("@/features/encryption/recovery/recoverDekFromEscrow", () => ({
 }));
 
 const mockRetrieveBiometricPin = vi.fn();
+const mockHasBiometricCredential = vi.fn();
 vi.mock("@/features/lock/services/biometricService", () => ({
   retrieveBiometricPin: (...args: unknown[]) => mockRetrieveBiometricPin(...args),
   storeBiometricCredential: vi.fn(),
   deleteBiometricCredential: vi.fn(),
   isBiometricAvailable: vi.fn().mockResolvedValue(false),
+  hasBiometricCredential: (...args: unknown[]) => mockHasBiometricCredential(...args),
 }));
 
 import AppLockGate from "./AppLockGate";
@@ -68,6 +70,8 @@ describe("AppLockGate", () => {
     mockRecoverDekFromEscrow.mockReset();
     mockRetrieveBiometricPin.mockReset();
     mockRetrieveBiometricPin.mockResolvedValue(null);
+    mockHasBiometricCredential.mockReset();
+    mockHasBiometricCredential.mockResolvedValue(false);
   });
 
   it("renders children directly when app lock was never set up", () => {
