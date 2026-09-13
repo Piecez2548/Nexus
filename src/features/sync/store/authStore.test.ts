@@ -14,6 +14,8 @@ const mockRedeemBackupCode = vi.fn();
 const mockVerifyOtp = vi.fn();
 const mockResend = vi.fn();
 const mockCaptureError = vi.fn();
+const mockTelemetryTime = vi.fn(async (_name: string, fn: () => Promise<unknown>) => fn());
+const mockTelemetryRecordError = vi.fn();
 
 vi.mock("@/lib/supabaseClient", () => ({
   isSyncConfigured: true,
@@ -47,11 +49,20 @@ vi.mock("@/lib/sentry", () => ({
   captureError: (...args: unknown[]) => mockCaptureError(...args),
 }));
 
+vi.mock("@/platform/localTelemetry", () => ({
+  localTelemetry: {
+    time: (...args: unknown[]) => mockTelemetryTime(...args as [string, () => Promise<unknown>]),
+    recordError: (...args: unknown[]) => mockTelemetryRecordError(...args),
+  },
+}));
+
 const { useAuthStore } = await import("./authStore");
 
 describe("authStore", () => {
   beforeEach(() => {
     mockCaptureError.mockReset();
+    mockTelemetryTime.mockClear();
+    mockTelemetryRecordError.mockReset();
     useAuthStore.setState({
       user: null,
       initialized: false,
@@ -199,6 +210,7 @@ describe("authStore", () => {
     expect(mockRunFullSync).toHaveBeenCalledWith("u1");
     expect(useAuthStore.getState().syncing).toBe(false);
     expect(useAuthStore.getState().lastSyncedAt).not.toBeNull();
+    expect(mockTelemetryTime).toHaveBeenCalledWith("sync.full", expect.any(Function));
   });
 
   it("routes a Realtime table hint to the targeted sync pass", async () => {
@@ -208,6 +220,7 @@ describe("authStore", () => {
 
     expect(mockRunTargetedSync).toHaveBeenCalledWith("u1", "budgets");
     expect(mockRunFullSync).not.toHaveBeenCalled();
+    expect(mockTelemetryTime).toHaveBeenCalledWith("sync.targeted", expect.any(Function));
   });
 
   it("does not attempt to sync when signed out", async () => {
@@ -247,6 +260,7 @@ describe("authStore", () => {
 
     expect(useAuthStore.getState().error).toBe("Network unreachable");
     expect(useAuthStore.getState().syncing).toBe(false);
+    expect(mockTelemetryRecordError).toHaveBeenCalledWith("sync");
     expect(mockCaptureError).toHaveBeenCalledWith(expect.any(Error), {
       source: "sync",
       path: "full",

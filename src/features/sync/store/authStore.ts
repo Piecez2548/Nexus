@@ -8,6 +8,7 @@ import { redeemBackupCode } from "@/features/sync/backupCodes";
 import { markMfaVerifiedThisSession, clearMfaSessionFlag } from "@/features/sync/mfaSession";
 import type { SyncTableName } from "@/features/sync/types";
 import { captureError } from "@/lib/sentry";
+import { localTelemetry } from "@/platform/localTelemetry";
 
 interface AuthState {
   user: User | null;
@@ -187,10 +188,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       const { runFullSync, runTargetedSync } = await import("@/features/sync/syncEngine");
-      if (preferredTable) await runTargetedSync(user.id, preferredTable);
-      else await runFullSync(user.id);
+      await localTelemetry.time(preferredTable ? "sync.targeted" : "sync.full", async () => {
+        if (preferredTable) await runTargetedSync(user.id, preferredTable);
+        else await runFullSync(user.id);
+      });
       set({ syncing: false, lastSyncedAt: new Date().toISOString() });
     } catch (err) {
+      localTelemetry.recordError("sync");
       captureError(err, {
         source: "sync",
         path: preferredTable ? "targeted" : "full",

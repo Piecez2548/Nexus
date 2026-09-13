@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { SYNC_TABLE_NAMES, type SyncTableName } from "@/features/sync/types";
 import { captureError } from "@/lib/sentry";
+import { localTelemetry } from "@/platform/localTelemetry";
 
 const PERIODIC_SYNC_INTERVAL_MS = 5_000;
 
@@ -68,6 +69,7 @@ export function SyncProvider() {
         )
         .subscribe((status, error) => {
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            localTelemetry.recordError(`realtime:${status}`);
             captureError(error ?? new Error(`Realtime channel ${status.toLowerCase()}`), {
               source: "realtime",
               status,
