@@ -102,6 +102,8 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 
 ## Recently Shipped (detailed)
 
+- **Bounded full-sync pull window (2026-09-13).** Independent table pulls now run in deterministic batches of four, reducing the physical 24-table pass to 2,212.9 ms while retaining the complete validation, cursor, tombstone, dedupe and final-refresh path. The changed transaction appeared in 1,208.0 ms on the final Android build. [Evidence](SYNC_PASS_PERF_001_2026-09-13.md).
+
 - **Foreground Realtime sync wake-up (2026-09-13).** A same-account, user-filtered Supabase Realtime event now wakes the existing serialized sync engine while the five-second timer and `online` listener remain as recovery paths. Busy-pass events coalesce into one follow-up pass. Final physical Android cloud-write-to-UI traces were 1,038.4/1,209.5/2,693.3 ms (median 1,209.5 ms), 78.6% below the prior median. [Evidence](SYNC_TRIGGER_001_2026-09-13.md).
 
 - **Foreground sync visibility latency (2026-09-13).** Changed stores now refresh immediately after their table pull, while unchanged encrypted envelopes reuse DEK-scoped decrypted content during the unlocked session. Three physical Android traces reduced the pull-response-to-UI median from 4,613 ms to 69.5 ms (98.5%); the final post-deduplication refresh remains for referential consistency. Realtime wake-up subsequently closed the measured scheduler/pass-start delay.

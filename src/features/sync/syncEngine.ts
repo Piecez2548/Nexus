@@ -56,6 +56,11 @@ const SYNCED_TABLES: SyncTableName[] = [
   "economicEvents",
 ];
 
+// A mobile full pass is dominated by independent HTTPS pull round trips.
+// Keep a small fixed window so unrelated tables do not serialize all 24
+// requests, without opening an unbounded burst against Supabase.
+const PULL_CONCURRENCY = 4;
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function localTable(name: SyncTableName): any {
   return db.table(name);
@@ -487,18 +492,31 @@ export async function runFullSync(userId: string): Promise<void> {
 
   await attempt(() => pushTombstones(userId));
 
-  for (const table of SYNCED_TABLES) {
-    const hadChanges = await attemptReturning(() => pullTable(userId, table), false);
-    if (hadChanges) {
-      changedTables.add(table);
+  for (let start = 0; start < SYNCED_TABLES.length; start += PULL_CONCURRENCY) {
+    const batch = SYNCED_TABLES.slice(start, start + PULL_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map(async (table) => {
+        try {
+          return { table, hadChanges: await pullTable(userId, table), error: null };
+        } catch (error) {
+          return { table, hadChanges: false, error };
+        }
+      })
+    );
 
-      // Make a successfully applied remote change visible as soon as its
-      // own table finishes. Waiting until every later table has completed
-      // made an early transaction pull sit unseen for several more seconds
-      // on a real Android device. The final refresh below still runs after
-      // cross-table account/category dedupe, so dependent finance views are
-      // reconciled once the complete sync pass is consistent.
-      await attempt(() => STORE_REFRESHERS[table]());
+    // Promise.all preserves the input order, so errors and store refreshes
+    // remain deterministic even when network responses finish out of order.
+    for (const { table, hadChanges, error } of results) {
+      if (error) errors.push(error);
+      if (hadChanges) {
+        changedTables.add(table);
+
+        // Make a successfully applied remote change visible as soon as its
+        // four-table batch finishes. The final refresh below still runs after
+        // cross-table account/category dedupe, so dependent finance views are
+        // reconciled once the complete sync pass is consistent.
+        await attempt(() => STORE_REFRESHERS[table]());
+      }
     }
   }
 

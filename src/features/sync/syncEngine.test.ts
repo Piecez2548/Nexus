@@ -1099,6 +1099,57 @@ describe("syncEngine", () => {
     loadTransactions.mockRestore();
   });
 
+  it("pulls independent tables through a bounded four-request window", async () => {
+    let activePulls = 0;
+    let maxActivePulls = 0;
+    const startedTables: string[] = [];
+
+    mockFrom.mockImplementation(() => {
+      let currentTableName: string | undefined;
+      let isPreflightQuery = false;
+      const builder = {
+        select: vi.fn(() => builder),
+        eq: vi.fn((column: string, value: string) => {
+          if (column === "table_name") currentTableName = value;
+          return builder;
+        }),
+        order: vi.fn(() => builder),
+        in: vi.fn(() => {
+          isPreflightQuery = true;
+          return builder;
+        }),
+        not: vi.fn(() => builder),
+        gt: vi.fn(() => builder),
+        gte: vi.fn(() => builder),
+        upsert: mockUpsert,
+        then: async (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (isPreflightQuery) {
+            resolve({ data: [], error: null });
+            return;
+          }
+          startedTables.push(currentTableName ?? "unknown");
+          activePulls += 1;
+          maxActivePulls = Math.max(maxActivePulls, activePulls);
+          await new Promise((release) => setTimeout(release, 5));
+          activePulls -= 1;
+          resolve({ data: [], error: null });
+        },
+      };
+      return builder;
+    });
+
+    await runFullSync(USER_ID);
+
+    expect(maxActivePulls).toBe(4);
+    expect(startedTables).toHaveLength(24);
+    expect(startedTables.slice(0, 4)).toEqual([
+      "transactions",
+      "accounts",
+      "categories",
+      "recipientProfiles",
+    ]);
+  });
+
   it("does not re-push a row it only ever received via pull, even across multiple later passes", async () => {
     // Simulates the "edit reverts / delete doesn't stick" bug reported when
     // two devices are open at once: this device (call it Device B) pulls a

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-13 — Bounded full-sync pull window
+
+- Pulls independent sync tables in deterministic batches of four concurrent requests, while processing results, errors and store refreshes in the original table order.
+- Physical Android measurement completed the 24-table pull pass in 2,212.9 ms; the changed transaction appeared in 1,208.0 ms. The pull-window regression verified exactly four active requests and all 24 tables.
+- Related sync suite 153/153, TypeScript, lint, release build, bundle budget and Android v2-signature verification passed. [Evidence](SYNC_PASS_PERF_001_2026-09-13.md).
+
 ## 2026-09-13 — Realtime foreground sync wake-up
 
 - Added a user-filtered Supabase Realtime subscription that wakes the existing deterministic sync engine when same-account cloud data changes; retained the five-second timer and online-event recovery paths.
