@@ -182,6 +182,47 @@ describe("extractSlipCandidate", () => {
     expect(candidate.amount).toBe(40);
   });
 
+  it("qrOnly filters non-QR images and never starts OCR", async () => {
+    let ocrCalled = false;
+    const candidate = await extractSlipCandidate({
+      assetId: "ordinary-photo",
+      bytes: new Uint8Array([0]),
+      detector: createQrDetector(qrDecoder(null)),
+      recover: async () => ({ payload: null, recoveredBy: null, attempts: 2 }),
+      recognizer: {
+        async recognize() {
+          ocrCalled = true;
+          return "must not run";
+        },
+      },
+      qrOnly: true,
+    });
+
+    expect(candidate).toBeNull();
+    expect(ocrCalled).toBe(false);
+  });
+
+  it("qrOnly keeps a QR candidate and preserves OCR fallback for a non-EMVCo payload", async () => {
+    let ocrCalled = false;
+    const candidate = await extractSlipCandidate({
+      assetId: "qr-photo",
+      bytes: new Uint8Array([1]),
+      detector: createQrDetector(qrDecoder("slip-verification-qr")),
+      recognizer: {
+        async recognize() {
+          ocrCalled = true;
+          return "must not run";
+        },
+      },
+      qrOnly: true,
+    });
+
+    expect(candidate).not.toBeNull();
+    expect(candidate?.source).toBe("qr");
+    expect(candidate?.payload).toBeNull();
+    expect(ocrCalled).toBe(true);
+  });
+
   it("attempts QR recovery but stops before starting OCR once cancelled mid-extraction", async () => {
     let ocrCalled = false;
     let recoveryAttempted = false;

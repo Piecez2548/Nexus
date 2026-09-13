@@ -38,6 +38,27 @@ export interface ExtractSlipInput {
   // picker flow (useSlipScan leaves this unset), where every picked photo is
   // a user-confirmed candidate slip and OCR should always be attempted.
   skipOcrWhenNoQr?: boolean;
+  // QR-only gallery mode: retain only images where a QR was detected. OCR
+  // fallback still runs for a detected QR that is not a usable EMVCo payload,
+  // because Thai slip-verification QRs commonly need printed date/time and
+  // bank metadata from OCR. The full/manual picker path leaves this unset. A
+  // null result is handled by createSlipExtractionProcessor as a deliberate
+  // filter, not a failed scan.
+  qrOnly?: boolean;
+  // Optional strict speed mode for callers that accept losing OCR metadata on
+  // non-EMVCo QR slips. Full-gallery scanning keeps this off to preserve the
+  // existing fallback behavior; valid EMVCo QRs already skip OCR naturally.
+  skipOcrWhenQr?: boolean;
+  // Upper bound for transformed QR recovery attempts. This bounds the slow
+  // path on large galleries; the initial detector pass is separate. When QR
+  // only is enabled the default is two transformed variants, which keeps the
+  // common per-image path predictable while still covering the two most common
+  // sideways/low-contrast cases.
+  maxRecoveryAttempts?: number;
+}
+
+export interface QrOnlyExtractSlipInput extends ExtractSlipInput {
+  qrOnly: true;
 }
 
 // Distinguishes a deliberate mid-extraction stop from a real extraction
@@ -52,6 +73,8 @@ export class ScanCancelledError extends Error {
   }
 }
 
+const DEFAULT_QR_ONLY_RECOVERY_ATTEMPTS = 2;
+
 // The single "image bytes → SlipCandidate" entry point wiring the extraction
 // stages together: QR detect (retrying transformed variants when the original
 // yields no QR) → EMVCo parse → bank identify → OCR fallback (when the QR is
@@ -61,13 +84,19 @@ export class ScanCancelledError extends Error {
 // slip-verification QR, not an EMVCo payment QR, so the bank name on the slip
 // is the reliable signal — this also covers a clean, CRC-valid EMVCo payload
 // from a bank rail the identifier has no GUID/plugin match for).
-export async function extractSlipCandidate(input: ExtractSlipInput): Promise<SlipCandidate> {
+export function extractSlipCandidate(input: QrOnlyExtractSlipInput): Promise<SlipCandidate | null>;
+export function extractSlipCandidate(input: ExtractSlipInput): Promise<SlipCandidate>;
+export async function extractSlipCandidate(input: ExtractSlipInput): Promise<SlipCandidate | null> {
   const detector = input.detector ?? defaultQrDetector;
   const recognizer = input.recognizer ?? tesseractOcrRecognizer;
   const isCancelled = input.isCancelled ?? (() => false);
   // The detect stage already tried the original bytes with the same decoder, so
   // recovery skips straight to transformed variants.
-  const recover = input.recover ?? ((bytes: Uint8Array, cancelled: () => boolean) => recoverQr(bytes, { skipOriginal: true, isCancelled: cancelled }));
+  const recover = input.recover ?? ((bytes: Uint8Array, cancelled: () => boolean) => recoverQr(bytes, {
+    skipOriginal: true,
+    isCancelled: cancelled,
+    maxAttempts: input.maxRecoveryAttempts ?? (input.qrOnly ? DEFAULT_QR_ONLY_RECOVERY_ATTEMPTS : Number.POSITIVE_INFINITY),
+  }));
 
   let detection = await detector.detect(input.bytes);
   if (!detection.hasQr) {
@@ -82,13 +111,18 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     }
   }
 
+  // In QR-only mode a non-QR image is intentionally filtered out before any
+  // parser, bank or OCR work. Returning null lets the queue mark the image as
+  // scanned without persisting a misleading OCR candidate.
+  if (input.qrOnly === true && !detection.hasQr) return null;
+
   const emvco = detection.payload !== null ? parseEmvcoPayload(detection.payload) : null;
   let bank = emvco ? identifyBank(emvco) : null;
 
   let ocr: OcrSlipFields | null = null;
   const needsOcrFallback = shouldRunOcrFallback({ hasQr: detection.hasQr, emvco });
   const skipForNoQr = input.skipOcrWhenNoQr === true && !detection.hasQr;
-  if ((needsOcrFallback || !bank) && !skipForNoQr) {
+  if ((needsOcrFallback || !bank) && !skipForNoQr && input.skipOcrWhenQr !== true) {
     // OCR is the one stage that, once started, can't be interrupted (Tesseract
     // exposes no mid-recognize cancellation) -- this is the last checkpoint
     // that can still skip it entirely rather than start a call that will run
@@ -120,5 +154,6 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     emvco,
     bank,
     ocr,
+    sourceOverride: input.qrOnly === true && detection.hasQr ? "qr" : undefined,
   });
 }

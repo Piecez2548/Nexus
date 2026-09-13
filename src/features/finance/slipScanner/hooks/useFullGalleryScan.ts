@@ -43,14 +43,20 @@ export interface UseFullGalleryScan {
 // one stable key every candidate carries (assetId) -- so the result never
 // depends on the concurrent queue's actual arrival order.
 //
-// Default extractor opts into skipOcrWhenNoQr: real-device measurement
-// showed OCR (even pooled) dominates per-image cost, and the overwhelming
-// majority of a real gallery's photos aren't slips at all -- see
-// extractSlipCandidate's own doc comment on the flag for the accuracy
-// tradeoff this accepts. The manual picker flow (useSlipScan) does NOT opt
-// into this, since every photo a user explicitly picks there is a
-// user-confirmed candidate slip.
-const defaultFullGalleryExtractor: SlipExtractor = (input) => extractSlipCandidate({ ...input, skipOcrWhenNoQr: true });
+// Full-gallery auto-scan is deliberately QR-prefiltered. Real-device
+// measurement showed OCR (even pooled) dominates per-image cost, and the
+// overwhelming majority of a gallery's photos are not slips. Returning null
+// for non-QR images keeps them out of the review/import queue while still
+// recording them as scanned in the orchestrator. A detected but non-EMVCo QR
+// still gets the existing OCR fallback so slip-verification metadata is not
+// lost. The manual picker flow keeps the same full QR → OCR behavior.
+const defaultFullGalleryExtractor: SlipExtractor = (input) =>
+  extractSlipCandidate({
+    ...input,
+    qrOnly: true,
+    skipOcrWhenNoQr: true,
+    maxRecoveryAttempts: 2,
+  });
 
 export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGalleryExtractor): UseFullGalleryScan {
   const gallery = useGalleryScan();

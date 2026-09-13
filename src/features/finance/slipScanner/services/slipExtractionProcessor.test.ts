@@ -59,6 +59,20 @@ describe("createSlipExtractionProcessor", () => {
     expect(order).toEqual(["callback", "after"]);
   });
 
+  it("does not persist or emit a filtered QR-only image", async () => {
+    let callbackCalled = false;
+    const processor = createSlipExtractionProcessor(
+      () => {
+        callbackCalled = true;
+      },
+      async () => null,
+    );
+
+    await processor.process(asset, new Uint8Array([1]), "hash", 1, () => false);
+
+    expect(callbackCalled).toBe(false);
+  });
+
   it("propagates an extraction failure so the scan queue can retry it", async () => {
     const processor = createSlipExtractionProcessor(
       () => {},

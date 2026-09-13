@@ -3,7 +3,7 @@ import type { GalleryAssetRef } from "@/features/finance/slipScanner/models/scan
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { ScanProcessor } from "@/features/finance/slipScanner/services/scanProcessor";
 
-export type SlipExtractor = (input: ExtractSlipInput) => Promise<SlipCandidate>;
+export type SlipExtractor = (input: ExtractSlipInput) => Promise<SlipCandidate | null>;
 
 // The real per-image work for the GS-006 scan orchestration (the concurrent,
 // byte-budgeted, cacheable, pause/resume/cancel-able queue) — closes the gap
@@ -23,6 +23,10 @@ export function createSlipExtractionProcessor(
   return {
     async process(asset: GalleryAssetRef, bytes: Uint8Array, _contentHash: string, runId: number, isCancelled: () => boolean): Promise<void> {
       const candidate = await extractor({ assetId: asset.assetId, bytes, isCancelled });
+      // A QR-only extractor returns null for ordinary gallery photos. They
+      // still count as scanned by the queue, but never enter the candidate
+      // repository or the review preview.
+      if (candidate === null) return;
       await onCandidate(asset, candidate, runId);
     },
   };

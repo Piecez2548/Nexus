@@ -53,6 +53,10 @@ export interface SlipCandidateInput {
   emvco?: EmvcoPayload | null;
   bank?: BankIdentification | null;
   ocr?: OcrSlipFields | null;
+  // Optional pipeline override for a detected non-EMVCo QR. In QR-only mode
+  // the image is intentionally retained without OCR, so the source must still
+  // report that QR detection (rather than implying OCR produced the record).
+  sourceOverride?: SlipCandidateSource;
   isDuplicate?: boolean;
 }
 
@@ -101,7 +105,7 @@ export function buildSlipCandidate(input: SlipCandidateInput): SlipCandidate {
   const emvco = input.emvco ?? null;
   const ocr = input.ocr ?? null;
   const qrUsable = emvco !== null && emvco.crcValid;
-  const source: SlipCandidateSource = qrUsable ? "qr" : "ocr";
+  const source: SlipCandidateSource = input.sourceOverride ?? (qrUsable ? "qr" : "ocr");
 
   // Trust EMVCo fields only when the QR checksum is valid; a corrupted payload
   // falls back to OCR entirely (its raw string is still kept for reference).

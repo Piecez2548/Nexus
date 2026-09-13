@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — QR-only gallery scan fast path
+
+- Full-gallery auto-scan now filters non-QR images before candidate creation, so OCR runs only for detected QR slips that need fallback fields; manual picked-image scanning is unchanged. QR recovery is bounded to two transformed attempts in the fast path. TypeScript, lint, targeted scanner tests (25/25) and production build passed. See [QR-only gallery scan](QR_ONLY_GALLERY_SCAN_2026-09-13.md).
+
 ## 2026-09-13 — Biometric unlock recovery
 
 - Fixed native fingerprint state reconciliation across startup/update/resume, surfaced secure-storage setup failures, and made Android build scripts verify the committed biometric hardening patch. Focused tests 75/75, lint, TypeScript/build and Android debug build passed. See [biometric unlock fix](BIOMETRIC_UNLOCK_FIX_2026-09-13.md).
