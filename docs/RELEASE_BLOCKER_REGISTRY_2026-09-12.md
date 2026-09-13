@@ -18,6 +18,8 @@
 
 **ทะเบียนปัจจุบัน (อัปเดต 2026-09-13):** 23 รายการที่ยังเกี่ยวข้องกับ release — P0 14, P1 9; Planned 10, In Progress 13, Blocked 0, Closed 0, Not Applicable 1. RB-001 ถูกตัดออกจากขอบเขต ordinary personal/demo ตามคำสั่งผู้ใช้ และมี reopen trigger เมื่อเปลี่ยนเป็น public, paid หรือ real-data use. TEST-STABILITY-001 อยู่ในหลักฐานที่เสร็จแล้ว ไม่รวมในรายการ release
 
+**Focused scope update:** ตามแผนโปรเจคส่วนตัว/เดโม งาน RB-003–RB-020 และ RB-022–RB-024 ถูกพักไว้เป็น release-only backlog; RB-021 เหลือเฉพาะ cloud-sync security maintenance ตาม [Focused project plan](FOCUSED_PLAN_2026-09-13.md). การพักงานไม่ใช่การปิดหรืออนุมัติความเสี่ยง และต้องเปิดกลับก่อนเปลี่ยน scope
+
 ## 2. แหล่งอ้างอิงและขอบเขตความเชื่อมั่น
 
 | รหัส | หลักฐาน | ใช้เพื่อ |

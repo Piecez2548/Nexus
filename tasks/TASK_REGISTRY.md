@@ -10,6 +10,7 @@ These coordination records are separate from the historical implementation-epic 
 
 | Task | Priority | Status | Scope / evidence |
 |---|---|---|---|
+| FOCUS-PLAN-001 | High | In Progress | Ordinary personal/demo scope: active work is limited to full-suite stability investigation, cloud-sync security maintenance and core regression watch. Release-only work is deferred. [Focused plan](../docs/FOCUSED_PLAN_2026-09-13.md). |
 | TEST-STABILITY-001 | High | Completed | Recipient Learning animation timing assumption removed; full suite 448/448 files and 2,782/2,782 tests passed. [Baseline](../docs/RELEASE_BASELINE_2026-09-12.md). |
 | RBR-001 | High | Completed | Release Blocker Registry created with 24 blockers (15 P0, 9 P1), evidence/closure requirements and sequential execution order. Current blocker status lives in that registry. |
 | DATA-INVENTORY-001 | High | Completed | [Data Inventory](../docs/DATA_INVENTORY_2026-09-12.md) and [Data Flow Map](../docs/DATA_FLOW_MAP_2026-09-12.md): 55 assets / 20 flows with source hashes; 32 Dexie tables, 24 sync tables, 7 cloud tables. Engineering deliverable complete; RB-002 release acceptance awaits an appointed reviewer under RB-001. |
@@ -54,7 +55,7 @@ These coordination records are separate from the historical implementation-epic 
 | RB-015-GOVERNANCE-001 | High | In Progress | Current pushed candidate and CI gates recorded; only main/direct-to-main workflow observed, with no checked-in CODEOWNERS or release-approval record. Branch protection, reviewers, deployment approval and rollback owner remain pending. [Report](../docs/RB_015_RELEASE_GOVERNANCE_BASELINE_2026-09-13.md). |
 | RB-012-ANDROID-001 | High | In Progress | Release build has no signingConfig/keystore. Unsigned build attempt was blocked by local Gradle loopback runtime; no mobile install performed. Production signing custody, artifact and store/rollback evidence remain pending. [Report](../docs/RB_012_ANDROID_RELEASE_SIGNING_BASELINE_2026-09-13.md). |
 
-Current work: `RB-022-VERIFY-001` has complete engineering evidence with Luna; release acceptance still requires named owner/reviewer records. No further sync behavior change is indicated by the production observation. External release-readiness blockers remain open for any public, paid or real-data use.
+Current work: `FOCUS-PLAN-001` is active with Luna. Only the full-suite runtime investigation, cloud-sync security maintenance and core regression watch remain in scope. Release-only items are deferred; reopen them before public, paid, organizational or real-data use.
 
 ## September audit remediation
 
@@ -65,7 +66,7 @@ Current work: `RB-022-VERIFY-001` has complete engineering evidence with Luna; r
 ## Legend
 
 - **Priority:** `Critical` · `High` · `Medium` · `Low`
-- **Status:** `Todo` · `In Progress` · `Completed` · `Blocked` · `Not Applicable (current scope)`
+- **Status:** `Todo` · `In Progress` · `Completed` · `Blocked` · `Deferred (scope)` · `Not Applicable (current scope)`
 - `Completed` reflects the **current implementation state** verified against `/docs` — this registry is both a backlog and an honest as-built view. Items marked `Todo` are genuinely not yet in the codebase (confirmed by direct code check, per the project rule to never claim features that don't exist).
 
 ## Status Summary

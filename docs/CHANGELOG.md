@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Focused ordinary-project plan
+
+- Reduced the active plan to test-suite stability, Supabase cloud-sync security maintenance and core regression watch. Legal, commercial, organizational and production-release work is paused until the project scope changes. Evidence: [Focused project plan](FOCUSED_PLAN_2026-09-13.md).
+
 ## 2026-09-13 — Scope change: RB-001 removed from ordinary project plan
 
 - Per user direction, RB-001 operator/accountability work is now **Not Applicable for the current personal/demo scope**. It must reopen before any public, paid or real-data pilot; the release blockers and evidence records remain preserved for that future scope.

@@ -6,6 +6,10 @@
 
 This roadmap replaces the previous version (last updated 2026-07-21), which was written before Trading, Portfolio, Todo, Habits, Life Schedule, Sync, Encryption, App Lock, and the entire AI Analytics engine existed in their current form — most of what it listed as "not started" is now built. This version is derived directly from the current source tree (see [MODULES.md](MODULES.md), [AI_ANALYTICS.md](AI_ANALYTICS.md)), not from an external blueprint document. Checkboxes are a backlog, not a commitment.
 
+## Focused current scope
+
+The active scope is an ordinary personal/demo project. See the [Focused project plan](FOCUSED_PLAN_2026-09-13.md) for the only remaining priorities: investigate the full-suite runtime hang, maintain the Supabase cloud-sync security baseline, and keep core regression coverage green. Public/paid/organizational release blockers are paused until the scope changes.
+
 ## Completed
 
 ### Sync performance
