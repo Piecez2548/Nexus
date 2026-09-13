@@ -11,6 +11,7 @@ These coordination records are separate from the historical implementation-epic 
 | Task | Priority | Status | Scope / evidence |
 |---|---|---|---|
 | FOCUS-PLAN-001 | High | In Progress | Ordinary personal/demo scope: active work is limited to full-suite stability investigation, cloud-sync security maintenance and core regression watch. Release-only work is deferred. [Focused plan](../docs/FOCUSED_PLAN_2026-09-13.md). |
+| CLOUD-SYNC-SECURITY-001 | High | Completed — current-scope verification | Linked Supabase schema lint passed with no errors; existing RLS/MFA controls and optional-digest scope were verified. Advisor owner decisions and Docker-backed schema diff remain deferred release work. [Maintenance record](../docs/CLOUD_SYNC_SECURITY_MAINTENANCE_2026-09-13.md). |
 | TEST-STABILITY-003 | Medium | Completed — diagnosis | Full isolated Nexus suite passes 451/451 files and 2,837/2,837 tests in 307.27s with 16 workers. `--no-isolate` is unsafe (91 state-leak failures); default isolation remains unchanged. Future optimization is P2. [Report](../docs/TEST_SUITE_RUNTIME_INVESTIGATION_2026-09-13.md). |
 | TEST-STABILITY-001 | High | Completed | Recipient Learning animation timing assumption removed; full suite 448/448 files and 2,782/2,782 tests passed. [Baseline](../docs/RELEASE_BASELINE_2026-09-12.md). |
 | RBR-001 | High | Completed | Release Blocker Registry created with 24 blockers (15 P0, 9 P1), evidence/closure requirements and sequential execution order. Current blocker status lives in that registry. |
