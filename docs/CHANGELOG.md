@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-023 security posture record
+
+- Mapped plaintext backup, optional encryption, local PIN/biometric, MFA recovery and CSP decisions to their current controls and open owner actions. No residual risk was accepted by automation. Evidence: [RB-023 security posture decisions](RB_023_SECURITY_POSTURE_DECISIONS_2026-09-13.md).
+
 ## 2026-09-13 — RB-018 privacy-safe pilot baseline
 
 - Recorded the on-device aggregate telemetry controls and their limits for a future pilot. No cohort or analytics consent was activated; event allow-list, retention and Privacy/Product approval remain open. Evidence: [RB-018 privacy-safe pilot evidence](RB_018_PRIVACY_SAFE_PILOT_EVIDENCE_2026-09-13.md).
