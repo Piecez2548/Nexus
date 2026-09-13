@@ -3,6 +3,7 @@
 ## 2026-09-13 — Sync observability
 
 - Added privacy-safe optional monitoring for sync failures and Realtime channel errors, including whether the failed path was full or targeted and the validated table when available. No account IDs, encrypted payloads or entity values are sent as extra context. Evidence: [SYNC-REALTIME-OBS-001](SYNC_REALTIME_OBS_001_2026-09-13.md).
+- Local telemetry now records sync full/targeted durations and generic sync/Realtime error counters for developer inspection without network transmission.
 
 ## 2026-09-13 — Realtime UPDATE routing diagnosis
 
