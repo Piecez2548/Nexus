@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-13 — Targeted pull runtime measurement
+
+- Measured the installed Android build's targeted pull path: a `budgets` invocation emitted exactly one remote pull request and completed in approximately 458 ms.
+- The encrypted mobile fixture was cleaned up after the trace; no payload contents were exported. Evidence: [SYNC-REALTIME-MEASURE-001](SYNC_REALTIME_MEASURE_001_2026-09-13.md).
+
 ## 2026-09-13 — Targeted Realtime pull
 
 - A validated Realtime table hint now runs the existing sync safeguards while pulling only the changed table.
