@@ -21,6 +21,7 @@ import { useTranslation } from "@/i18n/useTranslation";
 import { decideScan } from "@/features/finance/slipScanner/schedule/scanScheduler";
 import { getDeviceState } from "@/features/finance/slipScanner/schedule/deviceState";
 import { useScanScheduleStore } from "@/features/finance/slipScanner/store/scanScheduleStore";
+import { isVerifiedQrCandidate } from "@/features/finance/slipScanner/ai/confidenceTier";
 
 type Phase = "idle" | "banks";
 
@@ -257,11 +258,20 @@ export default function GalleryScanFlow({ extractor }: Props) {
       return;
     }
 
-    const candidatesToImport = visibleCandidates;
+    const candidatesToImport = visibleCandidates.filter(isVerifiedQrCandidate);
     if (candidatesToImport.length === 0) {
       scan.reset();
-      toast.error(t("slipScanner.galleryScan.noneFound"));
+      toast.error(
+        visibleCandidates.length > 0
+          ? t("slipScanner.galleryScan.noVerifiedQr")
+          : t("slipScanner.galleryScan.noneFound"),
+      );
       return;
+    }
+
+    const skippedUnverified = visibleCandidates.length - candidatesToImport.length;
+    if (skippedUnverified > 0) {
+      toast.info(t("slipScanner.galleryScan.unverifiedSkipped", { count: skippedUnverified }));
     }
 
     void handleImport(candidatesToImport);

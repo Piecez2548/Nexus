@@ -56,7 +56,7 @@ Every domain lives in `src/features/<name>/` with the same internal shape (see [
 
 ### Gallery Slip Scanner (`src/features/finance/slipScanner/`)
 
-A separate, ~100-file subsystem within Finance for **gallery** slip import. A single "Scan Gallery" button on the Transactions page (`GalleryScanFlow`) drives: bank selection → image picker (web file input, or `@capacitor/camera` `pickImages` on Android) → extraction → automatic Smart Import. It covers both single-image and batch scans, so there is no separate Scan Slip entry point.
+A separate, ~100-file subsystem within Finance for **gallery** slip import. A single "Scan Gallery" button on the Transactions page (`GalleryScanFlow`) drives: bank selection → image picker (web file input, or `@capacitor/camera` `pickImages` on Android) → extraction → verified-QR-only automatic Smart Import. It covers both single-image and batch scans, so there is no separate Scan Slip entry point; OCR-only or unverified QR results stay out of transactions until reviewed.
 
 **Extraction pipeline** (`extractSlipCandidate`): QR detect (jsQR, with a rotate/brighten/contrast/upscale recovery retry) → EMVCo/PromptPay TLV parse (with CRC-16 integrity) → plugin-based bank identification (falls back to OCR-text bank identification when EMVCo can't resolve it) → OCR fallback (Tesseract.js, backed by a shared worker pool) when the QR is missing/damaged/non-EMVCo — adaptively brightness/contrast-corrected then upscaled/downscaled + Otsu-binarised to beat slip watermarks — → slip-level duplicate detection (SHA-256 + perceptual hash).
 

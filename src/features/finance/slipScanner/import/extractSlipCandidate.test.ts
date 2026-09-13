@@ -218,7 +218,7 @@ describe("extractSlipCandidate", () => {
     });
 
     expect(candidate).not.toBeNull();
-    expect(candidate?.source).toBe("qr");
+    expect(candidate?.source).toBe("ocr");
     expect(candidate?.payload).toBeNull();
     expect(ocrCalled).toBe(true);
   });

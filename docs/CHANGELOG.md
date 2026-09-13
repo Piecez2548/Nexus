@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Verified QR auto-import
+
+- Gallery auto-import now accepts only positive-amount, CRC-valid EMVCo QR candidates. OCR-only and unverified QR results remain excluded from automatic transaction creation so imported data favors correctness over recall.
+
 ## 2026-09-13 — Unified gallery scanning
 
 - Removed the standalone Scan Slip entry point and legacy single-slip scanner. GalleryScanFlow is now the sole scanner and handles both single-image and batch gallery scans, automatically importing extracted transactions.

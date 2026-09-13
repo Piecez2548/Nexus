@@ -17,7 +17,8 @@ const fakeExtractor: SlipExtractor = async ({ assetId }): Promise<SlipCandidate>
   isDuplicate: false,
   confidence: 90,
   amount: 100,
-  merchant: "Coffee Shop",
+  merchant: `Coffee Shop ${assetId}`,
+  payload: "verified-emvco-payload",
 });
 
 function file(name: string, content: string): File {
@@ -98,6 +99,6 @@ describe("GalleryScanFlow", () => {
     await waitFor(async () => expect(await db.transactions.count()).toBe(2));
 
     const imported = await db.transactions.toArray();
-    expect(imported.every((t) => t.title === "Coffee Shop")).toBe(true);
+    expect(imported.every((t) => t.title.startsWith("Coffee Shop"))).toBe(true);
   });
 });

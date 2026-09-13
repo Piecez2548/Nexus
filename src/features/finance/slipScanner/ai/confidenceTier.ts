@@ -35,3 +35,20 @@ export function confidenceTier(candidate: Pick<SlipCandidate, "confidence" | "am
 export function isAutoImportEligible(candidate: Pick<SlipCandidate, "confidence" | "amount" | "isDuplicate">): boolean {
   return !candidate.isDuplicate && confidenceTier(candidate) === "high";
 }
+
+// Gallery auto-import has a stricter, deterministic gate than the review
+// preview's confidence policy: only a positive amount backed by a CRC-valid
+// EMVCo QR is written without a person checking OCR text. Non-EMVCo and OCR
+// candidates remain scan findings but are never silently turned into data.
+export function isVerifiedQrCandidate(
+  candidate: Pick<SlipCandidate, "source" | "payload" | "amount" | "isDuplicate">,
+): boolean {
+  return (
+    candidate.source === "qr" &&
+    typeof candidate.payload === "string" &&
+    candidate.payload.length > 0 &&
+    candidate.amount !== undefined &&
+    candidate.amount > 0 &&
+    !candidate.isDuplicate
+  );
+}

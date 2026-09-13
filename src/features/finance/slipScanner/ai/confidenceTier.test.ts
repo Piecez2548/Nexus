@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { confidenceTier, isAutoImportEligible } from "./confidenceTier";
+import { confidenceTier, isAutoImportEligible, isVerifiedQrCandidate } from "./confidenceTier";
 
 describe("confidenceTier", () => {
   it("is critical whenever the amount is missing or non-positive, regardless of confidence", () => {
@@ -41,5 +41,17 @@ describe("isAutoImportEligible", () => {
 
   it("is false for a critical (missing-amount) candidate even at high confidence", () => {
     expect(isAutoImportEligible({ confidence: 100, amount: undefined, isDuplicate: false })).toBe(false);
+  });
+});
+
+describe("isVerifiedQrCandidate", () => {
+  const base = { source: "qr" as const, payload: "emvco", amount: 10, isDuplicate: false };
+
+  it("accepts only positive, non-duplicate QR candidates with a payload", () => {
+    expect(isVerifiedQrCandidate(base)).toBe(true);
+    expect(isVerifiedQrCandidate({ ...base, source: "ocr" })).toBe(false);
+    expect(isVerifiedQrCandidate({ ...base, payload: null })).toBe(false);
+    expect(isVerifiedQrCandidate({ ...base, amount: undefined })).toBe(false);
+    expect(isVerifiedQrCandidate({ ...base, isDuplicate: true })).toBe(false);
   });
 });

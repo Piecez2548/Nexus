@@ -154,6 +154,10 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     emvco,
     bank,
     ocr,
-    sourceOverride: input.qrOnly === true && detection.hasQr ? "qr" : undefined,
+    // A gallery candidate is marked as QR-sourced only when the decoded
+    // payload is a CRC-valid EMVCo payment QR. Non-EMVCo or damaged QR images
+    // still retain their OCR fields, but must not be auto-imported as verified
+    // transactions.
+    sourceOverride: input.qrOnly === true && emvco?.crcValid === true ? "qr" : undefined,
   });
 }
