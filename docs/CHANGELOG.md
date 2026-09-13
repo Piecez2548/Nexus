@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-020 web deployment smoke
+
+- Published the current Nexus documentation candidate and verified HTTP 200 smoke responses for Nexus All/Main, Nexus-Tools and DataLens, with commit and deployment IDs recorded. RB-020 remains pending release-owner and QA acceptance. Evidence: [RB-020 deployment smoke](RB_020_DEPLOYMENT_SMOKE_2026-09-13.md).
+
 ## 2026-09-13 — RB-022 separate deployables verification
 
 - Prepared and published engineering evidence for Nexus-Tools and DataLens: Tools 54/54 unit tests plus 105 passed/1 expected browser skip, and DataLens frontend 3/3 E2E plus backend 42/42 tests. Both production deployments returned HTTP 200. RB-022 remains pending named owner/reviewer acceptance. Evidence: [RB-022 separate deployables verification](RB_022_SEPARATE_DEPLOYABLES_VERIFICATION_2026-09-13.md).
