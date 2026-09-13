@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-011 IP/licensing baseline
+
+- Recorded the Nexus dependency SBOM and package-license inventory for legal/IP review. Ownership, asset permissions and approved LICENSE/NOTICE remain open; no distribution rights were inferred. Evidence: [RB-011 IP/licensing baseline](RB_011_IP_LICENSING_EVIDENCE_2026-09-13.md).
+
 ## 2026-09-13 — RB-023 security posture record
 
 - Mapped plaintext backup, optional encryption, local PIN/biometric, MFA recovery and CSP decisions to their current controls and open owner actions. No residual risk was accepted by automation. Evidence: [RB-023 security posture decisions](RB_023_SECURITY_POSTURE_DECISIONS_2026-09-13.md).
