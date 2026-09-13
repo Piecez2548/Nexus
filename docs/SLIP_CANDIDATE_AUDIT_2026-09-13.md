@@ -14,8 +14,8 @@ This audit checks whether the strict QR-only gallery scan left unreviewed candid
 
 ## Decision
 
-The Transactions dataset remains limited to the two verified QR imports. Historical candidates are retained for auditability and are not automatically promoted to Transactions.
+The Transactions dataset remains limited to the two verified QR imports. The 242 historical candidate rows were cleared from device-local operational storage after confirming that they were outside the requested date range; no transaction rows were changed.
 
 ## Follow-up
 
-If historical scan cleanup is required, handle it as a separate retention task with an explicit export/delete decision. Do not broaden automatic import to OCR or unverified QR data without a review step.
+Keep candidate storage operational and short-lived. Do not broaden automatic import to OCR or unverified QR data without a review step. Any future retention change should be a separate, explicit task.
