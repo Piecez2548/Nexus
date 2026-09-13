@@ -9,6 +9,7 @@ import { markMfaVerifiedThisSession, clearMfaSessionFlag } from "@/features/sync
 import type { SyncTableName } from "@/features/sync/types";
 import { captureError } from "@/lib/sentry";
 import { localTelemetry } from "@/platform/localTelemetry";
+import { EncryptionLockedError } from "@/database/encryptedRepository";
 
 interface AuthState {
   user: User | null;
@@ -194,11 +195,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       set({ syncing: false, lastSyncedAt: new Date().toISOString() });
     } catch (err) {
-      localTelemetry.recordError("sync");
+      if (err instanceof EncryptionLockedError) {
+        // Startup can race the app-lock gate. The next timer/online pass will
+        // retry after the session DEK is resident; this is not a sync failure.
+        set({ syncing: false, error: null });
+        return;
+      }
+      const errorType = err instanceof Error ? err.name : typeof err;
+      localTelemetry.recordError(`sync:${errorType}`);
       captureError(err, {
         source: "sync",
         path: preferredTable ? "targeted" : "full",
         table: preferredTable ?? null,
+        errorType,
       });
       set({ syncing: false, error: toErrorMessage(err, "Sync failed") });
     }

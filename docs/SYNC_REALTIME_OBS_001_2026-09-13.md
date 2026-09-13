@@ -6,7 +6,7 @@
 
 ## Change
 
-Optional Sentry monitoring now receives structured sync failures from `authStore` with a safe operation path (`full` or `targeted`) and the validated table name when one exists. `SyncProvider` reports only Realtime `CHANNEL_ERROR` and `TIMED_OUT` statuses. The existing on-device `localTelemetry` also records full/targeted timings and generic sync/Realtime error counters for local inspection. Account IDs, encrypted payloads and local entity values are excluded from the additional context.
+Optional Sentry monitoring now receives structured sync failures from `authStore` with a safe operation path (`full` or `targeted`), validated table name when one exists and an error type. `SyncProvider` reports only Realtime `CHANNEL_ERROR` and `TIMED_OUT` statuses. The existing on-device `localTelemetry` also records full/targeted timings and typed sync/Realtime error counters for local inspection. Account IDs, encrypted payloads and local entity values are excluded from the additional context.
 
 ## Validation
 

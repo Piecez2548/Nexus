@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Expected locked-startup sync classification
+
+- Classified `EncryptionLockedError` during app-lock startup as an expected retry state, removing the false-positive operational error while preserving telemetry for genuine sync failures. Evidence: [SYNC-REALTIME-ERROR-CLASSIFY-001](SYNC_REALTIME_ERROR_CLASSIFY_001_2026-09-13.md).
+
 ## 2026-09-13 — Runtime telemetry inspection
 
 - Added the read-only `window.__NEXUS_TELEMETRY__` hook and verified a live aggregate snapshot on the installed Android WebView. Evidence: [SYNC-REALTIME-OBS-002](SYNC_REALTIME_OBS_002_2026-09-13.md).

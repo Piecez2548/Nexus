@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { clearAuditLog, getAuditLog } from "@/features/security/auditLog";
+import { EncryptionLockedError } from "@/database/encryptedRepository";
 
 const mockSignUp = vi.fn();
 const mockSignInWithPassword = vi.fn();
@@ -260,12 +261,24 @@ describe("authStore", () => {
 
     expect(useAuthStore.getState().error).toBe("Network unreachable");
     expect(useAuthStore.getState().syncing).toBe(false);
-    expect(mockTelemetryRecordError).toHaveBeenCalledWith("sync");
+    expect(mockTelemetryRecordError).toHaveBeenCalledWith("sync:Error");
     expect(mockCaptureError).toHaveBeenCalledWith(expect.any(Error), {
       source: "sync",
       path: "full",
       table: null,
+      errorType: "Error",
     });
+  });
+
+  it("does not report a startup sync that races the encryption lock gate", async () => {
+    useAuthStore.setState({ user: { id: "u1" } as never });
+    mockRunFullSync.mockRejectedValue(new EncryptionLockedError());
+
+    await useAuthStore.getState().sync();
+
+    expect(useAuthStore.getState().error).toBeNull();
+    expect(mockTelemetryRecordError).not.toHaveBeenCalled();
+    expect(mockCaptureError).not.toHaveBeenCalled();
   });
 
   it("loads the existing session and marks sessionChecked once initialize resolves", async () => {

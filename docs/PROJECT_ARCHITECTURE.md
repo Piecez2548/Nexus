@@ -131,3 +131,5 @@ Root `src/styles/nexusTheme.css` supplies the Main, All and authentication palet
 The optional monitoring layer records sync failures with only the operation path and validated table, and reports Realtime channel errors/timeouts with status metadata. It never adds account IDs, encrypted payloads or entity values to monitoring context.
 
 `window.__NEXUS_TELEMETRY__` exposes the same aggregate snapshot as a read-only support hook for production browser and Android WebView inspection. It is an in-memory view and does not create a network or persistence path.
+
+Expected `EncryptionLockedError` instances during the app-lock startup race are treated as transient and excluded from error monitoring; timer and online retry paths remain responsible for the later sync attempt. Genuine sync failures retain typed telemetry and Sentry context.
