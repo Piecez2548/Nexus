@@ -75,7 +75,7 @@ function selectResultBuilder(
 }
 
 // Import after the mock is registered so the engine picks up the fake client.
-const { runFullSync } = await import("./syncEngine");
+const { runFullSync, runTargetedSync } = await import("./syncEngine");
 
 const USER_ID = "user-123";
 
@@ -1187,6 +1187,40 @@ describe("syncEngine", () => {
       "accounts",
       "categories",
     ]);
+  });
+
+  it("targets only the Realtime-changed table while retaining the sync guards", async () => {
+    const startedTables: string[] = [];
+
+    mockFrom.mockImplementation(() => {
+      let currentTableName: string | undefined;
+      let isPreflightQuery = false;
+      const builder = {
+        select: vi.fn(() => builder),
+        eq: vi.fn((column: string, value: string) => {
+          if (column === "table_name") currentTableName = value;
+          return builder;
+        }),
+        order: vi.fn(() => builder),
+        in: vi.fn(() => {
+          isPreflightQuery = true;
+          return builder;
+        }),
+        not: vi.fn(() => builder),
+        gt: vi.fn(() => builder),
+        gte: vi.fn(() => builder),
+        upsert: mockUpsert,
+        then: (resolve: (value: { data: unknown[]; error: null }) => void) => {
+          if (!isPreflightQuery) startedTables.push(currentTableName ?? "unknown");
+          resolve({ data: [], error: null });
+        },
+      };
+      return builder;
+    });
+
+    await runTargetedSync(USER_ID, "budgets");
+
+    expect(startedTables).toEqual(["budgets"]);
   });
 
   it("does not re-push a row it only ever received via pull, even across multiple later passes", async () => {

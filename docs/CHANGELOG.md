@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-13 — Targeted Realtime pull
+
+- A validated Realtime table hint now runs the existing sync safeguards while pulling only the changed table.
+- Timer, online and manual syncs continue to pull all 24 tables as the recovery boundary for missed or malformed Realtime events.
+- Added regressions proving targeted pulls do not issue unrelated table requests and that full-pass ordering remains unchanged. Evidence: [SYNC-TARGETED-PULL-001](SYNC_TARGETED_PULL_001_2026-09-13.md).
+
 ## 2026-09-13 — Realtime table pull priority
 
 - Realtime payloads now carry a validated sync-table hint into the existing full-sync engine.

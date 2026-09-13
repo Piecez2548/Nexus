@@ -7,6 +7,7 @@ const mockSignOut = vi.fn();
 const mockGetSession = vi.fn();
 const mockOnAuthStateChange = vi.fn();
 const mockRunFullSync = vi.fn();
+const mockRunTargetedSync = vi.fn();
 const mockListFactors = vi.fn();
 const mockChallengeAndVerify = vi.fn();
 const mockRedeemBackupCode = vi.fn();
@@ -34,6 +35,7 @@ vi.mock("@/lib/supabaseClient", () => ({
 
 vi.mock("@/features/sync/syncEngine", () => ({
   runFullSync: (...args: unknown[]) => mockRunFullSync(...args),
+  runTargetedSync: (...args: unknown[]) => mockRunTargetedSync(...args),
 }));
 
 vi.mock("@/features/sync/backupCodes", () => ({
@@ -191,6 +193,15 @@ describe("authStore", () => {
     expect(mockRunFullSync).toHaveBeenCalledWith("u1");
     expect(useAuthStore.getState().syncing).toBe(false);
     expect(useAuthStore.getState().lastSyncedAt).not.toBeNull();
+  });
+
+  it("routes a Realtime table hint to the targeted sync pass", async () => {
+    useAuthStore.setState({ user: { id: "u1" } as never });
+
+    await useAuthStore.getState().sync("budgets");
+
+    expect(mockRunTargetedSync).toHaveBeenCalledWith("u1", "budgets");
+    expect(mockRunFullSync).not.toHaveBeenCalled();
   });
 
   it("does not attempt to sync when signed out", async () => {

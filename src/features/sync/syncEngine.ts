@@ -426,7 +426,7 @@ async function refreshChangedStores(changedTables: Set<SyncTableName>) {
 // every step after it in the same pass, including deletions, which then
 // silently never reach the other device. Errors are collected and
 // re-thrown at the end so the caller still surfaces that something failed.
-export async function runFullSync(userId: string, preferredTable?: SyncTableName): Promise<void> {
+async function runSync(userId: string, preferredTable?: SyncTableName, pullOnlyPreferredTable = false): Promise<void> {
   if (!isSyncConfigured || !supabase) return;
 
   const errors: unknown[] = [];
@@ -467,9 +467,11 @@ export async function runFullSync(userId: string, preferredTable?: SyncTableName
 
   await attempt(() => pushTombstones(userId));
 
-  const pullOrder: SyncTableName[] = preferredTable
-    ? [preferredTable, ...SYNCED_TABLES.filter((table) => table !== preferredTable)]
-    : SYNCED_TABLES;
+  const pullOrder: SyncTableName[] = preferredTable && pullOnlyPreferredTable
+    ? [preferredTable]
+    : preferredTable
+      ? [preferredTable, ...SYNCED_TABLES.filter((table) => table !== preferredTable)]
+      : SYNCED_TABLES;
 
   for (let start = 0; start < pullOrder.length; start += PULL_CONCURRENCY) {
     const batch = pullOrder.slice(start, start + PULL_CONCURRENCY);
@@ -527,4 +529,24 @@ export async function runFullSync(userId: string, preferredTable?: SyncTableName
   await refreshChangedStores(changedTables);
 
   if (errors.length > 0) throw errors[0];
+}
+
+/**
+ * Runs the complete correctness pass. Realtime callers should use
+ * runTargetedSync() so a validated table hint can avoid unrelated pull
+ * requests; timer, online and manual syncs deliberately retain this full
+ * fallback path.
+ */
+export async function runFullSync(userId: string, preferredTable?: SyncTableName): Promise<void> {
+  return runSync(userId, preferredTable);
+}
+
+/**
+ * Pulls only the table named by a validated Realtime event while retaining
+ * every push, tombstone, cursor, dedupe and conflict guard in runSync(). A
+ * later timer/online/full pass remains the recovery boundary for missed or
+ * concurrent Realtime events.
+ */
+export async function runTargetedSync(userId: string, table: SyncTableName): Promise<void> {
+  return runSync(userId, table, true);
 }

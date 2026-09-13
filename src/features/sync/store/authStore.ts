@@ -185,8 +185,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ syncing: true, error: null });
 
     try {
-      const { runFullSync } = await import("@/features/sync/syncEngine");
-      if (preferredTable) await runFullSync(user.id, preferredTable);
+      const { runFullSync, runTargetedSync } = await import("@/features/sync/syncEngine");
+      if (preferredTable) await runTargetedSync(user.id, preferredTable);
       else await runFullSync(user.id);
       set({ syncing: false, lastSyncedAt: new Date().toISOString() });
     } catch (err) {
