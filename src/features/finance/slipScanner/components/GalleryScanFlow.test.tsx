@@ -75,7 +75,7 @@ describe("GalleryScanFlow", () => {
     expect(useBankSelectionStore.getState().selectedBankIds).toEqual([]);
   });
 
-  it("drives the full web flow through the real orchestrator: bank confirm -> file pick -> scan progress -> Import Preview -> Smart Import", async () => {
+  it("drives the full web flow through the real orchestrator and auto-imports extracted candidates", async () => {
     const user = userEvent.setup();
     render(<GalleryScanFlow extractor={fakeExtractor} />);
 
@@ -93,12 +93,8 @@ describe("GalleryScanFlow", () => {
     // live progress while in flight.
     await waitFor(() => expect(screen.getByText("Scan progress")).toBeInTheDocument());
 
-    // Once it completes, Import Preview opens with both extracted candidates.
-    await waitFor(() => expect(screen.getByText("Import preview")).toBeInTheDocument());
-    expect(screen.getAllByText("Coffee Shop")).toHaveLength(2);
-
-    // Smart Import commits a real transaction through the same path GS-016 uses.
-    await user.click(screen.getByRole("button", { name: /Import \d+ selected/ }));
+    // Once it completes, GalleryScanFlow sends both extracted candidates
+    // straight through Smart Import without opening a review drawer.
     await waitFor(async () => expect(await db.transactions.count()).toBe(2));
 
     const imported = await db.transactions.toArray();

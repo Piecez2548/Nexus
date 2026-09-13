@@ -13,6 +13,7 @@ The project is currently treated as a personal/demo application. This plan keeps
 5. **Daily navigation simplification** — completed the first usability pass: daily Dashboard/Transactions/Budget shortcuts are visible first while all existing routes remain grouped below. [Evidence](UX_DAILY_NAV_2026-09-13.md)
 6. **Quick Add transaction entry** — completed the second usability pass: new entries start with essential fields while optional metadata stays available through progressive disclosure; scan/template drafts remain reviewable. [Evidence](UX_QUICK_ADD_2026-09-13.md)
 7. **Slip scan setup simplification** — completed the third usability pass: gallery scanning now offers a one-tap all-photos action, while bank/date filters remain available as optional advanced controls. [Evidence](UX_SLIP_SCAN_SETUP_2026-09-13.md)
+8. **Automatic gallery scan import** — completed: extracted candidates now pass through Smart Import automatically when a gallery scan settles, with duplicate handling and import history preserved.
 
 The current focused cycle includes the navigation, transaction-entry and slip-scanning usability passes. Continue with the next usability slice only after this change is released and observed.
 

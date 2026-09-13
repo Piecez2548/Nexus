@@ -30,7 +30,7 @@ export interface UseFullGalleryScan {
 // candidate as it arrives, since the orchestrator itself only counts done/
 // skipped/failed at the asset level, not by extraction outcome. `imported`
 // stays 0 for the lifetime of a scan: nothing is imported until the resulting
-// candidates go through Import Preview -> Smart Import afterwards.
+// candidates go through GalleryScanFlow's automatic Smart Import afterwards.
 //
 // This is today's entry point for a *large or open-ended* gallery scan (the
 // concurrent queue and cache exist for that case); the existing bounded

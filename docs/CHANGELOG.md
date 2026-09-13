@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Automatic gallery scan import
+
+- Gallery scans now send extracted, bank-filtered candidates through Smart Import automatically when scanning finishes. Duplicate detection, validation and Import History remain active; the separate review drawer is no longer required for this workflow. GalleryScanFlow tests, the slip-scanner suite, TypeScript, lint and the release build passed.
+
 ## 2026-09-13 — Slip scan setup simplification
 
 - Gallery scanning now starts with a one-tap “Scan all photos” action for the common case. Bank selection, date range, search, estimates and pause/cancel controls remain available under optional advanced filters. The remembered bank preference is preserved when using the unfiltered action. Targeted scanner tests, TypeScript and lint passed. See [slip scan setup](UX_SLIP_SCAN_SETUP_2026-09-13.md).

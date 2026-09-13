@@ -12,7 +12,6 @@ import type { ScanOptions } from "@/features/finance/slipScanner/models/scanType
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { SlipExtractor } from "@/features/finance/slipScanner/services/slipExtractionProcessor";
 import BankSelectionPopup from "@/features/finance/slipScanner/components/BankSelectionPopup";
-import ImportPreview from "@/features/finance/slipScanner/components/ImportPreview";
 import { useCategoryLearningStore } from "@/features/finance/slipScanner/store/categoryLearningStore";
 import { useBankSelectionStore } from "@/features/finance/slipScanner/store/bankSelectionStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
@@ -23,7 +22,7 @@ import { decideScan } from "@/features/finance/slipScanner/schedule/scanSchedule
 import { getDeviceState } from "@/features/finance/slipScanner/schedule/deviceState";
 import { useScanScheduleStore } from "@/features/finance/slipScanner/store/scanScheduleStore";
 
-type Phase = "idle" | "banks" | "preview";
+type Phase = "idle" | "banks";
 
 // React Strict Mode can mount the page twice in development. Keep the native
 // gallery scan single-flight at module scope so that never creates two scan
@@ -41,8 +40,8 @@ interface Props {
 // GalleryMediaPlugin adapter, GS-006/007/008 + Slip Intelligence Phase 8;
 // web: file picker, since there is no OS gallery to enumerate) → extract
 // slips (real jsQR + Tesseract, through the concurrent scan orchestrator) →
-// review → Smart Import. All the pieces (BankSelectionPopup, useFullGalleryScan,
-// ScanProgressDashboard, ImportPreview, useSmartImport) are tested units
+// Smart Import. All the pieces (BankSelectionPopup, useFullGalleryScan,
+// ScanProgressDashboard and useSmartImport) are tested units
 // built across the GS epic and Slip Intelligence phases; this only
 // orchestrates them.
 //
@@ -62,6 +61,8 @@ export default function GalleryScanFlow({ extractor }: Props) {
   const [dateTo, setDateTo] = useState("");
   const [rangeImageCount, setRangeImageCount] = useState<number | null>(null);
   const [isAutomaticScan, setIsAutomaticScan] = useState(false);
+  const [scanSettled, setScanSettled] = useState(false);
+  const autoImportStartedRef = useRef(false);
 
   const scan = useFullGalleryScan(extractor);
   const scheduleConfig = useScanScheduleStore((state) => state.config);
@@ -95,9 +96,15 @@ export default function GalleryScanFlow({ extractor }: Props) {
 
         setIsAutomaticScan(true);
         await scan.scanNativeGallery(true);
-        if (active) markScanned();
+        if (active) {
+          markScanned();
+          setScanSettled(true);
+        }
       } catch (err) {
-        if (active) toast.error(toErrorMessage(err));
+        if (active) {
+          toast.error(toErrorMessage(err));
+          setScanSettled(true);
+        }
       } finally {
         automaticScanInFlight = false;
         if (active) setIsAutomaticScan(false);
@@ -139,32 +146,6 @@ export default function GalleryScanFlow({ extractor }: Props) {
   }, [phase, dateFrom, dateTo]);
   const smartImport = useSmartImport();
 
-  // useScanStore is a module-level singleton, so a freshly mounted consumer
-  // could otherwise inherit an already-"completed" status left over from a
-  // previous scan elsewhere in the app — seeding from the first-seen status
-  // means only an actual running/paused -> completed transition is acted on
-  // Only an actual running/paused -> completed transition may finish the flow.
-  const prevScanStatusRef = useRef(scan.status);
-
-  useEffect(() => {
-    const prev = prevScanStatusRef.current;
-    prevScanStatusRef.current = scan.status;
-    if (prev === scan.status) return; // no real transition (also guards a stale status inherited on mount)
-
-    if (scan.status === "completed") {
-      if (scan.candidates.length === 0) {
-        toast.error(t("slipScanner.galleryScan.noneFound"));
-      } else {
-        setPhase("preview");
-      }
-    } else if (scan.status === "cancelled") {
-      toast.info(t("slipScanner.progressDashboard.statusCancelled"));
-    } else if (scan.status === "error") {
-      toast.error(t("slipScanner.progressDashboard.statusError", { error: scan.error ?? "" }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once per real status transition, not on every candidates/toast/t identity change
-  }, [scan.status]);
-
   async function handleConfirmBanks(bankIds: string[]): Promise<void> {
     if (bankIds.length === 0) {
       // The one-tap "scan all" action should apply an unfiltered run without
@@ -174,6 +155,8 @@ export default function GalleryScanFlow({ extractor }: Props) {
     }
     setSelectedBankIds(bankIds);
     setPhase("idle"); // close the popup before scanning
+    setScanSettled(false);
+    autoImportStartedRef.current = false;
     const dateRange: ScanOptions["dateRange"] =
       dateFrom || dateTo ? { from: dateFrom || undefined, to: dateTo || undefined } : undefined;
     // A date range is a one-off request, not a remembered preference (unlike
@@ -184,8 +167,10 @@ export default function GalleryScanFlow({ extractor }: Props) {
     if (isNativeGalleryAvailable()) {
       try {
         await scan.scanNativeGallery(true, dateRange);
+        setScanSettled(true);
       } catch (err) {
         toast.error(toErrorMessage(err));
+        setScanSettled(true);
       }
     } else {
       inputRef.current?.click();
@@ -198,8 +183,10 @@ export default function GalleryScanFlow({ extractor }: Props) {
     if (files.length === 0) return;
     try {
       await scan.scanPickedFiles(files, false);
+      setScanSettled(true);
     } catch (err) {
       toast.error(toErrorMessage(err));
+      setScanSettled(true);
     }
   }
 
@@ -249,10 +236,39 @@ export default function GalleryScanFlow({ extractor }: Props) {
     }
   }
 
-  function closePreview(): void {
-    scan.reset();
-    setPhase("idle");
-  }
+  // Gallery scans import every extracted candidate as soon as the scan settles.
+  // Smart Import still owns validation, duplicate detection, history, and
+  // persistence; the review drawer is intentionally skipped for this one-tap
+  // gallery workflow.
+  useEffect(() => {
+    if (!scanSettled || autoImportStartedRef.current) return;
+
+    autoImportStartedRef.current = true;
+    setScanSettled(false);
+
+    if (scan.status === "cancelled") {
+      scan.reset();
+      toast.info(t("slipScanner.progressDashboard.statusCancelled"));
+      return;
+    }
+    if (scan.status === "error") {
+      scan.reset();
+      toast.error(t("slipScanner.progressDashboard.statusError", { error: scan.error ?? "" }));
+      return;
+    }
+
+    const candidatesToImport = visibleCandidates;
+    if (candidatesToImport.length === 0) {
+      scan.reset();
+      toast.error(t("slipScanner.galleryScan.noneFound"));
+      return;
+    }
+
+    void handleImport(candidatesToImport);
+    // scanSettled is the explicit completion signal from the scan promise, so
+    // candidates are fully populated before this effect can import them.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scanSettled]);
 
   const busy = scan.status === "running" || scan.status === "paused";
   // Shown only while actually in flight -- "completed"/"cancelled"/"error"
@@ -265,7 +281,7 @@ export default function GalleryScanFlow({ extractor }: Props) {
       <button
         type="button"
         onClick={() => setPhase("banks")}
-        disabled={busy}
+        disabled={busy || smartImport.running}
         className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 px-4 py-2 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <Images size={18} className={isAutomaticScan ? "animate-pulse text-brand-400" : ""} />
@@ -302,12 +318,6 @@ export default function GalleryScanFlow({ extractor }: Props) {
         </div>
       )}
 
-      <ImportPreview
-        open={phase === "preview"}
-        onClose={closePreview}
-        candidates={visibleCandidates}
-        onImport={handleImport}
-      />
     </>
   );
 }
