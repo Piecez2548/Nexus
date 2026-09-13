@@ -14,6 +14,6 @@ Added a read-only `window.__NEXUS_TELEMETRY__` diagnostics hook backed by the ex
 - In-place install on vivo V2348 succeeded; first-install time remained `2026-07-24 01:35:06`.
 - Android WebView returned a live snapshot from `window.__NEXUS_TELEMETRY__`: `sync.full` count 2, no Realtime channel error sample, and one generic `sync` error sample with no server message or user data.
 - Snapshot unit test: 6/6 passed.
-- Production deployment: `dpl_3Z63qFe5wTVApsKiifCZG45SHwRp` (READY); production smoke returned HTTP 200.
+- Production deployment: `dpl_BS1sKeW6sdpmBY3G4FvLUFE6T41J` (READY); production smoke returned HTTP 200.
 
 The generic sync error sample is intentionally redacted by the recording path; detailed diagnostics remain in optional Sentry when configured.
