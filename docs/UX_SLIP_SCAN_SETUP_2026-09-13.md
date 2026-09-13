@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-13  
 **Status:** Completed  
-**Scope:** Personal/demo web experience; no mobile build installed
+**Scope:** Personal/demo web and Android experience; debug APK installed on the connected device
 
 ## Change
 
@@ -22,7 +22,7 @@ Using the one-tap action applies an unfiltered scan for that run without clearin
 
 ## Validation
 
-- Targeted scanner tests: 13/13 passed across `BankSelectionPopup` and `GalleryScanFlow`.
+- Targeted scanner tests: `BankSelectionPopup` and `GalleryScanFlow` passed, including the automatic-import flow.
 - TypeScript (`npx tsc -b`): passed.
 - ESLint/Oxlint (`npm run lint`): passed.
 - Impeccable detector: no findings for the changed component.
