@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-022 separate deployables verification
+
+- Prepared and published engineering evidence for Nexus-Tools and DataLens: Tools 54/54 unit tests plus 105 passed/1 expected browser skip, and DataLens frontend 3/3 E2E plus backend 42/42 tests. Both production deployments returned HTTP 200. RB-022 remains pending named owner/reviewer acceptance. Evidence: [RB-022 separate deployables verification](RB_022_SEPARATE_DEPLOYABLES_VERIFICATION_2026-09-13.md).
+
 ## 2026-09-13 — Technical quality audit
 
 - Completed a conservative Nexus All/Main frontend audit at 18/20 within the sampled scope. No new product defect was verified; external release accountability, full-suite runtime investigation and degraded detector dependencies remain tracked. Evidence: [Technical Quality Audit](TECHNICAL_QUALITY_AUDIT_2026-09-13.md).

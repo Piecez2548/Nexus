@@ -19,6 +19,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Normal production sync observation (SYNC-REALTIME-OBS-003) — an unlocked Android session completed 16 full-sync passes with zero typed sync or Realtime errors; no further sync behavior change is indicated.
 - [x] Sync settings test stability (TEST-STABILITY-002) — completed the missing dynamic sync-engine mock and async assertion; settings coverage passes 48/48.
 - [x] Technical quality audit (AUDIT-QUALITY-001) — conservative Nexus All/Main review recorded 18/20 within sampled scope; no new product defect verified.
+- [x] Separate deployables engineering verification (RB-022 evidence) — Nexus-Tools and DataLens lint/build/test gates passed and both Vercel production deployments returned HTTP 200; release acceptance remains pending appointed owner/reviewer evidence. [Evidence](RB_022_SEPARATE_DEPLOYABLES_VERIFICATION_2026-09-13.md).
 
 ### Finance
 - [x] Transactions (5 types: income/expense/transfer/refund/adjustment), Accounts, Categories — full CRUD, in-use delete guards, duplicate merge
