@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-012 Android signing baseline
+
+- Confirmed the Android release build has no production signing configuration. A no-install release build attempt was blocked by a local Gradle loopback-runtime error; no signing material was created or accessed. Evidence: [RB-012 Android release signing baseline](RB_012_ANDROID_RELEASE_SIGNING_BASELINE_2026-09-13.md).
+
 ## 2026-09-13 — RB-015 release governance baseline
 
 - Recorded the current pushed candidate, CI gates and repository governance gap. Branch protection, required reviewers, deployment approval and rollback ownership remain unassigned; no release approval was inferred. Evidence: [RB-015 release governance baseline](RB_015_RELEASE_GOVERNANCE_BASELINE_2026-09-13.md).
