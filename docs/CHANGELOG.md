@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-017 support baseline
+
+- Indexed the incident runbook and recovery evidence as the support-operation baseline. Staffing, channels, service hours, response targets and RTO/RPO remain unset; no SLA claim was added. Evidence: [RB-017 support and recovery targets](RB_017_SUPPORT_AND_RECOVERY_TARGETS_2026-09-13.md).
+
 ## 2026-09-13 — RB-011 IP/licensing baseline
 
 - Recorded the Nexus dependency SBOM and package-license inventory for legal/IP review. Ownership, asset permissions and approved LICENSE/NOTICE remain open; no distribution rights were inferred. Evidence: [RB-011 IP/licensing baseline](RB_011_IP_LICENSING_EVIDENCE_2026-09-13.md).

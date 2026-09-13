@@ -48,6 +48,7 @@ These coordination records are separate from the historical implementation-epic 
 | RB-018-PILOT-001 | Medium | In Progress | Recorded privacy-safe local telemetry baseline; no cohort/consent enabled. Event allow-list, retention, deletion workflow and synthetic negative test remain pending Product/Privacy approval. [Report](../docs/RB_018_PRIVACY_SAFE_PILOT_EVIDENCE_2026-09-13.md). |
 | RB-023-POSTURE-001 | High | In Progress | Mapped current controls and open decisions for plaintext backup, optional encryption, local PIN/biometric, MFA recovery and CSP. Named Security review and residual-risk acceptance remain pending. [Report](../docs/RB_023_SECURITY_POSTURE_DECISIONS_2026-09-13.md). |
 | RB-011-IP-001 | High | In Progress | SBOM/package-license baseline recorded; root LICENSE/NOTICE, chain of title and non-package asset permissions still require Legal/IP review. [Report](../docs/RB_011_IP_LICENSING_EVIDENCE_2026-09-13.md). |
+| RB-017-SUPPORT-001 | Medium | In Progress | Incident/recovery baseline indexed; support staffing, channel test, service hours, response targets, platform matrix and RTO/RPO remain pending. [Report](../docs/RB_017_SUPPORT_AND_RECOVERY_TARGETS_2026-09-13.md). |
 
 Current work: `RB-022-VERIFY-001` has complete engineering evidence with Luna; release acceptance still requires named owner/reviewer records. No further sync behavior change is indicated by the production observation. External release-readiness blockers remain open for any public, paid or real-data use.
 
