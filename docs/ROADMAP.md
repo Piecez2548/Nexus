@@ -12,6 +12,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Realtime table pull priority (SYNC-PULL-PRIORITY-001) — validates the changed table against the shared sync-table whitelist and places it first in the initial four-request batch while retaining the complete deterministic 24-table pull, conflict guards, tombstones and final refresh.
 - [x] Targeted Realtime pull (SYNC-TARGETED-PULL-001) — runs the existing push/tombstone/cursor/conflict/dedupe guards while pulling only the validated changed table; timer, online and manual paths retain the complete 24-table recovery pass.
 - [x] Targeted pull runtime measurement (SYNC-REALTIME-MEASURE-001) — verified on the installed Android build that a targeted `budgets` pull emits one remote pull request (~458 ms); cross-device Realtime arrival timing remains a separate follow-up measurement.
+- [x] Cross-device sync measurement (SYNC-CROSS-DEVICE-MEASURE-001) — desktop-to-Android edit appeared in approximately 12.2 seconds through the existing full-sync fallback; Realtime delivery was not observed and is queued for diagnosis.
 
 ### Finance
 - [x] Transactions (5 types: income/expense/transfer/refund/adjustment), Accounts, Categories — full CRUD, in-use delete guards, duplicate merge

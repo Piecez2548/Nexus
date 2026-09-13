@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-13 — Cross-device sync measurement
+
+- Desktop-to-Android edit propagation was measured end to end: the temporary transaction changed from ฿37 to ฿38 and appeared on the phone in approximately 12.2 seconds.
+- This trace completed through the existing 24-table timer fallback; no targeted Realtime pull request was observed for this event. The result is recorded as a delivery-diagnosis input, not as targeted-path latency evidence. [Evidence](SYNC_CROSS_DEVICE_MEASURE_001_2026-09-13.md).
+
 ## 2026-09-13 — Targeted pull runtime measurement
 
 - Measured the installed Android build's targeted pull path: a `budgets` invocation emitted exactly one remote pull request and completed in approximately 458 ms.
