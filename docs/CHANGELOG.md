@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-006 provider facts baseline
+
+- Added verified Supabase project/region and current Vercel deployable facts to the vendor register while keeping contract, subprocessor, retention and transfer fields explicitly unknown pending Privacy/Legal review. Evidence: [Vendor and transfer register](VENDOR_AND_TRANSFER_REGISTER.md).
+
 ## 2026-09-13 — RB-017 support baseline
 
 - Indexed the incident runbook and recovery evidence as the support-operation baseline. Staffing, channels, service hours, response targets and RTO/RPO remain unset; no SLA claim was added. Evidence: [RB-017 support and recovery targets](RB_017_SUPPORT_AND_RECOVERY_TARGETS_2026-09-13.md).
