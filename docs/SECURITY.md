@@ -4,7 +4,7 @@
 
 On Android, opening Transactions can trigger an incremental gallery scan after the user grants photo access. Image bytes are processed locally by the existing QR/OCR pipeline and are not uploaded for recognition. The scan cache stores asset identifiers and hashes so previously processed images are skipped. When a scan settles, extracted candidates are sent through Smart Import automatically; the existing duplicate resolver remains authoritative before any transaction is written.
 
-**Last Updated:** 2026-09-12
+**Last Updated:** 2026-09-13
 
 Account/PIN recovery now rejects failed reauthentication even with a stale signed-in user, checks account continuity during key retrieval, and validates the recovered key against existing local ciphertext before replacing the local PIN wrap. Password reset does not automatically repair escrow. See [account recovery verification](ACCOUNT_RECOVERY_VERIFICATION_2026-09-12.md) for the tested boundaries, recovery procedure and unverified live cases.
 
