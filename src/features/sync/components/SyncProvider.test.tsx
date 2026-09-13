@@ -1,11 +1,12 @@
 import { act, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { initialize, sync, getState, subscribeToAuthStore, realtime } = vi.hoisted(() => ({
+const { initialize, sync, getState, subscribeToAuthStore, captureError, realtime } = vi.hoisted(() => ({
   initialize: vi.fn(),
   sync: vi.fn(),
   getState: vi.fn(),
   subscribeToAuthStore: vi.fn(),
+  captureError: vi.fn(),
   realtime: {
     channel: vi.fn(),
     on: vi.fn(),
@@ -26,6 +27,8 @@ vi.mock("@/lib/supabaseClient", () => ({
     removeChannel: realtime.removeChannel,
   },
 }));
+
+vi.mock("@/lib/sentry", () => ({ captureError }));
 
 import { SyncProvider } from "./SyncProvider";
 
@@ -53,6 +56,7 @@ describe("SyncProvider", () => {
       initialize,
       sync,
     });
+    captureError.mockReset();
   });
 
   afterEach(() => {
@@ -120,6 +124,19 @@ describe("SyncProvider", () => {
     act(() => realtime.callback?.({ new: { updated_at: "2026-09-13T03:00:00Z" }, old: { table_name: "budgets" } }));
 
     expect(sync).toHaveBeenCalledWith("budgets");
+  });
+
+  it("reports Realtime channel failures without exposing account data", () => {
+    render(<SyncProvider />);
+
+    const subscribeCallback = realtime.subscribe.mock.calls[0]?.[0] as ((status: string, error?: Error) => void);
+    const error = new Error("socket unavailable");
+    subscribeCallback("CHANNEL_ERROR", error);
+
+    expect(captureError).toHaveBeenCalledWith(error, {
+      source: "realtime",
+      status: "CHANNEL_ERROR",
+    });
   });
 
   it("coalesces realtime events received during a sync into one immediate follow-up pass", async () => {

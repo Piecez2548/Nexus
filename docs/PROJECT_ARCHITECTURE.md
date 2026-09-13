@@ -125,3 +125,7 @@ Root `src/styles/nexusTheme.css` supplies the Main, All and authentication palet
 ### Central account entry and Main-only PIN (2026-08-31)
 
 `AccountRouteGate` wraps the route tree and reuses `AuthGate`. Account forms live at All; anonymous Main navigation redirects to All and restores a validated internal return path after login. All stays outside the PIN gate. Only the Main route branch mounts `AppLockGate`, followed by `SyncProvider` and the Main shell. Tools verifies the existing cross-origin SSO handoff and redirects unverified direct visitors to All. See [PROJECT_HUB_AUTH.md](PROJECT_HUB_AUTH.md).
+
+### Sync monitoring (2026-09-13)
+
+The optional monitoring layer records sync failures with only the operation path and validated table, and reports Realtime channel errors/timeouts with status metadata. It never adds account IDs, encrypted payloads or entity values to monitoring context.

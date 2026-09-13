@@ -7,6 +7,7 @@ import { resolveMfaAccess, verifyTotpCode } from "@/features/sync/mfa";
 import { redeemBackupCode } from "@/features/sync/backupCodes";
 import { markMfaVerifiedThisSession, clearMfaSessionFlag } from "@/features/sync/mfaSession";
 import type { SyncTableName } from "@/features/sync/types";
+import { captureError } from "@/lib/sentry";
 
 interface AuthState {
   user: User | null;
@@ -190,6 +191,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       else await runFullSync(user.id);
       set({ syncing: false, lastSyncedAt: new Date().toISOString() });
     } catch (err) {
+      captureError(err, {
+        source: "sync",
+        path: preferredTable ? "targeted" : "full",
+        table: preferredTable ?? null,
+      });
       set({ syncing: false, error: toErrorMessage(err, "Sync failed") });
     }
   },

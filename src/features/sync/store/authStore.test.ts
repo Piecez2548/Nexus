@@ -13,6 +13,7 @@ const mockChallengeAndVerify = vi.fn();
 const mockRedeemBackupCode = vi.fn();
 const mockVerifyOtp = vi.fn();
 const mockResend = vi.fn();
+const mockCaptureError = vi.fn();
 
 vi.mock("@/lib/supabaseClient", () => ({
   isSyncConfigured: true,
@@ -42,10 +43,15 @@ vi.mock("@/features/sync/backupCodes", () => ({
   redeemBackupCode: (...args: unknown[]) => mockRedeemBackupCode(...args),
 }));
 
+vi.mock("@/lib/sentry", () => ({
+  captureError: (...args: unknown[]) => mockCaptureError(...args),
+}));
+
 const { useAuthStore } = await import("./authStore");
 
 describe("authStore", () => {
   beforeEach(() => {
+    mockCaptureError.mockReset();
     useAuthStore.setState({
       user: null,
       initialized: false,
@@ -241,6 +247,11 @@ describe("authStore", () => {
 
     expect(useAuthStore.getState().error).toBe("Network unreachable");
     expect(useAuthStore.getState().syncing).toBe(false);
+    expect(mockCaptureError).toHaveBeenCalledWith(expect.any(Error), {
+      source: "sync",
+      path: "full",
+      table: null,
+    });
   });
 
   it("loads the existing session and marks sessionChecked once initialize resolves", async () => {
