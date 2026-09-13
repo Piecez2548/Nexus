@@ -4,11 +4,13 @@
 
 The project is currently treated as a personal/demo application. This plan keeps only work that protects day-to-day use, data integrity and the optional cloud-sync path. Public launch, paid use, organizational DataLens use and real-data commercial operations are outside the active scope.
 
-## Active priorities
+## Current-cycle results
 
 1. **Test-suite stability investigation** — completed the isolated 451-file/2,837-test run with 16 workers; keep jsdom startup optimization as a P2 maintenance item and retain safe isolation.
 2. **Cloud-sync security maintenance** — verified the linked schema lint and retained the existing migration/RLS baseline. Preserve the intentional backup-code RPC and deny-by-default attempt table behavior; advisor decisions remain deferred release work. [Maintenance record](CLOUD_SYNC_SECURITY_MAINTENANCE_2026-09-13.md)
 3. **Core regression watch** — keep the already-passed CRUD, backup/recovery and cross-device sync checks as the regression gate for future code changes.
+
+The 2026-09-13 focused cycle is complete for the current scope. No essential product-code change is pending. Resume engineering work only when a regression appears or the scope changes.
 
 ## Completed foundations
 

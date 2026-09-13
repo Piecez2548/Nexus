@@ -8,6 +8,10 @@
 
 - Re-ran linked Supabase schema lint with no errors, retained the existing RLS/MFA controls and recorded the Docker limitation for a linked schema diff. Optional weekly digest objects and advisor decisions remain deferred for the current personal/demo scope. See [cloud-sync security maintenance](CLOUD_SYNC_SECURITY_MAINTENANCE_2026-09-13.md).
 
+## 2026-09-13 — Focused cycle complete
+
+- Closed the current ordinary personal/demo maintenance cycle after the full-suite stability diagnosis, cloud-sync security verification and existing core regression evidence were recorded. No essential product-code change is pending; release-only work stays deferred until scope changes.
+
 ## 2026-09-13 — Full-suite runtime investigation
 
 - Reproduced the Nexus full-suite run exceeding seven minutes with 4 and 8 Vitest workers, then verified the repeatedly visible individual suites pass (TopBar 9/9, Transactions 16/16, Recipient Learning 2/2, Gallery Scan 4/4). No production code was changed without a narrower cause. Evidence: [Test-suite runtime investigation](TEST_SUITE_RUNTIME_INVESTIGATION_2026-09-13.md).
