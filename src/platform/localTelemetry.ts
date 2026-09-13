@@ -95,3 +95,13 @@ export function createLocalTelemetry(now: () => number = defaultNow): LocalTelem
 
 // App-wide singleton.
 export const localTelemetry = createLocalTelemetry();
+
+// Read-only diagnostics hook for production support and Android WebView
+// inspection. The snapshot contains aggregate timings and generic error
+// samples only; it never exposes entity data, account IDs or encrypted blobs.
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "__NEXUS_TELEMETRY__", {
+    configurable: true,
+    get: () => localTelemetry.snapshot(),
+  });
+}

@@ -129,3 +129,5 @@ Root `src/styles/nexusTheme.css` supplies the Main, All and authentication palet
 ### Sync monitoring (2026-09-13)
 
 The optional monitoring layer records sync failures with only the operation path and validated table, and reports Realtime channel errors/timeouts with status metadata. It never adds account IDs, encrypted payloads or entity values to monitoring context.
+
+`window.__NEXUS_TELEMETRY__` exposes the same aggregate snapshot as a read-only support hook for production browser and Android WebView inspection. It is an in-memory view and does not create a network or persistence path.

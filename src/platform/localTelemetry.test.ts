@@ -48,3 +48,16 @@ describe("createLocalTelemetry", () => {
     expect(snap.timings).toEqual({});
   });
 });
+
+it("exposes an aggregate read-only snapshot for runtime diagnostics", async () => {
+  const telemetry = await import("./localTelemetry");
+
+  telemetry.localTelemetry.recordTiming("sync.targeted", 12);
+  telemetry.localTelemetry.recordError("realtime:CHANNEL_ERROR");
+
+  expect((window as Window & { __NEXUS_TELEMETRY__?: typeof telemetry.localTelemetry.snapshot }).__NEXUS_TELEMETRY__).toMatchObject({
+    timings: { "sync.targeted": { count: 1, totalMs: 12 } },
+    errors: 1,
+    errorSamples: ["realtime:CHANNEL_ERROR"],
+  });
+});

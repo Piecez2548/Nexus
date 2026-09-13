@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Runtime telemetry inspection
+
+- Added the read-only `window.__NEXUS_TELEMETRY__` hook and verified a live aggregate snapshot on the installed Android WebView. Evidence: [SYNC-REALTIME-OBS-002](SYNC_REALTIME_OBS_002_2026-09-13.md).
+
 ## 2026-09-13 — Sync observability
 
 - Added privacy-safe optional monitoring for sync failures and Realtime channel errors, including whether the failed path was full or targeted and the validated table when available. No account IDs, encrypted payloads or entity values are sent as extra context. Evidence: [SYNC-REALTIME-OBS-001](SYNC_REALTIME_OBS_001_2026-09-13.md).

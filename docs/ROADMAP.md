@@ -14,6 +14,7 @@ This roadmap replaces the previous version (last updated 2026-07-21), which was 
 - [x] Targeted pull runtime measurement (SYNC-REALTIME-MEASURE-001) — verified on the installed Android build that a targeted `budgets` pull emits one remote pull request (~458 ms); cross-device Realtime arrival timing remains a separate follow-up measurement.
 - [x] Cross-device sync measurement (SYNC-CROSS-DEVICE-MEASURE-001) — desktop-to-Android edit appeared in approximately 12.2 seconds through the existing full-sync fallback; Realtime delivery was not observed and is queued for diagnosis.
 - [x] Realtime UPDATE routing diagnosis (SYNC-REALTIME-DIAG-001) — applied `REPLICA IDENTITY FULL` to `synced_records`, then verified a fresh Android install received a production edit through a targeted `transactions` pull in approximately 10.2 seconds; the complete timer pass remains the recovery boundary.
+- [x] Runtime telemetry inspection (SYNC-REALTIME-OBS-002) — exposed a read-only aggregate snapshot for production/WebView diagnostics and verified it on the installed Android build without exposing account or entity data.
 
 ### Finance
 - [x] Transactions (5 types: income/expense/transfer/refund/adjustment), Accounts, Categories — full CRUD, in-use delete guards, duplicate merge
