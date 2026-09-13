@@ -5,7 +5,7 @@
 **ขอบเขต:** Nexus All/Main, Tools, DataLens, Supabase และ Android  
 **สถานะ release:** real-data pilot / public / paid / organizational launch = **NO-GO**
 
-ทะเบียนนี้แปลงข้อค้นพบภายในเป็นงานที่ติดตามได้ ไม่ใช่การวินิจฉัยกฎหมายใหม่หรือหลักฐานว่าปิดข้อค้นพบแล้ว RB-001 เป็น **Blocked** รอข้อมูลผู้ประกอบการ/การแต่งตั้งและ contact evidence; RB-002 เป็น **In Progress** เฉพาะรอ named reviewer acceptance; อีก 22 รายการยัง **Planned**. การอนุมัติจาก Legal หมายถึงผู้เชี่ยวชาญที่ผู้ประกอบการแต่งตั้ง ไม่ใช่โมเดล AI
+ทะเบียนนี้แปลงข้อค้นพบภายในเป็นงานที่ติดตามได้ ไม่ใช่การวินิจฉัยกฎหมายใหม่หรือหลักฐานว่าปิดข้อค้นพบแล้ว RB-001 เป็น **Blocked** รอข้อมูลผู้ประกอบการ/การแต่งตั้งและ contact evidence; RB-002 เป็น **In Progress** เฉพาะรอ named reviewer acceptance; การทำ evidence ทางวิศวกรรมต่อในวันที่ 2026-09-13 ทำให้ RB-006, RB-011, RB-012, RB-015, RB-016, RB-017, RB-018, RB-019, RB-020, RB-021, RB-022 และ RB-023 เป็น **In Progress** โดยยังไม่มีรายการใด Closed. การอนุมัติจาก Legal หมายถึงผู้เชี่ยวชาญที่ผู้ประกอบการแต่งตั้ง ไม่ใช่โมเดล AI
 
 ## 1. วิธีอ่านสถานะและหลักฐาน
 
@@ -16,7 +16,7 @@
 - หลักฐานต้องระบุ ID, วันที่, ผู้จัดทำ/ผู้ตรวจ, repository + commit/build/deployment/configuration ที่ตรวจ, ผลจริง, ข้อจำกัด และที่เก็บที่ผู้ตรวจเข้าถึงได้ เก็บสัญญา ข้อมูลบุคคล และรายละเอียด pentest ในพื้นที่ควบคุมสิทธิ์; ใน Git เก็บเพียง reference ที่ไม่เปิดเผยข้อมูล
 - เปลี่ยน source, provider, data flow หรือขอบเขตหลังตรวจ ต้องประเมินผลกระทบและเปิดรายการที่เกี่ยวข้องใหม่ หลักฐานของรุ่นเดิมไม่ปิดรุ่นใหม่โดยอัตโนมัติ
 
-**ทะเบียนปัจจุบัน:** 24 รายการเปิด — P0 15, P1 9; Planned 22, In Progress 1, Blocked 1, Closed 0, Not Applicable 0. TEST-STABILITY-001 อยู่ในหลักฐานที่เสร็จแล้ว ไม่รวมใน 24 รายการ
+**ทะเบียนปัจจุบัน (อัปเดต 2026-09-13):** 24 รายการเปิด — P0 15, P1 9; Planned 10, In Progress 13, Blocked 1, Closed 0, Not Applicable 0. TEST-STABILITY-001 อยู่ในหลักฐานที่เสร็จแล้ว ไม่รวมใน 24 รายการ
 
 ## 2. แหล่งอ้างอิงและขอบเขตความเชื่อมั่น
 
@@ -52,24 +52,24 @@ S2 บันทึกผลล่าสุดหลัง TEST-STABILITY-001: **
 | RB-003 | P0 | Privacy Notice / Terms ไทย–อังกฤษฉบับอนุมัติ — Pilot/Launch | Legal | RB-001, RB-002, RB-005, RB-006, RB-007, RB-013, RB-017, RB-019, RB-023 | Planned | S1 P0/2; S8 |
 | RB-004 | P0 | เผยแพร่เอกสารและ versioned acceptance แยก optional consent — Pilot/Launch | Engineering lead | RB-003 | Planned | S1 P0/3 |
 | RB-005 | P0 | DataLens controller/processor decision และ DPA — organizational CSV | Legal + Privacy owner | RB-001, RB-002, RB-006 | Planned | S1 P0/4 |
-| RB-006 | P0 | Vendor, region, subprocessors, retention และ transfer evidence — ทุก provider ที่ใช้ | Privacy owner + Security | RB-001, RB-002 | Planned | S1 P0/5; S5 |
+| RB-006 | P0 | Vendor, region, subprocessors, retention และ transfer evidence — ทุก provider ที่ใช้ | Privacy owner + Security | RB-001, RB-002 | In Progress | S1 P0/5; S5; 2026-09-13 engineering facts |
 | RB-007 | P0 | Retention schedule และ rights-request workflow — Pilot/Launch | Privacy owner | RB-001, RB-002, RB-006 | Planned | S1 P0/6; S6 |
 | RB-008 | P0 | Incident commander, ผู้สำรอง และช่องทางที่ติดต่อได้ — Pilot/Launch | COO | RB-001 | Planned | S1 P0/7; S7 |
 | RB-009 | P0 | Breach escalation / notification tabletop — Pilot/Launch | Privacy owner + Security | RB-006, RB-008, RB-017 | Planned | S1 P0/8 |
 | RB-010 | P0 | Independent pentest และปิด critical/high — ทุก surface ใน release | Security owner | RB-004, RB-012, RB-015, RB-021, RB-022, RB-023 | Planned | S1 P0/9 |
-| RB-011 | P0 | Chain of title, source/assets rights, LICENSE/NOTICE — Pilot/Launch | Legal + IP owner | RB-001 | Planned | S1 P0/10; S4 |
-| RB-012 | P0 | Android production signing / release process — Android distribution | Release owner | RB-001, RB-011, RB-015 | Planned | S1 P0/11 |
+| RB-011 | P0 | Chain of title, source/assets rights, LICENSE/NOTICE — Pilot/Launch | Legal + IP owner | RB-001 | In Progress | S1 P0/10; S4; 2026-09-13 engineering baseline |
+| RB-012 | P0 | Android production signing / release process — Android distribution | Release owner | RB-001, RB-011, RB-015 | In Progress | S1 P0/11; 2026-09-13 signing baseline |
 | RB-013 | P1 | DPIA / necessity และ residual risks — Pilot/Launch | Privacy owner + Legal | RB-001, RB-002, RB-006, RB-023 | Planned | S1 P1/1 |
 | RB-014 | P1 | Supabase leaked-password protection decision — Supabase Auth | Security owner | RB-001 | Planned | S1 P1/2 |
-| RB-015 | P1 | Release governance และ source candidate ที่ตรวจสอบได้ — Pilot/Launch | Engineering lead | RB-001 | Planned | S1 P1/3; S2 §7 |
-| RB-016 | P1 | Restore / recovery / lost-device / sync / outage drills — Pilot/Launch | Operations + QA | RB-007, RB-012, RB-017, RB-021, RB-022, RB-023 | Planned | S1 P1/4 |
-| RB-017 | P1 | Support hours, response targets, RTO/RPO และ escalation — Pilot/Launch | COO + Support | RB-001 | Planned | S1 P1/5 |
-| RB-018 | P1 | Privacy-safe pilot analytics/research — Pilot/Launch | Product + Privacy owner | RB-003, RB-004, RB-007, RB-013 | Planned | S1 P1/6; S10 |
-| RB-019 | P1 | Packaging/pricing/cost model และขอบเขตข้อเสนอ — Pilot/Launch | CEO + Product + Finance | RB-001, RB-017 | Planned | S1 P1/7; S10 |
-| RB-020 | P0 | Deployment ผูกกับ candidate และ production smoke — Pilot/Launch | Release owner + QA | RB-010, RB-015, RB-021, RB-022 | Planned | S2 §6–7 |
-| RB-021 | P0 | Supabase production configuration / RLS / migrations evidence — cloud release | Security + Database owner | RB-014, RB-015 | Planned | S2 §6 |
-| RB-022 | P0 | Tools/DataLens candidate และ regression evidence — suite release | เจ้าของ Tools/DataLens + QA | RB-015 | Planned | S2 §6 |
-| RB-023 | P1 | Security posture decision: plaintext export, optional encryption, PIN/MFA, CSP — Pilot/Launch | Security owner | RB-002 | Planned | S1 §5; S3; S9 |
+| RB-015 | P1 | Release governance และ source candidate ที่ตรวจสอบได้ — Pilot/Launch | Engineering lead | RB-001 | In Progress | S1 P1/3; S2 §7; 2026-09-13 governance baseline |
+| RB-016 | P1 | Restore / recovery / lost-device / sync / outage drills — Pilot/Launch | Operations + QA | RB-007, RB-012, RB-017, RB-021, RB-022, RB-023 | In Progress | S1 P1/4; 2026-09-13 drill index |
+| RB-017 | P1 | Support hours, response targets, RTO/RPO และ escalation — Pilot/Launch | COO + Support | RB-001 | In Progress | S1 P1/5; 2026-09-13 support baseline |
+| RB-018 | P1 | Privacy-safe pilot analytics/research — Pilot/Launch | Product + Privacy owner | RB-003, RB-004, RB-007, RB-013 | In Progress | S1 P1/6; S10; 2026-09-13 pilot baseline |
+| RB-019 | P1 | Packaging/pricing/cost model และขอบเขตข้อเสนอ — Pilot/Launch | CEO + Product + Finance | RB-001, RB-017 | In Progress | S1 P1/7; S10; 2026-09-13 commercial baseline |
+| RB-020 | P0 | Deployment ผูกกับ candidate และ production smoke — Pilot/Launch | Release owner + QA | RB-010, RB-015, RB-021, RB-022 | In Progress | S2 §6–7; 2026-09-13 smoke record |
+| RB-021 | P0 | Supabase production configuration / RLS / migrations evidence — cloud release | Security + Database owner | RB-014, RB-015 | In Progress | S2 §6; 2026-09-13 linked verification |
+| RB-022 | P0 | Tools/DataLens candidate และ regression evidence — suite release | เจ้าของ Tools/DataLens + QA | RB-015 | In Progress | S2 §6; 2026-09-13 separate-deployable verification |
+| RB-023 | P1 | Security posture decision: plaintext export, optional encryption, PIN/MFA, CSP — Pilot/Launch | Security owner | RB-002 | In Progress | S1 §5; S3; S9; 2026-09-13 posture record |
 | RB-024 | P0 | Final scoped GO/NO-GO record — Pilot/Launch | Release authority ที่ CEO แต่งตั้ง | RB-001, RB-002, RB-003, RB-004, RB-005, RB-006, RB-007, RB-008, RB-009, RB-010, RB-011, RB-012, RB-013, RB-014, RB-015, RB-016, RB-017, RB-018, RB-019, RB-020, RB-021, RB-022, RB-023 | Planned | S1 §7–8; S2 §7 |
 
 RB-002, RB-020–024 เป็นรายการเพิ่มจากการจัด dependency และช่องว่างหลักฐานใน baseline ไม่ใช่ข้อค้นพบช่องโหว่ใหม่ การจัดลำดับ P เป็นข้อเสนอสำหรับทะเบียนนี้ ไม่ใช่คะแนนความรุนแรงของ pentest
@@ -188,7 +188,7 @@ Release authority, Legal/Privacy, Security และ Operations ลงชื่�
 
 ## 5. ลำดับทำทีละงาน
 
-งานปัจจุบันคือ **RB-001 — Operator และ accountable owners**, ใช้ **Astra + High**; โครงเอกสารเตรียมแล้วและรอข้อเท็จจริงจากผู้ประกอบการเพื่อทำงานเดิมต่อ. DATA-INVENTORY-001 ส่งมอบแล้วและรอผู้ตรวจที่แต่งตั้งรับรองตามกติกา release. ไม่เริ่มงานถัดไปในระหว่างรอ
+งานหลัก **RB-001 — Operator และ accountable owners** ยังคง **Blocked** เพราะยังรอข้อเท็จจริง/การแต่งตั้งจากผู้ประกอบการ. ระหว่างรอ ผู้ใช้สั่งให้เดินหน้าหลักฐานทางวิศวกรรมที่ทำได้เองด้วย Luna จึงจัดทำ RB-006, RB-011, RB-012, RB-015–023 ตาม records ลงวันที่ 2026-09-13; งานเหล่านี้ยังไม่ปิดจนกว่าจะมี owner/reviewer และการอนุมัติที่กำหนด. DATA-INVENTORY-001 ส่งมอบแล้วและรอผู้ตรวจที่แต่งตั้งรับรองตามกติกา release.
 
 ลำดับเดิมต่อไปนี้ใช้ติดตามความคืบหน้า; รายการที่ยัง Planned ไม่ได้เริ่มหรือมอบหมายจริง:
 
