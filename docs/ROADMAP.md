@@ -119,6 +119,8 @@ The active scope is an ordinary personal/demo project. See the [Focused project 
 
 ## Recently Shipped (detailed)
 
+- **Slip scan setup simplification (2026-09-13).** Gallery scanning now offers a one-tap “Scan all photos” path for the common case; bank/date filters remain available under optional advanced controls, and using the unfiltered path does not overwrite the remembered bank preference. [Evidence](UX_SLIP_SCAN_SETUP_2026-09-13.md).
+
 - **Quick Add transaction entry (2026-09-13).** New transactions begin with the essential fields while date, time, recipient, notes and recurring settings remain available under “More”. Existing and imported/template drafts keep metadata visible for review, and category suggestions continue to run while recipient input is collapsed. [Evidence](UX_QUICK_ADD_2026-09-13.md).
 
 - **Daily navigation simplification (2026-09-13).** Desktop now surfaces Dashboard, Transactions and Budget first, while every other route remains reachable under grouped “All features” sections. Mobile preserves its bottom quick-navigation bar and removes duplicate daily links from More. [Evidence](UX_DAILY_NAV_2026-09-13.md).

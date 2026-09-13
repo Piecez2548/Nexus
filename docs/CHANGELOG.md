@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Slip scan setup simplification
+
+- Gallery scanning now starts with a one-tap “Scan all photos” action for the common case. Bank selection, date range, search, estimates and pause/cancel controls remain available under optional advanced filters. The remembered bank preference is preserved when using the unfiltered action. Targeted scanner tests, TypeScript and lint passed. See [slip scan setup](UX_SLIP_SCAN_SETUP_2026-09-13.md).
+
 ## 2026-09-13 — Quick Add transaction entry
 
 - New transaction forms now show only the essential fields first; date, time, recipient, notes, and recurring settings are grouped under “More”. Editing and imported/template drafts keep metadata visible for review, and background merchant/recipient category suggestions remain active. Full suite 451/451 files and 2,844/2,844 tests passed. See [Quick Add transaction entry](UX_QUICK_ADD_2026-09-13.md).

@@ -44,11 +44,11 @@ describe("GalleryScanFlow", () => {
     render(<GalleryScanFlow />);
 
     // Popup is closed initially.
-    expect(screen.queryByText("Select banks to scan")).not.toBeInTheDocument();
+    expect(screen.queryByText("Scan your gallery")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Scan Gallery" }));
 
-    expect(screen.getByText("Select banks to scan")).toBeInTheDocument();
+    expect(screen.getByText("Scan your gallery")).toBeInTheDocument();
   });
 
   it("shows the date-range picker in the scan setup popup, defaulting to blank (whole gallery)", async () => {
@@ -57,9 +57,22 @@ describe("GalleryScanFlow", () => {
 
     await user.click(screen.getByRole("button", { name: "Scan Gallery" }));
 
+    await user.click(screen.getByRole("button", { name: "Choose banks or dates" }));
     expect(screen.getByText("Date range (optional)")).toBeInTheDocument();
     expect(screen.getByLabelText("From")).toHaveValue("");
     expect(screen.getByLabelText("To")).toHaveValue("");
+  });
+
+  it("scans all photos without overwriting the remembered bank filter", async () => {
+    const user = userEvent.setup();
+    useBankSelectionStore.getState().setSelectedBankIds(["scb"]);
+    render(<GalleryScanFlow />);
+
+    await user.click(screen.getByRole("button", { name: "Scan Gallery" }));
+    await user.click(screen.getByRole("button", { name: "Scan all photos" }));
+
+    expect(useBankSelectionStore.getState().chosen).toBe(false);
+    expect(useBankSelectionStore.getState().selectedBankIds).toEqual([]);
   });
 
   it("drives the full web flow through the real orchestrator: bank confirm -> file pick -> scan progress -> Import Preview -> Smart Import", async () => {
@@ -67,6 +80,7 @@ describe("GalleryScanFlow", () => {
     render(<GalleryScanFlow extractor={fakeExtractor} />);
 
     await user.click(screen.getByRole("button", { name: "Scan Gallery" }));
+    await user.click(screen.getByRole("button", { name: "Choose banks or dates" }));
     await user.click(screen.getByRole("button", { name: "Start scan" }));
 
     // Not on native in jsdom, so confirming banks falls through to the

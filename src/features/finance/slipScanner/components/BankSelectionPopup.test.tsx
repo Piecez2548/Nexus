@@ -13,14 +13,34 @@ beforeEach(() => {
 });
 
 describe("BankSelectionPopup", () => {
-  it("renders the bank list and the estimated image count / time", () => {
+  it("renders the one-tap gallery action", () => {
     render(<BankSelectionPopup open onClose={() => {}} onConfirm={() => {}} imageCount={100} />);
 
-    expect(screen.getByText("Select banks to scan")).toBeInTheDocument();
+    expect(screen.getByText("Scan your gallery")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Scan all photos" })).toBeInTheDocument();
+  });
+
+  it("keeps advanced bank controls hidden until requested", async () => {
+    const user = userEvent.setup();
+    render(<BankSelectionPopup open onClose={() => {}} onConfirm={() => {}} imageCount={100} />);
+
+    expect(screen.queryByText("SCB")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Choose banks or dates" }));
+
     expect(screen.getByText("SCB")).toBeInTheDocument();
     expect(screen.getAllByText("PromptPay").length).toBeGreaterThan(0);
     expect(screen.getByText("100")).toBeInTheDocument();
     expect(screen.getByText("40 sec")).toBeInTheDocument();
+  });
+
+  it("starts an unfiltered scan from the one-tap action", async () => {
+    const onConfirm = vi.fn();
+    const user = userEvent.setup();
+    render(<BankSelectionPopup open onClose={() => {}} onConfirm={onConfirm} />);
+
+    await user.click(screen.getByRole("button", { name: "Scan all photos" }));
+
+    expect(onConfirm).toHaveBeenCalledWith([]);
   });
 
   it("confirms with all banks selected by default", async () => {
@@ -28,6 +48,7 @@ describe("BankSelectionPopup", () => {
     const user = userEvent.setup();
     render(<BankSelectionPopup open onClose={() => {}} onConfirm={onConfirm} />);
 
+    await user.click(screen.getByRole("button", { name: "Choose banks or dates" }));
     await user.click(screen.getByRole("button", { name: "Start scan" }));
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
@@ -38,6 +59,7 @@ describe("BankSelectionPopup", () => {
     const user = userEvent.setup();
     render(<BankSelectionPopup open onClose={() => {}} onConfirm={() => {}} />);
 
+    await user.click(screen.getByRole("button", { name: "Choose banks or dates" }));
     await user.click(screen.getByRole("button", { name: "Deselect all" }));
 
     expect(screen.getByRole("button", { name: "Start scan" })).toBeDisabled();
@@ -48,6 +70,7 @@ describe("BankSelectionPopup", () => {
     const user = userEvent.setup();
     render(<BankSelectionPopup open onClose={() => {}} onConfirm={() => {}} />);
 
+    await user.click(screen.getByRole("button", { name: "Choose banks or dates" }));
     await user.type(screen.getByPlaceholderText("Search bank"), "kasikorn");
 
     expect(screen.getByText("KBank")).toBeInTheDocument();
@@ -75,6 +98,7 @@ describe("BankSelectionPopup", () => {
       />,
     );
 
+    await user.click(screen.getByRole("button", { name: "Choose banks or dates" }));
     expect(screen.getByText("Date range (optional)")).toBeInTheDocument();
 
     await user.type(screen.getByLabelText("From"), "2026-01-15");
@@ -84,7 +108,8 @@ describe("BankSelectionPopup", () => {
     expect(onDateToChange).toHaveBeenCalledWith("2026-02-15");
   });
 
-  it("constrains the From field's max and the To field's min against each other", () => {
+  it("constrains the From field's max and the To field's min against each other", async () => {
+    const user = userEvent.setup();
     render(
       <BankSelectionPopup
         open
@@ -97,6 +122,7 @@ describe("BankSelectionPopup", () => {
       />,
     );
 
+    await user.click(screen.getByRole("button", { name: "Choose banks or dates" }));
     expect(screen.getByLabelText("From")).toHaveAttribute("max", "2026-02-15");
     expect(screen.getByLabelText("To")).toHaveAttribute("min", "2026-01-15");
   });

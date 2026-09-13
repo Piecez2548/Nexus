@@ -14,6 +14,7 @@ import type { SlipExtractor } from "@/features/finance/slipScanner/services/slip
 import BankSelectionPopup from "@/features/finance/slipScanner/components/BankSelectionPopup";
 import ImportPreview from "@/features/finance/slipScanner/components/ImportPreview";
 import { useCategoryLearningStore } from "@/features/finance/slipScanner/store/categoryLearningStore";
+import { useBankSelectionStore } from "@/features/finance/slipScanner/store/bankSelectionStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useToast } from "@/hooks/useToast";
 import { toErrorMessage } from "@/utils/asyncState";
@@ -165,6 +166,12 @@ export default function GalleryScanFlow({ extractor }: Props) {
   }, [scan.status]);
 
   async function handleConfirmBanks(bankIds: string[]): Promise<void> {
+    if (bankIds.length === 0) {
+      // The one-tap "scan all" action should apply an unfiltered run without
+      // replacing the user's remembered bank preference for the next filtered
+      // scan.
+      useBankSelectionStore.getState().reset();
+    }
     setSelectedBankIds(bankIds);
     setPhase("idle"); // close the popup before scanning
     const dateRange: ScanOptions["dateRange"] =
