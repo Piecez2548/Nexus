@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-016 recovery evidence index
+
+- Indexed the existing encrypted backup/restore, account-recovery and sync-conflict drills against RB-016. Engineering scenarios pass, while RTO/RPO, provider-outage, lost-device scope and Operations/QA sign-off remain open. Evidence: [RB-016 recovery drill evidence](RB_016_RECOVERY_DRILL_EVIDENCE_2026-09-13.md).
+
 ## 2026-09-13 — RB-021 Supabase production verification
 
 - Read-only linked-project checks confirmed 8/8 migration parity, no schema-lint errors, RLS on all six public tables and the intended backup-code RPC ACL. Security/performance advisor findings and the optional weekly-digest schema gap remain recorded for owner decisions. Evidence: [RB-021 Supabase verification](RB_021_SUPABASE_PRODUCTION_VERIFICATION_2026-09-13.md).
