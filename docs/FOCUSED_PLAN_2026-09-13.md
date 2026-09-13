@@ -6,7 +6,7 @@ The project is currently treated as a personal/demo application. This plan keeps
 
 ## Active priorities
 
-1. **Test-suite stability investigation** — reproduced the >7 minute full-suite behavior and verified the repeatedly visible individual files pass; keep as a P2 maintenance item until a narrower cause is found.
+1. **Test-suite stability investigation** — completed the isolated 451-file/2,837-test run with 16 workers; keep jsdom startup optimization as a P2 maintenance item and retain safe isolation.
 2. **Cloud-sync security maintenance** — retain the verified Supabase migration/RLS baseline and review remaining advisor findings before changing anything. Preserve the intentional backup-code RPC and deny-by-default attempt table behavior.
 3. **Core regression watch** — keep the already-passed CRUD, backup/recovery and cross-device sync checks as the regression gate for future code changes.
 

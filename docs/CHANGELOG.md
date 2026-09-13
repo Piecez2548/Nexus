@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Full isolated-suite result
+
+- Completed the isolated Vitest stability check: 451/451 files and 2,837/2,837 tests pass in 307.27s with 16 workers. Confirmed `--no-isolate` causes state leakage, so the safe isolated configuration remains unchanged. See [test-suite runtime investigation](TEST_SUITE_RUNTIME_INVESTIGATION_2026-09-13.md).
+
 ## 2026-09-13 — Full-suite runtime investigation
 
 - Reproduced the Nexus full-suite run exceeding seven minutes with 4 and 8 Vitest workers, then verified the repeatedly visible individual suites pass (TopBar 9/9, Transactions 16/16, Recipient Learning 2/2, Gallery Scan 4/4). No production code was changed without a narrower cause. Evidence: [Test-suite runtime investigation](TEST_SUITE_RUNTIME_INVESTIGATION_2026-09-13.md).
