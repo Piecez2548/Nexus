@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-019 commercial boundary baseline
+
+- Reaffirmed the personal-use product boundary and recorded candidate paid value as hypotheses only. No price, refund policy, SLA or revenue claim was invented; measured costs and willingness-to-pay evidence remain pending. Evidence: [RB-019 commercial boundary](RB_019_COMMERCIAL_BOUNDARY_BASELINE_2026-09-13.md).
+
 ## 2026-09-13 — RB-006 provider facts baseline
 
 - Added verified Supabase project/region and current Vercel deployable facts to the vendor register while keeping contract, subprocessor, retention and transfer fields explicitly unknown pending Privacy/Legal review. Evidence: [Vendor and transfer register](VENDOR_AND_TRANSFER_REGISTER.md).
