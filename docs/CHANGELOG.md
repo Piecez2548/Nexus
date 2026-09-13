@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-018 privacy-safe pilot baseline
+
+- Recorded the on-device aggregate telemetry controls and their limits for a future pilot. No cohort or analytics consent was activated; event allow-list, retention and Privacy/Product approval remain open. Evidence: [RB-018 privacy-safe pilot evidence](RB_018_PRIVACY_SAFE_PILOT_EVIDENCE_2026-09-13.md).
+
 ## 2026-09-13 — RB-016 recovery evidence index
 
 - Indexed the existing encrypted backup/restore, account-recovery and sync-conflict drills against RB-016. Engineering scenarios pass, while RTO/RPO, provider-outage, lost-device scope and Operations/QA sign-off remain open. Evidence: [RB-016 recovery drill evidence](RB_016_RECOVERY_DRILL_EVIDENCE_2026-09-13.md).
