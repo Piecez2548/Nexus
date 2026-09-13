@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-021 Supabase production verification
+
+- Read-only linked-project checks confirmed 8/8 migration parity, no schema-lint errors, RLS on all six public tables and the intended backup-code RPC ACL. Security/performance advisor findings and the optional weekly-digest schema gap remain recorded for owner decisions. Evidence: [RB-021 Supabase verification](RB_021_SUPABASE_PRODUCTION_VERIFICATION_2026-09-13.md).
+
 ## 2026-09-13 — RB-020 web deployment smoke
 
 - Published the current Nexus documentation candidate and verified HTTP 200 smoke responses for Nexus All/Main, Nexus-Tools and DataLens, with commit and deployment IDs recorded. RB-020 remains pending release-owner and QA acceptance. Evidence: [RB-020 deployment smoke](RB_020_DEPLOYMENT_SMOKE_2026-09-13.md).
