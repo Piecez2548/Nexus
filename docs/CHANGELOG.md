@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — RB-015 release governance baseline
+
+- Recorded the current pushed candidate, CI gates and repository governance gap. Branch protection, required reviewers, deployment approval and rollback ownership remain unassigned; no release approval was inferred. Evidence: [RB-015 release governance baseline](RB_015_RELEASE_GOVERNANCE_BASELINE_2026-09-13.md).
+
 ## 2026-09-13 — RB-019 commercial boundary baseline
 
 - Reaffirmed the personal-use product boundary and recorded candidate paid value as hypotheses only. No price, refund policy, SLA or revenue claim was invented; measured costs and willingness-to-pay evidence remain pending. Evidence: [RB-019 commercial boundary](RB_019_COMMERCIAL_BOUNDARY_BASELINE_2026-09-13.md).
