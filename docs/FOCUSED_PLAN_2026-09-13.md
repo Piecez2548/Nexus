@@ -6,7 +6,7 @@ The project is currently treated as a personal/demo application. This plan keeps
 
 ## Active priorities
 
-1. **Test-suite stability investigation** — reproduce and isolate the full Nexus worker run that previously remained active beyond seven minutes, then fix only a proven test/runtime cause.
+1. **Test-suite stability investigation** — reproduced the >7 minute full-suite behavior and verified the repeatedly visible individual files pass; keep as a P2 maintenance item until a narrower cause is found.
 2. **Cloud-sync security maintenance** — retain the verified Supabase migration/RLS baseline and review remaining advisor findings before changing anything. Preserve the intentional backup-code RPC and deny-by-default attempt table behavior.
 3. **Core regression watch** — keep the already-passed CRUD, backup/recovery and cross-device sync checks as the regression gate for future code changes.
 

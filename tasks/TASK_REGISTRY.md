@@ -11,6 +11,7 @@ These coordination records are separate from the historical implementation-epic 
 | Task | Priority | Status | Scope / evidence |
 |---|---|---|---|
 | FOCUS-PLAN-001 | High | In Progress | Ordinary personal/demo scope: active work is limited to full-suite stability investigation, cloud-sync security maintenance and core regression watch. Release-only work is deferred. [Focused plan](../docs/FOCUSED_PLAN_2026-09-13.md). |
+| TEST-STABILITY-003 | Medium | In Progress | Reproduced full Nexus suite exceeding seven minutes with 4/8 Vitest workers; four repeatedly visible individual suites pass. No code change made without a narrower cause. [Report](../docs/TEST_SUITE_RUNTIME_INVESTIGATION_2026-09-13.md). |
 | TEST-STABILITY-001 | High | Completed | Recipient Learning animation timing assumption removed; full suite 448/448 files and 2,782/2,782 tests passed. [Baseline](../docs/RELEASE_BASELINE_2026-09-12.md). |
 | RBR-001 | High | Completed | Release Blocker Registry created with 24 blockers (15 P0, 9 P1), evidence/closure requirements and sequential execution order. Current blocker status lives in that registry. |
 | DATA-INVENTORY-001 | High | Completed | [Data Inventory](../docs/DATA_INVENTORY_2026-09-12.md) and [Data Flow Map](../docs/DATA_FLOW_MAP_2026-09-12.md): 55 assets / 20 flows with source hashes; 32 Dexie tables, 24 sync tables, 7 cloud tables. Engineering deliverable complete; RB-002 release acceptance awaits an appointed reviewer under RB-001. |

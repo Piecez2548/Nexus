@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-13 — Full-suite runtime investigation
+
+- Reproduced the Nexus full-suite run exceeding seven minutes with 4 and 8 Vitest workers, then verified the repeatedly visible individual suites pass (TopBar 9/9, Transactions 16/16, Recipient Learning 2/2, Gallery Scan 4/4). No production code was changed without a narrower cause. Evidence: [Test-suite runtime investigation](TEST_SUITE_RUNTIME_INVESTIGATION_2026-09-13.md).
+
 ## 2026-09-13 — Focused ordinary-project plan
 
 - Reduced the active plan to test-suite stability, Supabase cloud-sync security maintenance and core regression watch. Legal, commercial, organizational and production-release work is paused until the project scope changes. Evidence: [Focused project plan](FOCUSED_PLAN_2026-09-13.md).
