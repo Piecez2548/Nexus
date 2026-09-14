@@ -1,8 +1,31 @@
 diff --git a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/AuthActivity.java b/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/AuthActivity.java
-index b6c7c19..8332ed0 100644
+index b6c7c19..3a32b37 100644
 --- a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/AuthActivity.java
 +++ b/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/AuthActivity.java
-@@ -451,6 +451,7 @@ public class AuthActivity extends AppCompatActivity {
+@@ -84,6 +84,13 @@ public class AuthActivity extends AppCompatActivity {
+         int rawMaxAttempts = getIntent().getIntExtra("maxAttempts", 1);
+         maxAttempts = Math.max(1, Math.min(5, rawMaxAttempts));
+ 
++        // Resolve the requested authenticator set before any validity-window
++        // Keystore operation. The key must be generated with the same strong
++        // fingerprint policy used by the prompt; otherwise some OEM keymasters
++        // reject the subsequent cipher init and report a misleading InvalidKeyException.
++        int[] allowedTypes = getIntent().getIntArrayExtra("allowedBiometryTypes");
++        authenticatorConfig = BiometricAuthenticatorConfig.fromAllowedTypes(allowedTypes);
++
+         String server = getIntent().getStringExtra("server");
+         if ("setSecureCredentials".equals(mode) || "setSecureData".equals(mode)) {
+             // Not yet persisted — this call establishes the mode for the alias.
+@@ -117,8 +124,6 @@ public class AuthActivity extends AppCompatActivity {
+             .setSubtitle(getIntent().hasExtra("subtitle") ? getIntent().getStringExtra("subtitle") : null)
+             .setDescription(getIntent().hasExtra("description") ? getIntent().getStringExtra("description") : null);
+ 
+-        int[] allowedTypes = getIntent().getIntArrayExtra("allowedBiometryTypes");
+-        authenticatorConfig = BiometricAuthenticatorConfig.fromAllowedTypes(allowedTypes);
+         builder.setAllowedAuthenticators(authenticatorConfig.promptAuthenticators);
+ 
+         if (authenticatorConfig.allowNegativeButton) {
+@@ -451,6 +456,7 @@ public class AuthActivity extends AppCompatActivity {
                  key = getOrCreateCredentialKey(server, accessControl);
                  cipher.init(Cipher.ENCRYPT_MODE, key);
              }
@@ -10,7 +33,7 @@ index b6c7c19..8332ed0 100644
              return new BiometricPrompt.CryptoObject(cipher);
          } catch (GeneralSecurityException | IOException e) {
              return null;
-@@ -482,6 +483,7 @@ public class AuthActivity extends AppCompatActivity {
+@@ -482,6 +488,7 @@ public class AuthActivity extends AppCompatActivity {
                  prefs.edit().remove("secure_" + server).apply();
                  return null;
              }
@@ -18,7 +41,7 @@ index b6c7c19..8332ed0 100644
              return new BiometricPrompt.CryptoObject(cipher);
          } catch (GeneralSecurityException | IOException e) {
              return null;
-@@ -489,11 +491,33 @@ public class AuthActivity extends AppCompatActivity {
+@@ -489,11 +496,33 @@ public class AuthActivity extends AppCompatActivity {
      }
  
      private void handleSetSecureCredentials(BiometricPrompt.AuthenticationResult result) {
@@ -54,6 +77,31 @@ index b6c7c19..8332ed0 100644
      }
  
      private void encryptAndStoreCredentials(Cipher cipher) {
+@@ -635,6 +664,12 @@ public class AuthActivity extends AppCompatActivity {
+             if (e instanceof UserNotAuthenticatedException) {
+                 throw e;
+             }
++            if (!(e instanceof KeyPermanentlyInvalidatedException)) {
++                // Preserve the credential on transient/provider-specific
++                // failures. The user can retry instead of silently losing the
++                // only biometric copy of their PIN.
++                throw e;
++            }
+             // KeyPermanentlyInvalidatedException (biometric enrollment changed) — delete and recreate.
+             KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+             ks.load(null);
+@@ -662,6 +697,11 @@ public class AuthActivity extends AppCompatActivity {
+             if (e instanceof UserNotAuthenticatedException) {
+                 throw e;
+             }
++            if (!(e instanceof KeyPermanentlyInvalidatedException)) {
++                // Do not delete protected data for an opaque OEM/transient
++                // InvalidKeyException. It is recoverable by retrying the prompt.
++                throw e;
++            }
+             // Key was invalidated (e.g. biometric enrollment changed). Delete the unusable key
+             // and encrypted data so the user can re-enroll via setSecureCredentials.
+             KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
 diff --git a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java b/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java
 index d0f7703..78af60e 100644
 --- a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java

@@ -85,6 +85,7 @@ describe("biometricService", () => {
           password: "1234",
           server: "com.nexus.app",
           accessControl: 2,
+          authValidityDuration: 5,
         })
       );
     });

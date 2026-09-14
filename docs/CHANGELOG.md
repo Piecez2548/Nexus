@@ -3,6 +3,7 @@
 ## 2026-09-14 — Android biometric credential fallback
 
 - Fixed the vivo V2348 setup failure where fingerprint authentication succeeded but Android returned a null `CryptoObject`, causing `Failed to encrypt credentials: null`. The native bridge now retains the cipher supplied to the prompt and safely reuses it for secure credential storage/retrieval, with a guarded failure path.
+- Added a five-second Android authentication validity window for secure credential setup/readback to support OEMs that reject per-operation cipher mode after a successful fingerprint prompt.
 
 ## 2026-09-14 — Verified QR repeat-scan identity
 

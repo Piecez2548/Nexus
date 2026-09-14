@@ -8,6 +8,12 @@ import { translate } from "@/i18n/useTranslation";
 // PIN), so a fixed, app-scoped identifier is all that's needed.
 const CREDENTIAL_SERVER = "com.nexus.app";
 const CREDENTIAL_USERNAME = "nexus-app-lock-pin";
+// Some Android 16/OEM biometric providers authenticate successfully but do
+// not return a usable CryptoObject for per-operation cipher mode. A short
+// validity window lets the native bridge authenticate first, then perform the
+// cipher operation immediately after the prompt without weakening the
+// biometric gate for later app unlocks.
+const ANDROID_AUTH_VALIDITY_SECONDS = 5;
 
 export async function isBiometricAvailable(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
@@ -64,6 +70,7 @@ export async function storeBiometricCredential(pin: string): Promise<void> {
     password: pin,
     server: CREDENTIAL_SERVER,
     accessControl: AccessControl.BIOMETRY_ANY,
+    authValidityDuration: ANDROID_AUTH_VALIDITY_SECONDS,
   });
 }
 
