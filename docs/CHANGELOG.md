@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-14 — Gallery scan selected-image fallback
+
+- Fixed selected images being sent through the whole-gallery QR-only filter. Explicitly picked slips now run the normal QR → OCR pipeline, so a blurred, cropped or QR-free slip can still be extracted for the existing verification rules; open-ended gallery scans keep the QR-only fast path.
+
 ## 2026-09-14 — Android release signing readiness review
 
 - Verified that the Android `release` variant assembles reproducibly, but its signing report has no configuration and the output is `app-release-unsigned.apk`.

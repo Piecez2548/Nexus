@@ -58,6 +58,13 @@ const defaultFullGalleryExtractor: SlipExtractor = (input) =>
     maxRecoveryAttempts: 2,
   });
 
+// A user-picked image is an explicit slip candidate, so it must retain the
+// normal OCR fallback even when its QR is blurred, cropped, or absent. The
+// QR-only filter is reserved for open-ended whole-gallery scans, where OCR on
+// every ordinary photo would make the feature appear to stall and would drop
+// valid OCR-readable slips before the user has a chance to review them.
+const defaultPickedFileExtractor: SlipExtractor = (input) => extractSlipCandidate(input);
+
 export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGalleryExtractor): UseFullGalleryScan {
   const gallery = useGalleryScan();
   const [candidates, setCandidates] = useState<SlipCandidate[]>([]);
@@ -84,7 +91,19 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
     }));
   }, []);
 
-  const processor = useMemo(() => createSlipExtractionProcessor(onCandidate, extractor), [onCandidate, extractor]);
+  // Keep the injected extractor behavior used by deterministic tests and
+  // provide two production defaults: QR-only for a complete gallery and the
+  // full QR→OCR pipeline for files explicitly selected by the user.
+  const fullGalleryExtractor = extractor === defaultFullGalleryExtractor ? defaultFullGalleryExtractor : extractor;
+  const pickedFileExtractor = extractor === defaultFullGalleryExtractor ? defaultPickedFileExtractor : extractor;
+  const fullGalleryProcessor = useMemo(
+    () => createSlipExtractionProcessor(onCandidate, fullGalleryExtractor),
+    [onCandidate, fullGalleryExtractor],
+  );
+  const pickedFileProcessor = useMemo(
+    () => createSlipExtractionProcessor(onCandidate, pickedFileExtractor),
+    [onCandidate, pickedFileExtractor],
+  );
 
   // Seeds from any candidates left over from an interrupted run (app kill,
   // crash, reload) instead of always starting empty -- the counterpart to
@@ -113,19 +132,19 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
   const scanPickedFiles = useCallback(
     async (files: File[], incremental = false) => {
       await beginNewRun(incremental); // picker flow never sets a dateRange
-      await gallery.scanPickedFiles(files, incremental, processor);
+      await gallery.scanPickedFiles(files, incremental, pickedFileProcessor);
       setCandidates(flagBatchDuplicates);
     },
-    [gallery, processor],
+    [gallery, pickedFileProcessor],
   );
 
   const scanNativeGallery = useCallback(
     async (incremental = true, dateRange?: ScanOptions["dateRange"]) => {
       await beginNewRun(incremental && !dateRange);
-      await gallery.scanNativeGallery(incremental, processor, dateRange);
+      await gallery.scanNativeGallery(incremental, fullGalleryProcessor, dateRange);
       setCandidates(flagBatchDuplicates);
     },
-    [gallery, processor],
+    [gallery, fullGalleryProcessor],
   );
 
   const snapshot: ScanProgressSnapshot | null = gallery.progress

@@ -1,6 +1,6 @@
 # QR-only gallery scan — 2026-09-13
 
-The full-gallery scan now has an explicit QR pre-filter fast path. It detects QR pixels first and filters ordinary photos before candidate creation, so Tesseract never starts for the overwhelming majority of non-slip images. A detected QR that is not a usable EMVCo payload still uses the existing OCR fallback because Thai slip-verification QRs need printed date/time and bank metadata. The manual image-picker flow keeps the same QR → OCR behavior.
+The full-gallery scan now has an explicit QR pre-filter fast path. It detects QR pixels first and filters ordinary photos before candidate creation, so Tesseract never starts for the overwhelming majority of non-slip images. A detected QR that is not a usable EMVCo payload still uses the existing OCR fallback because Thai slip-verification QRs need printed date/time and bank metadata. The manual image-picker flow uses the full QR → OCR extractor (including the no-QR OCR fallback), while the open-ended native gallery path remains QR-only.
 
 When QR recovery is needed, the QR-only path is bounded to two transformed attempts after the initial decode. This keeps worst-case work predictable for a large gallery and avoids spending several seconds on six recovery variants for every non-slip image.
 
