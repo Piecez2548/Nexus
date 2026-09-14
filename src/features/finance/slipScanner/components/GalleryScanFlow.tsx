@@ -23,6 +23,7 @@ import { decideScan } from "@/features/finance/slipScanner/schedule/scanSchedule
 import { getDeviceState } from "@/features/finance/slipScanner/schedule/deviceState";
 import { useScanScheduleStore } from "@/features/finance/slipScanner/store/scanScheduleStore";
 import { isVerifiedQrCandidate } from "@/features/finance/slipScanner/ai/confidenceTier";
+import { scanCandidateRepository } from "@/features/finance/slipScanner/repositories/scanCandidateRepository";
 
 type Phase = "idle" | "banks";
 
@@ -121,6 +122,21 @@ export default function GalleryScanFlow({ extractor }: Props) {
     // Run once for this page visit. Schedule values are intentionally captured
     // at entry; changing settings applies on the next visit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Completed scans can leave OCR candidates waiting for a person to review.
+  // Restore them before allowing another scan so closing the app does not
+  // silently discard a financial record that still needs confirmation.
+  useEffect(() => {
+    let active = true;
+    void scanCandidateRepository.listCompletedRuns().then((pending) => {
+      if (!active || pending.length === 0) return;
+      setReviewCandidates(pending);
+      setReviewOpen(true);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   // Live "N photos in this range" estimate as the user adjusts the date
@@ -233,7 +249,6 @@ export default function GalleryScanFlow({ extractor }: Props) {
         toast.error(t("slipScanner.galleryScan.importFailed", { failed }));
       }
 
-      scan.reset();
       setPhase("idle");
       return result;
     } catch (err) {
@@ -267,12 +282,13 @@ export default function GalleryScanFlow({ extractor }: Props) {
     const candidatesForReview = visibleCandidates.filter((candidate) => !isVerifiedQrCandidate(candidate));
     setReviewCandidates(candidatesForReview);
     if (candidatesToImport.length === 0) {
-      scan.reset();
       if (visibleCandidates.length > 0) {
         toast.error(t("slipScanner.galleryScan.noVerifiedQr"));
+        scan.reset({ preserveCandidateIds: candidatesForReview.map((candidate) => candidate.id) });
         setReviewOpen(candidatesForReview.length > 0);
       } else {
         toast.error(t("slipScanner.galleryScan.noneFound"));
+        scan.reset();
       }
       return;
     }
@@ -282,9 +298,29 @@ export default function GalleryScanFlow({ extractor }: Props) {
       toast.info(t("slipScanner.galleryScan.unverifiedSkipped", { count: skippedUnverified }));
     }
 
-    void handleImport(candidatesToImport).then(() => {
-      if (candidatesForReview.length > 0) setReviewOpen(true);
-    });
+    void (async () => {
+      const result = await handleImport(candidatesToImport);
+      if (!result) {
+        scan.reset({ preserveCandidateIds: visibleCandidates.map((candidate) => candidate.id) });
+        setReviewCandidates(visibleCandidates);
+        setReviewOpen(visibleCandidates.length > 0);
+        return;
+      }
+
+      const resolvedIds = new Set([
+        ...result.importedCandidateIds,
+        ...result.skippedDuplicates.map((item) => item.candidateId),
+      ]);
+      await scan.removeCandidates(resolvedIds);
+
+      const failedIds = new Set(result.failed.map((item) => item.candidateId));
+      const remaining = visibleCandidates.filter(
+        (candidate) => !resolvedIds.has(candidate.id) && (!isVerifiedQrCandidate(candidate) || failedIds.has(candidate.id)),
+      );
+      setReviewCandidates(remaining);
+      scan.reset({ preserveCandidateIds: remaining.map((candidate) => candidate.id) });
+      setReviewOpen(remaining.length > 0);
+    })();
     // scanSettled is the explicit completion signal from the scan promise, so
     // candidates are fully populated before this effect can import them.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -364,6 +400,7 @@ export default function GalleryScanFlow({ extractor }: Props) {
             ...result.importedCandidateIds,
             ...result.skippedDuplicates.map((item) => item.candidateId),
           ]);
+          await scan.removeCandidates(resolvedIds);
           const remaining = reviewCandidates.filter((candidate) => !resolvedIds.has(candidate.id));
           setReviewCandidates(remaining);
           if (remaining.length === 0) setReviewOpen(false);

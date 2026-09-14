@@ -3,6 +3,7 @@
 ## 2026-09-15 — OCR slip review queue
 
 - Gallery scans now open the existing Import Preview for OCR or otherwise unverified slips instead of dropping them after the verified QR auto-import. A person can review, edit, import, or return to the pending queue while the strict automatic-import gate remains unchanged.
+- Pending review candidates are retained in the device-local scan tables and restored when Transactions opens again; resolved candidates are removed across their original scan runs.
 
 ## 2026-09-14 — Date-range gallery recovery
 

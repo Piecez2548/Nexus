@@ -20,7 +20,8 @@ export interface UseFullGalleryScan {
   pause: () => void;
   resume: () => void;
   cancel: () => void;
-  reset: () => void;
+  removeCandidates: (candidateIds: Iterable<string>) => Promise<void>;
+  reset: (options?: { preserveCandidateIds?: Iterable<string> }) => void;
 }
 
 // Drives the orchestrator-backed scan (GS-006/007/008: concurrent queue, byte
@@ -160,12 +161,22 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
       )
     : null;
 
-  // Called after a successful import and when the user discards the preview
-  // outright -- both cases already treat every current candidate as resolved
-  // (imported or explicitly dismissed), so their persisted copies are cleared
-  // too, not just the in-memory list.
-  function reset(): void {
-    if (runIdRef.current !== null) void scanCandidateRepository.clearRun(runIdRef.current);
+  async function removeCandidates(candidateIds: Iterable<string>): Promise<void> {
+    const ids = new Set(candidateIds);
+    if (ids.size === 0) return;
+    await scanCandidateRepository.clearCandidates(ids);
+    setCandidates((current) => current.filter((candidate) => !ids.has(candidate.id)));
+  }
+
+  // Reset after a successful import or explicit discard. A review handoff can
+  // preserve its unresolved candidate ids, allowing the queue to be restored
+  // after a page/app restart while resolved candidates are removed.
+  function reset(options: { preserveCandidateIds?: Iterable<string> } = {}): void {
+    const preserve = new Set(options.preserveCandidateIds ?? []);
+    if (runIdRef.current !== null) {
+      if (preserve.size > 0) void scanCandidateRepository.clearRunExcept(runIdRef.current, preserve);
+      else void scanCandidateRepository.clearRun(runIdRef.current);
+    }
     runIdRef.current = null;
     setCandidates([]);
     setCounts({ qrDetected: 0, ocrProcessed: 0 });
@@ -181,6 +192,7 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
     pause: gallery.pause,
     resume: gallery.resume,
     cancel: gallery.cancel,
+    removeCandidates,
     reset,
   };
 }

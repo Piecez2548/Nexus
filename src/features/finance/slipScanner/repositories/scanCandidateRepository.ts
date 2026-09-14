@@ -19,6 +19,32 @@ export const scanCandidateRepository = {
     return rows.map((row) => row.candidate);
   },
 
+  // Candidates from completed runs are the review queue. Running/paused runs
+  // remain owned by the resumable scan flow and must not appear twice.
+  async listCompletedRuns(): Promise<SlipCandidate[]> {
+    const completedRuns = await db.slipScanRuns.where("status").equals("completed").toArray();
+    const completedIds = new Set(completedRuns.flatMap((run) => (run.id === undefined ? [] : [run.id])));
+    if (completedIds.size === 0) return [];
+
+    const rows = await db.slipScanCandidates.toArray();
+    return rows.filter((row) => completedIds.has(row.runId)).map((row) => row.candidate);
+  },
+
+  async clearCandidates(candidateIds: Iterable<string>): Promise<void> {
+    const ids = new Set(candidateIds);
+    if (ids.size === 0) return;
+    await db.slipScanCandidates.filter((row) => ids.has(row.candidate.id)).delete();
+  },
+
+  async clearRunExcept(runId: number, candidateIds: Iterable<string>): Promise<void> {
+    const keep = new Set(candidateIds);
+    await db.slipScanCandidates
+      .where("runId")
+      .equals(runId)
+      .filter((row) => !keep.has(row.candidate.id))
+      .delete();
+  },
+
   async clearRun(runId: number): Promise<void> {
     await db.slipScanCandidates.where("runId").equals(runId).delete();
   },
