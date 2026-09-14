@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-14 — Android QR scan benchmark
+
+- Measured the QR-only gallery path on a representative vivo V2348 gallery: 113 images in 108.7 seconds (~1.04 images/second), sampled p50 completion interval ~704 ms and p95 ~2,072 ms. A one-second p95 SLA remains unclaimed. The run also exposed a duplicate-identity gap when a repeat scan's OCR date shifted; follow-up correction is required before repeat-scan idempotency can be promised.
+
 ## 2026-09-14 — QR transaction sync regression coverage
 
 - Added an isolated sync-engine regression covering verified QR-style transaction create, edit and delete operations across two simulated devices, including tombstone cleanup and duplicate-free convergence.
