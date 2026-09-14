@@ -179,6 +179,29 @@ describe("createScanSession", () => {
     expect(run.total).toBe(1);
   });
 
+  it("a date-range scan reprocesses unchanged cached assets", async () => {
+    const original = asset("recover", 9, [4, 2]);
+    await createScanSession({
+      provider: new FakeProvider([original]),
+      options: { source: "fake", incremental: true },
+    }).done;
+
+    const process = vi.fn<ScanProcessor["process"]>(async () => {});
+    const run = await createScanSession({
+      provider: new FakeProvider([original]),
+      processor: { process },
+      options: {
+        source: "fake",
+        incremental: true,
+        dateRange: { from: "2026-08-31T23:59:59.999Z", to: "2026-09-30T23:59:59.999Z" },
+      },
+    }).done;
+
+    expect(run.done).toBe(1);
+    expect(run.skipped).toBe(0);
+    expect(process).toHaveBeenCalledTimes(1);
+  });
+
   it("a date-range run is never returned by getResumable(), even while paused", async () => {
     const items = Array.from({ length: 6 }, (_, i) => asset(`r${i}`, (i % 9) + 1, [i]));
     let rangedSession: ScanSession;

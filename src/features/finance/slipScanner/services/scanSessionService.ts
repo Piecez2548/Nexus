@@ -132,12 +132,13 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
     const dateRange = params.options.dateRange;
     // A date-range-bounded scan is never resumed from, or checkpointed into,
     // the shared incremental cursor -- it's a bounded, one-off request, not
-    // a step in the open-ended incremental progression. `useCache` stays
-    // independent: skipping already-processed content within the range is a
-    // pure efficiency win with no correctness downside, so it follows the
-    // caller's `incremental` flag on its own regardless of dateRange.
+    // a step in the open-ended incremental progression. A date range is an
+    // explicit user request to inspect that slice again, so it deliberately
+    // bypasses the incremental cache. This matters when a person removed a
+    // transaction and then asks to recover it from the original slip: the
+    // gallery asset is unchanged, but its transaction outcome is not.
     const resumeAllowed = params.options.incremental && !dateRange;
-    const useCache = params.options.incremental || !!dateRange;
+    const useCache = params.options.incremental && !dateRange;
 
     // Resume an interrupted session (incremental only), else start fresh.
     const resumable = resumeAllowed ? await scanRunRepository.getResumable() : undefined;
@@ -181,9 +182,9 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
     async function handleAsset(asset: GalleryAssetRef): Promise<void> {
       if (asset.capturedAt && (!maxCapturedAt || asset.capturedAt > maxCapturedAt)) maxCapturedAt = asset.capturedAt;
 
-      // Consult the cache when incremental (or date-range scoped, which
-      // still wants to skip unchanged content within its bounds); a fully
-      // forced re-scan re-processes everything but still records + dedupes.
+      // Consult the cache only for open-ended incremental scans. A bounded
+      // date-range scan is an explicit re-scan and must reprocess unchanged
+      // assets so deleted/import-missing transactions can be recovered.
       const decision = useCache ? await cache.decide(asset.assetId, asset.capturedAt, versions) : "scan";
       if (decision === "skip-unchanged" || decision === "skip-failed") {
         progress.skipped++; // cache hit (unchanged) or a remembered, retries-exhausted failure

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-14 — Date-range gallery recovery
+
+- Explicit date-range gallery scans now reprocess unchanged images instead of treating the scan cache as a completed transaction import. This lets a person recover a transaction after removing it while keeping the fast incremental cache for routine open-ended scans.
+
 ## 2026-09-14 — Gallery scan selected-image fallback
 
 - Fixed selected images being sent through the whole-gallery QR-only filter. Explicitly picked slips now run the normal QR → OCR pipeline, so a blurred, cropped or QR-free slip can still be extracted for the existing verification rules; open-ended gallery scans keep the QR-only fast path.
