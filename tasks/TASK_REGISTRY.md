@@ -2,7 +2,7 @@
 
 Master registry of all planned and completed Nexus tasks, grouped by Epic. See [README.md](README.md) for conventions and lifecycle.
 
-**Last Updated:** 2026-09-13
+**Last Updated:** 2026-09-14
 
 ## Release readiness coordination — 2026-09-12
 
@@ -21,6 +21,7 @@ These coordination records are separate from the historical implementation-epic 
 | RB-001 | Critical | Not Applicable (current scope) | User scoped the project as a personal/demo project with no public, paid or real-data pilot. Reopen this task before any scope change; the prior partial operator record remains preserved for that case. |
 | CORE-SMOKE-001 | High | Completed | Added a production-build browser flow covering Dashboard → synthetic income/expense entry → calculated totals → reload persistence → Transactions navigation. Targeted E2E 9/9 and related integration 26/26 passed. |
 | MOBILE-DESKTOP-SYNC-001 | High | Completed | Verified transaction add/edit/delete on desktop and 390px mobile, plus create/update/delete propagation in both directions through isolated device states and a stateful cloud relay. E2E 10/10 and sync-related tests 63/63 passed. [Verification](../docs/MOBILE_DESKTOP_SYNC_VERIFICATION_2026-09-12.md). |
+| SYNC-QR-REGRESSION-001 | Medium | Completed | Added a QR-shaped transaction convergence regression covering create, edit and delete across two isolated device states, including tombstone cleanup and duplicate-free results. Sync conflict suite 18/18, TypeScript, lint and production build passed. |
 | LIVE-SYNC-001 | High | Completed | Fixed real form edits generating a new `syncId`. Bidirectional regression asserts one-row convergence; production desktop-to-Android create/edit passed without duplicates. Targeted 46/46, broader related 152/152, E2E 10/10, production smoke 2/2, TypeScript, lint, release build, Android build and production deployment passed. Reverse physical repetition was unavailable after USB/ADB disconnected. [Fix verification](../docs/LIVE_SYNC_FIX_VERIFICATION_2026-09-12.md). |
 | BACKUP-RESTORE-001 | High | Completed | Added an encrypted disaster-recovery drill across all 25 user-content tables: verified encrypted-at-rest rows, portable plaintext export, complete simulated loss, exact-value restore and 25/25 restored counts. Backup suite 24/24, TypeScript, lint, release build and bundle budget passed. No production data was touched. [Verification](../docs/BACKUP_RESTORE_VERIFICATION_2026-09-12.md). |
 | ACCOUNT-RECOVERY-001 | High | Completed | Local implementation and verification: reject stale authentication and mismatched accounts, validate the recovered key against existing local ciphertext before replacing the PIN, and handle saving failures with retry. Related suite 316/316, browser recovery 2/2 at 390px/1280px, TypeScript, configured lint, release build and bundle budget passed. Subsequently deployed under ACCOUNT-RECOVERY-DEPLOY-001; live email/MFA and physical Android recovery remain unverified. [Verification](../docs/ACCOUNT_RECOVERY_VERIFICATION_2026-09-12.md). |

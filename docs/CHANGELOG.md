@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-14 — QR transaction sync regression coverage
+
+- Added an isolated sync-engine regression covering verified QR-style transaction create, edit and delete operations across two simulated devices, including tombstone cleanup and duplicate-free convergence.
+
 ## 2026-09-13 — Verified QR auto-import
 
 - Gallery auto-import now accepts only positive-amount, CRC-valid EMVCo QR candidates. OCR-only and unverified QR results remain excluded from automatic transaction creation so imported data favors correctness over recall.

@@ -169,6 +169,39 @@ describe("SYNC-CONFLICT-001 isolated failure drills", () => {
     expect(await db.transactions.count()).toBe(2);
   });
 
+  it("keeps verified QR imports identical across devices after create, edit and delete", async () => {
+    const qrImport = (recipient: string, amount: number): Transaction => ({
+      ...draft("PromptPay", amount),
+      recipient,
+      note: "EMVCo CRC verified",
+    });
+
+    await transactionRepository.add(qrImport("promptpay-a", 40));
+    await transactionRepository.add(qrImport("promptpay-b", 40));
+    await runFullSync(USER);
+    const otherDevice = await snapshot();
+
+    at(10);
+    const localRows = await db.transactions.toArray();
+    await transactionRepository.update(localRows[0]!.id!, qrImport("promptpay-a", 45));
+    await transactionRepository.remove(localRows[1]!.id!);
+    await transactionRepository.add(qrImport("promptpay-c", 80));
+    await runFullSync(USER);
+
+    const expected = (await db.transactions.toArray())
+      .map(({ title, amount, recipient, syncId }) => ({ title, amount, recipient, syncId }))
+      .sort((a, b) => a.recipient!.localeCompare(b.recipient!));
+    expect(expected).toHaveLength(2);
+    expect(await db.syncTombstones.count()).toBe(0);
+
+    await restore(otherDevice);
+    await runFullSync(USER);
+    const pulled = (await db.transactions.toArray())
+      .map(({ title, amount, recipient, syncId }) => ({ title, amount, recipient, syncId }))
+      .sort((a, b) => a.recipient!.localeCompare(b.recipient!));
+    expect(pulled).toEqual(expected);
+  });
+
   it("keeps the pull cursor on a read outage and catches up on the next healthy pass", async () => {
     await baseline();
     const cursor = await db.syncState.get("pull:transactions");
