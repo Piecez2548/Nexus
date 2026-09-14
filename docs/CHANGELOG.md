@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-14 — Final regression smoke
+
+- Re-ran the core and mobile browser smoke flows after the Settings UX pass: 5/5 Playwright tests passed, including mobile navigation, FAB, CRUD, reload and a narrow drawer form.
+- Verified the installed vivo V2348 APK through Dashboard → Transactions → Settings navigation with zero WebView page errors and no horizontal overflow at 420px.
+
 ## 2026-09-14 — Mobile Settings usability pass
 
 - Reduced Settings card and page spacing on small screens while retaining the desktop layout.
