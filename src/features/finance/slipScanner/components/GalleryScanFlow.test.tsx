@@ -21,6 +21,16 @@ const fakeExtractor: SlipExtractor = async ({ assetId }): Promise<SlipCandidate>
   payload: `verified-emvco-payload-${assetId}`,
 });
 
+const fakeOcrExtractor: SlipExtractor = async ({ assetId }): Promise<SlipCandidate> => ({
+  id: assetId,
+  assetId,
+  source: "ocr",
+  isDuplicate: false,
+  confidence: 90,
+  amount: 180,
+  merchant: `OCR Cafe ${assetId}`,
+});
+
 function file(name: string, content: string): File {
   return new File([content], name, { type: "image/jpeg" });
 }
@@ -100,5 +110,24 @@ describe("GalleryScanFlow", () => {
 
     const imported = await db.transactions.toArray();
     expect(imported.every((t) => t.title.startsWith("Coffee Shop"))).toBe(true);
+  });
+
+  it("opens the review queue for OCR candidates instead of importing them silently", async () => {
+    const user = userEvent.setup();
+    render(<GalleryScanFlow extractor={fakeOcrExtractor} />);
+
+    await user.click(screen.getByRole("button", { name: "Scan Gallery" }));
+    await user.click(screen.getByRole("button", { name: "Choose banks or dates" }));
+    await user.click(screen.getByRole("button", { name: "Start scan" }));
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    await user.upload(fileInput, [file("ocr.jpg", "gallery-flow-ocr")]);
+
+    await waitFor(() => expect(screen.getByText("Import preview")).toBeInTheDocument());
+    expect(await db.transactions.count()).toBe(0);
+    await waitFor(() => expect(screen.getByText(/OCR Cafe ocr\.jpg/)).toBeInTheDocument());
+
+    await user.click(screen.getByRole("button", { name: "Import 1 selected" }));
+    await waitFor(async () => expect(await db.transactions.count()).toBe(1));
   });
 });

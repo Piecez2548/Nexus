@@ -3,6 +3,7 @@ import { Images } from "lucide-react";
 
 import ScanControls from "@/features/finance/slipScanner/components/ScanControls";
 import ScanProgressDashboard from "@/features/finance/slipScanner/components/ScanProgressDashboard";
+import ImportPreview from "@/features/finance/slipScanner/components/ImportPreview";
 import { useFullGalleryScan } from "@/features/finance/slipScanner/hooks/useFullGalleryScan";
 import { useSmartImport } from "@/features/finance/slipScanner/hooks/useSmartImport";
 import { isNativeGalleryAvailable } from "@/features/finance/slipScanner/gallery/pickImages";
@@ -63,6 +64,8 @@ export default function GalleryScanFlow({ extractor }: Props) {
   const [rangeImageCount, setRangeImageCount] = useState<number | null>(null);
   const [isAutomaticScan, setIsAutomaticScan] = useState(false);
   const [scanSettled, setScanSettled] = useState(false);
+  const [reviewCandidates, setReviewCandidates] = useState<SlipCandidate[]>([]);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const autoImportStartedRef = useRef(false);
 
   const scan = useFullGalleryScan(extractor);
@@ -201,7 +204,7 @@ export default function GalleryScanFlow({ extractor }: Props) {
     [scan.candidates, selectedBankIds],
   );
 
-  async function handleImport(selected: SlipCandidate[]): Promise<void> {
+  async function handleImport(selected: SlipCandidate[]): Promise<Awaited<ReturnType<typeof smartImport.importCandidates>> | null> {
     try {
       // An empty list means categories haven't loaded (not "the user has zero
       // categories") — pass undefined then so resolveCategory skips validation
@@ -232,15 +235,17 @@ export default function GalleryScanFlow({ extractor }: Props) {
 
       scan.reset();
       setPhase("idle");
+      return result;
     } catch (err) {
       toast.error(toErrorMessage(err));
+      return null;
     }
   }
 
-  // Gallery scans import every extracted candidate as soon as the scan settles.
-  // Smart Import still owns validation, duplicate detection, history, and
-  // persistence; the review drawer is intentionally skipped for this one-tap
-  // gallery workflow.
+  // Gallery scans import verified QR candidates as soon as the scan settles.
+  // OCR and otherwise unverified candidates stay in the existing Import
+  // Preview so a person can correct and explicitly import them. Smart Import
+  // still owns validation, duplicate detection, history, and persistence.
   useEffect(() => {
     if (!scanSettled || autoImportStartedRef.current) return;
 
@@ -259,13 +264,16 @@ export default function GalleryScanFlow({ extractor }: Props) {
     }
 
     const candidatesToImport = visibleCandidates.filter(isVerifiedQrCandidate);
+    const candidatesForReview = visibleCandidates.filter((candidate) => !isVerifiedQrCandidate(candidate));
+    setReviewCandidates(candidatesForReview);
     if (candidatesToImport.length === 0) {
       scan.reset();
-      toast.error(
-        visibleCandidates.length > 0
-          ? t("slipScanner.galleryScan.noVerifiedQr")
-          : t("slipScanner.galleryScan.noneFound"),
-      );
+      if (visibleCandidates.length > 0) {
+        toast.error(t("slipScanner.galleryScan.noVerifiedQr"));
+        setReviewOpen(candidatesForReview.length > 0);
+      } else {
+        toast.error(t("slipScanner.galleryScan.noneFound"));
+      }
       return;
     }
 
@@ -274,11 +282,17 @@ export default function GalleryScanFlow({ extractor }: Props) {
       toast.info(t("slipScanner.galleryScan.unverifiedSkipped", { count: skippedUnverified }));
     }
 
-    void handleImport(candidatesToImport);
+    void handleImport(candidatesToImport).then(() => {
+      if (candidatesForReview.length > 0) setReviewOpen(true);
+    });
     // scanSettled is the explicit completion signal from the scan promise, so
     // candidates are fully populated before this effect can import them.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scanSettled]);
+
+  function closeReview(): void {
+    setReviewOpen(false);
+  }
 
   const busy = scan.status === "running" || scan.status === "paused";
   // Shown only while actually in flight -- "completed"/"cancelled"/"error"
@@ -297,6 +311,16 @@ export default function GalleryScanFlow({ extractor }: Props) {
         <Images size={18} className={isAutomaticScan ? "animate-pulse text-brand-400" : ""} />
         {isAutomaticScan ? t("slipScanner.galleryScan.scanningNew") : t("transactions.scanGallery")}
       </button>
+
+      {reviewCandidates.length > 0 && !reviewOpen && (
+        <button
+          type="button"
+          onClick={() => setReviewOpen(true)}
+          className="rounded-xl border border-brand-300 px-4 py-2 font-medium text-brand-700 transition hover:bg-brand-50 dark:border-brand-700 dark:text-brand-300 dark:hover:bg-brand-950/30"
+        >
+          {t("slipScanner.galleryScan.reviewPending", { count: reviewCandidates.length })}
+        </button>
+      )}
 
       <input
         ref={inputRef}
@@ -327,6 +351,24 @@ export default function GalleryScanFlow({ extractor }: Props) {
           </div>
         </div>
       )}
+
+      <ImportPreview
+        open={reviewOpen}
+        onClose={closeReview}
+        candidates={reviewCandidates}
+        onImport={async (selected) => {
+          const result = await handleImport(selected);
+          if (!result) return;
+
+          const resolvedIds = new Set([
+            ...result.importedCandidateIds,
+            ...result.skippedDuplicates.map((item) => item.candidateId),
+          ]);
+          const remaining = reviewCandidates.filter((candidate) => !resolvedIds.has(candidate.id));
+          setReviewCandidates(remaining);
+          if (remaining.length === 0) setReviewOpen(false);
+        }}
+      />
 
     </>
   );

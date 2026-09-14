@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-15 — OCR slip review queue
+
+- Gallery scans now open the existing Import Preview for OCR or otherwise unverified slips instead of dropping them after the verified QR auto-import. A person can review, edit, import, or return to the pending queue while the strict automatic-import gate remains unchanged.
+
 ## 2026-09-14 — Date-range gallery recovery
 
 - Explicit date-range gallery scans now reprocess unchanged images instead of treating the scan cache as a completed transaction import. This lets a person recover a transaction after removing it while keeping the fast incremental cache for routine open-ended scans.
