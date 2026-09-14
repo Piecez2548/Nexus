@@ -48,27 +48,33 @@ export default function EnableBiometricForm({ onDone }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6"
+      className="space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6"
     >
       <h2 className="text-xl font-bold">{t("settings.enableBiometric")}</h2>
       <p className="text-sm text-zinc-500 dark:text-zinc-400">{t("settings.biometricEnableExplain")}</p>
 
-      <FormField label={t("settings.biometricConfirmPinLabel")} htmlFor="enable-biometric-pin">
+      <FormField
+        label={t("settings.biometricConfirmPinLabel")}
+        htmlFor="enable-biometric-pin"
+        error={error ?? undefined}
+      >
         <input
           id="enable-biometric-pin"
           type="password"
           inputMode="numeric"
+          autoComplete="current-password"
+          minLength={4}
+          required
           value={pin}
           onChange={(e) => setPin(e.target.value)}
           className={inputClassName}
         />
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{t("settings.biometricPinHint")}</p>
       </FormField>
-
-      {error && <p className="text-sm text-red-500">{error}</p>}
 
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || pin.length < 4}
         className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
       >
         {submitting ? t("settings.biometricSaving") : t("common.save")}

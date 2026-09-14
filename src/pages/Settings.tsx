@@ -21,8 +21,8 @@ export default function Settings() {
   const { t } = useTranslation();
 
   return (
-    <div className="max-w-2xl space-y-8">
-      <h1 className="text-3xl font-bold">{t("settings.pageTitle")}</h1>
+    <div className="max-w-2xl space-y-6 sm:space-y-8">
+      <h1 className="text-2xl font-bold sm:text-3xl">{t("settings.pageTitle")}</h1>
 
       <SettingsGroup title={t("settings.groupGeneral")}>
         <LanguageSettings />

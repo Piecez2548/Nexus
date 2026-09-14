@@ -142,8 +142,12 @@ describe("SecuritySettings", () => {
       render(<SecuritySettings />);
 
       await user.click(await screen.findByRole("button", { name: "Enable Fingerprint Unlock" }));
-      await user.type(await screen.findByLabelText("Confirm PIN"), "1234");
-      await user.click(screen.getByRole("button", { name: "Save" }));
+      const pinInput = await screen.findByLabelText("Confirm PIN");
+      const saveButton = screen.getByRole("button", { name: "Save" });
+      expect(saveButton).toBeDisabled();
+      await user.type(pinInput, "1234");
+      expect(saveButton).toBeEnabled();
+      await user.click(saveButton);
 
       await waitFor(() => {
         expect(useAppLockStore.getState().biometricEnabled).toBe(true);

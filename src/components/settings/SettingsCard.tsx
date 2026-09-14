@@ -8,7 +8,7 @@ interface Props {
 
 export default function SettingsCard({ title, description, children }: Props) {
   return (
-    <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6">
+    <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6">
       <h2 className="text-lg font-semibold">{title}</h2>
 
       {description && (

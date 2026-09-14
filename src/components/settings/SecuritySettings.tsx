@@ -125,15 +125,15 @@ export default function SecuritySettings() {
                   {t("settings.enableBiometric")}
                 </button>
               ) : (
-                <div className="flex items-center justify-between gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-2">
-                  <div className="flex items-center gap-2 text-sm text-green-500">
+                <div className="flex flex-col items-stretch gap-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-2 text-sm text-green-500">
                     <FingerprintPattern size={16} />
-                    {t("settings.biometricEnabledStatus")}
+                    <span>{t("settings.biometricEnabledStatus")}</span>
                   </div>
                   <button
                     type="button"
                     onClick={handleDisableBiometric}
-                    className="text-sm font-medium text-red-500 hover:underline"
+                    className="w-full rounded-lg py-2 text-left text-sm font-medium text-red-500 transition hover:bg-red-500/10 hover:underline sm:w-auto sm:py-1 sm:text-right"
                   >
                     {t("settings.disableBiometric")}
                   </button>

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-14 — Mobile Settings usability pass
+
+- Reduced Settings card and page spacing on small screens while retaining the desktop layout.
+- Stacked the enabled fingerprint status and disable action on mobile so the status remains readable and the destructive action has a clear touch target.
+- Added a four-digit PIN hint, native password-manager semantics, accessible error wiring and submit protection to the fingerprint setup form.
+
 ## 2026-09-14 — Android biometric credential fallback
 
 - Fixed the vivo V2348 setup failure where fingerprint authentication succeeded but Android returned a null `CryptoObject`, causing `Failed to encrypt credentials: null`. The native bridge now retains the cipher supplied to the prompt and safely reuses it for secure credential storage/retrieval, with a guarded failure path.

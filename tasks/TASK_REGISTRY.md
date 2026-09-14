@@ -359,6 +359,7 @@ AI Analytics user-experience fixes.
 | UX-003 | UX | Put daily-use navigation before grouped features | High | Completed | — |
 | UX-004 | UX | Simplify new transaction entry with progressive disclosure | High | Completed | — |
 | UX-005 | UX | Simplify slip scan setup with one-tap gallery scanning | High | Completed | — |
+| UX-006 | UX | Improve mobile Settings and biometric controls | Medium | Completed | — |
 
 > UX-002 fixed the synchronous-engine-throw hang (a sync throw now surfaces as an error state instead of leaving the page on `loading`) and made retry re-fetch the finance data before re-analysing. Remaining: surfacing store-level data-load errors as their own `ErrorState` — they currently fall through to the empty state — which is not yet a registered task.
 
