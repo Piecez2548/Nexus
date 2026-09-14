@@ -130,4 +130,35 @@ describe("GalleryScanFlow", () => {
     await user.click(screen.getByRole("button", { name: "Import 1 selected" }));
     await waitFor(async () => expect(await db.transactions.count()).toBe(1));
   });
+
+  it("restores pending OCR candidates from a completed run", async () => {
+    const runId = await db.slipScanRuns.add({
+      status: "completed",
+      source: "native-media",
+      startedAt: "2026-09-15T00:00:00.000Z",
+      total: 1,
+      done: 1,
+      skipped: 0,
+      failed: 0,
+    });
+    const pending: SlipCandidate = {
+      id: "pending-ocr",
+      assetId: "pending-ocr",
+      source: "ocr",
+      isDuplicate: false,
+      confidence: 90,
+      amount: 180,
+      merchant: "OCR Cafe pending-ocr",
+    };
+    await db.slipScanCandidates.add({
+      runId,
+      assetId: "pending-ocr",
+      candidate: pending,
+    });
+
+    render(<GalleryScanFlow />);
+
+    await waitFor(() => expect(screen.getByText("Import preview")).toBeInTheDocument());
+    expect(screen.getByText(/OCR Cafe pending-ocr/)).toBeInTheDocument();
+  });
 });
