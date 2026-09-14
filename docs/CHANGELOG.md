@@ -4,6 +4,7 @@
 
 - Fixed the vivo V2348 setup failure where fingerprint authentication succeeded but Android returned a null `CryptoObject`, causing `Failed to encrypt credentials: null`. The native bridge now retains the cipher supplied to the prompt and safely reuses it for secure credential storage/retrieval, with a guarded failure path.
 - Added a five-second Android authentication validity window for secure credential setup/readback to support OEMs that reject per-operation cipher mode after a successful fingerprint prompt.
+- Added a Vivo/OEM compatibility fallback: when the provider still rejects the post-prompt Keystore operation, Nexus performs a fresh biometric verification and uses the plugin's encrypted compatibility credential store instead of showing a red setup error or dropping the credential.
 
 ## 2026-09-14 — Verified QR repeat-scan identity
 

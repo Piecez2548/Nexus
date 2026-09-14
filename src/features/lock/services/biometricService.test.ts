@@ -4,6 +4,8 @@ const mockIsNativePlatform = vi.fn();
 const mockIsAvailable = vi.fn();
 const mockSetCredentials = vi.fn();
 const mockGetSecureCredentials = vi.fn();
+const mockGetCredentials = vi.fn();
+const mockVerifyIdentity = vi.fn();
 const mockDeleteCredentials = vi.fn();
 const mockIsCredentialsSaved = vi.fn();
 
@@ -16,6 +18,8 @@ vi.mock("@capgo/capacitor-native-biometric", () => ({
     isAvailable: (...args: unknown[]) => mockIsAvailable(...args),
     setCredentials: (...args: unknown[]) => mockSetCredentials(...args),
     getSecureCredentials: (...args: unknown[]) => mockGetSecureCredentials(...args),
+    getCredentials: (...args: unknown[]) => mockGetCredentials(...args),
+    verifyIdentity: (...args: unknown[]) => mockVerifyIdentity(...args),
     deleteCredentials: (...args: unknown[]) => mockDeleteCredentials(...args),
     isCredentialsSaved: (...args: unknown[]) => mockIsCredentialsSaved(...args),
   },
@@ -89,6 +93,24 @@ describe("biometricService", () => {
         })
       );
     });
+
+    it("falls back to encrypted compatibility storage after an OEM Keystore failure", async () => {
+      mockIsNativePlatform.mockReturnValue(true);
+      mockSetCredentials
+        .mockRejectedValueOnce(new Error("Keystore operation failed after authentication: User not authenticated"))
+        .mockResolvedValueOnce(undefined);
+      mockVerifyIdentity.mockResolvedValue(undefined);
+
+      await storeBiometricCredential("1234");
+
+      expect(mockVerifyIdentity).toHaveBeenCalledWith(expect.objectContaining({ reason: "lock.biometricPromptReason" }));
+      expect(mockSetCredentials).toHaveBeenLastCalledWith({
+        username: "nexus-app-lock-pin",
+        password: "1234",
+        server: "com.nexus.app",
+        accessControl: 0,
+      });
+    });
   });
 
   describe("hasBiometricCredential", () => {
@@ -133,6 +155,17 @@ describe("biometricService", () => {
       mockIsNativePlatform.mockReturnValue(true);
       mockGetSecureCredentials.mockRejectedValue(new Error("cancelled"));
       expect(await retrieveBiometricPin()).toBeNull();
+    });
+
+    it("uses a fresh biometric verification before reading the encrypted OEM fallback", async () => {
+      mockIsNativePlatform.mockReturnValue(true);
+      mockGetSecureCredentials.mockRejectedValue(new Error("No protected credentials found"));
+      mockVerifyIdentity.mockResolvedValue(undefined);
+      mockGetCredentials.mockResolvedValue({ username: "nexus-app-lock-pin", password: "1234" });
+
+      expect(await retrieveBiometricPin()).toBe("1234");
+      expect(mockVerifyIdentity).toHaveBeenCalledWith(expect.objectContaining({ reason: "lock.biometricPromptReason" }));
+      expect(mockGetCredentials).toHaveBeenCalledWith({ server: "com.nexus.app" });
     });
   });
 

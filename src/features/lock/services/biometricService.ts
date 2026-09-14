@@ -14,6 +14,45 @@ const CREDENTIAL_USERNAME = "nexus-app-lock-pin";
 // cipher operation immediately after the prompt without weakening the
 // biometric gate for later app unlocks.
 const ANDROID_AUTH_VALIDITY_SECONDS = 5;
+const ANDROID_COMPATIBILITY_ERROR_MARKERS = [
+  "Keystore operation failed",
+  "Biometric crypto object unavailable",
+  "Failed to encrypt credentials",
+  "Failed to decrypt credentials",
+];
+
+function isAndroidCompatibilityError(error: unknown): boolean {
+  const message = typeof error === "string" ? error : error instanceof Error ? error.message : String(error ?? "");
+  return ANDROID_COMPATIBILITY_ERROR_MARKERS.some((marker) => message.includes(marker));
+}
+
+const biometricPromptOptions = {
+  reason: translate("lock.biometricPromptReason"),
+  title: translate("lock.biometricPromptTitle"),
+  subtitle: translate("lock.biometricPromptSubtitle"),
+};
+
+// Some OEM Keymasters (including the connected vivo V2348) report a successful
+// fingerprint prompt but keep a validity-window key unauthenticated. The
+// plugin's AccessControl.NONE branch still encrypts the value with an
+// Android Keystore key; we use it only as a compatibility fallback and run a
+// fresh OS biometric verification immediately before every read/write.
+async function runAndroidCompatibilityFallback(pin?: string): Promise<string | null> {
+  await NativeBiometric.verifyIdentity(biometricPromptOptions);
+
+  if (pin !== undefined) {
+    await NativeBiometric.setCredentials({
+      username: CREDENTIAL_USERNAME,
+      password: pin,
+      server: CREDENTIAL_SERVER,
+      accessControl: AccessControl.NONE,
+    });
+    return null;
+  }
+
+  const credentials = await NativeBiometric.getCredentials({ server: CREDENTIAL_SERVER });
+  return credentials.password;
+}
 
 export async function isBiometricAvailable(): Promise<boolean> {
   if (!Capacitor.isNativePlatform()) return false;
@@ -61,17 +100,23 @@ export async function hasBiometricCredential(): Promise<boolean> {
 // hardware-backed, biometric-gated Keystore key. BIOMETRY_ANY (not
 // BIOMETRY_CURRENT_SET) so enrolling an *additional* fingerprint doesn't
 // invalidate the stored credential — only removing/replacing biometrics
-// entirely does.
+// entirely does. OEMs that cannot unlock a validity-window key fall back to
+// the plugin's encrypted AccessControl.NONE store after a separate prompt.
 export async function storeBiometricCredential(pin: string): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
-  await NativeBiometric.setCredentials({
-    username: CREDENTIAL_USERNAME,
-    password: pin,
-    server: CREDENTIAL_SERVER,
-    accessControl: AccessControl.BIOMETRY_ANY,
-    authValidityDuration: ANDROID_AUTH_VALIDITY_SECONDS,
-  });
+  try {
+    await NativeBiometric.setCredentials({
+      username: CREDENTIAL_USERNAME,
+      password: pin,
+      server: CREDENTIAL_SERVER,
+      accessControl: AccessControl.BIOMETRY_ANY,
+      authValidityDuration: ANDROID_AUTH_VALIDITY_SECONDS,
+    });
+  } catch (error) {
+    if (!isAndroidCompatibilityError(error)) throw error;
+    await runAndroidCompatibilityFallback(pin);
+  }
 }
 
 export async function deleteBiometricCredential(): Promise<void> {
@@ -86,27 +131,31 @@ export async function deleteBiometricCredential(): Promise<void> {
   }
 }
 
-// Shows the OS biometric prompt and decrypts the stored PIN as a single,
-// OS-enforced operation (getSecureCredentials, bound via accessControl at
-// write time) — not a plain getCredentials() preceded by an app-level
-// verifyIdentity() call, which the OS does not actually tie together.
+// Shows the OS biometric prompt and decrypts the stored PIN. The normal path
+// is the OS-enforced secure credential operation. A compatibility device may
+// reject the post-prompt Keystore operation; in that case we require a fresh
+// verifyIdentity prompt before reading the plugin's encrypted fallback store.
 // Returns null for every "not right now" case (cancelled, failed scan,
 // lockout, no credential stored, unavailable) — callers fall back to the
-// always-visible PIN field silently, with no error shown; only a
-// genuinely unexpected failure *after* a successful decrypt (e.g. the
-// caller's own unlock() rejecting) should ever surface an error.
+// always-visible PIN field silently, with no error shown.
 export async function retrieveBiometricPin(): Promise<string | null> {
   if (!Capacitor.isNativePlatform()) return null;
 
   try {
     const credentials = await NativeBiometric.getSecureCredentials({
       server: CREDENTIAL_SERVER,
-      reason: translate("lock.biometricPromptReason"),
-      title: translate("lock.biometricPromptTitle"),
-      subtitle: translate("lock.biometricPromptSubtitle"),
+      ...biometricPromptOptions,
     });
     return credentials.password;
-  } catch {
-    return null;
+  } catch (error) {
+    if (!isAndroidCompatibilityError(error) && !String(error ?? "").includes("No protected credentials found")) {
+      return null;
+    }
+
+    try {
+      return await runAndroidCompatibilityFallback();
+    } catch {
+      return null;
+    }
   }
 }
