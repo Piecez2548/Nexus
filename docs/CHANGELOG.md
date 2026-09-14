@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-14 — Android biometric credential fallback
+
+- Fixed the vivo V2348 setup failure where fingerprint authentication succeeded but Android returned a null `CryptoObject`, causing `Failed to encrypt credentials: null`. The native bridge now retains the cipher supplied to the prompt and safely reuses it for secure credential storage/retrieval, with a guarded failure path.
+
 ## 2026-09-14 — Verified QR repeat-scan identity
 
 - Persisted the verified QR payload inside encrypted transaction content and included it in Smart Import duplicate signals. Re-scanning the same slip now skips it even when OCR changes the date or time. Editing a transaction preserves this internal metadata. Added regression coverage for the repeat-scan case.

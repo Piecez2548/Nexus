@@ -1,3 +1,59 @@
+diff --git a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/AuthActivity.java b/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/AuthActivity.java
+index b6c7c19..8332ed0 100644
+--- a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/AuthActivity.java
++++ b/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/AuthActivity.java
+@@ -451,6 +451,7 @@ public class AuthActivity extends AppCompatActivity {
+                 key = getOrCreateCredentialKey(server, accessControl);
+                 cipher.init(Cipher.ENCRYPT_MODE, key);
+             }
++            authCipher = cipher;
+             return new BiometricPrompt.CryptoObject(cipher);
+         } catch (GeneralSecurityException | IOException e) {
+             return null;
+@@ -482,6 +483,7 @@ public class AuthActivity extends AppCompatActivity {
+                 prefs.edit().remove("secure_" + server).apply();
+                 return null;
+             }
++            authCipher = cipher;
+             return new BiometricPrompt.CryptoObject(cipher);
+         } catch (GeneralSecurityException | IOException e) {
+             return null;
+@@ -489,11 +491,33 @@ public class AuthActivity extends AppCompatActivity {
+     }
+ 
+     private void handleSetSecureCredentials(BiometricPrompt.AuthenticationResult result) {
+-        encryptAndStoreCredentials(result.getCryptoObject().getCipher());
++        Cipher cipher = authenticatedCipher(result);
++        if (cipher == null) {
++            finishActivity("error", 0, "Biometric crypto object unavailable");
++            return;
++        }
++        encryptAndStoreCredentials(cipher);
+     }
+ 
+     private void handleGetSecureCredentials(BiometricPrompt.AuthenticationResult result) {
+-        decryptAndReturnCredentials(result.getCryptoObject().getCipher());
++        Cipher cipher = authenticatedCipher(result);
++        if (cipher == null) {
++            finishActivity("error", 0, "Biometric crypto object unavailable");
++            return;
++        }
++        decryptAndReturnCredentials(cipher);
++    }
++
++    // A few Android biometric providers report a successful authentication with
++    // a null CryptoObject even though the cipher supplied to authenticate() is
++    // still the authenticated operation. Keep the cipher we created as a safe
++    // fallback instead of dereferencing a null result object and returning the
++    // opaque "...: null" error to the WebView.
++    private Cipher authenticatedCipher(BiometricPrompt.AuthenticationResult result) {
++        if (result != null && result.getCryptoObject() != null && result.getCryptoObject().getCipher() != null) {
++            return result.getCryptoObject().getCipher();
++        }
++        return authCipher;
+     }
+ 
+     private void encryptAndStoreCredentials(Cipher cipher) {
 diff --git a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java b/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java
 index d0f7703..78af60e 100644
 --- a/node_modules/@capgo/capacitor-native-biometric/android/src/main/java/ee/forgr/biometric/BiometricAuthenticatorConfig.java
