@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-14 — Android release signing readiness review
+
+- Verified that the Android `release` variant assembles reproducibly, but its signing report has no configuration and the output is `app-release-unsigned.apk`.
+- Recorded the artifact digest and `apksigner` failure evidence; no production keystore or signing secret was created or accessed. RB-012 remains In Progress. See [Android release signing readiness](ANDROID_RELEASE_SIGNING_READINESS_2026-09-14.md).
+
 ## 2026-09-14 — Final regression smoke
 
 - Re-ran the core and mobile browser smoke flows after the Settings UX pass: 5/5 Playwright tests passed, including mobile navigation, FAB, CRUD, reload and a narrow drawer form.
