@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-14 — Verified QR repeat-scan identity
+
+- Persisted the verified QR payload inside encrypted transaction content and included it in Smart Import duplicate signals. Re-scanning the same slip now skips it even when OCR changes the date or time. Editing a transaction preserves this internal metadata. Added regression coverage for the repeat-scan case.
+
 ## 2026-09-14 — Android QR scan benchmark
 
 - Measured the QR-only gallery path on a representative vivo V2348 gallery: 113 images in 108.7 seconds (~1.04 images/second), sampled p50 completion interval ~704 ms and p95 ~2,072 ms. A one-second p95 SLA remains unclaimed. The run also exposed a duplicate-identity gap when a repeat scan's OCR date shifted; follow-up correction is required before repeat-scan idempotency can be promised.

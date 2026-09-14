@@ -141,7 +141,9 @@ export default function TransactionForm() {
 
     try {
       if (selectedTransaction?.id !== undefined) {
-        await updateTransaction(selectedTransaction.id, data);
+        // Preserve importer metadata that has no visible form control (the
+        // verified QR payload is used for repeat-scan deduplication).
+        await updateTransaction(selectedTransaction.id, { ...selectedTransaction, ...data });
       } else {
         await addTransaction(data);
       }

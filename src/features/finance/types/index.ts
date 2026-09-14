@@ -33,6 +33,9 @@ export interface Transaction extends SyncMeta {
   // Identifier used by the Rule Engine / Learning Engine to recognize a
   // recurring payee (e.g. a phone number or PromptPay ID) across visits.
   recipient?: string;
+  // Raw verified QR payload used for deterministic repeat-scan dedupe. It is
+  // encrypted with the transaction content and never rendered in the form.
+  sourcePayload?: string;
   favorite?: boolean;
 }
 

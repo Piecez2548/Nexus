@@ -69,6 +69,7 @@ function referenceFromNote(note: string | undefined): string | undefined {
 // duplicate" stays one definition across every import path in the app.
 export function transactionSignals(transaction: Transaction): DuplicateSignals {
   return {
+    payload: transaction.sourcePayload,
     reference: referenceFromNote(transaction.note),
     amount: transaction.amount,
     merchant: transaction.title,

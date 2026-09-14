@@ -24,8 +24,8 @@ These completion intervals are queue-level observations, not isolated QR-decoder
 
 The benchmark required clearing the date-range scan cache. The repeat scan produced two additional PromptPay rows whose OCR date shifted to 14/9/2569, despite the original two rows already existing for 13/9/2569. Those two benchmark-created rows were removed immediately; the final Transactions table remains at the original two verified rows.
 
-This exposes a duplicate-identity gap: a verified QR payload is not currently persisted on the `Transaction` row, so a date change can lower the duplicate score enough for Smart Import to keep both rows. Do not claim repeat-scan idempotency until that identity is persisted or the duplicate policy is corrected.
+This exposed a duplicate-identity gap: a verified QR payload was not persisted on the `Transaction` row, so a date change could lower the duplicate score enough for Smart Import to keep both rows. The gap is now corrected by persisting the payload inside encrypted transaction content and using it as a duplicate signal; the regression is covered by Smart Import tests.
 
 ## Decision
 
-The current device result does not support a one-second p95 claim. The QR fast path is approximately one image per second on this representative gallery, with a long tail above two seconds and a duplicate-identity fix required before repeated scans can be considered safe.
+The current device result does not support a one-second p95 claim. The QR fast path is approximately one image per second on this representative gallery, with a long tail above two seconds. Repeat-scan identity is now deterministic for persisted verified QR imports.

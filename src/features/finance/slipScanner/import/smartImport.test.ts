@@ -146,6 +146,35 @@ describe("runSmartImport — conflict resolution against existing transactions",
     expect(created).toHaveLength(1);
   });
 
+  it("skips a repeat QR payload even when OCR date or time changed", async () => {
+    const { deps, created } = fakeDeps();
+    const payload = "000201010212...CRC";
+    const withExisting: SmartImportDeps = {
+      ...deps,
+      listTransactions: async () => [
+        {
+          title: "PromptPay",
+          amount: 40,
+          type: "expense",
+          account: "Cash",
+          date: "2026-09-13",
+          time: "12:30",
+          sourcePayload: payload,
+          status: "completed",
+        },
+      ],
+    };
+
+    const result = await runSmartImport(
+      [candidate({ id: "repeat", amount: 40, merchant: "PromptPay", date: "2026-09-14", time: "12:31", payload })],
+      withExisting,
+    );
+
+    expect(result.importedCandidateIds).toEqual([]);
+    expect(result.skippedDuplicates).toEqual([{ candidateId: "repeat", error: "duplicate-of-existing" }]);
+    expect(created).toHaveLength(0);
+  });
+
   it("KNOWN LIMIT: a same-payment duplicate with only 3 weak signals available (e.g. a notification-confirmed transaction later re-captured by a gallery scan) is kept, not silently auto-skipped -- by design, not by accident", async () => {
     // Payment Notification Capture confirms a transaction from bank push-
     // notification text, which sets neither a time (buildNotificationCandidate.ts

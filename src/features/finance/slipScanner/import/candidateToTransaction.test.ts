@@ -14,6 +14,11 @@ const candidate = (over: Partial<SlipCandidate>): SlipCandidate => ({
 });
 
 describe("candidateToTransaction", () => {
+  it("persists the QR payload for deterministic repeat-scan deduplication", () => {
+    const tx = candidateToTransaction(candidate({ amount: 120, payload: "000201010212...CRC" }));
+    expect(tx.sourcePayload).toBe("000201010212...CRC");
+  });
+
   it("maps a slip to a completed expense with bank + reference in the note", () => {
     const tx = candidateToTransaction(
       candidate({ merchant: "Coffee Shop", amount: 120, date: "2024-05-12", time: "14:30", bankName: "SCB", reference: "TX111" }),

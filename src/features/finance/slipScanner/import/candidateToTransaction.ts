@@ -110,6 +110,7 @@ export function candidateToTransaction(candidate: SlipCandidate, options: Candid
     date: candidate.date ?? today(),
     time: candidate.time,
     note: noteParts.length > 0 ? noteParts.join(" · ") : undefined,
+    sourcePayload: candidate.payload?.trim() || undefined,
     status: "completed",
   };
 }

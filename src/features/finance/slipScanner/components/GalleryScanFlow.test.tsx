@@ -18,7 +18,7 @@ const fakeExtractor: SlipExtractor = async ({ assetId }): Promise<SlipCandidate>
   confidence: 90,
   amount: 100,
   merchant: `Coffee Shop ${assetId}`,
-  payload: "verified-emvco-payload",
+  payload: `verified-emvco-payload-${assetId}`,
 });
 
 function file(name: string, content: string): File {

@@ -50,6 +50,8 @@ export function transactionSchema(t: TranslateFn) {
 
       recipient: z.string().optional(),
 
+      sourcePayload: z.string().optional(),
+
       status: transactionStatusEnum.optional(),
 
       recurring: z
