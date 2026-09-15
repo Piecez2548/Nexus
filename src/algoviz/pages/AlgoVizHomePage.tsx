@@ -1,4 +1,5 @@
-import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Play, Route } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, BarChart3, BookOpen, GitCompareArrows, Pause, Play, Route } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import type { AlgorithmDefinition } from "@/algorithms/shared/types";
@@ -28,36 +29,60 @@ const categories: AlgorithmDefinition[] = [
 ];
 
 function ExecutionPreview() {
+  const previewSteps = [
+    { node: "A", queue: "[B, C]", action: "Starting at A", explanation: "A is the starting node. Its neighbors become the first frontier to explore." },
+    { node: "B", queue: "[C, D]", action: "Visiting B", explanation: "B is the next node in the queue. Its neighbors are added to the frontier for the next level." },
+    { node: "C", queue: "[D, E]", action: "Visiting C", explanation: "C is now the next node to inspect. The queue preserves a level-by-level order." },
+  ] as const;
+  const [previewStep, setPreviewStep] = useState(1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const current = previewSteps[previewStep];
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const timer = window.setInterval(() => {
+      setPreviewStep((step) => (step + 1) % previewSteps.length);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [isPlaying, previewSteps.length]);
+
+  const movePreview = (direction: -1 | 1) => {
+    setPreviewStep((step) => (step + direction + previewSteps.length) % previewSteps.length);
+    setIsPlaying(false);
+  };
+
   return (
     <div className="algoviz-preview" aria-label="Illustrative graph execution preview">
       <div className="algoviz-preview-toolbar">
-        <span><span className="algoviz-live-dot" aria-hidden="true" /> Execution surface</span>
-        <span className="algoviz-preview-step">Step 04 <span>/</span> 12</span>
+        <span><span className="algoviz-live-dot" aria-hidden="true" /> Illustrative execution preview</span>
+        <span className="algoviz-preview-step">Step 0{previewStep + 1} <span>/</span> 03</span>
       </div>
       <div className="algoviz-preview-body">
         <div className="algoviz-graph" aria-hidden="true">
           <svg className="algoviz-graph-lines" viewBox="0 0 480 280" preserveAspectRatio="none">
             <path d="M84 65 L238 44 L392 84 M84 65 L160 188 L302 156 L392 84 M160 188 L302 236 L392 84" />
           </svg>
-          <span className="algoviz-node node-a">A</span>
-          <span className="algoviz-node node-b is-current">B</span>
-          <span className="algoviz-node node-c is-frontier">C</span>
+          <span className={`algoviz-node node-a ${current.node === "A" ? "is-current" : ""}`}>A</span>
+          <span className={`algoviz-node node-b ${current.node === "B" ? "is-current" : "is-visited"}`}>B</span>
+          <span className={`algoviz-node node-c ${current.node === "C" ? "is-current" : "is-frontier"}`}>C</span>
           <span className="algoviz-node node-d is-visited">D</span>
           <span className="algoviz-node node-e is-goal">E</span>
         </div>
         <aside className="algoviz-step-note">
           <span className="algoviz-note-label">Current action</span>
-          <strong>Visiting B</strong>
-          <p>B is the next node in the queue. Its neighbors are added to the frontier for the next level.</p>
-          <div className="algoviz-note-meta"><span>Queue</span><code>[C, D]</code></div>
+          <strong>{current.action}</strong>
+          <p>{current.explanation}</p>
+          <div className="algoviz-note-meta"><span>Queue</span><code>{current.queue}</code></div>
         </aside>
       </div>
-      <div className="algoviz-preview-controls" aria-hidden="true">
-        <button type="button" tabIndex={-1}><span>←</span></button>
-        <button type="button" className="is-play" tabIndex={-1}><Play size={15} fill="currentColor" /></button>
-        <button type="button" tabIndex={-1}><span>→</span></button>
+      <div className="algoviz-preview-controls" aria-label="Preview controls">
+        <button type="button" aria-label="Previous preview step" onClick={() => movePreview(-1)}><span aria-hidden="true">←</span></button>
+        <button type="button" className="is-play" aria-label={isPlaying ? "Pause preview" : "Play preview"} onClick={() => setIsPlaying((playing) => !playing)}>
+          {isPlaying ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" />}
+        </button>
+        <button type="button" aria-label="Next preview step" onClick={() => movePreview(1)}><span aria-hidden="true">→</span></button>
         <span className="algoviz-control-rule" />
-        <span>Speed <b>1×</b></span>
+        <span>Preview <b>{isPlaying ? "Playing" : "Ready"}</b></span>
       </div>
     </div>
   );
