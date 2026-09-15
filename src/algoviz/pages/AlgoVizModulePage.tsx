@@ -33,7 +33,7 @@ function CompareLab() {
   const dijkstra = runDijkstra(); const aStar = runAStar();
   const dijkstraPath = dijkstra.steps.find((step) => step.type === "path")?.dataStructure?.[0]?.value ?? "—";
   const aStarPath = aStar.steps.find((step) => step.type === "path")?.dataStructure?.[0]?.value ?? "—";
-  const lastMetric = (execution: typeof dijkstra) => execution.steps.at(-2)?.metrics?.visitedNodes ?? 0;
+  const lastMetric = (execution: typeof dijkstra) => Math.max(...execution.steps.map((step) => step.metrics?.visitedNodes ?? step.visited?.length ?? 0));
   return <section className="algoviz-compare-lab" aria-label="Algorithm comparison">
     <div className="algoviz-compare-summary"><div><span>Shared input</span><strong>Weighted graph · A → F</strong></div><div><span>Shortest path</span><strong>{dijkstraPath}</strong></div><div><span>Result</span><strong>Both reach the same optimum</strong></div></div>
     <div className="algoviz-compare-cards"><CompareCard name="Dijkstra's Algorithm" execution={dijkstra} metric={lastMetric(dijkstra)} path={dijkstraPath} /><CompareCard name="A* Search" execution={aStar} metric={lastMetric(aStar)} path={aStarPath} /></div>
