@@ -29,16 +29,16 @@ const categories: AlgorithmDefinition[] = [
 ];
 
 const algorithmCatalog = [
-  { name: "Breadth-First Search", shortName: "BFS", category: "search", complexity: "O(V + E)", summary: "Explore level by level with a queue." },
-  { name: "Depth-First Search", shortName: "DFS", category: "search", complexity: "O(V + E)", summary: "Go deep before backtracking with a stack." },
-  { name: "Greedy Best-First Search", shortName: "GBFS", category: "search", complexity: "Heuristic", summary: "Choose the frontier node that looks closest." },
-  { name: "Dijkstra's Algorithm", shortName: "Dijkstra", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Relax edges to find shortest weighted paths." },
-  { name: "A* Search", shortName: "A*", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Combine cost-so-far with a heuristic." },
-  { name: "Bubble Sort", shortName: "Bubble", category: "sorting", complexity: "O(n²)", summary: "Bubble the largest values to the end." },
-  { name: "Selection Sort", shortName: "Selection", category: "sorting", complexity: "O(n²)", summary: "Select the next smallest value." },
-  { name: "Insertion Sort", shortName: "Insertion", category: "sorting", complexity: "O(n²)", summary: "Insert each value into a sorted prefix." },
-  { name: "Merge Sort", shortName: "Merge", category: "sorting", complexity: "O(n log n)", summary: "Divide, sort, and merge ordered runs." },
-  { name: "Quick Sort", shortName: "Quick", category: "sorting", complexity: "O(n log n)", summary: "Partition around a pivot and recurse." },
+  { id: "bfs", name: "Breadth-First Search", shortName: "BFS", category: "search", complexity: "O(V + E)", summary: "Explore level by level with a queue." },
+  { id: "dfs", name: "Depth-First Search", shortName: "DFS", category: "search", complexity: "O(V + E)", summary: "Go deep before backtracking with a stack." },
+  { id: "greedy-best-first", name: "Greedy Best-First Search", shortName: "GBFS", category: "search", complexity: "Heuristic", summary: "Choose the frontier node that looks closest." },
+  { id: "dijkstra", name: "Dijkstra's Algorithm", shortName: "Dijkstra", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Relax edges to find shortest weighted paths." },
+  { id: "a-star", name: "A* Search", shortName: "A*", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Combine cost-so-far with a heuristic." },
+  { id: "bubble", name: "Bubble Sort", shortName: "Bubble", category: "sorting", complexity: "O(n²)", summary: "Bubble the largest values to the end." },
+  { id: "selection", name: "Selection Sort", shortName: "Selection", category: "sorting", complexity: "O(n²)", summary: "Select the next smallest value." },
+  { id: "insertion", name: "Insertion Sort", shortName: "Insertion", category: "sorting", complexity: "O(n²)", summary: "Insert each value into a sorted prefix." },
+  { id: "merge", name: "Merge Sort", shortName: "Merge", category: "sorting", complexity: "O(n log n)", summary: "Divide, sort, and merge ordered runs." },
+  { id: "quick", name: "Quick Sort", shortName: "Quick", category: "sorting", complexity: "O(n log n)", summary: "Partition around a pivot and recurse." },
 ] as const;
 
 function ExecutionPreview() {
@@ -152,7 +152,7 @@ export default function AlgoVizHomePage() {
         </div>
         <div className="algoviz-catalog-grid">
           {algorithmCatalog.map((algorithm, index) => (
-            <Link className="algoviz-catalog-card" to={`/algoviz/${algorithm.category}`} key={algorithm.shortName}>
+            <Link className="algoviz-catalog-card" to={`/algoviz/${algorithm.category}?algorithm=${algorithm.id}`} key={algorithm.shortName}>
               <span className="algoviz-catalog-number">{String(index + 1).padStart(2, "0")}</span>
               <span className={`algoviz-catalog-tag icon-${algorithm.category}`}>{algorithm.shortName}</span>
               <strong>{algorithm.name}</strong>

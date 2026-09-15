@@ -20,6 +20,9 @@ export function AlgoVizLab({ category, options, defaultAlgorithm }: AlgoVizLabPr
   const execution = useMemo(() => options.find((option) => option.id === algorithmId)?.run() ?? options[0].run(), [algorithmId, options]);
   const step = execution.steps[Math.min(stepIndex, execution.steps.length - 1)];
 
+  useEffect(() => {
+    if (options.some((option) => option.id === defaultAlgorithm)) setAlgorithmId(defaultAlgorithm);
+  }, [defaultAlgorithm, options]);
   useEffect(() => { setStepIndex(0); setIsPlaying(false); }, [algorithmId]);
   useEffect(() => {
     if (!isPlaying) return;

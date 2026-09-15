@@ -17,6 +17,10 @@ export default function AlgoVizModulePage() {
   const key = location.pathname.split("/").filter(Boolean).at(-1) as keyof typeof moduleContent;
   const module = moduleContent[key] ?? moduleContent.search;
   const Icon = module.icon;
+  const requestedAlgorithm = new URLSearchParams(location.search).get("algorithm");
+  const selectedAlgorithm = "options" in module
+    ? module.options.find((option) => option.id === requestedAlgorithm)?.id ?? module.defaultAlgorithm
+    : "";
   return <div className="algoviz-page algoviz-module-page">
     <section className="algoviz-module-hero">
       <Link className="algoviz-back-link" to="/algoviz"><ArrowLeft size={16} /> Back to Learn</Link>
@@ -25,7 +29,7 @@ export default function AlgoVizModulePage() {
       <h1>{module.name}</h1>
       <p className="algoviz-module-lede">{module.description}</p>
     </section>
-    {module.category === "compare" ? <CompareLab /> : <AlgoVizLab category={module.category} options={module.options as readonly LabOption[]} defaultAlgorithm={module.defaultAlgorithm} />}
+    {module.category === "compare" ? <CompareLab /> : <AlgoVizLab category={module.category} options={module.options as readonly LabOption[]} defaultAlgorithm={selectedAlgorithm} />}
   </div>;
 }
 
