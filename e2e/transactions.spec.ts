@@ -81,8 +81,9 @@ test.describe("transaction lifecycle", () => {
   test("the slip scanner opens, accepts an image, and starts on-device OCR", async ({ page }) => {
     await page.goto("/transactions");
 
-    await page.getByRole("button", { name: "Scan Slip" }).click();
-    await expect(page.getByText("Everything is processed on-device")).toBeVisible();
+    await page.locator("button").filter({ hasText: "Scan Gallery" }).click();
+    await expect(page.getByText("Scan your gallery")).toBeVisible();
+    await page.getByRole("button", { name: "Scan all photos" }).click();
 
     // A minimal 1x1 PNG — real OCR accuracy isn't what this test is checking;
     // it's confirming the on-device Tesseract pipeline actually starts inside
@@ -92,32 +93,33 @@ test.describe("transaction lifecycle", () => {
       "base64"
     );
 
-    await page.getByLabel(/Choose from Gallery/).setInputFiles({
+    await page.getByLabel("Scan Gallery").setInputFiles({
       name: "slip.png",
       mimeType: "image/png",
       buffer: pngBuffer,
     });
 
-    await expect(page.getByText("Reading slip...")).toBeVisible();
+    await expect(page.getByText("Scan progress")).toBeVisible();
   });
 
   test("selecting multiple slips from the gallery starts a batch scan and shows a review list", async ({ page }) => {
     await page.goto("/transactions");
 
-    await page.getByRole("button", { name: "Scan Slip" }).click();
+    await page.locator("button").filter({ hasText: "Scan Gallery" }).click();
+    await page.getByRole("button", { name: "Scan all photos" }).click();
 
     const pngBuffer = Buffer.from(
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
       "base64"
     );
 
-    await page.getByLabel(/Choose from Gallery/).setInputFiles([
+    await page.getByLabel("Scan Gallery").setInputFiles([
       { name: "slip1.png", mimeType: "image/png", buffer: pngBuffer },
       { name: "slip2.png", mimeType: "image/png", buffer: pngBuffer },
     ]);
 
-    await expect(page.getByText(/Reading slip \d\/2/)).toBeVisible();
-    await expect(page.getByText("Found 2 items — review before saving")).toBeVisible({ timeout: 30000 });
-    await expect(page.getByRole("button", { name: /Save All/ })).toBeVisible();
+    await expect(page.getByText("Scan progress")).toBeVisible();
+    await expect(page.getByText("Import preview")).toBeVisible({ timeout: 60000 });
+    await expect(page.getByRole("button", { name: /Import \d+ selected/ })).toBeVisible();
   });
 });
