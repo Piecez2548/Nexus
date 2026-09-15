@@ -28,6 +28,19 @@ const categories: AlgorithmDefinition[] = [
   },
 ];
 
+const algorithmCatalog = [
+  { name: "Breadth-First Search", shortName: "BFS", category: "search", complexity: "O(V + E)", summary: "Explore level by level with a queue." },
+  { name: "Depth-First Search", shortName: "DFS", category: "search", complexity: "O(V + E)", summary: "Go deep before backtracking with a stack." },
+  { name: "Greedy Best-First Search", shortName: "GBFS", category: "search", complexity: "Heuristic", summary: "Choose the frontier node that looks closest." },
+  { name: "Dijkstra's Algorithm", shortName: "Dijkstra", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Relax edges to find shortest weighted paths." },
+  { name: "A* Search", shortName: "A*", category: "pathfinding", complexity: "O((V + E) log V)", summary: "Combine cost-so-far with a heuristic." },
+  { name: "Bubble Sort", shortName: "Bubble", category: "sorting", complexity: "O(n²)", summary: "Bubble the largest values to the end." },
+  { name: "Selection Sort", shortName: "Selection", category: "sorting", complexity: "O(n²)", summary: "Select the next smallest value." },
+  { name: "Insertion Sort", shortName: "Insertion", category: "sorting", complexity: "O(n²)", summary: "Insert each value into a sorted prefix." },
+  { name: "Merge Sort", shortName: "Merge", category: "sorting", complexity: "O(n log n)", summary: "Divide, sort, and merge ordered runs." },
+  { name: "Quick Sort", shortName: "Quick", category: "sorting", complexity: "O(n log n)", summary: "Partition around a pivot and recurse." },
+] as const;
+
 function ExecutionPreview() {
   const previewSteps = [
     { node: "A", queue: "[B, C]", action: "Starting at A", explanation: "A is the starting node. Its neighbors become the first frontier to explore." },
@@ -124,6 +137,27 @@ export default function AlgoVizHomePage() {
               <span className="algoviz-category-index">0{index + 1}</span>
               <span className="algoviz-category-copy"><strong>{category.name}</strong><span>{category.summary}</span></span>
               <span className="algoviz-category-status">{category.status === "planned" ? "Planned" : "Live lab"} <ArrowRight size={17} /></span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="algoviz-section algoviz-catalog-section" aria-labelledby="catalog-heading">
+        <div className="algoviz-section-heading">
+          <div>
+            <p className="algoviz-eyebrow">Algorithm catalog</p>
+            <h2 id="catalog-heading">The complete starter set.</h2>
+          </div>
+          <p>Ten core algorithms for teaching graph search, shortest paths, and sorting with the same step-by-step contract.</p>
+        </div>
+        <div className="algoviz-catalog-grid">
+          {algorithmCatalog.map((algorithm, index) => (
+            <Link className="algoviz-catalog-card" to={`/algoviz/${algorithm.category}`} key={algorithm.shortName}>
+              <span className="algoviz-catalog-number">{String(index + 1).padStart(2, "0")}</span>
+              <span className={`algoviz-catalog-tag icon-${algorithm.category}`}>{algorithm.shortName}</span>
+              <strong>{algorithm.name}</strong>
+              <span>{algorithm.summary}</span>
+              <code>{algorithm.complexity}</code>
             </Link>
           ))}
         </div>

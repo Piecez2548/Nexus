@@ -2,13 +2,13 @@ import { ArrowLeft, GitCompareArrows, Route, Search, Sigma } from "lucide-react"
 import { Link, useLocation } from "react-router-dom";
 import { runAStar, runDijkstra } from "../../algorithms/pathfinding/pathfindingAlgorithms";
 import { runBfs, runDfs, runGreedyBestFirst } from "../../algorithms/search/searchAlgorithms";
-import { runBubbleSort, runInsertionSort, runSelectionSort } from "../../algorithms/sorting/sortingAlgorithms";
+import { runBubbleSort, runInsertionSort, runMergeSort, runQuickSort, runSelectionSort } from "../../algorithms/sorting/sortingAlgorithms";
 import { AlgoVizLab, type LabOption } from "../components/AlgoVizLab";
 
 const moduleContent = {
   search: { icon: Search, name: "Search algorithms", description: "Explore BFS, DFS, and Greedy Best-First Search step by step.", category: "search" as const, eyebrow: "Graph search lab", defaultAlgorithm: "bfs", options: [{ id: "bfs", name: "Breadth-First Search", run: runBfs }, { id: "dfs", name: "Depth-First Search", run: runDfs }, { id: "greedy-best-first", name: "Greedy Best-First Search", run: runGreedyBestFirst }] },
   pathfinding: { icon: Route, name: "Pathfinding", description: "Compare distance, heuristics, and shortest paths on the same weighted graph.", category: "pathfinding" as const, eyebrow: "Weighted graph lab", defaultAlgorithm: "dijkstra", options: [{ id: "dijkstra", name: "Dijkstra's Algorithm", run: runDijkstra }, { id: "a-star", name: "A* Search", run: runAStar }] },
-  sorting: { icon: Sigma, name: "Sorting algorithms", description: "Watch comparisons and swaps turn an unsorted array into order.", category: "sorting" as const, eyebrow: "Array sorting lab", defaultAlgorithm: "bubble", options: [{ id: "bubble", name: "Bubble Sort", run: runBubbleSort }, { id: "selection", name: "Selection Sort", run: runSelectionSort }, { id: "insertion", name: "Insertion Sort", run: runInsertionSort }] },
+  sorting: { icon: Sigma, name: "Sorting algorithms", description: "Watch comparisons and swaps turn an unsorted array into order.", category: "sorting" as const, eyebrow: "Array sorting lab", defaultAlgorithm: "bubble", options: [{ id: "bubble", name: "Bubble Sort", run: runBubbleSort }, { id: "selection", name: "Selection Sort", run: runSelectionSort }, { id: "insertion", name: "Insertion Sort", run: runInsertionSort }, { id: "merge", name: "Merge Sort", run: runMergeSort }, { id: "quick", name: "Quick Sort", run: runQuickSort }] },
   compare: { icon: GitCompareArrows, name: "Compare algorithms", description: "Run real executions against shared inputs and inspect the difference.", category: "compare" as const, eyebrow: "Comparison lab" },
 } as const;
 
