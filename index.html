@@ -10,6 +10,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ScreenTutor" />
     <title>ScreenTutor — See. Understand. Learn.</title>
+    <script>
+      try {
+        const savedTheme = JSON.parse(localStorage.getItem("nexus-app-settings") || "{}").state?.themeMode || "dark";
+        const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const isDark = savedTheme === "dark" || (savedTheme === "system" && systemDark);
+        document.documentElement.classList.toggle("dark", isDark);
+        document.documentElement.classList.toggle("mono", savedTheme === "mono");
+      } catch { document.documentElement.classList.add("dark"); }
+    </script>
     <style id="entry-shell-style">
       .entry-shell{min-height:100svh;background:#f5f7f4;color:#1e2a23;font-family:system-ui,"Leelawadee UI",Tahoma,sans-serif;padding:0 20px;display:flex;flex-direction:column}
       .entry-shell__header{min-height:80px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #dce4dd;font-size:14px}
