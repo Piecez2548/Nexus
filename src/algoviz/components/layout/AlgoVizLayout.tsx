@@ -81,7 +81,7 @@ export default function AlgoVizLayout() {
       </main>
 
       <footer className="algoviz-footer">
-        <span>AlgoViz foundation · Milestone 1</span>
+        <span>AlgoViz interactive labs · deterministic steps</span>
         <span className="algoviz-footer-note"><GitCompareArrows size={15} aria-hidden="true" /> Built for understanding</span>
       </footer>
     </div>
