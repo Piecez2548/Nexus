@@ -31,6 +31,28 @@ export default function ScreenTutorApp() {
   const [mobileNav, setMobileNav] = useState(false);
   const { settings, region, history, setRegion, setSettings, addHistory, deleteHistory, clearHistory } = useScreenTutorStore();
 
+  const chooseRegion = async () => {
+    const nativeSelector = window.screenTutor?.selectRegion;
+    if (!nativeSelector) {
+      setSelectionMode(true);
+      return;
+    }
+
+    setNotice("Select a region anywhere on your desktop. Press Esc to cancel.");
+    try {
+      const next = await nativeSelector();
+      if (next) {
+        setRegion(next);
+        setRegionDraft(next);
+        setNotice("Region saved");
+      } else {
+        setNotice(null);
+      }
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Unable to select a desktop region.");
+    }
+  };
+
   const runAnalysis = async (sourceText = ocrText) => {
     if (status === "capturing" || status === "reading" || status === "thinking") return;
     const started = performance.now();
@@ -63,10 +85,12 @@ export default function ScreenTutorApp() {
       const totalTime = Math.round(performance.now() - started);
       if (settings.storeHistory) addHistory({ id: crypto.randomUUID(), timestamp: new Date().toISOString(), ocrText: recognized, contentType, analysis: nextAnalysis, processingTime: totalTime });
       setShowCapture(true);
+      window.screenTutor?.showResult();
       void captureTime;
     } catch (error) {
       setStatus("error");
       setNotice(error instanceof Error ? error.message : "Something went wrong while reading this region.");
+      window.screenTutor?.showResult();
     }
   };
 
@@ -108,7 +132,7 @@ export default function ScreenTutorApp() {
       {mobileNav && <button className="st-backdrop" aria-label="Close navigation" onClick={() => setMobileNav(false)} />}
       <main className="st-main">
         <header className="st-topbar"><button className="st-icon-button st-menu-button" aria-label="Open navigation" onClick={() => setMobileNav(true)}><Menu size={20} /></button><div><p className="st-breadcrumb">ScreenTutor <span>/</span> {pageTitle}</p><h1>{pageTitle}</h1></div><div className="st-topbar-actions"><ConnectionPill connected={ollamaConnected} /><button className="st-icon-button" aria-label="Help"><CircleHelp size={19} /></button><button className="st-avatar" aria-label="Profile">ST</button></div></header>
-        <div className="st-content">{page === "home" && <HomeView region={region} settings={settings} status={status} ollamaConnected={ollamaConnected} onSelect={() => setSelectionMode(true)} onCapture={() => void runAnalysis()} onDebug={() => setShowDebug(true)} />}{page === "history" && <HistoryView history={history} onDelete={deleteHistory} onClear={clearHistory} onOpen={(entry) => { setOcrText(entry.ocrText); setAnalysis(entry.analysis); setShowCapture(true); }} />}{page === "settings" && <SettingsView settings={settings} region={region} models={models} onSettings={setSettings} onSelect={() => setSelectionMode(true)} onReset={() => setRegion(null)} onClear={clearHistory} />}</div>
+        <div className="st-content">{page === "home" && <HomeView region={region} settings={settings} status={status} ollamaConnected={ollamaConnected} onSelect={() => void chooseRegion()} onCapture={() => void runAnalysis()} onDebug={() => setShowDebug(true)} />}{page === "history" && <HistoryView history={history} onDelete={deleteHistory} onClear={clearHistory} onOpen={(entry) => { setOcrText(entry.ocrText); setAnalysis(entry.analysis); setShowCapture(true); }} />}{page === "settings" && <SettingsView settings={settings} region={region} models={models} onSettings={setSettings} onSelect={() => void chooseRegion()} onReset={() => setRegion(null)} onClear={clearHistory} />}</div>
       </main>
       {selectionMode && <RegionSelector initial={region} onCancel={() => setSelectionMode(false)} onSave={(next) => { setRegion(next); setRegionDraft(next); setSelectionMode(false); setNotice("Region saved"); }} />}
       {showCapture && analysis && <ResultOverlay analysis={analysis} ocrText={ocrText} onClose={() => setShowCapture(false)} onMore={() => { setShowCapture(false); setShowDebug(true); }} />}

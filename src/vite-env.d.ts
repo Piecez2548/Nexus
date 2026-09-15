@@ -6,6 +6,8 @@ declare global {
   interface Window {
     screenTutor?: {
       captureRegion: (region: ScreenRegion) => Promise<string>;
+      selectRegion: () => Promise<ScreenRegion | null>;
+      showResult: () => void;
       onHotkey: (callback: () => void) => () => void;
     };
   }

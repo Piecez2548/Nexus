@@ -16,7 +16,7 @@ ollama pull qwen2.5:3b
 npm run electron:dev
 ```
 
-The browser preview is also available with `npm run dev`. Ollama is optional for the UI preview; the test-capture action uses a local demo response when no model is connected. Native region capture is available in the Electron desktop wrapper.
+The browser preview is also available with `npm run dev`. Ollama is optional for the UI preview; the test-capture action uses a local demo response when no model is connected. For cross-app capture, run the Electron desktop wrapper with `npm run electron:dev`: `Ctrl + Shift + Space` works over other Windows programs, and `Select screen region` opens a native always-on-top desktop selector. The Vercel preview cannot capture other applications because browsers are sandboxed.
 
 ## ScreenTutor MVP features
 
