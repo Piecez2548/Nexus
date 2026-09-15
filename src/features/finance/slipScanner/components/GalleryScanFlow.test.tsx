@@ -62,6 +62,12 @@ describe("GalleryScanFlow", () => {
     expect(screen.getByText("Scan your gallery")).toBeInTheDocument();
   });
 
+  it("can open the setup popup immediately for shared page entry points", () => {
+    render(<GalleryScanFlow automaticScan={false} initialOpen />);
+
+    expect(screen.getByText("Scan your gallery")).toBeInTheDocument();
+  });
+
   it("shows the date-range picker in the scan setup popup, defaulting to blank (whole gallery)", async () => {
     const user = userEvent.setup();
     render(<GalleryScanFlow />);

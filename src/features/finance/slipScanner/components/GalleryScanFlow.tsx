@@ -36,6 +36,12 @@ interface Props {
   // Injectable so tests can supply a fake instead of the real jsQR + Tesseract
   // pipeline (injectable so tests can supply a deterministic extractor).
   extractor?: SlipExtractor;
+  // Background gallery enumeration is kept opt-in for shared entry points so
+  // mounting the scanner on every route does not start a native scan by itself.
+  automaticScan?: boolean;
+  // Shared entry points can open the setup drawer immediately after the lazy
+  // scanner bundle finishes loading.
+  initialOpen?: boolean;
 }
 
 // The live Gallery Scanner entry point: a Scan button that drives the whole
@@ -53,12 +59,12 @@ interface Props {
 // time to "just these banks' slips" the way a manual picker could) — so it
 // still gates *when* scanning starts (matching the existing UX), not *what*
 // gets scanned.
-export default function GalleryScanFlow({ extractor }: Props) {
+export default function GalleryScanFlow({ extractor, automaticScan = true, initialOpen = false }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<Phase>(() => (initialOpen ? "banks" : "idle"));
   const [selectedBankIds, setSelectedBankIds] = useState<string[]>([]);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -78,7 +84,7 @@ export default function GalleryScanFlow({ extractor }: Props) {
   // The OS permission is requested once; subsequent visits are hands-free and
   // the persistent scan cache prevents rescanning the same image.
   useEffect(() => {
-    if (!isNativeGalleryAvailable() || automaticScanInFlight) return;
+    if (!automaticScan || !isNativeGalleryAvailable() || automaticScanInFlight) return;
 
     let active = true;
     automaticScanInFlight = true;
@@ -122,7 +128,7 @@ export default function GalleryScanFlow({ extractor }: Props) {
     // Run once for this page visit. Schedule values are intentionally captured
     // at entry; changing settings applies on the next visit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [automaticScan]);
 
   // Completed scans can leave OCR candidates waiting for a person to review.
   // Restore them before allowing another scan so closing the app does not

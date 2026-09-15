@@ -55,6 +55,15 @@ describe("TopBar", () => {
     expect(useAppSettingsStore.getState().themeMode).toBe("light");
   });
 
+  it("opens the gallery scanner from the shared top bar", async () => {
+    const user = userEvent.setup();
+    renderTopBar();
+
+    await user.click(screen.getByRole("button", { name: "Scan Gallery" }));
+
+    expect(await screen.findByText("Scan your gallery")).toBeInTheDocument();
+  });
+
   it("shows a budget-over-limit notification in the bell dropdown", async () => {
     await db.budgets.add({ category: "Food", amount: 1000, period: "monthly" });
     await db.transactions.add({

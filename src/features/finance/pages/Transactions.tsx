@@ -8,7 +8,6 @@ import { useAccountStore } from "@/features/finance/store/accountStore";
 
 import TransactionTable from "@/features/finance/components/TransactionTable";
 import TransactionToolbar from "@/features/finance/components/TransactionToolbar";
-import GalleryScanFlow from "@/features/finance/slipScanner/components/GalleryScanFlow";
 import LoadingState from "@/components/ui/LoadingState";
 import ErrorState from "@/components/ui/ErrorState";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -97,8 +96,6 @@ export default function Transactions() {
         </h1>
 
         <div className="flex gap-3">
-          <GalleryScanFlow />
-
           <button
             onClick={handleAddClick}
             className="hidden items-center gap-2 rounded-xl px-4 py-2 transition md:flex nexus-primary-action"

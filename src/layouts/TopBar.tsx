@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Moon, Sun } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Images, Moon, Sun } from "lucide-react";
 
 import { useAppSettingsStore } from "@/store/appSettingsStore";
 import { useResolvedTheme } from "@/hooks/useResolvedTheme";
@@ -11,6 +11,8 @@ import GlobalSearch from "./GlobalSearch";
 import NotificationsMenu from "./NotificationsMenu";
 import UserMenu from "./UserMenu";
 import LevelBadge from "./LevelBadge";
+
+const GalleryScanFlow = lazy(() => import("@/features/finance/slipScanner/components/GalleryScanFlow"));
 
 export default function TopBar() {
   const themeMode = useAppSettingsStore((s) => s.themeMode);
@@ -44,6 +46,8 @@ export default function TopBar() {
 
         <LevelBadge />
 
+        <GlobalGalleryScan />
+
         <button
           type="button"
           onClick={() => setThemeMode(isDark ? "light" : "dark")}
@@ -62,5 +66,36 @@ export default function TopBar() {
       </div>
 
     </header>
+  );
+}
+
+function GlobalGalleryScan() {
+  const { t } = useTranslation();
+  const [scannerLoaded, setScannerLoaded] = useState(false);
+
+  if (!scannerLoaded) {
+    return (
+      <button
+        type="button"
+        onClick={() => setScannerLoaded(true)}
+        className="flex min-h-11 items-center gap-2 rounded-xl border border-zinc-300 px-3 py-2 text-sm transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+      >
+        <Images size={18} aria-hidden="true" />
+        {t("transactions.scanGallery")}
+      </button>
+    );
+  }
+
+  return (
+    <Suspense
+      fallback={
+        <button type="button" disabled className="flex min-h-11 items-center gap-2 rounded-xl border border-zinc-300 px-3 py-2 text-sm opacity-60 dark:border-zinc-700">
+          <Images size={18} aria-hidden="true" />
+          {t("transactions.scanGallery")}
+        </button>
+      }
+    >
+      <GalleryScanFlow automaticScan={false} initialOpen />
+    </Suspense>
   );
 }
