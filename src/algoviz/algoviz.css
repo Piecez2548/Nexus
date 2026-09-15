@@ -1,0 +1,118 @@
+.algoviz-app {
+  --algo-bg: #0d1020;
+  --algo-surface: #151a2d;
+  --algo-surface-raised: #1b2239;
+  --algo-ink: #eef1ff;
+  --algo-muted: #a4acc7;
+  --algo-faint: #737c9f;
+  --algo-line: #2b3555;
+  --algo-accent: #a8ffcb;
+  --algo-accent-ink: #092017;
+  --algo-blue: #aab9ff;
+  --algo-yellow: #f5d36b;
+  min-height: 100dvh;
+  background: var(--algo-bg);
+  color: var(--algo-ink);
+  font-family: Manrope, "Noto Sans Thai", sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.algoviz-app *, .algoviz-app *::before, .algoviz-app *::after { box-sizing: border-box; }
+.algoviz-app ::selection { background: var(--algo-accent); color: var(--algo-accent-ink); }
+.algoviz-app :focus-visible { outline: 3px solid var(--algo-accent); outline-offset: 4px; }
+.algoviz-app a { color: inherit; }
+.algoviz-app button, .algoviz-app a { -webkit-tap-highlight-color: transparent; }
+
+.algoviz-skip-link {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+  padding: 0.7rem 0.9rem;
+  border-radius: 7px;
+  background: var(--algo-accent);
+  color: var(--algo-accent-ink);
+  transform: translateY(-160%);
+}
+.algoviz-skip-link:focus { transform: translateY(0); }
+
+.algoviz-header { border-bottom: 1px solid var(--algo-line); }
+.algoviz-header-inner { display: flex; align-items: center; gap: 2rem; width: min(1180px, calc(100% - 48px)); min-height: 76px; margin: 0 auto; }
+.algoviz-brand { display: inline-flex; align-items: center; gap: 0.65rem; color: var(--algo-ink); font-size: 1.1rem; font-weight: 800; letter-spacing: -0.04em; text-decoration: none; }
+.algoviz-brand-mark { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid var(--algo-accent); border-radius: 8px; color: var(--algo-accent); }
+.algoviz-desktop-nav { display: flex; align-items: center; gap: 1.45rem; margin-left: auto; }
+.algoviz-nav-link { position: relative; padding: 0.5rem 0; color: var(--algo-muted); font-size: 0.82rem; font-weight: 700; text-decoration: none; transition: color 160ms ease; }
+.algoviz-nav-link:hover, .algoviz-nav-link.is-active { color: var(--algo-ink); }
+.algoviz-nav-link.is-active::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: var(--algo-accent); content: ""; }
+.algoviz-header-actions { display: flex; align-items: center; gap: 0.9rem; }
+.algoviz-status-pill { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.45rem 0.65rem; border: 1px solid var(--algo-line); border-radius: 999px; color: var(--algo-muted); font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
+.algoviz-status-pill span { width: 6px; height: 6px; border-radius: 50%; background: var(--algo-accent); box-shadow: 0 0 0 3px #a8ffcb22; }
+.algoviz-menu-button { display: none; width: 44px; height: 44px; border: 1px solid var(--algo-line); border-radius: 7px; background: transparent; color: var(--algo-ink); cursor: pointer; }
+.algoviz-mobile-nav { display: none; }
+
+.algoviz-page { width: min(1180px, calc(100% - 48px)); margin: 0 auto; }
+.algoviz-hero { display: grid; grid-template-columns: minmax(0, 0.88fr) minmax(520px, 1.12fr); gap: clamp(40px, 7vw, 96px); align-items: center; min-height: 600px; padding: 92px 0 82px; }
+.algoviz-hero-copy { max-width: 550px; }
+.algoviz-eyebrow { margin: 0 0 1.25rem; color: var(--algo-accent); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.algoviz-eyebrow span { padding: 0 0.35rem; color: var(--algo-faint); }
+.algoviz-hero h1, .algoviz-module-page h1 { max-width: 10ch; margin: 0; color: var(--algo-ink); font-size: clamp(3.2rem, 6.7vw, 6rem); font-weight: 500; letter-spacing: -0.065em; line-height: 0.98; }
+.algoviz-hero h1 em { color: var(--algo-accent); font-style: normal; }
+.algoviz-hero-lede { max-width: 42ch; margin: 2rem 0 0; color: var(--algo-muted); font-size: 1.05rem; line-height: 1.7; }
+.algoviz-hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.15rem; }
+.algoviz-button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 0.6rem; padding: 0.75rem 1rem; border: 1px solid transparent; border-radius: 7px; font-size: 0.8rem; font-weight: 800; text-decoration: none; transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease; }
+.algoviz-button:hover { transform: translateY(-2px); }
+.algoviz-button-primary { background: var(--algo-accent); color: var(--algo-accent-ink); }
+.algoviz-button-primary:hover { background: #c2ffdc; }
+.algoviz-button-secondary { border-color: var(--algo-line); color: var(--algo-ink); }
+.algoviz-button-secondary:hover { border-color: var(--algo-muted); background: var(--algo-surface); }
+.algoviz-hero-footnote { margin: 1.2rem 0 0; color: var(--algo-faint); font-size: 0.74rem; }
+.algoviz-hero-footnote span { margin-right: 0.35rem; color: var(--algo-accent); }
+
+.algoviz-preview { overflow: hidden; border: 1px solid var(--algo-line); border-radius: 13px; background: var(--algo-surface); box-shadow: 0 24px 80px #05071166; }
+.algoviz-preview-toolbar, .algoviz-preview-controls { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; color: var(--algo-muted); font-size: 0.68rem; font-weight: 700; }
+.algoviz-preview-toolbar { border-bottom: 1px solid var(--algo-line); }
+.algoviz-preview-toolbar > span:first-child { display: flex; align-items: center; gap: 0.45rem; }
+.algoviz-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--algo-accent); }
+.algoviz-preview-step span { padding: 0 0.25rem; color: var(--algo-faint); }
+.algoviz-preview-body { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(180px, 0.65fr); min-height: 330px; }
+.algoviz-graph { position: relative; min-height: 330px; border-right: 1px solid var(--algo-line); background: #101426; }
+.algoviz-graph-lines { position: absolute; inset: 9% 6%; width: 88%; height: 82%; overflow: visible; }
+.algoviz-graph-lines path { fill: none; stroke: #526083; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.algoviz-node { position: absolute; display: grid; width: 42px; height: 42px; place-items: center; border: 1px solid #60709a; border-radius: 50%; background: #171d34; color: var(--algo-ink); font-size: 0.78rem; font-weight: 800; }
+.algoviz-node::after { position: absolute; inset: -5px; border: 1px solid transparent; border-radius: inherit; content: ""; }
+.algoviz-node.is-current { border-color: var(--algo-accent); background: var(--algo-accent); color: var(--algo-accent-ink); box-shadow: 0 0 0 5px #a8ffcb1f; }
+.algoviz-node.is-frontier { border-color: var(--algo-blue); color: var(--algo-blue); }
+.algoviz-node.is-visited { border-color: var(--algo-yellow); color: var(--algo-yellow); }
+.algoviz-node.is-goal { border-style: dashed; }
+.node-a { top: 16%; left: 11%; }.node-b { top: 8%; left: 48%; }.node-c { top: 24%; right: 8%; }.node-d { bottom: 17%; left: 28%; }.node-e { bottom: 4%; right: 28%; }
+.algoviz-step-note { display: flex; flex-direction: column; padding: 1.3rem; }
+.algoviz-note-label { margin-bottom: 0.8rem; color: var(--algo-accent); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.13em; text-transform: uppercase; }
+.algoviz-step-note strong { color: var(--algo-ink); font-size: 1.18rem; letter-spacing: -0.03em; }
+.algoviz-step-note p { margin: 0.75rem 0 1.2rem; color: var(--algo-muted); font-size: 0.76rem; line-height: 1.65; }
+.algoviz-note-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: auto; padding-top: 0.8rem; border-top: 1px solid var(--algo-line); color: var(--algo-faint); font-size: 0.66rem; }
+.algoviz-note-meta code { color: var(--algo-blue); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.algoviz-preview-controls { justify-content: flex-start; gap: 0.45rem; border-top: 1px solid var(--algo-line); }
+.algoviz-preview-controls button { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid var(--algo-line); border-radius: 6px; background: transparent; color: var(--algo-muted); }
+.algoviz-preview-controls button.is-play { border-color: var(--algo-accent); background: var(--algo-accent); color: var(--algo-accent-ink); }
+.algoviz-control-rule { width: 1px; height: 22px; margin: 0 0.55rem; background: var(--algo-line); }.algoviz-preview-controls span:last-child { margin-left: auto; }.algoviz-preview-controls b { margin-left: 0.25rem; color: var(--algo-ink); }
+
+.algoviz-section { padding: 86px 0; border-top: 1px solid var(--algo-line); }
+.algoviz-section-heading { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin-bottom: 2.5rem; }.algoviz-section-heading h2, .algoviz-workflow-section h2 { margin: 0; color: var(--algo-ink); font-size: clamp(2rem, 4vw, 3rem); font-weight: 500; letter-spacing: -0.055em; line-height: 1; }.algoviz-section-heading > p { max-width: 34ch; margin: 0; color: var(--algo-muted); font-size: 0.88rem; line-height: 1.65; }
+.algoviz-category-list { border-top: 1px solid var(--algo-line); }.algoviz-category-row { display: grid; grid-template-columns: 42px 44px minmax(0, 1fr) auto; gap: 1rem; align-items: center; min-height: 102px; border-bottom: 1px solid var(--algo-line); text-decoration: none; transition: background-color 160ms ease, padding 160ms ease; }.algoviz-category-row:hover { padding-right: 0.75rem; padding-left: 0.75rem; background: var(--algo-surface); }.algoviz-category-icon { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 8px; }.icon-search { background: #a8ffcb18; color: var(--algo-accent); }.icon-pathfinding { background: #aab9ff18; color: var(--algo-blue); }.icon-sorting { background: #f5d36b18; color: var(--algo-yellow); }.algoviz-category-index { color: var(--algo-faint); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.66rem; }.algoviz-category-copy { display: flex; flex-direction: column; gap: 0.35rem; }.algoviz-category-copy strong { color: var(--algo-ink); font-size: 1rem; }.algoviz-category-copy span { color: var(--algo-muted); font-size: 0.8rem; }.algoviz-category-status { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--algo-faint); font-size: 0.7rem; font-weight: 700; }.algoviz-category-row:hover .algoviz-category-status { color: var(--algo-accent); }
+
+.algoviz-workflow-section { display: grid; grid-template-columns: minmax(250px, 0.7fr) minmax(0, 1.3fr); gap: clamp(40px, 10vw, 160px); padding: 92px 0 120px; border-top: 1px solid var(--algo-line); }.algoviz-workflow-intro > p:last-child { max-width: 34ch; margin: 1.5rem 0 0; color: var(--algo-muted); font-size: 0.9rem; line-height: 1.7; }.algoviz-workflow-list { display: flex; flex-wrap: wrap; align-items: center; gap: 1.3rem; margin: 0; padding: 0; list-style: none; }.algoviz-workflow-list li { display: inline-flex; align-items: center; gap: 0.65rem; color: var(--algo-ink); font-size: 0.88rem; }.algoviz-workflow-list li > span { color: var(--algo-accent); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.63rem; }.algoviz-workflow-list li > svg { margin-left: 0.6rem; color: var(--algo-faint); }
+
+.algoviz-footer { display: flex; justify-content: space-between; width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 1.3rem 0 1.6rem; border-top: 1px solid var(--algo-line); color: var(--algo-faint); font-size: 0.68rem; }.algoviz-footer-note { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--algo-muted); }
+
+.algoviz-module-page { min-height: calc(100dvh - 140px); padding: 70px 0 110px; }.algoviz-module-hero { max-width: 700px; }.algoviz-back-link { display: inline-flex; align-items: center; gap: 0.45rem; margin-bottom: 4rem; color: var(--algo-muted); font-size: 0.76rem; font-weight: 700; text-decoration: none; }.algoviz-back-link:hover { color: var(--algo-accent); }.algoviz-module-icon { display: grid; width: 58px; height: 58px; margin-bottom: 1.6rem; place-items: center; border: 1px solid var(--algo-line); border-radius: 12px; color: var(--algo-accent); }.algoviz-module-page h1 { max-width: none; font-size: clamp(3rem, 6vw, 5.4rem); }.algoviz-module-lede { max-width: 45ch; margin: 1.4rem 0 0; color: var(--algo-muted); font-size: 1.05rem; line-height: 1.7; }.algoviz-module-state { display: flex; gap: 1.25rem; max-width: 650px; margin-top: 5rem; padding: 1.5rem 0; border-top: 1px solid var(--algo-line); border-bottom: 1px solid var(--algo-line); color: var(--algo-accent); }.algoviz-module-state h2 { margin: 0; color: var(--algo-ink); font-size: 1.1rem; }.algoviz-module-state p { max-width: 56ch; margin: 0.6rem 0 1rem; color: var(--algo-muted); font-size: 0.82rem; line-height: 1.65; }.algoviz-planned-badge { display: inline-flex; padding: 0.4rem 0.55rem; border: 1px solid var(--algo-line); border-radius: 5px; color: var(--algo-faint); font-size: 0.66rem; font-weight: 700; }
+
+@media (max-width: 900px) {
+  .algoviz-header-inner, .algoviz-page, .algoviz-footer { width: min(100% - 36px, 720px); }
+  .algoviz-desktop-nav { display: none; }.algoviz-menu-button { display: grid; place-items: center; }.algoviz-header-actions { margin-left: auto; }.algoviz-mobile-nav { display: flex; flex-wrap: wrap; gap: 1rem 1.35rem; width: min(100% - 36px, 720px); margin: 0 auto; padding: 0.75rem 0 1.1rem; }
+  .algoviz-hero { grid-template-columns: 1fr; gap: 48px; min-height: unset; padding: 72px 0 68px; }.algoviz-hero-copy { max-width: 620px; }.algoviz-preview { max-width: 720px; }.algoviz-workflow-section { gap: 48px; }
+}
+@media (max-width: 620px) {
+  .algoviz-header-inner, .algoviz-page, .algoviz-footer { width: min(100% - 28px, 480px); }.algoviz-status-pill { display: none; }.algoviz-hero { padding-top: 54px; }.algoviz-hero h1 { font-size: clamp(3rem, 16vw, 4.7rem); }.algoviz-hero-lede { font-size: 0.96rem; }.algoviz-hero-actions { align-items: stretch; flex-direction: column; }.algoviz-button { width: 100%; }.algoviz-preview-body { grid-template-columns: 1fr; }.algoviz-graph { min-height: 240px; border-right: 0; border-bottom: 1px solid var(--algo-line); }.algoviz-step-note { min-height: 210px; }.algoviz-section { padding: 64px 0; }.algoviz-section-heading { display: block; }.algoviz-section-heading > p { margin-top: 1.3rem; }.algoviz-category-row { grid-template-columns: 34px 1fr auto; gap: 0.75rem; min-height: 96px; }.algoviz-category-index { display: none; }.algoviz-category-copy span { line-height: 1.45; }.algoviz-category-status { font-size: 0; }.algoviz-category-status svg { width: 18px; height: 18px; }.algoviz-workflow-section { display: block; padding: 64px 0 86px; }.algoviz-workflow-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; margin-top: 2rem; }.algoviz-workflow-list li > svg { display: none; }.algoviz-footer { align-items: flex-start; flex-direction: column; gap: 0.6rem; }.algoviz-module-page { padding-top: 48px; }.algoviz-back-link { margin-bottom: 3rem; }.algoviz-module-state { margin-top: 4rem; }
+}
+@media (prefers-reduced-motion: reduce) { .algoviz-app *, .algoviz-app *::before, .algoviz-app *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }.algoviz-button:hover, .algoviz-category-row:hover { transform: none; } }
+@media (forced-colors: active) { .algoviz-app { background: Canvas; color: CanvasText; }.algoviz-app * { border-color: ButtonText; }.algoviz-button-primary, .algoviz-nav-link.is-active::after { background: Highlight; color: HighlightText; }.algoviz-brand-mark, .algoviz-node { border-color: ButtonText; }.algoviz-node.is-current { background: Highlight; color: HighlightText; } }

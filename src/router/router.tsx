@@ -36,12 +36,26 @@ import {
 } from "./lazyPages";
 
 import PasswordRecoveryScreen from "@/features/sync/components/PasswordRecoveryScreen";
+import AlgoVizLayout from "@/algoviz/components/layout/AlgoVizLayout";
+import AlgoVizHomePage from "@/algoviz/pages/AlgoVizHomePage";
+import AlgoVizModulePage from "@/algoviz/pages/AlgoVizModulePage";
 const projectHub = <Suspense fallback={null}><ProjectHub /></Suspense>;
 const MainRoute = lazy(() => import("./MainRoute"));
 const native = Capacitor.isNativePlatform();
 
 export const router = createBrowserRouter([
   { path: "/forgot-password", element: <Suspense fallback={null}><PasswordRecoveryScreen /></Suspense> },
+  {
+    path: "/algoviz",
+    element: <AlgoVizLayout />,
+    children: [
+      { index: true, element: <AlgoVizHomePage /> },
+      { path: "search", element: <AlgoVizModulePage /> },
+      { path: "pathfinding", element: <AlgoVizModulePage /> },
+      { path: "sorting", element: <AlgoVizModulePage /> },
+      { path: "compare", element: <AlgoVizModulePage /> },
+    ],
+  },
   { element: <AccountRouteGate />, children: [
   { path: "/projects", element: projectHub },
   { path: "/projects/index.html", element: projectHub },
