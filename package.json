@@ -21,7 +21,7 @@
     "electron:build": "vite build && electron-builder",
     "cap:sync": "vite build && cap sync android",
     "cap:open": "cap open android",
-    "cap:build": "vite build && npx patch-package --check && cap sync android && cd android && gradlew.bat assembleDebug",
+    "cap:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1",
     "cap:build:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1",
     "postinstall": "patch-package"
   },

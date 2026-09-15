@@ -26,6 +26,9 @@ $env:JAVA_HOME = $jdk.FullName
 $env:Path = "$($jdk.FullName)\bin;$env:Path"
 $env:TEMP = $shortTemp
 $env:TMP = $shortTemp
+$unixSocketOption = "-Djdk.net.unixdomain.tmpdir=$shortTemp"
+$env:JAVA_TOOL_OPTIONS = (@($env:JAVA_TOOL_OPTIONS, $unixSocketOption) |
+  Where-Object { $_ -and $_.Trim() }) -join " "
 
 Push-Location $projectRoot
 try {
