@@ -10,21 +10,21 @@ const categories: AlgorithmDefinition[] = [
     name: "Search",
     category: "search",
     summary: "Trace how a graph is explored, one decision at a time.",
-    status: "planned",
+    status: "available",
   },
   {
     id: "pathfinding",
     name: "Pathfinding",
     category: "pathfinding",
     summary: "See distance, heuristics, and shortest paths evolve in real time.",
-    status: "planned",
+    status: "available",
   },
   {
     id: "sorting",
     name: "Sorting",
     category: "sorting",
     summary: "Watch comparisons and swaps turn an array into order.",
-    status: "planned",
+    status: "available",
   },
 ];
 
@@ -123,7 +123,7 @@ export default function AlgoVizHomePage() {
               </span>
               <span className="algoviz-category-index">0{index + 1}</span>
               <span className="algoviz-category-copy"><strong>{category.name}</strong><span>{category.summary}</span></span>
-              <span className="algoviz-category-status">{category.status === "planned" ? "Planned · foundation ready" : "Available"} <ArrowRight size={17} /></span>
+              <span className="algoviz-category-status">{category.status === "planned" ? "Planned" : "Live lab"} <ArrowRight size={17} /></span>
             </Link>
           ))}
         </div>

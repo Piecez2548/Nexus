@@ -37,6 +37,9 @@ export interface AlgorithmStep {
   visited?: readonly string[];
   frontier?: readonly string[];
   dataStructure?: readonly DataStructureEntry[];
+  values?: readonly number[];
+  highlightIndices?: readonly number[];
+  sortedIndices?: readonly number[];
   explanation: string;
   metrics?: AlgorithmMetrics;
 }
