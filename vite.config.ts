@@ -41,11 +41,11 @@ export default defineConfig({
       },
       includeAssets: ["favicon.svg", "icons/apple-touch-icon.png"],
       manifest: {
-        name: "ScreenTutor — See. Understand. Learn.",
-        short_name: "ScreenTutor",
-        description: "A private, local-first screen learning assistant.",
-        theme_color: "#f5f7f4",
-        background_color: "#f5f7f4",
+        name: "Nexus - Life Operating System",
+        short_name: "Nexus",
+        description: "Local-first finance, trading, and life tracking — all on your device.",
+        theme_color: "#09090b",
+        background_color: "#09090b",
         display: "standalone",
         start_url: "/",
         icons: [

@@ -1,10 +1,4 @@
-const { contextBridge, ipcRenderer } = require("electron");
-
-contextBridge.exposeInMainWorld("screenTutor", {
-  captureRegion: (region) => ipcRenderer.invoke("screen-tutor:capture-region", region),
-  onHotkey: (callback) => {
-    const listener = () => callback();
-    ipcRenderer.on("screen-tutor:hotkey", listener);
-    return () => ipcRenderer.removeListener("screen-tutor:hotkey", listener);
-  },
-});
+// Nexus is fully client-side (IndexedDB only) — the renderer doesn't need
+// any privileged main-process APIs today. This file exists so
+// contextIsolation stays on with an explicit (currently empty) preload,
+// rather than skipping it.

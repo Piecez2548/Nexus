@@ -1,18 +1,5 @@
 /// <reference types="vite/client" />
 
-import type { ScreenRegion } from "./features/screentutor/types";
-
-declare global {
-  interface Window {
-    screenTutor?: {
-      captureRegion: (region: ScreenRegion) => Promise<string>;
-      onHotkey: (callback: () => void) => () => void;
-    };
-  }
-}
-
-export {};
-
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL: string;
   readonly VITE_SUPABASE_ANON_KEY: string;
