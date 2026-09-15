@@ -20,7 +20,7 @@
 .algoviz-app *, .algoviz-app *::before, .algoviz-app *::after { box-sizing: border-box; }
 .algoviz-app ::selection { background: var(--algo-accent); color: var(--algo-accent-ink); }
 .algoviz-app :focus-visible { outline: 3px solid var(--algo-accent); outline-offset: 4px; }
-.algoviz-app a { color: inherit; }
+.algoviz-app :where(a) { color: inherit; }
 .algoviz-app button, .algoviz-app a { -webkit-tap-highlight-color: transparent; }
 
 .algoviz-skip-link {
