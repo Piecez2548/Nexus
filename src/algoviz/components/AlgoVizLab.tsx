@@ -46,7 +46,7 @@ export function AlgoVizLab({ category, options, defaultAlgorithm }: AlgoVizLabPr
     </div>
     <div className="algoviz-lab-grid">
       <div className="algoviz-stage">
-        <div className="algoviz-stage-header"><span><i className="algoviz-status-dot" /> Execution surface</span><span>{getStepLabel(step, execution.steps.length)}</span></div>
+        <div className="algoviz-stage-header" aria-live="polite" aria-atomic="true"><span><i className="algoviz-status-dot" /> Execution surface</span><span>{getStepLabel(step, execution.steps.length)}</span></div>
         {category === "sorting" ? <SortCanvas step={step} /> : <GraphCanvas step={step} />}
         <div className="algoviz-playback">
           <button type="button" className="algoviz-control" onClick={() => advance(-1)} aria-label="Previous step"><SkipBack size={16} /></button>
@@ -76,7 +76,7 @@ function SortCanvas({ step }: { step: AlgorithmStep }) {
 
 function LabInspector({ step, category }: { step: AlgorithmStep; category: string }) {
   const data = step.dataStructure ?? [];
-  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">Current action</p><h2>{step.type === "complete" ? "Complete" : step.type[0].toUpperCase() + step.type.slice(1)}</h2><p className="algoviz-explanation">{step.explanation}</p><div className="algoviz-inspector-block"><span>{category === "sorting" ? "Array state" : "Data structure"}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">No pending items</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>Live metrics</span><div className="algoviz-metric-grid"><Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} /><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label="Swaps" value={step.metrics?.swaps ?? 0} /><Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
+  return <aside className="algoviz-inspector"><p className="algoviz-eyebrow">Current action</p><h2 aria-live="polite" aria-atomic="true">{step.type === "complete" ? "Complete" : step.type[0].toUpperCase() + step.type.slice(1)}</h2><p className="algoviz-explanation" aria-live="polite" aria-atomic="true">{step.explanation}</p><div className="algoviz-inspector-block"><span>{category === "sorting" ? "Array state" : "Data structure"}</span>{data.length ? data.map((entry) => <div className="algoviz-data-row" key={`${entry.label}-${entry.value}`}><span>{entry.label}</span><strong>{entry.value}</strong></div>) : <p className="algoviz-empty-data">No pending items</p>}</div><div className="algoviz-inspector-block algoviz-metrics"><span>Live metrics</span><div className="algoviz-metric-grid"><Metric label="Visited" value={step.metrics?.visitedNodes ?? step.visited?.length ?? 0} /><Metric label="Comparisons" value={step.metrics?.comparisons ?? 0} /><Metric label="Swaps" value={step.metrics?.swaps ?? 0} /><Metric label="Operations" value={step.metrics?.operations ?? 0} /></div></div></aside>;
 }
 
 function Metric({ label, value }: { label: string; value: number }) { return <div><strong>{value}</strong><span>{label}</span></div>; }
