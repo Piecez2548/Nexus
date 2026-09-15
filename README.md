@@ -1,3 +1,36 @@
+# ScreenTutor
+
+> See. Understand. Learn.
+
+ScreenTutor is a local-first Windows screen learning assistant. Select a region, trigger `Ctrl + Shift + Space`, and receive a concise OCR-backed explanation from Ollama running on your own device. Screen data is never uploaded and source websites are never controlled.
+
+The MVP surface is implemented in `src/features/screentutor/`. The repository still contains the original Nexus modules for reference and future reuse; the default application entry now launches ScreenTutor.
+
+## ScreenTutor setup (Windows 11)
+
+```powershell
+npm ci
+# Install Ollama from https://ollama.com/download/windows, then:
+ollama serve
+ollama pull qwen2.5:3b
+npm run electron:dev
+```
+
+The browser preview is also available with `npm run dev`. Ollama is optional for the UI preview; the test-capture action uses a local demo response when no model is connected. Native region capture is available in the Electron desktop wrapper.
+
+## ScreenTutor MVP features
+
+- Region selection with saved coordinates and reset/change controls.
+- Thai, English, and Thai + English OCR through a replaceable `OCRService` boundary.
+- Lightweight content classification for multiple-choice, programming errors, translation, math, and general text.
+- Ollama health/model discovery and structured JSON analysis with prompt-injection boundaries.
+- Non-blocking result overlay, OCR debug panel, local searchable history, and settings.
+- Keyboard navigation, visible focus states, responsive layout, and local-only persistence.
+
+See [docs/SCREENTUTOR_MVP.md](docs/SCREENTUTOR_MVP.md) for architecture, validation results, limitations, and the next recommended task.
+
+---
+
 # Nexus
 
 > A local-first personal finance and productivity workspace built with React, TypeScript, and Capacitor.
