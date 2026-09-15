@@ -71,7 +71,7 @@ function GraphCanvas({ step }: { step: AlgorithmStep }) {
 
 function SortCanvas({ step }: { step: AlgorithmStep }) {
   const values = step.values ?? []; const highlights = new Set(step.highlightIndices ?? []); const sorted = new Set(step.sortedIndices ?? []); const max = Math.max(...values, 1);
-  return <div className="algoviz-sort-canvas" role="img" aria-label="Sorting array execution visualization">{values.map((value, index) => <div className={`algoviz-sort-bar ${highlights.has(index) ? "is-highlighted" : ""} ${sorted.has(index) ? "is-sorted" : ""}`} key={`${index}-${value}`}><span>{value}</span><i style={{ height: `${Math.max(10, (value / max) * 170)}px` }} /></div>)}</div>;
+  return <div className="algoviz-sort-canvas" role="img" aria-label="Sorting array execution visualization">{values.map((value, index) => <div className={`algoviz-sort-bar ${highlights.has(index) ? "is-highlighted" : ""} ${sorted.has(index) ? "is-sorted" : ""}`} key={`${index}-${value}`}><span>{value}</span><i style={{ transform: `scaleY(${Math.max(0.06, value / max)})` }} /></div>)}</div>;
 }
 
 function LabInspector({ step, category }: { step: AlgorithmStep; category: string }) {
