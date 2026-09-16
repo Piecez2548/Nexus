@@ -32,7 +32,16 @@
 
 HTML shell ช่วงแรกของทุก SPA route ยังใช้ title และ loading shell ของ ScreenTutor ก่อน React hydration จากนั้น runtime จึงเปลี่ยนเป็นชื่อและเนื้อหาของ route ที่ถูกต้อง เช่น `/projects` เปลี่ยนเป็น Nexus All และ `/algoviz` เปลี่ยนเป็น AlgoViz ปัญหานี้ไม่ใช่ route ผิด แต่ทำให้เห็นชื่อหรือภาพ ScreenTutor ชั่วคราวได้ และควรแก้ด้วย route-aware entry shell/title
 
-## 4. สถานะ source และ deployment
+## 4. ผลทดสอบสแกนซ้ำ
+
+- Slip Scanner suite: ผ่าน 94 test files / 476 tests
+- Critical scan flow: ผ่านซ้ำ 5 รอบ
+- แต่ละรอบครอบคลุม QR, EMVCo, OCR fallback, duplicate detection, ledger conflict, import history, gallery flow และ stress queue รวม 33 tests ต่อรอบ (165/165 ผ่าน)
+- Full repository suite: ผ่าน 460 test files / 2,891 tests
+- Production smoke: ผ่าน 2/2
+- Production route ที่มีข้อมูลส่วนตัวถูกป้องกันด้วย PIN; การทดสอบ production ไม่ bypass การล็อก แต่ยืนยัน protected gate และทดสอบ scanner flow แบบ deterministic ในชุด integration/unit tests
+
+## 5. สถานะ source และ deployment
 
 - HEAD ในเครื่องและ `origin/main` อยู่ที่ commit `78a8188`
 - ในเครื่องมีไฟล์แก้ไขที่ยังไม่ commit 13 ไฟล์
@@ -41,7 +50,7 @@ HTML shell ช่วงแรกของทุก SPA route ยังใช้ 
 - Vercel CLI จากเครื่องไม่มีสิทธิ์ deploy โดยตรง แต่ GitHub integration deploy จาก `main` สำเร็จและ production URL แสดง build ใหม่แล้ว
 - ไฟล์ `.traineddata` ถูกเพิ่มใน `.gitignore` เพราะ runtime ยังไม่ได้อ้างอิงเป็น source asset และ Tesseract ดาวน์โหลด language data ตามการใช้งาน
 
-## 5. ความเสี่ยงและลำดับแก้ไขที่แนะนำ
+## 6. ความเสี่ยงและลำดับแก้ไขที่แนะนำ
 
 1. ปิดงาน release ในรอบนี้: commit/push/deploy และ production smoke ผ่านแล้ว
 2. หากต้องการยืนยันข้อมูลธุรกรรมจริง ควรทำ database-level audit แยกต่างหาก เพราะการตรวจรอบนี้ยืนยัน routing, auth, API contracts และ runtime health ยังไม่ได้ตรวจทุกแถวข้อมูลทางการเงิน
