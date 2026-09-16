@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 
@@ -7,6 +7,7 @@ import { useBankSelectionStore } from "@/features/finance/slipScanner/store/bank
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { SlipExtractor } from "@/features/finance/slipScanner/services/slipExtractionProcessor";
 import { useLanguageStore } from "@/store/languageStore";
+import { useToastStore } from "@/store/toastStore";
 
 import GalleryScanFlow from "./GalleryScanFlow";
 
@@ -38,6 +39,7 @@ function file(name: string, content: string): File {
 beforeEach(async () => {
   useBankSelectionStore.getState().reset();
   useLanguageStore.setState({ language: "en" });
+  useToastStore.setState({ toasts: [] });
   await db.slipScanRuns.clear();
   await db.slipScanCache.clear();
   await db.transactions.clear();
@@ -86,10 +88,25 @@ describe("GalleryScanFlow", () => {
     render(<GalleryScanFlow />);
 
     await user.click(screen.getByRole("button", { name: "Scan Gallery" }));
-    await user.click(screen.getByRole("button", { name: "Scan all photos" }));
+    await user.click(screen.getByRole("button", { name: "Choose image folder" }));
 
     expect(useBankSelectionStore.getState().chosen).toBe(false);
     expect(useBankSelectionStore.getState().selectedBankIds).toEqual([]);
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(fileInput).toHaveAttribute("webkitdirectory");
+    expect(fileInput).toHaveAttribute("directory");
+  });
+
+  it("reports a selected folder that contains no supported images", async () => {
+    const user = userEvent.setup();
+    render(<GalleryScanFlow />);
+    await user.click(screen.getByRole("button", { name: "Scan Gallery" }));
+    await user.click(screen.getByRole("button", { name: "Choose image folder" }));
+
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(fileInput, { target: { files: [new File(["notes"], "notes.txt", { type: "text/plain" })] } });
+
+    expect(useToastStore.getState().toasts.at(-1)?.message).toBe("No supported images were found in the selected folder");
   });
 
   it("drives the full web flow through the real orchestrator and auto-imports extracted candidates", async () => {

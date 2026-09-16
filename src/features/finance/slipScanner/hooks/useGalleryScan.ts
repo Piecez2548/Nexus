@@ -23,12 +23,12 @@ export function useGalleryScan() {
   // defaults to the orchestrator's no-op recorder; pass
   // createSlipExtractionProcessor(...) for real extraction.
   const scanPickedFiles = useCallback(
-    (files: File[], incremental = true, processor?: ScanProcessor) =>
-      start(new WebPickerProvider(files), { source: "web-picker", incremental }, processor),
+    (files: File[], incremental = true, processor?: ScanProcessor, dateRange?: ScanOptions["dateRange"]) =>
+      start(new WebPickerProvider(files), { source: "web-picker", incremental, dateRange }, processor),
     [start]
   );
 
-  // Native: full-gallery scan (no assets until the media plugin is wired).
+  // Native: full-gallery scan through the MediaStore-backed provider.
   // `dateRange` bounds the scan to a user-picked window instead of the whole
   // gallery -- see ScanOptions.dateRange for why this is never combined with
   // `incremental` (scanSessionService forces it off internally regardless).

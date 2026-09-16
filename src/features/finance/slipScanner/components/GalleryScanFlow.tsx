@@ -63,6 +63,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
   const { t } = useTranslation();
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
+  const pendingWebDateRangeRef = useRef<ScanOptions["dateRange"]>(undefined);
 
   const [phase, setPhase] = useState<Phase>(() => (initialOpen ? "banks" : "idle"));
   const [selectedBankIds, setSelectedBankIds] = useState<string[]>([]);
@@ -192,23 +193,42 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
     setDateTo("");
     if (isNativeGalleryAvailable()) {
       try {
-        await scan.scanNativeGallery(true, dateRange);
+        // A scan explicitly started by the person must include OCR-only
+        // slips; only hands-free background scans use the QR-prefilter.
+        // This is the explicit "scan all" action, so do not reuse the
+        // incremental watermark/cache that intentionally skips old images.
+        // Background startup scans remain incremental in the effect above.
+        await scan.scanNativeGallery(false, dateRange, true);
         setScanSettled(true);
       } catch (err) {
         toast.error(toErrorMessage(err));
         setScanSettled(true);
       }
     } else {
+      pendingWebDateRangeRef.current = dateRange;
+      // Browser security requires an explicit folder choice. The directory
+      // attribute lets Chromium/Edge recursively return the selected folder;
+      // browsers without support gracefully keep their normal multi-file
+      // picker instead of failing the action.
+      inputRef.current?.setAttribute("webkitdirectory", "");
+      inputRef.current?.setAttribute("directory", "");
       inputRef.current?.click();
     }
   }
 
   async function handleFiles(event: ChangeEvent<HTMLInputElement>): Promise<void> {
-    const files = Array.from(event.target.files ?? []);
+    const files = Array.from(event.target.files ?? []).filter((file) =>
+      file.type.startsWith("image/") || /\.(?:avif|bmp|gif|heic|heif|jpe?g|png|webp)$/i.test(file.name),
+    );
     event.target.value = "";
-    if (files.length === 0) return;
+    const dateRange = pendingWebDateRangeRef.current;
+    pendingWebDateRangeRef.current = undefined;
+    if (files.length === 0) {
+      toast.error(t("slipScanner.galleryScan.noImagesSelected"));
+      return;
+    }
     try {
-      await scan.scanPickedFiles(files, false);
+      await scan.scanPickedFiles(files, false, dateRange);
       setScanSettled(true);
     } catch (err) {
       toast.error(toErrorMessage(err));
@@ -383,6 +403,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
         dateTo={dateTo}
         onDateFromChange={setDateFrom}
         onDateToChange={setDateTo}
+        webFolderSelection={!isNativeGalleryAvailable()}
       />
 
       {showScanOverlay && (

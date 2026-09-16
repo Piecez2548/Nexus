@@ -81,6 +81,18 @@ describe("OcrWorkerPool (via getOcrWorkerPool)", () => {
     expect(getOcrWorkerPool()).toBe(getOcrWorkerPool());
   });
 
+  it("rejects queued OCR calls and can retry after worker startup fails", async () => {
+    createWorker.mockRejectedValueOnce(new Error("language data unavailable"));
+    const pool = getOcrWorkerPool();
+
+    await expect(pool.recognize(new Uint8Array([1]))).rejects.toThrow("language data unavailable");
+
+    const worker = fakeWorker("recovered");
+    createWorker.mockResolvedValue(worker);
+    await expect(pool.recognize(new Uint8Array([2]))).resolves.toBe("recovered");
+    expect(createWorker).toHaveBeenCalledTimes(2);
+  });
+
   it("resetOcrWorkerPoolForTests terminates idle workers and clears the singleton", async () => {
     const worker = fakeWorker("a");
     createWorker.mockResolvedValue(worker);

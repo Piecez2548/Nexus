@@ -49,6 +49,17 @@ describe("NativeMediaProvider", () => {
     expect(count).toHaveBeenCalledWith({ sinceCursorMs: undefined, untilCursorMs: undefined });
   });
 
+  it("turns a date-only upper bound into the next local midnight", async () => {
+    count.mockResolvedValue({ total: 2 });
+    const provider = new NativeMediaProvider();
+    await provider.count({ until: "2026-01-31" });
+
+    expect(count).toHaveBeenCalledWith({
+      sinceCursorMs: undefined,
+      untilCursorMs: new Date(2026, 1, 1).getTime(),
+    });
+  });
+
   it("passes both since and until bounds through to count() for a date-range scan", async () => {
     count.mockResolvedValue({ total: 7 });
     const provider = new NativeMediaProvider();

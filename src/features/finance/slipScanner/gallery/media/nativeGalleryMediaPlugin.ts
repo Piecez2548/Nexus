@@ -1,4 +1,4 @@
-import { registerPlugin } from "@capacitor/core";
+import { GalleryPermissions } from "@/features/finance/slipScanner/gallery/permission/galleryPermissionPlugin";
 
 export interface GalleryMediaAsset {
   assetId: string;
@@ -20,4 +20,8 @@ export interface NativeGalleryMediaPlugin {
   readBytes(options: { assetId: string }): Promise<{ data: string }>;
 }
 
-export const NativeGalleryMedia = registerPlugin<NativeGalleryMediaPlugin>("GalleryPermissions");
+// GalleryPermissions and NativeGalleryMedia are backed by the same native
+// Capacitor registration. Reuse the existing proxy instead of calling
+// registerPlugin a second time; duplicate registrations leak global state in
+// web tests and produce a warning in the Android WebView.
+export const NativeGalleryMedia = GalleryPermissions as unknown as NativeGalleryMediaPlugin;

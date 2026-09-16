@@ -15,8 +15,8 @@ export interface UseFullGalleryScan {
   snapshot: ScanProgressSnapshot | null;
   candidates: SlipCandidate[];
   error: string | null;
-  scanPickedFiles: (files: File[], incremental?: boolean) => Promise<void>;
-  scanNativeGallery: (incremental?: boolean, dateRange?: ScanOptions["dateRange"]) => Promise<void>;
+  scanPickedFiles: (files: File[], incremental?: boolean, dateRange?: ScanOptions["dateRange"]) => Promise<void>;
+  scanNativeGallery: (incremental?: boolean, dateRange?: ScanOptions["dateRange"], exhaustive?: boolean) => Promise<void>;
   pause: () => void;
   resume: () => void;
   cancel: () => void;
@@ -105,6 +105,10 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
     () => createSlipExtractionProcessor(onCandidate, pickedFileExtractor),
     [onCandidate, pickedFileExtractor],
   );
+  // A person-requested whole-gallery scan favors completeness and includes
+  // OCR-only slips. Scheduled background scans retain the QR-prefiltered
+  // processor so they do not OCR every ordinary photo without user intent.
+  const exhaustiveGalleryProcessor = pickedFileProcessor;
 
   // Seeds from any candidates left over from an interrupted run (app kill,
   // crash, reload) instead of always starting empty -- the counterpart to
@@ -131,21 +135,25 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
   }
 
   const scanPickedFiles = useCallback(
-    async (files: File[], incremental = false) => {
-      await beginNewRun(incremental); // picker flow never sets a dateRange
-      await gallery.scanPickedFiles(files, incremental, pickedFileProcessor);
+    async (files: File[], incremental = false, dateRange?: ScanOptions["dateRange"]) => {
+      await beginNewRun(incremental && !dateRange);
+      await gallery.scanPickedFiles(files, incremental, pickedFileProcessor, dateRange);
       setCandidates(flagBatchDuplicates);
     },
     [gallery, pickedFileProcessor],
   );
 
   const scanNativeGallery = useCallback(
-    async (incremental = true, dateRange?: ScanOptions["dateRange"]) => {
+    async (incremental = true, dateRange?: ScanOptions["dateRange"], exhaustive = false) => {
       await beginNewRun(incremental && !dateRange);
-      await gallery.scanNativeGallery(incremental, fullGalleryProcessor, dateRange);
+      await gallery.scanNativeGallery(
+        incremental,
+        exhaustive ? exhaustiveGalleryProcessor : fullGalleryProcessor,
+        dateRange,
+      );
       setCandidates(flagBatchDuplicates);
     },
-    [gallery, fullGalleryProcessor],
+    [gallery, exhaustiveGalleryProcessor, fullGalleryProcessor],
   );
 
   const snapshot: ScanProgressSnapshot | null = gallery.progress

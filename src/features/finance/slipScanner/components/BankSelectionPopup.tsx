@@ -20,6 +20,7 @@ interface Props {
   dateTo?: string;
   onDateFromChange?: (value: string) => void;
   onDateToChange?: (value: string) => void;
+  webFolderSelection?: boolean;
 }
 
 function formatDuration(estimate: ScanEstimate, t: TranslateFn): string {
@@ -46,6 +47,7 @@ export default function BankSelectionPopup({
   dateTo = "",
   onDateFromChange,
   onDateToChange,
+  webFolderSelection = false,
 }: Props) {
   const { t } = useTranslation();
   const selection = useBankSelection(imageCount);
@@ -65,10 +67,10 @@ export default function BankSelectionPopup({
             onClick={() => onConfirm([])}
             className="w-full rounded-xl py-3 font-semibold transition active:scale-[0.99] nexus-primary-action"
           >
-            {t("slipScanner.bankSelect.scanAll")}
+            {t(webFolderSelection ? "slipScanner.bankSelect.chooseFolder" : "slipScanner.bankSelect.scanAll")}
           </button>
           <p className="text-center text-xs text-zinc-600 dark:text-zinc-400">
-            {t("slipScanner.bankSelect.scanAllHint")}
+            {t(webFolderSelection ? "slipScanner.bankSelect.webFolderHint" : "slipScanner.bankSelect.scanAllHint")}
           </p>
         </div>
 

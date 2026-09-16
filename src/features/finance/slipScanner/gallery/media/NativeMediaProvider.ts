@@ -2,17 +2,12 @@ import { base64ToBytes } from "@/features/encryption/crypto/encryption";
 import { NativeGalleryMedia } from "@/features/finance/slipScanner/gallery/media/nativeGalleryMediaPlugin";
 import type { GalleryAssetRef } from "@/features/finance/slipScanner/models/scanTypes";
 import type { MediaCursorBounds, MediaProvider, MediaProviderCapabilities } from "./MediaProvider";
+import { mediaCursorMs } from "./mediaCursorBoundary";
 
 // Assets fetched per page() round trip -- bounds one call's response size
 // regardless of how large the on-device gallery is. Exported so tests can
 // build a realistic "full page, so fetch another" fixture without guessing.
 export const PAGE_SIZE = 200;
-
-function cursorToMs(cursor: string | undefined): number | undefined {
-  if (!cursor) return undefined;
-  const ms = Date.parse(cursor);
-  return Number.isNaN(ms) ? undefined : ms;
-}
 
 // Real on-device gallery enumeration (Slip Intelligence Phase 8), backed by
 // GalleryMediaPlugin.java's MediaStore query methods. Replaces the
@@ -29,15 +24,15 @@ export class NativeMediaProvider implements MediaProvider {
 
   async count(bounds?: MediaCursorBounds): Promise<number | null> {
     const { total } = await NativeGalleryMedia.count({
-      sinceCursorMs: cursorToMs(bounds?.since),
-      untilCursorMs: cursorToMs(bounds?.until),
+      sinceCursorMs: mediaCursorMs(bounds?.since),
+      untilCursorMs: mediaCursorMs(bounds?.until, true),
     });
     return total;
   }
 
   async *enumerate(bounds?: MediaCursorBounds): AsyncGenerator<GalleryAssetRef> {
-    const sinceCursorMs = cursorToMs(bounds?.since);
-    const untilCursorMs = cursorToMs(bounds?.until);
+    const sinceCursorMs = mediaCursorMs(bounds?.since);
+    const untilCursorMs = mediaCursorMs(bounds?.until, true);
     let offset = 0;
 
     for (;;) {

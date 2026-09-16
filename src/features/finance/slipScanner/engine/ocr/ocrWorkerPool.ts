@@ -22,6 +22,11 @@ interface PooledWorker {
   busy: boolean;
 }
 
+interface WorkerWaiter {
+  resolve: (pooled: PooledWorker) => void;
+  reject: (reason: unknown) => void;
+}
+
 // Reuses a small pool of Tesseract workers across every OCR call in an app
 // session instead of spinning one up per image and tearing it down
 // immediately after (the original behavior) -- each worker init reloads the
@@ -43,7 +48,7 @@ class OcrWorkerPool {
   private readonly maxSize: number;
   private readonly idle: PooledWorker[] = [];
   private totalCount = 0; // includes workers currently being created
-  private readonly waiters: Array<(pooled: PooledWorker) => void> = [];
+  private readonly waiters: WorkerWaiter[] = [];
 
   constructor(maxSize: number) {
     this.maxSize = Math.max(1, maxSize);
@@ -78,16 +83,27 @@ class OcrWorkerPool {
 
     if (this.totalCount < this.maxSize) {
       this.totalCount++;
-      return { pooled: this.spawnWorker(), source: "spawn" };
+      return {
+        pooled: this.spawnWorker().catch((error: unknown) => {
+          // Worker/language-data startup can fail offline. Release the slot
+          // and reject queued calls instead of leaving totalCount at max and
+          // making every later OCR call wait forever.
+          this.totalCount--;
+          const waiting = this.waiters.splice(0);
+          for (const waiter of waiting) waiter.reject(error);
+          throw error;
+        }),
+        source: "spawn",
+      };
     }
 
-    return { pooled: new Promise((resolve) => this.waiters.push(resolve)), source: "wait" };
+    return { pooled: new Promise((resolve, reject) => this.waiters.push({ resolve, reject })), source: "wait" };
   }
 
   private release(pooled: PooledWorker): void {
     const waiter = this.waiters.shift();
     if (waiter) {
-      waiter(pooled); // still marked busy -- handed directly to the next waiter
+      waiter.resolve(pooled); // still marked busy -- handed directly to the next waiter
       return;
     }
     pooled.busy = false;

@@ -59,7 +59,10 @@ export const router = createBrowserRouter([
   { element: <AccountRouteGate />, children: [
   { path: "/projects", element: projectHub },
   { path: "/projects/index.html", element: projectHub },
-  ...(native ? [{ path: "/", element: projectHub }] : []),
+  ...(native ? [
+    { path: "/", element: projectHub },
+    { path: "/index.html", element: projectHub },
+  ] : []),
   {
     // Native reserves the exact root for All while retaining every explicit
     // Main child route under this pathless layout. Web keeps its existing root.

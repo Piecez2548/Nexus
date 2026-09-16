@@ -24,6 +24,10 @@ coverage
 
 *.log
 
+# Tesseract language downloads are fetched by the OCR runtime when needed;
+# keep local copies out of source control unless the OCR asset strategy changes.
+*.traineddata
+
 .DS_Store
 
 Thumbs.db

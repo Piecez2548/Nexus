@@ -9,7 +9,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="ScreenTutor" />
-    <title>ScreenTutor — See. Understand. Learn.</title>
+    <title>Nexus — Preparing workspace…</title>
     <script>
       try {
         const savedTheme = JSON.parse(localStorage.getItem("nexus-app-settings") || "{}").state?.themeMode || "dark";
@@ -28,9 +28,24 @@
     </style>
   </head>
   <body>
-    <div id="root"><main class="entry-shell" aria-busy="true"><header class="entry-shell__header"><div class="entry-shell__brand">ScreenTutor<span>.</span></div><span>Local-first learning</span></header><section class="entry-shell__body"><h1>See. Understand. Learn.</h1><p>Preparing your private workspace…</p></section></main></div>
+    <div id="root"><main class="entry-shell" aria-busy="true" data-entry-shell><header class="entry-shell__header"><div class="entry-shell__brand"><span data-entry-brand>ScreenTutor</span><span data-entry-mark>.</span></div><span data-entry-context>Local-first learning</span></header><section class="entry-shell__body"><h1 data-entry-heading>See. Understand. Learn.</h1><p data-entry-message>Preparing your private workspace…</p></section></main></div>
     <script>
       try {
+        const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+        const entry = pathname === "/" || pathname === "/index.html"
+          ? { title: "ScreenTutor — See. Understand. Learn.", brand: "ScreenTutor", mark: ".", context: "Local-first learning", heading: "See. Understand. Learn.", message: "Preparing your private workspace…" }
+          : pathname === "/projects" || pathname === "/projects/index.html"
+            ? { title: "Nexus All — Projects", brand: "nexus", mark: ".", context: "Private workspace hub", heading: "Preparing your workspaces", message: "Loading your Nexus project hub…" }
+            : pathname.startsWith("/algoviz")
+              ? { title: "AlgoViz · Interactive Algorithm Lab", brand: "AlgoViz", mark: "", context: "Interactive algorithm lab", heading: "Preparing AlgoViz", message: "Loading the algorithm workspace…" }
+              : { title: "Nexus Main — Workspace", brand: "nexus", mark: ".", context: "Private financial workspace", heading: "Preparing Nexus Main", message: "Checking your private workspace…" };
+        document.title = entry.title;
+        document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute("content", entry.brand === "ScreenTutor" ? "ScreenTutor" : "Nexus");
+        document.querySelector("[data-entry-brand]")?.replaceChildren(document.createTextNode(entry.brand));
+        document.querySelector("[data-entry-mark]")?.replaceChildren(document.createTextNode(entry.mark));
+        document.querySelector("[data-entry-context]")?.replaceChildren(document.createTextNode(entry.context));
+        document.querySelector("[data-entry-heading]")?.replaceChildren(document.createTextNode(entry.heading));
+        document.querySelector("[data-entry-message]")?.replaceChildren(document.createTextNode(entry.message));
         const hasSavedSession = Object.keys(localStorage).some((key) => key.startsWith("sb-") && key.endsWith("-auth-token"));
         if (hasSavedSession) document.getElementById("root").replaceChildren();
       } catch { /* Keep the public shell when storage is unavailable. */ }
