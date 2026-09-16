@@ -37,15 +37,15 @@ HTML shell ช่วงแรกของทุก SPA route ยังใช้ 
 - HEAD ในเครื่องและ `origin/main` อยู่ที่ commit `78a8188`
 - ในเครื่องมีไฟล์แก้ไขที่ยังไม่ commit 13 ไฟล์
 - มีไฟล์ใหม่ที่ยังไม่ tracked 7 ไฟล์ รวม OCR assets `eng.traineddata` และ `tha.traineddata`
-- source ในเครื่องได้รับการแก้ไขตามลำดับงานแล้ว แต่ยังต้อง commit, push และ deploy รอบ release
+- source ได้รับการแก้ไขตามลำดับงานแล้ว และ commit `3475ac5` ถูก push ขึ้น `origin/main`
+- Vercel CLI จากเครื่องไม่มีสิทธิ์ deploy โดยตรง แต่ GitHub integration deploy จาก `main` สำเร็จและ production URL แสดง build ใหม่แล้ว
 - ไฟล์ `.traineddata` ถูกเพิ่มใน `.gitignore` เพราะ runtime ยังไม่ได้อ้างอิงเป็น source asset และ Tesseract ดาวน์โหลด language data ตามการใช้งาน
 
 ## 5. ความเสี่ยงและลำดับแก้ไขที่แนะนำ
 
-1. Commit และ push source ที่ผ่าน validation แล้ว
-2. Deploy production และรัน production smoke ซ้ำหลัง deploy
-3. หากต้องการยืนยันข้อมูลธุรกรรมจริง ควรทำ database-level audit แยกต่างหาก เพราะการตรวจรอบนี้ยืนยัน routing, auth, API contracts และ runtime health ยังไม่ได้ตรวจทุกแถวข้อมูลทางการเงิน
+1. ปิดงาน release ในรอบนี้: commit/push/deploy และ production smoke ผ่านแล้ว
+2. หากต้องการยืนยันข้อมูลธุรกรรมจริง ควรทำ database-level audit แยกต่างหาก เพราะการตรวจรอบนี้ยืนยัน routing, auth, API contracts และ runtime health ยังไม่ได้ตรวจทุกแถวข้อมูลทางการเงิน
 
 ## สรุปสถานะ
 
-โครงสร้าง Project Hub และ production routes ของทุกโปรเจคทำงานถูกต้องในระดับ runtime, Gallery Scanner regression ถูกแก้แล้ว และ validation ในเครื่องผ่านทั้งหมด เหลือขั้นตอน commit, push, deploy และ smoke test บน deployment ใหม่
+โครงสร้าง Project Hub และ production routes ของทุกโปรเจคทำงานถูกต้องในระดับ runtime, Gallery Scanner regression ถูกแก้แล้ว, validation ในเครื่องผ่านทั้งหมด และ production deployment ใหม่ผ่าน smoke test แล้ว
