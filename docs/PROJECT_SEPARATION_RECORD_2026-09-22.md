@@ -5,10 +5,11 @@ The workspace now has explicit project folders under `D:\Project_001\Nexus-Proje
 | Folder | Status | Source / deployment |
 | --- | --- | --- |
 | `Nexus` | Original monorepo preserved | `https://github.com/Piecez2548/Nexus` / `https://nexus-lemon-eight-32.vercel.app` |
-| `Nexus Main` | Standalone build snapshot created | Main route entry points at `/dashboard`; dedicated remote not created |
-| `AlgoViz` | Standalone source extraction created | Dedicated remote/deployment not created |
-| `ScreenTutor` | Standalone source extraction created | Dedicated remote/deployment not created |
-| `DataLens` | Already independent Git repository | `https://github.com/Piecez2548/DataLens` / `https://datalens-kappa-one.vercel.app` |
-| `Nexus Tools` | Placeholder manifest only | Production URL exists; canonical source repository was not found locally |
+| `Nexus Main` | Standalone build and Vercel deployment | [GitHub](https://github.com/Piecez2548/Nexus-Main) / [Vercel](https://nexus-main-phi.vercel.app) |
+| `AlgoViz` | Standalone build and Vercel deployment | [GitHub](https://github.com/Piecez2548/AlgoViz) / [Vercel](https://algoviz-brown-kappa.vercel.app) |
+| `ScreenTutor` | Standalone build and Vercel deployment | [GitHub](https://github.com/Piecez2548/ScreenTutor) / [Vercel](https://screentutor.vercel.app) |
+| `DataLens` | Independent GitHub and Vercel project | [GitHub](https://github.com/Piecez2548/DataLens) / [Vercel](https://datalens-kappa-one.vercel.app) |
+| `Nexus Tools` | Independent GitHub and Vercel project | [GitHub](https://github.com/Piecez2548/Nexus-Tools) / [Vercel](https://nexus-tools-chi.vercel.app) |
 
-The extraction is copy-first and non-destructive. Existing routes in the original Nexus app were not changed, and no credentials or environment files were copied. Each extracted application must pass an independent install/build/runtime check before its Project Hub link is switched to a new deployment.
+The extraction is copy-first and non-destructive. Existing routes in the original Nexus app were not changed, and no credentials or environment files were copied. Each extracted application passed an independent install/build/runtime check. GitHub and Vercel projects are now connected; Project Hub links can be switched in a separate routing task.
+
