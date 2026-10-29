@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { shouldOpenScreenTutor } from "./appEntry";
+import { matchRoutes } from "react-router-dom";
+import type { RouteObject } from "react-router-dom";
+import { appRoutes } from "./router/router";
+
+const routes = appRoutes as RouteObject[];
 
 describe("application entry route", () => {
-  it.each(["/", "/index.html"])("opens Nexus All for native %s entry", (pathname) => {
-    expect(shouldOpenScreenTutor(pathname, true)).toBe(false);
+  it.each(["/", "/index.html", "/projects", "/projects/index.html"])("opens Nexus All at %s", (pathname) => {
+    expect(matchRoutes(routes, pathname)?.some((match) => match.route.id?.startsWith("nexus-all-") === true)).toBe(true);
   });
 
-  it.each(["/", "/index.html"])("preserves Screen Tutor at the web %s entry", (pathname) => {
-    expect(shouldOpenScreenTutor(pathname, false)).toBe(true);
+  it("opens ScreenTutor only at its explicit route", () => {
+    expect(matchRoutes(routes, "/screentutor")?.some((match) => match.route.id === "screentutor")).toBe(true);
+    expect(matchRoutes(routes, "/")?.some((match) => match.route.id === "screentutor")).toBe(false);
   });
 
-  it("uses the workspace for explicit web routes", () => {
-    expect(shouldOpenScreenTutor("/projects", false)).toBe(false);
+  it("retains Main and unknown-route behavior", () => {
+    expect(matchRoutes(routes, "/dashboard")?.some((match) => match.route.path === "dashboard")).toBe(true);
+    expect(matchRoutes(routes, "/missing")?.some((match) => match.route.path === "*")).toBe(true);
   });
 });

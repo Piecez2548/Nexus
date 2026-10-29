@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#f5f7f4" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="ScreenTutor" />
+    <meta name="apple-mobile-web-app-title" content="Nexus" />
     <title>Nexus — Preparing workspace…</title>
     <script>
       try {
@@ -28,13 +28,13 @@
     </style>
   </head>
   <body>
-    <div id="root"><main class="entry-shell" aria-busy="true" data-entry-shell><header class="entry-shell__header"><div class="entry-shell__brand"><span data-entry-brand>ScreenTutor</span><span data-entry-mark>.</span></div><span data-entry-context>Local-first learning</span></header><section class="entry-shell__body"><h1 data-entry-heading>See. Understand. Learn.</h1><p data-entry-message>Preparing your private workspace…</p></section></main></div>
+    <div id="root"><main class="entry-shell" aria-busy="true" data-entry-shell><header class="entry-shell__header"><div class="entry-shell__brand"><span data-entry-brand>nexus</span><span data-entry-mark>.</span></div><span data-entry-context>Private workspace hub</span></header><section class="entry-shell__body"><h1 data-entry-heading>Preparing your workspaces</h1><p data-entry-message>Loading your Nexus project hub…</p></section></main></div>
     <script>
       try {
         const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
-        const entry = pathname === "/" || pathname === "/index.html"
+        const entry = pathname === "/screentutor"
           ? { title: "ScreenTutor — See. Understand. Learn.", brand: "ScreenTutor", mark: ".", context: "Local-first learning", heading: "See. Understand. Learn.", message: "Preparing your private workspace…" }
-          : pathname === "/projects" || pathname === "/projects/index.html"
+          : pathname === "/" || pathname === "/index.html" || pathname === "/projects" || pathname === "/projects/index.html"
             ? { title: "Nexus All — Projects", brand: "nexus", mark: ".", context: "Private workspace hub", heading: "Preparing your workspaces", message: "Loading your Nexus project hub…" }
             : pathname.startsWith("/algoviz")
               ? { title: "AlgoViz · Interactive Algorithm Lab", brand: "AlgoViz", mark: "", context: "Interactive algorithm lab", heading: "Preparing AlgoViz", message: "Loading the algorithm workspace…" }

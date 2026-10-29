@@ -1,5 +1,6 @@
 import { lazy } from "react";
 export const ProjectHub = lazy(() => import("@/features/projects/ProjectHub"));
+export const ScreenTutor = lazy(() => import("@/features/screentutor/ScreenTutorApp"));
 
 export const Dashboard = lazy(() => import("@/features/dashboard/pages/Dashboard"));
 export const FinanceDashboard = lazy(() => import("@/features/finance/pages/FinanceDashboard"));

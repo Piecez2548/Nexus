@@ -41,9 +41,9 @@ export default defineConfig({
       },
       includeAssets: ["favicon.svg", "icons/apple-touch-icon.png"],
       manifest: {
-        name: "ScreenTutor — See. Understand. Learn.",
-        short_name: "ScreenTutor",
-        description: "A private, local-first screen learning assistant.",
+        name: "Nexus — Personal Workspace",
+        short_name: "Nexus",
+        description: "A private workspace hub for finance, productivity and tools.",
         theme_color: "#f5f7f4",
         background_color: "#f5f7f4",
         display: "standalone",

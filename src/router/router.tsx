@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import { Capacitor } from "@capacitor/core";
 
 import AccountRouteGate from "./AccountRouteGate";
 import {
@@ -33,6 +32,7 @@ import {
   Settings,
   NotFound,
   ProjectHub,
+  ScreenTutor,
 } from "./lazyPages";
 
 import PasswordRecoveryScreen from "@/features/sync/components/PasswordRecoveryScreen";
@@ -41,9 +41,7 @@ import AlgoVizHomePage from "@/algoviz/pages/AlgoVizHomePage";
 import AlgoVizModulePage from "@/algoviz/pages/AlgoVizModulePage";
 const projectHub = <Suspense fallback={null}><ProjectHub /></Suspense>;
 const MainRoute = lazy(() => import("./MainRoute"));
-const native = Capacitor.isNativePlatform();
-
-export const router = createBrowserRouter([
+export const appRoutes = [
   { path: "/forgot-password", element: <Suspense fallback={null}><PasswordRecoveryScreen /></Suspense> },
   {
     path: "/algoviz",
@@ -57,22 +55,14 @@ export const router = createBrowserRouter([
     ],
   },
   { element: <AccountRouteGate />, children: [
-  { path: "/projects", element: projectHub },
-  { path: "/projects/index.html", element: projectHub },
-  ...(native ? [
-    { path: "/", element: projectHub },
-    { path: "/index.html", element: projectHub },
-  ] : []),
+  { id: "nexus-all-root", path: "/", element: projectHub },
+  { id: "nexus-all-index", path: "/index.html", element: projectHub },
+  { id: "nexus-all-projects", path: "/projects", element: projectHub },
+  { id: "nexus-all-projects-index", path: "/projects/index.html", element: projectHub },
+  { id: "screentutor", path: "/screentutor", element: <Suspense fallback={<div aria-busy="true">Loading ScreenTutor…</div>}><ScreenTutor /></Suspense> },
   {
-    // Native reserves the exact root for All while retaining every explicit
-    // Main child route under this pathless layout. Web keeps its existing root.
-    path: native ? undefined : "/",
     element: <Suspense fallback={null}><MainRoute /></Suspense>,
     children: [
-      ...(!native ? [{
-        index: true,
-        element: <Dashboard />,
-      }] : []),
       {
         path: "dashboard",
         element: <Dashboard />,
@@ -188,4 +178,6 @@ export const router = createBrowserRouter([
     ],
   },
   ] },
-]);
+];
+
+export const router = createBrowserRouter(appRoutes);
