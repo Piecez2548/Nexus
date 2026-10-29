@@ -50,6 +50,7 @@ export interface AnalysisRequest {
 }
 
 export interface AnalysisResult {
+  source?: "ollama" | "demo";
   type: ContentType;
   answer?: string;
   answerText?: string;
