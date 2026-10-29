@@ -65,6 +65,12 @@ describe("ImportPreview", () => {
     expect(screen.getByText("No slips to preview")).toBeInTheDocument();
   });
 
+  it("disables transaction confirmation in safe verification mode", () => {
+    render(<ImportPreview open onClose={() => {}} candidates={list} onImport={() => {}} safeVerificationMode />);
+    expect(screen.getByRole("status")).toHaveTextContent("Safe verification mode");
+    expect(screen.getByRole("button", { name: "Import 1 selected" })).toBeDisabled();
+  });
+
   it("edits a row via its pencil button and reflects the saved patch in the list and the import payload", async () => {
     const onImport = vi.fn();
     const user = userEvent.setup();

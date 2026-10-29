@@ -14,6 +14,10 @@ export const scanCandidateRepository = {
     return db.slipScanCandidates.add({ runId, assetId: candidate.assetId, candidate: persisted });
   },
 
+  removeEntry(id: number): Promise<void> {
+    return db.slipScanCandidates.delete(id);
+  },
+
   async listByRun(runId: number): Promise<SlipCandidate[]> {
     const rows = await db.slipScanCandidates.where("runId").equals(runId).toArray();
     return rows.map((row) => row.candidate);

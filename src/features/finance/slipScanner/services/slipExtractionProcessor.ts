@@ -2,6 +2,7 @@ import { extractSlipCandidate, type ExtractSlipInput } from "@/features/finance/
 import type { GalleryAssetRef } from "@/features/finance/slipScanner/models/scanTypes";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { ScanProcessor } from "@/features/finance/slipScanner/services/scanProcessor";
+import { recordScannerDiagnostic } from "@/features/finance/slipScanner/services/scannerDiagnostics";
 
 export type SlipExtractor = (input: ExtractSlipInput) => Promise<SlipCandidate | null>;
 
@@ -17,17 +18,24 @@ export type SlipExtractor = (input: ExtractSlipInput) => Promise<SlipCandidate |
 // the scan queue and extraction. `runId` is passed through so a caller can
 // persist the candidate against the scan run it came from (BUG-05 fix).
 export function createSlipExtractionProcessor(
-  onCandidate: (asset: GalleryAssetRef, candidate: SlipCandidate, runId: number) => void | Promise<void>,
+  onCandidate: (asset: GalleryAssetRef, candidate: SlipCandidate, runId: number, isCancelled: () => boolean) => void | Promise<void>,
   extractor: SlipExtractor = extractSlipCandidate,
 ): ScanProcessor {
   return {
     async process(asset: GalleryAssetRef, bytes: Uint8Array, _contentHash: string, runId: number, isCancelled: () => boolean): Promise<void> {
       const candidate = await extractor({ assetId: asset.assetId, bytes, isCancelled });
+      // OCR's in-flight recognize() cannot be interrupted; discard its result
+      // after cancellation before any candidate repository write can occur.
+      if (isCancelled()) {
+        recordScannerDiagnostic("SCAN_CANCELLED");
+        return;
+      }
       // A QR-only extractor returns null for ordinary gallery photos. They
       // still count as scanned by the queue, but never enter the candidate
       // repository or the review preview.
       if (candidate === null) return;
-      await onCandidate(asset, candidate, runId);
+      await onCandidate(asset, candidate, runId, isCancelled);
+      recordScannerDiagnostic("CANDIDATE_CREATED");
     },
   };
 }

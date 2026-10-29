@@ -109,7 +109,7 @@ describe("GalleryScanFlow", () => {
     expect(useToastStore.getState().toasts.at(-1)?.message).toBe("No supported images were found in the selected folder");
   });
 
-  it("drives the full web flow through the real orchestrator and auto-imports extracted candidates", async () => {
+  it("requires explicit confirmation before importing a verified QR candidate", async () => {
     const user = userEvent.setup();
     render(<GalleryScanFlow extractor={fakeExtractor} />);
 
@@ -127,8 +127,11 @@ describe("GalleryScanFlow", () => {
     // live progress while in flight.
     await waitFor(() => expect(screen.getByText("Scan progress")).toBeInTheDocument());
 
-    // Once it completes, GalleryScanFlow sends both extracted candidates
-    // straight through Smart Import without opening a review drawer.
+    // Manual scans always stop at review, including verified QR candidates.
+    await waitFor(() => expect(screen.getByText("Import preview")).toBeInTheDocument());
+    expect(await db.transactions.count()).toBe(0);
+
+    await user.click(screen.getByRole("button", { name: "Import 2 selected" }));
     await waitFor(async () => expect(await db.transactions.count()).toBe(2));
 
     const imported = await db.transactions.toArray();

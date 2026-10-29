@@ -5,6 +5,7 @@ import type { ScanProcessor } from "@/features/finance/slipScanner/services/scan
 import { toErrorMessage } from "@/utils/asyncState";
 import type { MediaProvider } from "@/features/finance/slipScanner/gallery/media/MediaProvider";
 import type { ScanOptions, ScanProgress, ScanStatus } from "@/features/finance/slipScanner/models/scanTypes";
+import { errorCategory, recordScannerDiagnostic } from "@/features/finance/slipScanner/services/scannerDiagnostics";
 
 interface ScanState {
   status: ScanStatus;
@@ -42,8 +43,13 @@ export const useScanStore = create<ScanState>((set) => ({
 
     try {
       await session.done;
+      const finalStatus = session.control.status;
+      if (finalStatus === "cancelled") recordScannerDiagnostic("SCAN_CANCELLED");
+      else recordScannerDiagnostic("SCAN_COMPLETED");
     } catch (err) {
       set({ status: "error", error: toErrorMessage(err) });
+      recordScannerDiagnostic("SCAN_FAILED", { errorCategory: errorCategory(err) });
+      throw err;
     } finally {
       session = null;
     }
@@ -61,6 +67,7 @@ export const useScanStore = create<ScanState>((set) => ({
 
   cancel() {
     // Status flips to "cancelled" when the loop finalises and emits.
+    recordScannerDiagnostic("SCAN_CANCELLED");
     session?.control.cancel();
   },
 }));

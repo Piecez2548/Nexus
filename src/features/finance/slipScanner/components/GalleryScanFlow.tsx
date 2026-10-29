@@ -24,6 +24,10 @@ import { getDeviceState } from "@/features/finance/slipScanner/schedule/deviceSt
 import { useScanScheduleStore } from "@/features/finance/slipScanner/store/scanScheduleStore";
 import { isVerifiedQrCandidate } from "@/features/finance/slipScanner/ai/confidenceTier";
 import { scanCandidateRepository } from "@/features/finance/slipScanner/repositories/scanCandidateRepository";
+import ScannerDiagnosticsPanel from "@/features/finance/slipScanner/components/ScannerDiagnosticsPanel";
+import { runManualGalleryScan } from "@/features/finance/slipScanner/services/manualGalleryScan";
+import { AUTOMATIC_GALLERY_SCAN_MODE, scannerSafeVerificationMode } from "@/features/finance/slipScanner/services/scannerMode";
+import { recordScannerDiagnostic } from "@/features/finance/slipScanner/services/scannerDiagnostics";
 
 type Phase = "idle" | "banks";
 
@@ -75,6 +79,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
   const [reviewCandidates, setReviewCandidates] = useState<SlipCandidate[]>([]);
   const [reviewOpen, setReviewOpen] = useState(false);
   const autoImportStartedRef = useRef(false);
+  const scanOriginRef = useRef<"manual" | "automatic">("manual");
 
   const scan = useFullGalleryScan(extractor);
   const scheduleConfig = useScanScheduleStore((state) => state.config);
@@ -93,10 +98,16 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
     void (async () => {
       try {
         let permission = await galleryPermissionService.check();
+        recordScannerDiagnostic("PERMISSION_CHECK");
         if (permission.status === "prompt" || permission.status === "denied") {
           permission = await galleryPermissionService.request();
         }
-        if (!permission.canScanGallery || !active) return;
+        if (!permission.canScanGallery || !active) {
+          recordScannerDiagnostic("PERMISSION_DENIED", { errorCategory: "permission" });
+          if (active) toast.error(t(permission.status === "blocked" ? "slipScanner.galleryScan.permissionBlocked" : "slipScanner.galleryScan.permissionDenied"));
+          return;
+        }
+        recordScannerDiagnostic("PERMISSION_GRANTED");
 
         const decision = decideScan({
           trigger: "scheduled",
@@ -107,7 +118,12 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
         if (!decision.shouldScan || !active) return;
 
         setIsAutomaticScan(true);
-        await scan.scanNativeGallery(true);
+        scanOriginRef.current = "automatic";
+        await scan.scanNativeGallery(
+          AUTOMATIC_GALLERY_SCAN_MODE.incremental,
+          undefined,
+          AUTOMATIC_GALLERY_SCAN_MODE.exhaustive,
+        );
         if (active) {
           markScanned();
           setScanSettled(true);
@@ -191,18 +207,25 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
     // back to the whole gallery.
     setDateFrom("");
     setDateTo("");
+    scanOriginRef.current = "manual";
     if (isNativeGalleryAvailable()) {
       try {
-        // A scan explicitly started by the person must include OCR-only
-        // slips; only hands-free background scans use the QR-prefilter.
-        // This is the explicit "scan all" action, so do not reuse the
-        // incremental watermark/cache that intentionally skips old images.
-        // Background startup scans remain incremental in the effect above.
-        await scan.scanNativeGallery(false, dateRange, true);
-        setScanSettled(true);
+        const started = await runManualGalleryScan({
+          scan: scan.scanNativeGallery,
+          dateRange,
+        onPermissionUnavailable: (permission) => {
+            const key = permission.status === "blocked"
+              ? "slipScanner.galleryScan.permissionBlocked"
+              : permission.status === "unavailable"
+                ? "slipScanner.galleryScan.permissionUnavailable"
+            : "slipScanner.galleryScan.permissionDenied";
+            toast.error(t(key));
+          },
+        });
+        if (started) setScanSettled(true);
       } catch (err) {
         toast.error(toErrorMessage(err));
-        setScanSettled(true);
+        scan.reset();
       }
     } else {
       pendingWebDateRangeRef.current = dateRange;
@@ -301,6 +324,19 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
     if (scan.status === "error") {
       scan.reset();
       toast.error(t("slipScanner.progressDashboard.statusError", { error: scan.error ?? "" }));
+      return;
+    }
+
+    if (scanOriginRef.current === "manual") {
+      setReviewCandidates(visibleCandidates);
+      if (visibleCandidates.length === 0) {
+        toast.error(t("slipScanner.galleryScan.noneFound"));
+        scan.reset();
+        return;
+      }
+      recordScannerDiagnostic("REVIEW_REACHED", { count: visibleCandidates.length });
+      scan.reset({ preserveCandidateIds: visibleCandidates.map((candidate) => candidate.id) });
+      setReviewOpen(true);
       return;
     }
 
@@ -419,6 +455,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
         open={reviewOpen}
         onClose={closeReview}
         candidates={reviewCandidates}
+        safeVerificationMode={scannerSafeVerificationMode}
         onImport={async (selected) => {
           const result = await handleImport(selected);
           if (!result) return;
@@ -433,6 +470,13 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
           if (remaining.length === 0) setReviewOpen(false);
         }}
       />
+
+      {scannerSafeVerificationMode && (
+        <div role="status" className="fixed left-3 top-20 z-[80] max-w-sm rounded-xl border border-amber-500 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-950 shadow-lg dark:bg-amber-950 dark:text-amber-100">
+          {t("slipScanner.diagnostics.safeMode")}
+        </div>
+      )}
+      <ScannerDiagnosticsPanel />
 
     </>
   );

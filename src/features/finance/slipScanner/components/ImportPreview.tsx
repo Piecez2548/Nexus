@@ -20,6 +20,7 @@ interface Props {
   onClose: () => void;
   candidates: SlipCandidate[];
   onImport: (selected: SlipCandidate[]) => void;
+  safeVerificationMode?: boolean;
 }
 
 const DUPLICATE_FILTERS: DuplicateFilter[] = ["all", "unique", "duplicates"];
@@ -36,7 +37,7 @@ const pillButton =
 // bank, amount, date/time, merchant, a duplicate badge and a confidence score,
 // with search, a duplicate filter, select-all, and Import Selected. All state
 // lives in useImportPreview; this stays presentational. Reuses the shared Drawer.
-export default function ImportPreview({ open, onClose, candidates, onImport }: Props) {
+export default function ImportPreview({ open, onClose, candidates, onImport, safeVerificationMode = false }: Props) {
   const { t } = useTranslation();
   const preview = useImportPreview(candidates);
 
@@ -46,6 +47,11 @@ export default function ImportPreview({ open, onClose, candidates, onImport }: P
         <div>
           <h2 className="text-xl font-bold">{t("slipScanner.importPreview.title")}</h2>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{t("slipScanner.importPreview.subtitle")}</p>
+          {safeVerificationMode && (
+            <p role="status" className="mt-3 rounded-lg border border-amber-400/60 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              {t("slipScanner.diagnostics.safeMode")}
+            </p>
+          )}
         </div>
 
         <div className="relative">
@@ -193,7 +199,7 @@ export default function ImportPreview({ open, onClose, candidates, onImport }: P
         <button
           type="button"
           onClick={() => onImport(preview.selectedCandidates)}
-          disabled={preview.selectedCount === 0}
+          disabled={preview.selectedCount === 0 || safeVerificationMode}
           className="w-full rounded-xl py-3 font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 nexus-primary-action"
         >
           {t("slipScanner.importPreview.importSelected", { count: preview.selectedCount })}

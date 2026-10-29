@@ -78,13 +78,21 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
   // id isn't known until scanSessionService creates it).
   const runIdRef = useRef<number | null>(null);
 
-  const onCandidate = useCallback(async (_asset: GalleryAssetRef, candidate: SlipCandidate, runId: number) => {
+  const onCandidate = useCallback(async (_asset: GalleryAssetRef, candidate: SlipCandidate, runId: number, isCancelled: () => boolean) => {
+    if (isCancelled()) return;
     runIdRef.current = runId;
     // Awaited (not fire-and-forget): the processor awaits onCandidate before
     // scanSessionService marks the asset "scanned" in slipScanCache, so this
     // write must land first -- otherwise a kill in the gap between the two
     // would still lose the candidate while its asset looks already handled.
-    await scanCandidateRepository.add(runId, candidate);
+    const entryId = await scanCandidateRepository.add(runId, candidate);
+    // An IDB write already submitted cannot be synchronously aborted. If a
+    // cancellation lands while it is in flight, remove that exact candidate
+    // row before publishing it to React state.
+    if (isCancelled()) {
+      await scanCandidateRepository.removeEntry(entryId);
+      return;
+    }
     setCandidates((prev) => [...prev, candidate]);
     setCounts((prev) => ({
       qrDetected: prev.qrDetected + (candidate.source === "qr" ? 1 : 0),

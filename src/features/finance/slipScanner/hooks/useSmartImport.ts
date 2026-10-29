@@ -13,6 +13,8 @@ import { deriveImportStatus, type ImportSource } from "@/features/finance/slipSc
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import { importHistoryRepository } from "@/features/finance/slipScanner/repositories/importHistoryRepository";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
+import { withSafeVerificationBoundary } from "@/features/finance/slipScanner/import/safeSmartImportDeps";
+import { scannerSafeVerificationMode } from "@/features/finance/slipScanner/services/scannerMode";
 
 // Record one Import History entry (GS-035) per batch: dominant bank + total
 // amount among what actually imported, a failed/skipped count (real failures
@@ -75,6 +77,7 @@ export interface UseSmartImport {
 // per row), and exposes an undo that rolls the last import back. Persistence is
 // injectable for tests; production uses the transactionService-backed deps.
 export function useSmartImport(deps: SmartImportDeps = defaultSmartImportDeps): UseSmartImport {
+  const persistenceDeps = withSafeVerificationBoundary(deps, scannerSafeVerificationMode);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<SmartImportProgress | null>(null);
   const [result, setResult] = useState<SmartImportResult | null>(null);
@@ -90,7 +93,7 @@ export function useSmartImport(deps: SmartImportDeps = defaultSmartImportDeps): 
     setProgress(null);
     const startedAt = Date.now();
     try {
-      const res = await runSmartImport(candidates, deps, { ...options, onProgress: setProgress });
+      const res = await runSmartImport(candidates, persistenceDeps, { ...options, onProgress: setProgress });
       setResult(res);
       await loadTransactions();
       if (candidates.length > 0) await recordImportHistory(candidates, res, Date.now() - startedAt, historySource);
@@ -102,7 +105,7 @@ export function useSmartImport(deps: SmartImportDeps = defaultSmartImportDeps): 
 
   async function undo(): Promise<number> {
     if (!result) return 0;
-    const removed = await rollbackImport(result.importedIds, deps);
+    const removed = await rollbackImport(result.importedIds, persistenceDeps);
     await loadTransactions();
     setResult(null);
     return removed;

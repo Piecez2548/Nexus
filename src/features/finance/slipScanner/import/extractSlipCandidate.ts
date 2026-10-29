@@ -7,6 +7,7 @@ import type { OcrSlipFields } from "@/features/finance/slipScanner/engine/ocr/sl
 import { recoverQr, type QrRecoveryResult } from "@/features/finance/slipScanner/engine/qr/qrRecovery";
 import { defaultQrDetector, type QrDetector } from "@/features/finance/slipScanner/engine/qr/qrDetector";
 import { buildSlipCandidate, type SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
+import { errorCategory, recordScannerDiagnostic } from "@/features/finance/slipScanner/services/scannerDiagnostics";
 
 export interface ExtractSlipInput {
   assetId: string;
@@ -98,7 +99,15 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     maxAttempts: input.maxRecoveryAttempts ?? (input.qrOnly ? DEFAULT_QR_ONLY_RECOVERY_ATTEMPTS : Number.POSITIVE_INFINITY),
   }));
 
-  let detection = await detector.detect(input.bytes);
+  const qrStartedAt = Date.now();
+  recordScannerDiagnostic("QR_STARTED");
+  let detection;
+  try {
+    detection = await detector.detect(input.bytes);
+  } catch (error) {
+    recordScannerDiagnostic("QR_FAILED", { errorCategory: errorCategory(error), durationMs: Date.now() - qrStartedAt });
+    throw error;
+  }
   if (!detection.hasQr) {
     if (isCancelled()) throw new ScanCancelledError();
     try {
@@ -108,8 +117,10 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
       if (err instanceof ScanCancelledError) throw err;
       // Recovery is best-effort (canvas transforms can throw under memory
       // pressure); a failure must not abort the batch — fall through to OCR.
+      recordScannerDiagnostic("QR_FAILED", { errorCategory: errorCategory(err), durationMs: Date.now() - qrStartedAt });
     }
   }
+  recordScannerDiagnostic("QR_COMPLETED", { count: detection.hasQr ? 1 : 0, durationMs: Date.now() - qrStartedAt });
 
   // In QR-only mode a non-QR image is intentionally filtered out before any
   // parser, bank or OCR work. Returning null lets the queue mark the image as
@@ -128,6 +139,8 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     // that can still skip it entirely rather than start a call that will run
     // to completion regardless.
     if (isCancelled()) throw new ScanCancelledError();
+    const ocrStartedAt = Date.now();
+    recordScannerDiagnostic("OCR_STARTED");
     try {
       const result = await runOcrFallback(input.bytes, recognizer);
       // Keep the OCR fields even when OCR ran only to resolve the bank: a
@@ -135,6 +148,7 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
       // regardless (buildSlipCandidate still prefers EMVCo for amount/merchant).
       ocr = result;
       if (!bank) bank = identifyBankFromText(result.text);
+      recordScannerDiagnostic("OCR_COMPLETED", { durationMs: Date.now() - ocrStartedAt });
     } catch (err) {
       if (err instanceof ScanCancelledError) throw err;
       // Tesseract can genuinely fail to read a specific image (corrupt file,
@@ -145,10 +159,11 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
       // still gets a candidate (QR-only fields, or none) rather than being
       // lost to an uncaught rejection that could also leave a pooled worker
       // in an inconsistent state for the next image.
+      recordScannerDiagnostic("OCR_FAILED", { errorCategory: errorCategory(err), durationMs: Date.now() - ocrStartedAt });
     }
   }
 
-  return buildSlipCandidate({
+  const candidate = buildSlipCandidate({
     assetId: input.assetId,
     thumbnailUrl: input.thumbnailUrl,
     emvco,
@@ -160,4 +175,6 @@ export async function extractSlipCandidate(input: ExtractSlipInput): Promise<Sli
     // transactions.
     sourceOverride: input.qrOnly === true && emvco?.crcValid === true ? "qr" : undefined,
   });
+  recordScannerDiagnostic("EXTRACTION_COMPLETED");
+  return candidate;
 }

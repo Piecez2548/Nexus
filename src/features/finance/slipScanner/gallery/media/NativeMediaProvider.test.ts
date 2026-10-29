@@ -146,4 +146,15 @@ describe("NativeMediaProvider", () => {
     expect(readBytes).toHaveBeenCalledWith({ assetId: "1" });
     expect(new TextDecoder().decode(bytes)).toBe("hi");
   });
+
+  it("preserves real native enumeration and image-read failures for the scan session", async () => {
+    page.mockRejectedValueOnce(new Error("MediaStore provider unavailable"));
+    readBytes.mockRejectedValueOnce(new Error("Gallery permission not granted"));
+    const provider = new NativeMediaProvider();
+
+    await expect(async () => {
+      for await (const _asset of provider.enumerate()) { /* drain */ }
+    }).rejects.toThrow("MediaStore provider unavailable");
+    await expect(provider.readBytes({ assetId: "1" })).rejects.toThrow("Gallery permission not granted");
+  });
 });

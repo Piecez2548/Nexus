@@ -478,6 +478,13 @@ export const financeTranslations = {
         importFailed: "Couldn't import {{failed}} slip(s) — check the amount and try again",
         importedWithDuplicates: "Imported {{count}} transaction(s) — {{duplicates}} already existed and were skipped",
         allDuplicates: "{{duplicates}} slip(s) already exist as transactions — nothing new to import",
+        permissionDenied: "Photo access was denied. Allow photo access in Android settings, then try Scan Gallery again.",
+        permissionBlocked: "Photo access is blocked. Open Android Settings and allow Nexus to access photos, then retry.",
+        permissionUnavailable: "Nexus could not access Android photos. Please retry; if this continues, contact support.",
+      },
+      diagnostics: {
+        title: "Scanner diagnostics",
+        safeMode: "Safe verification mode: scan results are review-only; transaction saving is disabled.",
       },
       recovery: {
         resumableScan: "A previous gallery scan didn't finish",
@@ -1008,6 +1015,13 @@ export const financeTranslations = {
         importFailed: "นำเข้าไม่สำเร็จ {{failed}} รายการ — ตรวจสอบจำนวนเงินแล้วลองใหม่",
         importedWithDuplicates: "นำเข้า {{count}} รายการแล้ว — ข้าม {{duplicates}} รายการที่มีอยู่แล้ว",
         allDuplicates: "สลิป {{duplicates}} รายการมีอยู่ในระบบแล้ว — ไม่มีรายการใหม่ให้นำเข้า",
+        permissionDenied: "ยังไม่ได้รับอนุญาตให้เข้าถึงรูปภาพ โปรดอนุญาตในการตั้งค่า Android แล้วลองสแกนอีกครั้ง",
+        permissionBlocked: "การเข้าถึงรูปภาพถูกบล็อก โปรดเปิดการตั้งค่า Android และอนุญาตให้ Nexus เข้าถึงรูปภาพ แล้วลองใหม่",
+        permissionUnavailable: "Nexus ไม่สามารถเข้าถึงรูปภาพใน Android ได้ โปรดลองอีกครั้ง หากยังไม่ได้โปรดติดต่อฝ่ายสนับสนุน",
+      },
+      diagnostics: {
+        title: "ข้อมูลวินิจฉัยการสแกน",
+        safeMode: "โหมดตรวจสอบอย่างปลอดภัย: ผลสแกนดูได้เท่านั้น ปิดการบันทึกรายการธุรกรรม",
       },
       recovery: {
         resumableScan: "มีการสแกนแกลเลอรีครั้งก่อนที่ยังไม่เสร็จสมบูรณ์",

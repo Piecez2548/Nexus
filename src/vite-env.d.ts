@@ -23,6 +23,7 @@ interface ImportMetaEnv {
   readonly VITE_AI_ENDPOINT: string;
   readonly VITE_AI_MODEL: string;
   readonly VITE_AI_TIMEOUT_MS: string;
+  readonly VITE_NEXUS_SCANNER_SAFE_MODE?: string;
 }
 
 interface ImportMeta {
