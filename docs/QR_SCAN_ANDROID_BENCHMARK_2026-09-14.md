@@ -29,3 +29,7 @@ This exposed a duplicate-identity gap: a verified QR payload was not persisted o
 ## Decision
 
 The current device result does not support a one-second p95 claim. The QR fast path is approximately one image per second on this representative gallery, with a long tail above two seconds. Repeat-scan identity is now deterministic for persisted verified QR imports.
+
+## Follow-up — 2026-09-30
+
+The benchmark above remains a historical measurement of the QR-only production path and is not a performance benchmark of the new exhaustive explicit-scan path. The updated code has not been rebuilt into an APK or benchmarked on a device; Gradle loopback failure and remaining verification are documented in [SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md).

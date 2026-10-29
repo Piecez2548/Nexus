@@ -1,8 +1,10 @@
 # ScreenTutor — MVP implementation note
 
+**Current route:** `/screentutor` (within the Nexus account route gate). Nexus All is the shared `/` entry point.
+
 ## Status
 
-Partial MVP. The React/Electron vertical slice is implemented and verified in the browser preview. Native Windows screen capture, an always-on-top desktop region selector, and the global hotkey are wired through Electron IPC; final end-to-end capture/OCR verification requires running the packaged Electron app on a Windows desktop with Ollama available.
+Partial MVP. The React/Electron vertical slice is implemented; focused route/provider/UI tests and a production build pass. Native Windows screen capture, an always-on-top desktop region selector, and the global hotkey are wired through Electron IPC; final end-to-end capture/OCR verification requires running the packaged Electron app on a Windows desktop with Ollama available.
 
 ## Architecture
 
@@ -20,14 +22,16 @@ AIProvider boundary → OllamaProvider (/api/tags, /api/generate)
 Result overlay + local history
 ```
 
-ScreenTutor sends screen data only to the local Ollama endpoint configured by the user. Screen content is wrapped as untrusted `SCREEN_CONTENT` data in the AI request and is never treated as application instructions.
+ScreenTutor sends recognized screen data only to the configured Ollama endpoint. Screen content is wrapped as untrusted `SCREEN_CONTENT` data in the AI request and is never treated as application instructions. Analysis fails closed unless real desktop capture, non-empty OCR, provider availability and a validated non-empty JSON response all succeed. Successful results carry explicit Ollama provenance; legacy history without provenance is labeled as unrecorded.
 
 ## Validation
 
 - `npm run build` — passed.
 - `npm run lint` — passed.
-- `npm test -- --run src/features/screentutor/services.test.ts` — 3 tests passed.
-- Browser preview — region selection, save state, demo capture, answer overlay, ESC close, and history entry verified.
+- Focused route/provider/UI run — 3 files / 21 tests passed (2026-10-02).
+- Full `npm test -- --reporter=dot` — incomplete quality gate: 458 files passed, 2 failed; TopBar gallery lazy test and unrelated sync-engine test timeout; see the [phase report](PHASE_0_1_0_2_PRODUCT_ENTRY_SCREENTUTOR_FIX_2026-10-02.md).
+- Browser preview — UI only. Browser capture is unsupported, and ScreenTutor will not generate an answer without a real capture and validated Ollama response.
+- Electron capture/Ollama remains subject to packaged runtime verification; do not infer it from the browser preview.
 
 ## Known limitations
 

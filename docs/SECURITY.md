@@ -2,6 +2,8 @@
 
 ## Automatic on-device slip scan
 
+For the current repository root/product routing mismatch and audit limits, see [FULL_SYSTEM_AUDIT_2026-09-30.md](FULL_SYSTEM_AUDIT_2026-09-30.md) and [SECURITY_AUDIT_2026-09-30.md](SECURITY_AUDIT_2026-09-30.md). These are source reviews, not live penetration or account-security certification.
+
 On Android, opening Transactions can trigger an incremental gallery scan after the user grants photo access. Image bytes are processed locally by the existing QR/OCR pipeline and are not uploaded for recognition. The scan cache stores asset identifiers and hashes so previously processed images are skipped. When a scan settles, extracted candidates are sent through Smart Import automatically; the existing duplicate resolver remains authoritative before any transaction is written.
 
 **Last Updated:** 2026-09-13

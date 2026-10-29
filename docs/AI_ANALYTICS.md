@@ -4,7 +4,7 @@
 
 ## Overview
 
-"AI Analytics" (`src/features/finance/aiAnalytics/`, ~250 files, mounted at `/ai-analytics`) is a **pure local, rule-based statistical engine — no LLM, no network calls, everything runs synchronously in the browser against the user's own transaction data.** It is the largest and most complex module in the codebase. A separate, fully-built-but-unused "AI Gateway" (`src/ai/`) exists as a designed seam for a future real LLM integration; it is explicitly documented as parked and is confirmed (via repo-wide grep) to have zero importers anywhere in `src/features/`.
+"AI Analytics" (`src/features/finance/aiAnalytics/`, ~250 files, mounted at `/ai-analytics`) is primarily a **local, rule-based statistical engine — scoring, forecasting, recommendations and summaries run in the browser against the user's own transaction data.** The AI Coach may use an independently opt-in Claude fallback through a Supabase Edge Function for unclassified questions; this sends only its documented aggregate allow-list. It is the largest and most complex module in the codebase.
 
 Every sub-engine's own header comments trace back to a numbered internal spec ("Prompt 004" through "Prompt 010") — this doc follows that same layering, from the base statistical facts up to the executive summary that sits on top of everything else.
 
@@ -98,7 +98,7 @@ An on-demand Q&A layer, **not** part of the batch pipeline — free-text questio
 
 ## AI Gateway (`src/ai/`) — designed, not wired in
 
-Confirmed via both header comments and grep: `src/ai/index.ts` and `src/ai/services/aiGatewayService.ts` explicitly state the Gateway is "intentionally parked, not wired into the running app," and zero files under `src/features/` import anything from `@/ai`. It provides a complete provider-registry pattern (`AIGateway`, `ProviderRegistry`, `ProviderFactory`, a `LocalRuleProvider` implementation, and the `AIProvider`/`AIRequest`/`AIResponse`/`ProviderConfiguration` DTOs — see [API_INTERFACES.md](API_INTERFACES.md)) — fully built and tested, reserved as the seam a future real-LLM integration would plug into. Every `*Engine` interface in AI Analytics (`FinancialIntelligenceEngine`, `BehaviorEngine`, `ForecastEngine`, etc.) mirrors this same "Promise-returning method, synchronous implementation today" pattern deliberately.
+The `src/ai/` Gateway remains a separate provider abstraction; do not confuse it with the AI Coach's current Supabase Edge Function fallback. The fallback is the only remote LLM path documented here; all other AI Analytics calculations remain local and rule-based. Historical statements that the entire Gateway was unused predate that integration.
 
 ## Legacy analyzers vs. current synthesis engines — is `engine/analyzers/` still load-bearing?
 

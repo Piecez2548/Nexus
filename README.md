@@ -1,10 +1,12 @@
-# ScreenTutor
+# Nexus
 
-> See. Understand. Learn.
+> A local-first personal finance and productivity workspace built with React, TypeScript, and Capacitor.
 
-ScreenTutor is a local-first Windows screen learning assistant. Select a region, trigger `Ctrl + Shift + Space`, and receive a concise OCR-backed explanation from Ollama running on your own device. Screen data is never uploaded and source websites are never controlled.
+Nexus All is the primary entry point at `/`. Nexus Main remains available under `/dashboard`; ScreenTutor is a separate feature at `/screentutor` and requires a supported desktop capture bridge plus a working Ollama provider for real analysis.
 
-The MVP surface is implemented in `src/features/screentutor/`. The repository still contains the original Nexus modules for reference and future reuse; the default application entry now launches ScreenTutor.
+Nexus brings finance, trading notes, and personal routines into one privacy-conscious application. Data is stored on the device by default. Cloud sync, client-side encryption, biometric unlock, and the Android shell are optional layers built on the same local-first data model.
+
+The repository is maintained as a personal/demo product and engineering portfolio. The [production preview](https://nexus-lemon-eight-32.vercel.app/) is authentication-gated; the app can also run locally without cloud credentials.
 
 ## ScreenTutor setup (Windows 11)
 
@@ -16,7 +18,7 @@ ollama pull qwen2.5:3b
 npm run electron:dev
 ```
 
-The browser preview is also available with `npm run dev`. Ollama is optional for the UI preview; the test-capture action uses a local demo response when no model is connected. For cross-app capture, run the Electron desktop wrapper with `npm run electron:dev`: `Ctrl + Shift + Space` works over other Windows programs, and `Select screen region` opens a native always-on-top desktop selector. The Vercel preview cannot capture other applications because browsers are sandboxed.
+The browser preview is also available with `npm run dev`; browser-based screen capture is unavailable, so no analysis is produced there. For cross-app capture, run the Electron desktop wrapper with `npm run electron:dev`: `Ctrl + Shift + Space` works over other Windows programs, and `Select screen region` opens a native always-on-top desktop selector. Ollama must be running and have a selected model; provider failure is reported instead of replaced with sample output.
 
 ## ScreenTutor MVP features
 
@@ -31,15 +33,12 @@ See [docs/SCREENTUTOR_MVP.md](docs/SCREENTUTOR_MVP.md) for architecture, validat
 
 ---
 
-# Nexus
+## Nexus workspace
 
 > A local-first personal finance and productivity workspace built with React, TypeScript, and Capacitor.
 
 [![CI](https://github.com/Piecez2548/Nexus/actions/workflows/ci.yml/badge.svg)](https://github.com/Piecez2548/Nexus/actions/workflows/ci.yml) [![Live preview](https://img.shields.io/badge/live%20preview-Vercel-black)](https://nexus-lemon-eight-32.vercel.app/)
 
-Nexus brings everyday finance, trading notes, and personal routines into one privacy-conscious application. Data is stored on the device by default. Cloud sync, client-side encryption, biometric unlock, and the Android shell are optional layers built on top of the same local-first data model.
-
-The repository is maintained as a personal/demo product and engineering portfolio. The [production preview](https://nexus-lemon-eight-32.vercel.app/) is authentication-gated; the app can also run locally without cloud credentials.
 
 ## What this project demonstrates
 

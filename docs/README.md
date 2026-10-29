@@ -1,6 +1,12 @@
 # Nexus — Documentation
 
-**Last Updated:** 2026-09-13
+**Last Updated:** 2026-10-02
+
+For the latest consolidated repository status and explicit verification gaps, see [System Status Report — 2026-09-30](SYSTEM_STATUS_REPORT_2026-09-30.md). The broader codebase review and findings are in [Full System Audit — 2026-09-30](FULL_SYSTEM_AUDIT_2026-09-30.md), with separate [dead-code](DEAD_CODE_AUDIT_2026-09-30.md), [fake-feature](FAKE_FEATURE_AUDIT_2026-09-30.md), [database](DATABASE_AUDIT_2026-09-30.md), [security](SECURITY_AUDIT_2026-09-30.md), and [cleanup plan](CLEANUP_PLAN_2026-09-30.md) reports. The scanner fix and Android build limitation are in [Slip Scanner System Fix — 2026-09-30](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md). Full-regression evidence is in the [Phase 0.3 report](PHASE_0_3_FULL_REGRESSION_RELIABILITY_2026-10-02.md); Android build/device evidence and current limitations are in the [Phase 0.4 report](PHASE_0_4_ANDROID_VERIFICATION_2026-10-02.md). Dated reports remain historical evidence, not fresh certification.
+
+## Current repository entry point
+
+Nexus All is the primary entry at `/` and `/index.html` on web and native targets. `/projects` remains an alias, Nexus Main is available under `/dashboard` and its other explicit routes, and ScreenTutor is a separate authenticated feature at `/screentutor`. PWA metadata and the initial HTML shell use Nexus branding. Browser screen capture is unavailable; ScreenTutor analysis fails closed unless a real desktop capture and configured Ollama provider succeed. See [Phase 0.1–0.2 report](PHASE_0_1_0_2_PRODUCT_ENTRY_SCREENTUTOR_FIX_2026-10-02.md).
 
 ## Overview
 
@@ -24,7 +30,7 @@ This `/docs` folder is the single source of truth for how the codebase is actual
 
 See [MODULES.md](MODULES.md) for the full per-module breakdown and [ROADMAP.md](ROADMAP.md) for what's built vs. planned. At a glance, currently implemented:
 
-- **Finance**: transactions, accounts, categories, budgets, savings goals (with milestone events), recipient profiles with confidence-scored auto-categorization, a seeded merchant lookup, duplicate transaction/account/category merging (now self-healing — runs automatically on every sync pass, not just on manual request), CSV/PDF/JSON export and CSV import, on-device Thai+English receipt-slip OCR (Tesseract.js) with a full-gallery scanner (date-range-bounded scanning, native Android MediaStore enumeration), and Payment Notification Capture (one-tap transaction entry from a recognized banking app's own payment notification — SCB Easy, K PLUS, Krungthai NEXT, เป๋าตัง — with an income/expense selector).
+- **Finance**: transactions, accounts, categories, budgets, savings goals (with milestone events), recipient profiles with confidence-scored auto-categorization, a seeded merchant lookup, duplicate transaction/account/category merging (now self-healing — runs automatically on every sync pass, not just on manual request), CSV/PDF/JSON export and CSV import, on-device Thai+English receipt-slip OCR (Tesseract.js) with native gallery scanning and a web folder-selection fallback where supported. The explicit scan and date-boundary follow-up is recorded in the [2026-09-30 scanner report](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md); the changed Android revision still needs APK/device verification. Also includes Payment Notification Capture (one-tap transaction entry from a recognized banking app's own payment notification — SCB Easy, K PLUS, Krungthai NEXT, เป๋าตัง — with an income/expense selector).
 - **AI Analytics**: Financial Health Score (weighted, explainable), a ~46-rule Rule Engine, a Behavior Analysis engine (9 detectors + 8 domain analyzers), a Forecast engine (linear projection + an interactive what-if scenario simulator), a Recommendation engine (difficulty/impact/timeline-enriched), an Executive Summary report, and a keyword-classified AI Coach Q&A — see [AI_ANALYTICS.md](AI_ANALYTICS.md).
 - **Trading**: trade journal CRUD with full psychology/session/strategy metadata, a trading dashboard (win rate, profit factor, average RR, max drawdown, equity curve, drawdown chart, R-multiple risk distribution, per-session stats), CSV export, and heuristic (non-AI) market-type detection from a symbol.
 - **Portfolio**: manual holdings tracker with cost basis, user-entered current price, and unrealized P/L.
@@ -40,7 +46,7 @@ See [MODULES.md](MODULES.md) for the full per-module breakdown and [ROADMAP.md](
 | Framework | React 19 + TypeScript, Vite 8 |
 | Styling | Tailwind CSS v4 |
 | State | Zustand 5 (global + per-feature stores) |
-| Local database | Dexie 4 (IndexedDB), 14 schema versions to date |
+| Local database | Dexie 4 (IndexedDB), schema version 27, 32 tables |
 | Forms & validation | React Hook Form + Zod 4, with a `schema(t: TranslateFn)` factory pattern for i18n'd errors |
 | Routing | React Router 7 (`createBrowserRouter`, lazy-loaded route components) |
 | Charts | Recharts |

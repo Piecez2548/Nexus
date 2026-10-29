@@ -1,6 +1,16 @@
 # Task Registry
 
+## Product entry and ScreenTutor integrity (2026-10-02)
+
+Completed phase 0.1–0.2: `/` and `/index.html` now resolve to Nexus All across supported router targets; ScreenTutor remains at `/screentutor`. Removed the automatic demo-answer fallback and sample OCR input, failed closed for unavailable capture/provider, enforced structured non-empty Ollama responses, and added explicit result provenance. Web/Android runtime and full-suite status are recorded in [the phase report](../docs/PHASE_0_1_0_2_PRODUCT_ENTRY_SCREENTUTOR_FIX_2026-10-02.md).
+
 Master registry of all planned and completed Nexus tasks, grouped by Epic. See [README.md](README.md) for conventions and lifecycle.
+
+## Documentation and Scanner Status Follow-up (2026-09-30)
+
+The user reported the whole-device slip scanner was not working, prompting a scoped code follow-up and documentation reconciliation. Explicit native scans now request exhaustive non-incremental processing; automatic startup remains incremental/QR-filtered. Web selection accepts a directory where supported, filters image files, and passes date bounds through. Date-only end bounds include the complete local day. OCR worker startup failure releases capacity, rejects queued calls, and allows retry. Tests cover the relevant boundaries and failure paths.
+
+Validation evidence: `npm run build` passed; `npx vitest run src/features/finance/slipScanner` passed 94 files / 476 tests; focused flow/hooks/media/OCR tests passed 7 files / 38 tests; TopBar/i18n passed 2 files / 13 tests; scoped Oxlint/ESLint passed; `npx cap sync android` passed. Android `assembleDebug` repeatedly failed before task configuration with `java.io.IOException: Unable to establish loopback connection`; no APK or post-change physical scan is claimed. Real-slip OCR accuracy and browser directory behavior remain unverified. Full record: [docs/SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md](../docs/SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md).
 
 **Last Updated:** 2026-09-14
 

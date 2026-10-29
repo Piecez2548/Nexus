@@ -1,6 +1,10 @@
 # Technical Debt
 
-**Last Updated:** 2026-09-12
+**Last Updated:** 2026-09-30
+
+## September 30 scanner verification boundary
+
+The explicit scan/date-boundary/OCR-worker fixes and targeted automated evidence are recorded in [SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md). The current Android revision is **not yet verified**: `cap sync android` passed, but Gradle failed before task configuration with a loopback-connection IOException on repeated attempts. A post-change APK build, physical gallery run, browser directory-picker matrix, and real-slip OCR quality check remain planned. Prior native-device evidence below describes its historical revision and is not evidence for the changed files. No overall engineering score was recalculated.
 
 ## September 12 sync-conflict findings — three implementation fixes
 

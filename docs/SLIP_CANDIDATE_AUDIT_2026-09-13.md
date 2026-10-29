@@ -19,3 +19,7 @@ The Transactions dataset remains limited to the two verified QR imports. The 242
 ## Follow-up
 
 Keep candidate storage operational and short-lived. Do not broaden automatic import to OCR or unverified QR data without a review step. Any future retention change should be a separate, explicit task.
+
+## Follow-up — 2026-09-30
+
+This audit's dataset counts and decision remain historical. Scanner orchestration and OCR-worker reliability have since received a code follow-up; no new gallery dataset or real-slip OCR result was produced. See [current scanner report](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md).

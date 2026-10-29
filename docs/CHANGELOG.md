@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-02 — Product entry consistency and ScreenTutor answer integrity
+
+- Web and native root routes now open Nexus All; ScreenTutor is available at `/screentutor`, and initial/PWA branding is Nexus.
+- Removed canned fallback analysis and default sample OCR input. ScreenTutor now requires desktop capture, OCR text and validated Ollama output; provider failures are surfaced without fake success, and results record explicit source provenance.
+- Added route/provider regression tests. See [phase report](PHASE_0_1_0_2_PRODUCT_ENTRY_SCREENTUTOR_FIX_2026-10-02.md) for exact validation and runtime limitations.
+
+## 2026-09-30 — Explicit gallery scan and recovery reliability
+
+- Explicit native scans now use a non-incremental exhaustive path while automatic startup retains incremental QR filtering; web supports directory selection where available.
+- Date-only scan ranges include the selected final local day, and OCR worker startup failures no longer strand the queue or permanently consume a pool slot.
+- Automated scanner/build checks passed; current Android APK/device verification remains pending due to Gradle loopback initialization failure. See [report](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md).
+
 ## 2026-09-15 — OCR slip review queue
 
 - Gallery scans now open the existing Import Preview for OCR or otherwise unverified slips instead of dropping them after the verified QR auto-import. A person can review, edit, import, or return to the pending queue while the strict automatic-import gate remains unchanged.

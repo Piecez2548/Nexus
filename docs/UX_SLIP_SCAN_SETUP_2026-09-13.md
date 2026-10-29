@@ -27,3 +27,7 @@ Using the one-tap action applies an unfiltered scan for that run without clearin
 - ESLint/Oxlint (`npm run lint`): passed.
 - Impeccable detector: no findings for the changed component.
 - `git diff --check`: passed.
+
+## Follow-up — 2026-09-30
+
+The setup's explicit scan action now selects the exhaustive path; web folder selection is offered where supported, and date ranges pass through to picked files. The historical UX validation above predates this follow-up. Current build/test evidence and Android/browser verification still needed are in [SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md).

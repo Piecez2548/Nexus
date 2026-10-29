@@ -1,6 +1,19 @@
 # Roadmap
 
-**Last Updated:** 2026-09-13
+**Last Updated:** 2026-10-02
+
+### Product entry and ScreenTutor integrity (2026-10-02)
+- [x] Make Nexus All the shared web/native root and move ScreenTutor to `/screentutor`; update SPA shell and PWA identity.
+- [x] Remove automatic canned analysis. Require real desktop capture, OCR text, and validated Ollama output; label provenance and fail safely on unavailable/error responses.
+- [ ] **Planned:** verify Electron capture/Ollama end-to-end and Android launch on supported devices; route-config tests do not substitute for runtime validation.
+- [ ] **Planned:** complete full Vitest suite and investigate the known TopBar lazy-loading instability if reproduced.
+
+This roadmap is a historical backlog plus current follow-ups, not a complete current product certification. For the current routing/product identity, audit findings, and verification limits see [FULL_SYSTEM_AUDIT_2026-09-30.md](FULL_SYSTEM_AUDIT_2026-09-30.md).
+
+### Slip scanner reliability follow-up (2026-09-30)
+- [x] Correct explicit scan behavior, local-day inclusive date ranges, web folder selection where supported, and recoverable OCR worker startup failure. Targeted build/tests/lint passed; details in [scanner fix report](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md).
+- [ ] **Planned:** resolve Gradle loopback failure, build/install the changed Android APK, and verify the explicit native gallery scan and real slips on-device. `cap sync` alone is not an APK build.
+- [ ] **Planned:** confirm folder selection behavior in supported web browsers and document per-browser fallback.
 
 ## Overview
 
@@ -50,7 +63,7 @@ The active scope is an ordinary personal/demo project. See the [Focused project 
 - [x] Forecast & Trend Engine, including an interactive What-If scenario simulator
 - [x] Executive Summary Generator
 - [x] AI Coach (16-intent keyword-classified Q&A)
-- [x] AI Gateway infrastructure (`src/ai/`) — built, tested, **not yet wired into the app**
+- [x] AI Gateway infrastructure (`src/ai/`) — built and used for the opt-in Claude fallback in AI Coach; other analytics surfaces remain deterministic/local.
 
 ### Trading & Portfolio
 - [x] Trading Journal — full trade CRUD with psychology/session/strategy metadata
@@ -191,7 +204,7 @@ Larger initiatives with no code-level scaffolding yet:
 
 ## Current Status
 
-This roadmap was reconciled with the current working tree on 2026-08-30. No implementation item is queued under Planned; Future items require product or infrastructure decisions before work begins.
+The earlier 2026-08-30 reconciliation is historical. Planned work now includes the September 30 scanner Android/browser verification and full-suite stability follow-up above; future items still require product or infrastructure decisions.
 
 ## Future Improvements
 

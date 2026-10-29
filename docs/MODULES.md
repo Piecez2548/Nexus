@@ -1,6 +1,6 @@
 # Modules
 
-**Last Updated:** 2026-08-21
+**Last Updated:** 2026-09-30
 
 ## Overview
 
@@ -34,7 +34,7 @@ Every domain lives in `src/features/<name>/` with the same internal shape (see [
 
 ## 2. Finance — core (`src/features/finance/`, excluding `aiAnalytics/`)
 
-**Purpose:** The core money-tracking module — transactions, accounts, categories, budgets, savings goals, recipient/merchant auto-categorization, receipt-slip OCR, and the Gallery Slip Scanner.
+**Purpose:** The core money-tracking module — transactions, accounts, categories, budgets, savings goals, recipient/merchant auto-categorization, receipt-slip OCR, and the Gallery Slip Scanner. Scanner implementation and current verification limits are in [SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md).
 
 **Routes:** `/finance`, `/transactions`, `/favorites`, `/budget`, `/goals`, `/accounts`, `/net-worth`, `/subscriptions`, `/categories`, `/recipients`, `/reports`.
 

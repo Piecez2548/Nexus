@@ -1,6 +1,14 @@
 # Testing Guide
 
-**Last Updated:** 2026-09-13
+**Last Updated:** 2026-09-30
+
+### Slip scanner focused verification (2026-09-30)
+
+- `npm run build`: passed (TypeScript and production build).
+- `npx vitest run src/features/finance/slipScanner src/database/db.test.ts src/database/backupService.test.ts`: 96 files / 501 tests passed.
+- Focused gallery flow/hooks/media/OCR run: 7 files / 38 tests; TopBar/i18n run: 2 files / 13 tests.
+- Scoped Oxlint and ESLint passed. Android `cap sync` passed, but `assembleDebug` did not reach task configuration because Gradle could not establish loopback; no APK/device validation is implied. Full evidence and remaining checks: [scanner fix report](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md).
+- A full-repository `npm test` run did not complete with a clean summary during the 2026-09-30 audit; one earlier attempt reported a single TopBar lazy GalleryScanFlow assertion failure, while isolated and paired runs passed. The current full-suite status is therefore **unverified**, not green.
 
 ## Current regression groups
 

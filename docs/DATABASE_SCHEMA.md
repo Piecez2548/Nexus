@@ -1,6 +1,8 @@
 # Database Schema
 
-**Last Updated:** 2026-09-12
+**Last Updated:** 2026-09-30
+
+Current schema inventory was rechecked for the [full system audit](FULL_SYSTEM_AUDIT_2026-09-30.md). There are 32 declared tables at version 27. The v16 removal applies to the documented unreleased/rebuildable `slipScannedAssets` table; do not generalize it as a migration that safely deletes released user data.
 
 ## Overview
 

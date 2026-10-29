@@ -1,6 +1,10 @@
 # Project Architecture
 
-**Last Updated:** 2026-09-01
+**Last Updated:** 2026-10-02
+
+Application entry is platform-consistent: `/` and `/index.html` resolve to Nexus All, `/projects` remains an alias, and ScreenTutor is a separately lazy-loaded route at `/screentutor` within `AccountRouteGate`. `index.html` and the PWA manifest identify Nexus. ScreenTutor only returns analysis after successful, validated Ollama inference and labels persisted result provenance; see [Phase 0.1–0.2 report](PHASE_0_1_0_2_PRODUCT_ENTRY_SCREENTUTOR_FIX_2026-10-02.md).
+
+The slip scanner's current explicit-scan data flow and validation boundary are recorded in [SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md](SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md). Its coordination remains in the existing feature/hooks/providers/extraction pipeline; this follow-up does not change application layering.
 
 Current browser access is described in [SECURITY.md](SECURITY.md) and [ROUTING.md](ROUTING.md): AccountRouteGate wraps All/Main; MainRoute retains PIN/encryption gating; explicit All lock synchronizes same-origin tab lock generations through the existing app-lock store. Tools local utilities are public, while its private cloud APIs verify account/MFA independently. No domain store/service/repository architecture was replaced by this hardening.
 
