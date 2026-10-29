@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Link } from "react-router-dom";
 import { useAppSettingsStore, type ThemeMode } from "@/store/appSettingsStore";
 import HubAccountMenu from "./HubAccountMenu";
 import AppLockGate from "@/features/lock/components/AppLockGate";
@@ -37,12 +38,13 @@ function ProjectHubContent() {
   }, []);
 
   // Trusted, bundled presentation only. Never interpolate user data or URLs
-  // here. AuthGate mounts this route only after session + MFA checks complete.
+  // here. The hub is public; only Main's routes require a signed-in session.
   return <>
     <div id="top" className="project-hub" ref={root} dangerouslySetInnerHTML={trustedMarkup} />
     {themeSlot && createPortal(<HubThemeControl />, themeSlot)}
-    {accountSlot && user && createPortal(
-      <HubAccountMenu name={accountName} />, accountSlot)}
+    {accountSlot && createPortal(user
+      ? <HubAccountMenu name={accountName} />
+      : <Link className="hub-account" to="/projects?returnTo=%2Fdashboard">เข้าสู่ระบบ</Link>, accountSlot)}
   </>;
 }
 

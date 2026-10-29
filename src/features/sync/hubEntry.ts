@@ -1,5 +1,5 @@
 export function isHubPath(path: string) {
-  return ["/projects", "/projects/", "/projects/index.html"].includes(path);
+  return ["/", "/index.html", "/projects", "/projects/", "/projects/index.html"].includes(path);
 }
 
 // A return destination only restores navigation after authentication; never access.

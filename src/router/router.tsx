@@ -54,12 +54,12 @@ export const appRoutes = [
       { path: "compare", element: <AlgoVizModulePage /> },
     ],
   },
+  { id: "screentutor", path: "/screentutor", element: <Suspense fallback={<div aria-busy="true">Loading ScreenTutor…</div>}><ScreenTutor /></Suspense> },
   { element: <AccountRouteGate />, children: [
   { id: "nexus-all-root", path: "/", element: projectHub },
   { id: "nexus-all-index", path: "/index.html", element: projectHub },
   { id: "nexus-all-projects", path: "/projects", element: projectHub },
   { id: "nexus-all-projects-index", path: "/projects/index.html", element: projectHub },
-  { id: "screentutor", path: "/screentutor", element: <Suspense fallback={<div aria-busy="true">Loading ScreenTutor…</div>}><ScreenTutor /></Suspense> },
   {
     element: <Suspense fallback={null}><MainRoute /></Suspense>,
     children: [
