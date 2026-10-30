@@ -37,7 +37,7 @@ describe("project hub shared authentication", () => {
     const { rerender } = render(<AuthGate><ProjectHub /></AuthGate>, { wrapper: MemoryRouter });
     expect(screen.getByRole("link", { name: "เข้าสู่ Nexus Main" })).toHaveAttribute("href", "/dashboard");
     expect(screen.getByRole("link", { name: "เข้าสู่ DataLens" })).toHaveAttribute("href", "https://datalens-kappa-one.vercel.app/");
-    expect(screen.getByRole("link", { name: "เข้าสู่ AlgoViz" })).toHaveAttribute("href", "/algoviz");
+    expect(screen.getByRole("link", { name: "เข้าสู่ AlgoViz" })).toHaveAttribute("href", "https://algoviz-brown-kappa.vercel.app/");
     expect(screen.queryByText("Welcome back")).not.toBeInTheDocument();
     expect(document.querySelector(".project-hub")).not.toBeNull();
     rerender(<AuthGate><p>Main workspace</p></AuthGate>);

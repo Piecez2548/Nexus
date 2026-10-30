@@ -15,13 +15,12 @@ describe("application entry route", () => {
     expect(matchRoutes(routes, "/")?.some((match) => match.route.id === "screentutor")).toBe(false);
   });
 
-  it.each(["/algoviz/nope", "/algoviz/search/extra"])("keeps unknown AlgoViz path %s inside AlgoViz, not behind Main's sign-in", (pathname) => {
+  it.each(["/algoviz", "/algoviz/nope", "/algoviz/search/extra"])("sends %s to the AlgoViz site, never behind Main's sign-in", (pathname) => {
     const matches = matchRoutes(routes, pathname) ?? [];
-    expect(matches.some((match) => match.route.path === "/algoviz")).toBe(true);
+    expect(matches.some((match) => match.route.id === "algoviz-redirect")).toBe(true);
     // Main's account gate is a pathless layout route; none of the matches may sit under it.
     expect(matches.some((match) => match.route.path === "dashboard" || match.route.id === "nexus-all-root")).toBe(false);
-    expect(matches.at(-1)?.route.path).toBe("*");
-    expect(matches.length).toBe(2);
+    expect(matches.length).toBe(1);
   });
 
   it("retains Main and unknown-route behavior", () => {

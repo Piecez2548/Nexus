@@ -36,26 +36,12 @@ import {
 } from "./lazyPages";
 
 import PasswordRecoveryScreen from "@/features/sync/components/PasswordRecoveryScreen";
-import AlgoVizLayout from "@/algoviz/components/layout/AlgoVizLayout";
-import AlgoVizHomePage from "@/algoviz/pages/AlgoVizHomePage";
-import AlgoVizModulePage from "@/algoviz/pages/AlgoVizModulePage";
-import AlgoVizNotFound from "@/algoviz/pages/AlgoVizNotFound";
+import AlgoVizRedirect from "./AlgoVizRedirect";
 const projectHub = <Suspense fallback={null}><ProjectHub /></Suspense>;
 const MainRoute = lazy(() => import("./MainRoute"));
 export const appRoutes = [
   { path: "/forgot-password", element: <Suspense fallback={null}><PasswordRecoveryScreen /></Suspense> },
-  {
-    path: "/algoviz",
-    element: <AlgoVizLayout />,
-    children: [
-      { index: true, element: <AlgoVizHomePage /> },
-      { path: "search", element: <AlgoVizModulePage /> },
-      { path: "pathfinding", element: <AlgoVizModulePage /> },
-      { path: "sorting", element: <AlgoVizModulePage /> },
-      { path: "compare", element: <AlgoVizModulePage /> },
-      { path: "*", element: <AlgoVizNotFound /> },
-    ],
-  },
+  { id: "algoviz-redirect", path: "/algoviz/*", element: <AlgoVizRedirect /> },
   { id: "screentutor", path: "/screentutor", element: <Suspense fallback={<div aria-busy="true">Loading ScreenTutor…</div>}><ScreenTutor /></Suspense> },
   { element: <AccountRouteGate />, children: [
   { id: "nexus-all-root", path: "/", element: projectHub },

@@ -20,6 +20,8 @@
     { "source": "/projects", "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }] }
   ],
   "redirects": [
+    { "source": "/algoviz", "destination": "https://algoviz-brown-kappa.vercel.app/", "permanent": false },
+    { "source": "/algoviz/:path*", "destination": "https://algoviz-brown-kappa.vercel.app/:path*", "permanent": false },
     { "source": "/projects/index.html", "destination": "/projects", "permanent": false },
     { "source": "/projects/", "destination": "/projects", "permanent": false }
   ],

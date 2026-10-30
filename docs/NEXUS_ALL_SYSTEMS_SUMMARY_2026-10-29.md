@@ -27,7 +27,7 @@
 | **Nexus Main** | Personal finance, planning, trading journal และ secure workspace | Web + Android + Electron จาก architecture หลัก | `https://nexus-main-phi.vercel.app` | `Piecez2548/Nexus-Main` และ source หลักใน `Piecez2548/Nexus` | IndexedDB/Dexie เป็นหลัก, optional Supabase sync |
 | **Nexus Tools** | เครื่องมือเอกสาร สื่อ OCR QR และเอกสารธุรกิจ | Standalone web app + Vercel Functions/Blob | `https://nexus-tools-chi.vercel.app` | `Piecez2548/Nexus-Tools` | browser-local เป็นหลัก, cloud เฉพาะงานที่ผู้ใช้เลือก |
 | **DataLens** | วิเคราะห์และ profile CSV แบบ deterministic | React frontend + FastAPI backend | `https://datalens-kappa-one.vercel.app` | `Piecez2548/DataLens` | วิเคราะห์ใน request, ไม่ตั้งใจเก็บ CSV ถาวร |
-| **AlgoViz** | ห้องทดลองแสดง algorithm แบบ interactive | Standalone web app และ embedded route | `https://algoviz-brown-kappa.vercel.app` และ root `/algoviz` | `Piecez2548/AlgoViz` | ไม่มี business persistence |
+| **AlgoViz** | ห้องทดลองแสดง algorithm แบบ interactive | Standalone web app (Nexus ลิงก์ไป; `/algoviz` redirect มาที่นี่) | `https://algoviz-brown-kappa.vercel.app` | `Piecez2548/AlgoViz` | ไม่มี business persistence |
 | **ScreenTutor** | ผู้ช่วยเรียนรู้จากภาพหน้าจอด้วย OCR/Local AI | Standalone web + Electron bridge ใน root | `https://screentutor.vercel.app` และ root `/screentutor` | `Piecez2548/ScreenTutor` | local history/settings; optional Ollama |
 
 ## 3. สถาปัตยกรรมร่วมของ Nexus
