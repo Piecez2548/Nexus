@@ -5,10 +5,12 @@ import App from "./App";
 import "./styles/index.css";
 import { ThemeEffect } from "@/providers/ThemeEffect";
 import { initErrorMonitoring } from "@/lib/sentry";
+import { installStaleChunkReload } from "@/lib/staleChunkReload";
 
 // Account-side startup (audit sink, lock sync, Tools session links) runs from
 // accountBoot.ts and default data is seeded by MainRoute, so public pages stay light.
 initErrorMonitoring();
+installStaleChunkReload();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
