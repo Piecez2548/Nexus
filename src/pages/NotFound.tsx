@@ -10,7 +10,8 @@ export default function NotFound() {
       <p className="text-zinc-600 dark:text-zinc-500">
         {t("notFound.message")}
       </p>
-      <Link to="/" className="text-brand-500 hover:underline">
+      {/* "/" is the Nexus All hub; this 404 lives inside Main. */}
+      <Link to="/dashboard" className="text-brand-500 hover:underline">
         {t("notFound.backToDashboard")}
       </Link>
     </div>

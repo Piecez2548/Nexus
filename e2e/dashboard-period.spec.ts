@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Dashboard period selector", () => {
   test("switching Day/Month/Year changes income but leaves Portfolio and Budget unaffected", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
     // No Quick Actions card anymore; Budget takes its place.
@@ -27,6 +27,8 @@ test.describe("Dashboard period selector", () => {
     await page.getByLabel("Type").selectOption({ label: "Income" });
     await page.getByLabel("Category").selectOption({ label: "Salary" });
     await page.getByLabel("Account", { exact: true }).selectOption({ label: "Cash" });
+    // Date sits behind the form's "More" details toggle.
+    await page.getByRole("dialog").getByRole("button", { name: "More", exact: true }).click();
     await page.getByLabel("Date").fill("2020-01-01");
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeHidden();
@@ -58,7 +60,7 @@ test.describe("Dashboard period selector", () => {
     await page.getByRole("button", { name: "Save price for AAPL" }).click();
     await expect(page.getByText("+200 (+20%)").first()).toBeVisible();
 
-    await page.goto("/");
+    await page.goto("/dashboard");
     await expect(page.getByText("+200 (+20%)").first()).toBeVisible();
     const portfolioPnlBefore = await page.getByText("+200 (+20%)").count();
     expect(portfolioPnlBefore).toBeGreaterThan(0);

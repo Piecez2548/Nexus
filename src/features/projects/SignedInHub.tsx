@@ -4,6 +4,9 @@ import { useAppLockStore } from "@/store/appLockStore";
 import { useAuthStore } from "@/features/sync/store/authStore";
 import HubAccountMenu from "./HubAccountMenu";
 import ProjectHubContent, { HubSignInLink } from "./ProjectHubContent";
+import { installAccountBoot } from "@/features/sync/accountBoot";
+
+installAccountBoot();
 
 // Loaded only when a session or lock state may exist; keeps the hub PIN gate.
 export default function SignedInHub() {

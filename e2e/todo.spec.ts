@@ -41,7 +41,7 @@ test.describe("todo lifecycle", () => {
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("ซื้อของเข้าบ้าน")).toBeVisible();
 
-    await page.goto("/");
+    await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Todo" })).toBeVisible();
     await expect(page.getByText("ซื้อของเข้าบ้าน")).toBeVisible();
 

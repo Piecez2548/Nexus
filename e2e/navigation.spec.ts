@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("sidebar navigation", () => {
   test("every sidebar link loads without a runtime error", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
     // Finance is a collapsible group — expand it once, then its links stay visible.

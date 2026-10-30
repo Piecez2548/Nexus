@@ -4,7 +4,7 @@ test.describe("mobile layout", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test("hides the sidebar and shows the bottom tab bar with a working FAB", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
 
     // The desktop sidebar's logo text shouldn't render on a mobile viewport.
     await expect(page.getByText("Life Operating System")).not.toBeVisible();
@@ -26,7 +26,7 @@ test.describe("mobile layout", () => {
   });
 
   test("the More menu surfaces the rest of the navigation", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
 
     await page.getByRole("button", { name: "More", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Menu" })).toBeVisible();

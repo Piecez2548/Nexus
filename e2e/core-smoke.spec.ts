@@ -6,7 +6,7 @@ test("core finance flow survives a page reload", async ({ page }) => {
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.message));
 
-  await page.goto("/");
+  await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
   await page.getByRole("button", { name: "Add Transaction" }).click();

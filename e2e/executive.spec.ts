@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("executive dashboard", () => {
   test("loads from the nav and shows the Executive Summary in an empty-data state", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
 
     // The "Personal" sidebar group (which Executive lives in) starts
     // collapsed unless the current route is already inside it.
@@ -55,7 +55,7 @@ test.describe("executive dashboard (mobile)", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
   test("is reachable from the More menu and renders on a narrow viewport", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
 
     await page.getByRole("button", { name: "More", exact: true }).click();
     await page.getByRole("link", { name: "Executive" }).click();

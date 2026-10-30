@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("AI Analytics", () => {
   test("nav link navigates to the AI Analytics page", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
     await page.getByRole("button", { name: "Finance" }).click();
     await page.getByRole("link", { name: "AI Analytics", exact: true }).click();
 

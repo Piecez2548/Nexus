@@ -9,6 +9,9 @@ import AuthBackdrop from "@/components/ui/AuthBackdrop";
 import ErrorState from "@/components/ui/ErrorState";
 import { useEntryTranslation } from "@/i18n/useEntryTranslation";
 import { allowsLocalOnlyAccess } from "../authAccessPolicy";
+import { installAccountBoot } from "../accountBoot";
+
+installAccountBoot();
 
 interface Props {
   children: ReactNode;

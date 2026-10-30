@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("top bar", () => {
   test("theme toggle switches between light and dark mode", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
 
     const html = page.locator("html");
     await expect(page.getByRole("button", { name: "Toggle dark mode" })).toBeVisible();
@@ -38,7 +38,7 @@ test.describe("top bar", () => {
   });
 
   test("user menu navigates to Settings and can lock the app", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
 
     await page.getByRole("button", { name: "User menu" }).click();
     await expect(page.getByRole("button", { name: "Lock App" })).not.toBeVisible();
@@ -68,7 +68,7 @@ test.describe("top bar", () => {
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByRole("table").getByText("Starbucks Coffee")).toBeVisible();
 
-    await page.goto("/");
+    await page.goto("/dashboard");
     await page.getByPlaceholder("Search anything...").fill("starbucks");
     await page.getByRole("button", { name: "Starbucks Coffee" }).click();
     await expect(page.getByRole("heading", { name: "Transactions" })).toBeVisible();

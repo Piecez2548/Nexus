@@ -27,10 +27,16 @@ test("desktop navigation exposes every Main workspace", async ({ page }) => {
 test("mobile More menu exposes every Main workspace", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dashboard");
-  await page.locator("[data-shell-audit=mobile-navigation]").getByRole("button", { name: "More", exact: true }).click();
+  const tabBar = page.locator("[data-shell-audit=mobile-navigation]");
+  // Daily workspaces live on the bottom tab bar; the More menu holds the rest.
+  const tabBarPaths = ["/transactions", "/budget"];
+  for (const path of tabBarPaths) {
+    await expect(tabBar.locator(`a[href="${path}"]`), path).toBeVisible();
+  }
+  await tabBar.getByRole("button", { name: "More", exact: true }).click();
 
   const menu = page.getByRole("dialog");
-  for (const path of featurePaths) {
+  for (const path of featurePaths.filter((path) => !tabBarPaths.includes(path))) {
     await expect(menu.locator(`a[href="${path}"]`), path).toBeVisible();
   }
 });

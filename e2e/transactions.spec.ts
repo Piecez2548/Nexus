@@ -1,4 +1,24 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+// A minimal 1x1 PNG — real OCR accuracy isn't what these tests check; they
+// confirm the on-device Tesseract pipeline starts inside the bundled app.
+const pngBuffer = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+  "base64"
+);
+
+// On the web the scanner asks for a folder (webkitdirectory), so hand the
+// file chooser a real directory of slips.
+async function chooseSlipFolder(page: Page, count: number) {
+  const dir = await mkdtemp(path.join(tmpdir(), "nexus-slips-"));
+  for (let i = 1; i <= count; i++) await writeFile(path.join(dir, `slip${i}.png`), pngBuffer);
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose image folder" }).click();
+  await (await chooser).setFiles(dir);
+}
 
 test.describe("transaction lifecycle", () => {
   test("add, edit, and delete a transaction end to end", async ({ page }) => {
@@ -68,7 +88,7 @@ test.describe("transaction lifecycle", () => {
   });
 
   test("the dashboard's header button opens the transaction drawer", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dashboard");
 
     await page.getByRole("button", { name: "Add Transaction" }).click();
     await expect(page.getByRole("heading", { name: "Add Transaction" })).toBeVisible();
@@ -83,21 +103,7 @@ test.describe("transaction lifecycle", () => {
 
     await page.locator("button").filter({ hasText: "Scan Gallery" }).click();
     await expect(page.getByText("Scan your gallery")).toBeVisible();
-    await page.getByRole("button", { name: "Scan all photos" }).click();
-
-    // A minimal 1x1 PNG — real OCR accuracy isn't what this test is checking;
-    // it's confirming the on-device Tesseract pipeline actually starts inside
-    // the real bundled app (WASM/worker loading, not just the mocked unit test).
-    const pngBuffer = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-      "base64"
-    );
-
-    await page.getByLabel("Scan Gallery").setInputFiles({
-      name: "slip.png",
-      mimeType: "image/png",
-      buffer: pngBuffer,
-    });
+    await chooseSlipFolder(page, 1);
 
     await expect(page.getByText("Scan progress")).toBeVisible();
   });
@@ -106,17 +112,7 @@ test.describe("transaction lifecycle", () => {
     await page.goto("/transactions");
 
     await page.locator("button").filter({ hasText: "Scan Gallery" }).click();
-    await page.getByRole("button", { name: "Scan all photos" }).click();
-
-    const pngBuffer = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-      "base64"
-    );
-
-    await page.getByLabel("Scan Gallery").setInputFiles([
-      { name: "slip1.png", mimeType: "image/png", buffer: pngBuffer },
-      { name: "slip2.png", mimeType: "image/png", buffer: pngBuffer },
-    ]);
+    await chooseSlipFolder(page, 2);
 
     await expect(page.getByText("Scan progress")).toBeVisible();
     await expect(page.getByText("Import preview")).toBeVisible({ timeout: 60000 });
