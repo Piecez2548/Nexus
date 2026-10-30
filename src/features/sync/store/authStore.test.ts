@@ -1,4 +1,5 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
+import { AuthRetryableFetchError } from "@supabase/supabase-js";
 import { clearAuditLog, getAuditLog } from "@/features/security/auditLog";
 import { EncryptionLockedError } from "@/database/encryptedRepository";
 
@@ -57,7 +58,7 @@ vi.mock("@/platform/localTelemetry", () => ({
   },
 }));
 
-const { useAuthStore } = await import("./authStore");
+const { useAuthStore, AUTH_CHECK_TIMEOUT_MS } = await import("./authStore");
 
 describe("authStore", () => {
   beforeEach(() => {
@@ -68,6 +69,7 @@ describe("authStore", () => {
       user: null,
       initialized: false,
       sessionChecked: false,
+      authUnreachable: false,
       loading: false,
       error: null,
       needsEmailConfirmation: false,
@@ -289,6 +291,49 @@ describe("authStore", () => {
 
     expect(useAuthStore.getState().user).toMatchObject({ id: "u1" });
     expect(useAuthStore.getState().sessionChecked).toBe(true);
+  });
+
+  describe("unreachable account service", () => {
+    afterEach(() => vi.useRealTimers());
+
+    it("stops waiting after the timeout and flags the service as unreachable", async () => {
+      vi.useFakeTimers();
+      let finish!: (value: unknown) => void;
+      mockGetSession.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+
+      const pending = useAuthStore.getState().initialize();
+      await vi.advanceTimersByTimeAsync(AUTH_CHECK_TIMEOUT_MS);
+      expect(useAuthStore.getState()).toMatchObject({ sessionChecked: true, authUnreachable: true, user: null });
+
+      // The late Supabase answer (retries exhausted) keeps the message up.
+      finish({ data: { session: null }, error: new AuthRetryableFetchError("Failed to fetch", 0) });
+      await pending;
+      expect(useAuthStore.getState()).toMatchObject({ sessionChecked: true, authUnreachable: true, user: null });
+    });
+
+    it("clears the flag when a slow session check eventually returns a user", async () => {
+      vi.useFakeTimers();
+      let finish!: (value: unknown) => void;
+      mockGetSession.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+
+      const pending = useAuthStore.getState().initialize();
+      await vi.advanceTimersByTimeAsync(AUTH_CHECK_TIMEOUT_MS);
+      finish({ data: { session: { user: { id: "u1" } } }, error: null });
+      await pending;
+      expect(useAuthStore.getState()).toMatchObject({ authUnreachable: false, user: { id: "u1" } });
+    });
+
+    it("flags a sign-in that fails because the service cannot be reached", async () => {
+      mockSignInWithPassword.mockResolvedValue({ data: { user: null }, error: new AuthRetryableFetchError("Failed to fetch", 0) });
+      await useAuthStore.getState().signIn("person@example.test", "long-password");
+      expect(useAuthStore.getState().authUnreachable).toBe(true);
+    });
+
+    it("does not flag an ordinary wrong-password failure", async () => {
+      mockSignInWithPassword.mockResolvedValue({ data: { user: null }, error: { message: "Invalid login credentials", status: 400 } });
+      await useAuthStore.getState().signIn("person@example.test", "long-password");
+      expect(useAuthStore.getState().authUnreachable).toBe(false);
+    });
   });
 
   it("does not re-run the session check on a second initialize call", async () => {

@@ -25,6 +25,7 @@ export default function AuthGate({ children, loginFallback }: Props) {
   const sessionChecked = useAuthStore((s) => s.sessionChecked);
   const mfaPending = useAuthStore((s) => s.mfaPending);
   const emailVerificationPending = useAuthStore((s) => s.emailVerificationPending);
+  const authUnreachable = useAuthStore((s) => s.authUnreachable);
 
   useEffect(() => {
     useAuthStore.getState().initialize();
@@ -42,6 +43,18 @@ export default function AuthGate({ children, loginFallback }: Props) {
     return (
       <AuthBackdrop>
         <span className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-300 dark:border-zinc-700 border-t-brand-500" />
+      </AuthBackdrop>
+    );
+  }
+
+  // A login form cannot work while the account service is unreachable.
+  if (!user && authUnreachable) {
+    return (
+      <AuthBackdrop>
+        <div className="flex flex-col items-center gap-4">
+          <ErrorState message={t("common.authUnreachable")} onRetry={() => window.location.reload()} />
+          <a href="/projects" className="text-sm font-medium text-brand-500 hover:underline">{t("common.backToHub")}</a>
+        </div>
       </AuthBackdrop>
     );
   }

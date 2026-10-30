@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { User } from "@supabase/supabase-js";
+import { isAuthRetryableFetchError, type User } from "@supabase/supabase-js";
 import { supabase, isSyncConfigured } from "@/lib/supabaseClient";
 import { toErrorMessage } from "@/utils/asyncState";
 import { recordAudit } from "@/features/security/auditLog";
@@ -11,6 +11,13 @@ import { captureError } from "@/lib/sentry";
 import { localTelemetry } from "@/platform/localTelemetry";
 import { EncryptionLockedError } from "@/database/encryptedRepository";
 
+export const AUTH_CHECK_TIMEOUT_MS = 6_000;
+
+// Network/DNS failures reach us as Supabase's retryable fetch error.
+function isUnreachable(error: unknown): boolean {
+  return isAuthRetryableFetchError(error) || error instanceof TypeError;
+}
+
 interface AuthState {
   user: User | null;
   initialized: boolean;
@@ -19,6 +26,10 @@ interface AuthState {
   // before the async session check even starts. The auth gate waits on this
   // one so it doesn't flash the login screen before a valid session loads.
   sessionChecked: boolean;
+  // The account service could not be reached (DNS/network failure or a
+  // session check that outlived AUTH_CHECK_TIMEOUT_MS). AuthGate shows a
+  // clear message instead of a spinner or a login form that cannot work.
+  authUnreachable: boolean;
   loading: boolean;
   error: string | null;
   needsEmailConfirmation: boolean;
@@ -59,6 +70,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   initialized: false,
   sessionChecked: false,
+  authUnreachable: false,
   loading: false,
   error: null,
   needsEmailConfirmation: false,
@@ -80,9 +92,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return;
     }
 
-    const { data } = await supabase.auth.getSession();
+    // Refreshing a stored session against an unreachable project retries for
+    // ~30s. Stop the spinner early; the late result below still applies.
+    const sessionCheck = supabase.auth.getSession();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timedOut = await Promise.race([
+      sessionCheck.then(() => false, () => false),
+      new Promise<boolean>((resolve) => { timer = setTimeout(() => resolve(true), AUTH_CHECK_TIMEOUT_MS); }),
+    ]);
+    clearTimeout(timer);
+    if (timedOut) set({ sessionChecked: true, authUnreachable: true });
+
+    const { data, error } = await sessionCheck.catch((err: unknown) => ({ data: { session: null }, error: err }));
     const access = await resolveMfaAccess(data.session?.user ?? null);
-    set({ user: access.user, mfaPending: access.mfaPending, mfaFactorId: access.mfaFactorId, sessionChecked: true });
+    set({
+      user: access.user,
+      mfaPending: access.mfaPending,
+      mfaFactorId: access.mfaFactorId,
+      sessionChecked: true,
+      authUnreachable: !access.user && (isUnreachable(error) || (timedOut && Boolean(error))),
+    });
 
     // Async on purpose: Supabase doesn't wait for this callback, and every
     // session change (including one that arrives mid-MFA-challenge) must go
@@ -155,7 +184,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     if (error) {
       recordAudit("auth", "sign-in", { success: false });
-      set({ loading: false, error: error.message });
+      set({ loading: false, error: error.message, authUnreachable: isUnreachable(error) });
       return;
     }
 

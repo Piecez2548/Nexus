@@ -32,6 +32,7 @@ describe("AuthGate (sync configured)", () => {
       user: null,
       initialized: false,
       sessionChecked: false,
+      authUnreachable: false,
       loading: false,
       error: null,
       needsEmailConfirmation: false,
@@ -61,6 +62,21 @@ describe("AuthGate (sync configured)", () => {
 
     expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
     expect(screen.queryByText("Welcome back")).not.toBeInTheDocument();
+  });
+
+  it("explains an unreachable account service instead of showing a login form that cannot work", () => {
+    useAuthStore.setState({ initialized: true, sessionChecked: true, authUnreachable: true });
+
+    render(
+      <AuthGate loginFallback={<p>Login fallback</p>}>
+        <p>Protected content</p>
+      </AuthGate>
+    );
+
+    expect(screen.getByText(/account service can't be reached/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to Nexus All" })).toHaveAttribute("href", "/projects");
+    expect(screen.queryByText("Login fallback")).not.toBeInTheDocument();
+    expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
   });
 
   it("shows the login screen once checked and there's no session", async () => {
