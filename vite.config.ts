@@ -28,6 +28,9 @@ export default defineConfig({
         // Precache only the shell; JS chunks are cached as each workspace is opened,
         // so a first hub visit does not download all of Main in the background.
         globPatterns: ["index.html", "**/*.{css,svg,png,webp,woff2}"],
+        // Never answer "/" from the precache: it would serve the previous deploy's HTML, which
+        // points at hashed files that no longer exist. Navigations go network-first below.
+        directoryIndex: null,
         // Prefer the deployed HTML shell; retain the precached shell offline.
         navigateFallback: null,
         runtimeCaching: [{
