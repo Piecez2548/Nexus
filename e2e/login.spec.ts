@@ -4,7 +4,7 @@ const output='.impeccable/review/login';
 mkdirSync(output,{recursive:true});
 for(const width of [320,390,768,1280]) test(`login and signup ${width}`,async({page})=>{
  await page.setViewportSize({width,height:900});
- await page.goto('/projects');
+ await page.goto('/projects?returnTo=%2Fdashboard');
  await expect(page.locator('.login-form')).toBeVisible();
  await page.evaluate(()=>document.fonts.ready);
  await page.addScriptTag({content:readFileSync('node_modules/axe-core/axe.min.js','utf8')});
@@ -19,7 +19,7 @@ for(const width of [320,390,768,1280]) test(`login and signup ${width}`,async({p
 
 test('validation border feedback',async({page})=>{
  await page.setViewportSize({width:390,height:900});
- await page.goto('/projects');
+ await page.goto('/projects?returnTo=%2Fdashboard');
  const email=page.locator('#login-email');
  await email.fill('incorrect'); await email.blur();
  await expect(email).toHaveClass(/is-invalid/);

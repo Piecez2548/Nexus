@@ -39,6 +39,7 @@ import PasswordRecoveryScreen from "@/features/sync/components/PasswordRecoveryS
 import AlgoVizLayout from "@/algoviz/components/layout/AlgoVizLayout";
 import AlgoVizHomePage from "@/algoviz/pages/AlgoVizHomePage";
 import AlgoVizModulePage from "@/algoviz/pages/AlgoVizModulePage";
+import AlgoVizNotFound from "@/algoviz/pages/AlgoVizNotFound";
 const projectHub = <Suspense fallback={null}><ProjectHub /></Suspense>;
 const MainRoute = lazy(() => import("./MainRoute"));
 export const appRoutes = [
@@ -52,6 +53,7 @@ export const appRoutes = [
       { path: "pathfinding", element: <AlgoVizModulePage /> },
       { path: "sorting", element: <AlgoVizModulePage /> },
       { path: "compare", element: <AlgoVizModulePage /> },
+      { path: "*", element: <AlgoVizNotFound /> },
     ],
   },
   { id: "screentutor", path: "/screentutor", element: <Suspense fallback={<div aria-busy="true">Loading ScreenTutor…</div>}><ScreenTutor /></Suspense> },

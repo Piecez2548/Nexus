@@ -73,7 +73,17 @@ test.beforeEach(async ({ context }) => {
   });
 });
 
-for (const path of ["/projects", "/projects/", "/projects/index.html", "/dashboard", "/trading?from=nexus-all"]) {
+for (const path of ["/projects", "/projects/", "/projects/index.html"]) {
+  test(`anonymous ${path} opens the public Nexus All hub with a sign-in link`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.locator(".project-hub")).toBeVisible();
+    await expect(page.getByRole("link", { name: "เข้าสู่ระบบ", exact: true })).toHaveAttribute("href", "/projects?returnTo=%2Fdashboard");
+    await expect(page.getByRole("textbox", { name: "Email", exact: true })).toHaveCount(0);
+    await expect(page.locator(".sidebar")).toHaveCount(0);
+  });
+}
+
+for (const path of ["/dashboard", "/trading?from=nexus-all"]) {
   test(`anonymous ${path} requires login and offers registration`, async ({ page }) => {
     await page.goto(path);
     await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
@@ -89,7 +99,7 @@ for (const width of [390, 1280]) {
     // Seed once for this origin, then retain the real SDK's persisted session
     // across ordinary full-page anchor navigation and reload.
     await page.goto("/projects");
-    await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "เข้าสู่ระบบ", exact: true })).toBeVisible();
     await page.evaluate(value => localStorage.setItem("sb-nexus-auth-test-auth-token", JSON.stringify(value)), session);
     await page.reload();
     const main = page.getByRole("link", { name: "เข้าสู่ Nexus Main", exact: true });
@@ -107,31 +117,42 @@ for (const width of [390, 1280]) {
     // A separate anonymous browser must not inherit that session.
     const anonymous = await context.browser()!.newContext();
     const freshPage = await anonymous.newPage();
-    await freshPage.goto("http://localhost:4175/projects");
+    await freshPage.goto("http://localhost:4175/dashboard");
     await expect(freshPage.locator('input[type="email"]')).toBeVisible();
     await anonymous.close();
   });
 }
 
-test("signing in on the hub returns to the hub and carries the session to Main", async ({ page }) => {
+test("signing in from the public hub's link lands in Main", async ({ page }) => {
   await page.goto("/projects");
+  await page.getByRole("link", { name: "เข้าสู่ระบบ", exact: true }).click();
+  await expect(page).toHaveURL(/\/projects\?returnTo=%2Fdashboard$/);
   await page.getByRole("textbox", { name: "Email", exact: true }).fill("fixture@example.test");
   await page.locator('input[type="password"]').fill("test-password-only");
   await page.getByRole("button", { name: "Sign In", exact: true }).click();
-  await page.getByRole("link", { name: "เข้าสู่ Nexus Main", exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.locator("main")).toBeVisible();
   await expect(page.locator('input[type="email"]')).toHaveCount(0);
 });
 
+test("signing in after Main redirected an anonymous visitor returns to the page they asked for", async ({ page }) => {
+  await page.goto("/trading?view=open");
+  await expect(page).toHaveURL(/\/projects\?returnTo=/);
+  await page.getByRole("textbox", { name: "Email", exact: true }).fill("fixture@example.test");
+  await page.locator('input[type="password"]').fill("test-password-only");
+  await page.getByRole("button", { name: "Sign In", exact: true }).click();
+  await expect(page).toHaveURL(/\/trading\?view=open$/);
+  await expect(page.locator("main")).toBeVisible();
+});
+
 for (const themeMode of ["dark", "light", "mono"]) {
   test(`login and All share the saved ${themeMode} palette`, async ({ page }, testInfo) => {
     await page.addInitScript(mode => localStorage.setItem("nexus-app-settings", JSON.stringify({ state: { themeMode: mode }, version: 0 })), themeMode);
-    await page.goto("/projects");
+    await page.goto("/projects?returnTo=%2Fdashboard");
     const expected = themeMode === "dark" ? "rgb(12, 11, 16)" : themeMode === "light" ? "rgb(247, 245, 250)" : "rgb(250, 250, 250)";
     await expect(page.locator(".login-page")).toHaveCSS("background-color", expected);
     await page.evaluate(value => localStorage.setItem("sb-nexus-auth-test-auth-token", JSON.stringify(value)), session);
-    await page.reload();
+    await page.goto("/projects");
     await expect(page.locator(".project-hub")).toHaveCSS("background-color", expected);
     await page.screenshot({ path: testInfo.outputPath(`shared-hub-${themeMode}.png`), fullPage: true, animations: "disabled" });
   });
@@ -146,14 +167,11 @@ for (const direct of [false, true]) {
     await page.goto(direct ? "/trading?view=open" : "/projects");
     await expect(page).toHaveURL(/\/projects/);
     await expect(page.locator("#lock-pin")).toHaveCount(0);
+    // The hub itself is public; the sign-in link starts the same flow Main would.
+    if (!direct) await page.getByRole("link", { name: "เข้าสู่ระบบ", exact: true }).click();
     await page.getByRole("textbox", { name: "Email", exact: true }).fill("fixture@example.test");
     await page.locator('input[type="password"]').fill("test-password-only");
     await page.getByRole("button", { name: "Sign In", exact: true }).click();
-    if (!direct) {
-      await expect(page.locator(".project-hub")).toBeVisible();
-      await expect(page.locator("#lock-pin")).toHaveCount(0);
-      await page.getByRole("link", { name: "เข้าสู่ Nexus Main", exact: true }).click();
-    }
     await expect(page.locator("#lock-pin")).toBeVisible();
     await expect(page.locator(".nexus-main")).toHaveCount(0);
     await expect(page.locator('input[type="email"]')).toHaveCount(0);
@@ -204,8 +222,9 @@ for (const width of [390, 1280]) {
     await expect(trigger).toBeVisible();
     await trigger.click();
     await page.getByRole("button", { name: "ออกจากระบบ", exact: true }).click();
-    await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
-    await expect(page.locator(".project-hub")).toHaveCount(0);
+    // Signing out of the public hub keeps the hub and swaps the account menu for the sign-in link.
+    await expect(page.getByRole("link", { name: "เข้าสู่ระบบ", exact: true })).toBeVisible();
+    await expect(trigger).toHaveCount(0);
     await page.goto("/dashboard");
     await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
   });
@@ -220,8 +239,10 @@ test("All menu explains missing PIN and removes local access even if remote logo
   await expect(page.getByText("ยังไม่ได้ตั้งค่า PIN บนอุปกรณ์นี้")).toBeVisible();
   await page.route("**/auth/v1/logout**", route => route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ message: "Test failure" }) }));
   await page.getByRole("button", { name: "ออกจากระบบ", exact: true }).click();
+  await expect(page.getByRole("link", { name: "เข้าสู่ระบบ", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "เมนูบัญชี Nexus Preview" })).toHaveCount(0);
+  await page.goto("/dashboard");
   await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeVisible();
-  await expect(page.locator(".project-hub")).toHaveCount(0);
 });
 test("All lock invalidates another Main tab and survives reload", async ({page, context}) => {
  await page.goto("/projects");
