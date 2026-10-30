@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /$
+Allow: /projects
+Allow: /algoviz
+Allow: /screentutor
+Disallow: /

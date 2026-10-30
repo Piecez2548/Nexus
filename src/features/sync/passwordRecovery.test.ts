@@ -1,11 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ reset: vi.fn(), update: vi.fn(), session: vi.fn(), callback: null as null | ((event: string) => void) }));
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+const mocks = vi.hoisted(() => {
+  // Recovery links land with auth parameters, which is what loads Supabase on public pages.
+  window.history.replaceState(null, "", "/?code=fixture");
+  return { reset: vi.fn(), update: vi.fn(), session: vi.fn(), callback: null as null | ((event: string) => void) };
+});
 vi.mock("@/lib/supabaseClient", () => ({ supabase: { auth: {
   resetPasswordForEmail: mocks.reset, updateUser: mocks.update, getSession: mocks.session,
   onAuthStateChange: (callback: (event: string) => void) => { mocks.callback = callback; return { data: { subscription: { unsubscribe: vi.fn() } } }; },
 } } }));
 import { clearRecovery, requestPasswordReset, saveRecoveredPassword, usePasswordRecovery } from "./passwordRecovery";
 describe("password recovery", () => {
+  beforeAll(() => vi.waitFor(() => expect(mocks.callback).not.toBeNull()));
   beforeEach(() => { vi.clearAllMocks(); clearRecovery(); mocks.reset.mockResolvedValue({ error: null }); mocks.update.mockResolvedValue({ error: null }); mocks.session.mockResolvedValue({ data: { session: { user: { id: "fixture" } } }, error: null }); });
   it("trims email and redirects to the current site origin", async () => {
     await requestPasswordReset(" person@example.test ");

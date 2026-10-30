@@ -42,6 +42,7 @@ export default function AlgoVizLayout() {
                 {item.label}
               </NavLink>
             ))}
+            <Link className="algoviz-nav-link" to="/projects">← Nexus All</Link>
           </nav>
 
           <div className="algoviz-header-actions">
@@ -72,6 +73,7 @@ export default function AlgoVizLayout() {
                 {item.label}
               </NavLink>
             ))}
+            <Link className="algoviz-nav-link" to="/projects">← Nexus All</Link>
           </nav>
         )}
       </header>

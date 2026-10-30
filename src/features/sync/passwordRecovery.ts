@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { supabase } from "@/lib/supabaseClient";
+import { needsAccountStack } from "./authBootstrap";
 
 const marker = "nexus-password-recovery";
 const hash = new URLSearchParams(window.location.hash.slice(1));
@@ -9,16 +9,24 @@ export const usePasswordRecovery = create<{ active: boolean }>(() => ({
 }));
 if (arriving) sessionStorage.setItem(marker, "1");
 
-// Subscribe before React mounts: Supabase may consume the URL during startup.
-const subscription = supabase?.auth.onAuthStateChange((event) => {
-  if (event === "PASSWORD_RECOVERY") {
-    sessionStorage.setItem(marker, "1");
-    usePasswordRecovery.setState({ active: true });
-  }
-});
-if (import.meta.hot) import.meta.hot.dispose(() => subscription?.data.subscription.unsubscribe());
+const loadSupabase = () => import("@/lib/supabaseClient").then((module) => module.supabase);
+
+// Subscribe as soon as the client exists: Supabase may consume the URL during
+// startup. Recovery links carry auth parameters, so they always load it here.
+if (needsAccountStack()) {
+  void loadSupabase().then((supabase) => {
+    const subscription = supabase?.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        sessionStorage.setItem(marker, "1");
+        usePasswordRecovery.setState({ active: true });
+      }
+    });
+    if (import.meta.hot) import.meta.hot.dispose(() => subscription?.data.subscription.unsubscribe());
+  });
+}
 
 export async function requestPasswordReset(email: string) {
+  const supabase = await loadSupabase();
   if (!supabase) throw new Error("ระบบบัญชียังไม่พร้อมใช้งาน กรุณาลองใหม่ภายหลัง");
   // The established site origin avoids requiring a new redirect allowlist entry.
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin });
@@ -27,6 +35,7 @@ export async function requestPasswordReset(email: string) {
 export async function saveRecoveredPassword(password: string, confirmation: string) {
   if (password.length < 8) throw new Error("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
   if (password !== confirmation) throw new Error("รหัสผ่านทั้งสองช่องไม่ตรงกัน");
+  const supabase = await loadSupabase();
   if (!supabase) throw new Error("ระบบบัญชียังไม่พร้อมใช้งาน");
   const { data, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !data.session) throw new Error("ลิงก์หมดอายุหรือไม่ถูกต้อง กรุณาขอลิงก์ใหม่");

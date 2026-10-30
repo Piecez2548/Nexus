@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useAppSettingsStore } from "@/store/appSettingsStore";
-import { resolveIsDark } from "@/utils/theme";
+import { resolveIsDark, themeColorFor } from "@/utils/theme";
 
 // Applies the persisted theme preference to the document root so Tailwind's
 // `dark:` variant (configured as a class strategy in index.css) takes effect
@@ -10,6 +10,7 @@ export function ThemeEffect() {
 
   useEffect(() => {
     const apply = () => {
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", themeColorFor(themeMode));
       if (themeMode === "mono") {
         document.documentElement.classList.remove("dark");
         document.documentElement.classList.add("mono");

@@ -1,6 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
+import { MemoryRouter } from "react-router-dom";
 import AuthGate from "@/features/sync/components/AuthGate";
 import { useAuthStore } from "@/features/sync/store/authStore";
 import ProjectHub from "./ProjectHub";
@@ -13,10 +14,19 @@ describe("project hub shared authentication", () => {
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
     useAuthStore.setState({ initialized: true, sessionChecked: true, user: null, mfaPending: false, emailVerificationPending: false });
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  it("serves first-time visitors without the account stack", () => {
+    render(<ProjectHub />, { wrapper: MemoryRouter });
+    expect(screen.getByRole("link", { name: "เข้าสู่ระบบ" })).toHaveAttribute("href", "/projects?returnTo=%2Fdashboard");
+    expect(document.documentElement.lang).toBe("th");
+  });
 
   it("does not mount project links or hub styles before login", () => {
-    render(<AuthGate><ProjectHub /></AuthGate>);
+    render(<AuthGate><ProjectHub /></AuthGate>, { wrapper: MemoryRouter });
     expect(screen.getByText("Welcome back")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "เข้าสู่ Nexus Main" })).not.toBeInTheDocument();
     expect(document.querySelector(".project-hub")).toBeNull();
@@ -24,7 +34,7 @@ describe("project hub shared authentication", () => {
 
   it("reveals the hub with an existing session, reuses it for Main, and gates logout", () => {
     useAuthStore.setState({ user: { id: "test-user" } as User });
-    const { rerender } = render(<AuthGate><ProjectHub /></AuthGate>);
+    const { rerender } = render(<AuthGate><ProjectHub /></AuthGate>, { wrapper: MemoryRouter });
     expect(screen.getByRole("link", { name: "เข้าสู่ Nexus Main" })).toHaveAttribute("href", "/dashboard");
     expect(screen.getByRole("link", { name: "เข้าสู่ DataLens" })).toHaveAttribute("href", "https://datalens-kappa-one.vercel.app/");
     expect(screen.getByRole("link", { name: "เข้าสู่ AlgoViz" })).toHaveAttribute("href", "/algoviz");
@@ -38,10 +48,12 @@ describe("project hub shared authentication", () => {
     expect(screen.getByText("Welcome back")).toBeInTheDocument();
   });
 
-  it("shows the signed-in profile and updates it when the account changes", () => {
+  it("shows the signed-in profile and updates it when the account changes", async () => {
+    localStorage.setItem("sb-test-auth-token", "{}");
     useAuthStore.setState({ user: { id: "test-user", email: "ada@example.com", app_metadata: {}, aud: "authenticated", created_at: "2026-01-01T00:00:00Z", user_metadata: { first_name: "Ada", last_name: "Lovelace" } } as User });
-    render(<AuthGate><ProjectHub /></AuthGate>);
-    expect(screen.getByRole("button", { name: "เมนูบัญชี Ada Lovelace" })).toHaveAttribute("aria-expanded", "false");
+    render(<AuthGate><ProjectHub /></AuthGate>, { wrapper: MemoryRouter });
+    // The signed-in hub is a lazy chunk.
+    expect(await screen.findByRole("button", { name: "เมนูบัญชี Ada Lovelace" }, { timeout: 5000 })).toHaveAttribute("aria-expanded", "false");
     act(() => { useAuthStore.setState({ user: { id: "second-user", email: "second@example.com", user_metadata: {} } as User }); });
     expect(screen.getByText("second@example.com")).toBeInTheDocument();
     expect(screen.queryByText("Ada Lovelace")).not.toBeInTheDocument();
@@ -49,7 +61,7 @@ describe("project hub shared authentication", () => {
 
   it("unmounts hub presentation and motion when a session is removed", () => {
     useAuthStore.setState({ user: { id: "test-user" } as User });
-    render(<AuthGate><ProjectHub /></AuthGate>);
+    render(<AuthGate><ProjectHub /></AuthGate>, { wrapper: MemoryRouter });
     act(() => { useAuthStore.setState({ user: null }); });
     expect(screen.queryByRole("link", { name: "เข้าสู่ Nexus Main" })).not.toBeInTheDocument();
     expect(document.querySelector(".project-hub")).toBeNull();

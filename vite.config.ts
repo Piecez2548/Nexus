@@ -21,14 +21,20 @@ export default defineConfig({
       // install -r` (and a normal user's app update), so it can silently
       // keep serving a stale, already-fixed JS bundle indefinitely.
       injectRegister: false,
-      // The project hub now shares the SPA's authenticated session gate.
       workbox: {
         // Manual registration does not send Workbox's SKIP_WAITING message.
         skipWaiting: true,
         clientsClaim: true,
+        // Precache only the shell; JS chunks are cached as each workspace is opened,
+        // so a first hub visit does not download all of Main in the background.
+        globPatterns: ["index.html", "**/*.{css,svg,png,webp,woff2}"],
         // Prefer the deployed HTML shell; retain the precached shell offline.
         navigateFallback: null,
         runtimeCaching: [{
+          urlPattern: ({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/assets/") && url.pathname.endsWith(".js"),
+          handler: "CacheFirst",
+          options: { cacheName: "nexus-chunks-v1", expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 } },
+        }, {
           urlPattern: ({ request, url }) => request.mode === "navigate" && url.origin === self.location.origin,
           handler: "NetworkFirst",
           options: {

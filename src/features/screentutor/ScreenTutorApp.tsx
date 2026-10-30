@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import {
-  BookOpen, Check, ChevronDown, CircleHelp, Clipboard, Clock3, Copy, Crop, Eye, FileText, Keyboard,
+  ArrowLeft, BookOpen, Check, ChevronDown, CircleHelp, Clipboard, Clock3, Copy, Crop, Eye, FileText, Keyboard,
   Menu, MonitorUp, MoreHorizontal, Play, RotateCcw, Search, Settings2, ShieldCheck, Sparkles, Trash2, X,
 } from "lucide-react";
 import { classifyContent, cleanOcrText, captureService, OllamaProvider, recognizeImage, ScreenTutorError, type ProviderState } from "./services";
@@ -126,6 +126,8 @@ export default function ScreenTutorApp() {
           <NavButton active={page === "home"} icon={<MonitorUp size={18} />} label="Home" onClick={() => { setPage("home"); setMobileNav(false); }} />
           <NavButton active={page === "history"} icon={<Clock3 size={18} />} label="History" count={history.length || undefined} onClick={() => { setPage("history"); setMobileNav(false); }} />
           <NavButton active={page === "settings"} icon={<Settings2 size={18} />} label="Settings" onClick={() => { setPage("settings"); setMobileNav(false); }} />
+          {/* The desktop shell has no hub to return to. */}
+          {!window.screenTutor && <a className="st-nav-item" href="/projects"><ArrowLeft size={18} /><span>Nexus All</span></a>}
         </nav>
         <div className="st-sidebar-bottom"><div className="st-privacy"><ShieldCheck size={16} /><div><strong>Private by default</strong><span>Your screen data stays on this device.</span></div></div><div className="st-version">ScreenTutor MVP <span>v0.1</span></div></div>
       </aside>

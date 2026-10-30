@@ -6,6 +6,7 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#f5f7f4" />
+    <meta name="description" content="Nexus รวมพื้นที่ทำงานส่วนตัวและเครื่องมือ: Nexus Main, Nexus Tools, DataLens, AlgoViz และ ScreenTutor" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Nexus" />
@@ -17,6 +18,8 @@
         const isDark = savedTheme === "dark" || (savedTheme === "system" && systemDark);
         document.documentElement.classList.toggle("dark", isDark);
         document.documentElement.classList.toggle("mono", savedTheme === "mono");
+        // Keep in sync with themeColorFor() in src/utils/theme.ts.
+        document.querySelector('meta[name="theme-color"]')?.setAttribute("content", savedTheme === "mono" ? "#fafafa" : isDark ? "#0c0b10" : "#f5f7f4");
       } catch { document.documentElement.classList.add("dark"); }
     </script>
     <style id="entry-shell-style">
@@ -35,11 +38,12 @@
         const entry = pathname === "/screentutor"
           ? { title: "ScreenTutor — See. Understand. Learn.", brand: "ScreenTutor", mark: ".", context: "Local-first learning", heading: "See. Understand. Learn.", message: "Preparing your private workspace…" }
           : pathname === "/" || pathname === "/index.html" || pathname === "/projects" || pathname === "/projects/index.html"
-            ? { title: "Nexus All — Projects", brand: "nexus", mark: ".", context: "Private workspace hub", heading: "Preparing your workspaces", message: "Loading your Nexus project hub…" }
+            ? { title: "Nexus All — Projects", brand: "nexus", mark: ".", context: "Private workspace hub", lang: "th", heading: "Preparing your workspaces", message: "Loading your Nexus project hub…" }
             : pathname.startsWith("/algoviz")
               ? { title: "AlgoViz · Interactive Algorithm Lab", brand: "AlgoViz", mark: "", context: "Interactive algorithm lab", heading: "Preparing AlgoViz", message: "Loading the algorithm workspace…" }
               : { title: "Nexus Main — Workspace", brand: "nexus", mark: ".", context: "Private financial workspace", heading: "Preparing Nexus Main", message: "Checking your private workspace…" };
         document.title = entry.title;
+        if (entry.lang) document.documentElement.lang = entry.lang;
         document.querySelector('meta[name="apple-mobile-web-app-title"]')?.setAttribute("content", entry.brand === "ScreenTutor" ? "ScreenTutor" : "Nexus");
         document.querySelector("[data-entry-brand]")?.replaceChildren(document.createTextNode(entry.brand));
         document.querySelector("[data-entry-mark]")?.replaceChildren(document.createTextNode(entry.mark));
