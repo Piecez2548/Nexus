@@ -10,9 +10,10 @@ import type {
 } from "./types";
 
 export function cleanOcrText(text: string): string {
-  return [...text]
+  return [...text.replace(/\t/g, " ")]
     .filter((character) => { const code = character.charCodeAt(0); return !(code < 32 && code !== 10 && code !== 13); })
     .join("")
+    .replace(/\r\n?/g, "\n")
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .split("\n")
@@ -21,48 +22,79 @@ export function cleanOcrText(text: string): string {
     .trim();
 }
 
+// A real error report carries a signature, not just the word "error" in prose.
+const ERROR_SIGNATURE = /\b(traceback|segmentation fault|stack ?trace|ora-\d+|npm err!?|ts\d{3,}|errno\s*\d+)\b/i;
+const ERROR_LABEL = /\b(error|exception|fatal)\s*(?::|\[|\(|#\d+|code\b|ts\d+)/i;
+const NAMED_ERROR = /\b[A-Z][A-Za-z]*(?:Error|Exception)\b/;
+const STACK_FRAME = /^\s*at\s+\S+.*:\d+/m;
+
+// Letter options A-E (or Thai ก-ง) are always choices; 1) 2) 3) only when the text asks a question,
+// so numbered steps ("1. Preheat the oven") are not mistaken for answer options.
+const LETTER_OPTION = /^\s*\(?([a-eA-Eก-ง])[.)]\s+\S/;
+const NUMBER_OPTION = /^\s*\(?([1-5])[.)]\s+\S/;
+const QUESTION_CUE = /\?|ข้อใด|เลือก|\b(which|choose|select|pick)\b/i;
+
+// Arithmetic needs digits on both sides of an operator. Unspaced "-" and "/" are left out on purpose:
+// they are dates (2026-10-30, 30/10/2026), phone numbers and ranges far more often than subtraction.
+const MATH_EXPRESSION = /[\d)]\s*[+*×÷^=]\s*[\d(]|[\d)]\s+[-−–/]\s+[\d(]|\b[a-z]\s*=\s*[-\w(]/i;
+
 export function classifyContent(text: string): ContentType {
-  const normalized = text.toLowerCase();
-  if (/\b(error|exception|traceback|typeerror|referenceerror|ora-\d+|npm err|ts\d{3,})\b/.test(normalized)) {
+  if (ERROR_SIGNATURE.test(text) || ERROR_LABEL.test(text) || NAMED_ERROR.test(text) || STACK_FRAME.test(text)) {
     return "PROGRAMMING_ERROR";
   }
-  if (/(^|\n)\s*[a-d][.)]\s+.+/im.test(text) && text.split(/\n/).filter((line) => /^\s*[a-d][.)]\s+/i.test(line)).length >= 2) {
-    return "MULTIPLE_CHOICE";
-  }
-  if (/[=+\-*/^]|\d+\s*[×÷]\s*\d+/.test(text) && /\d/.test(text)) {
-    return "MATH";
-  }
-  if (/(translate|translation|แปล|ภาษาอังกฤษ|ภาษาไทย)/i.test(text)) {
-    return "TRANSLATION";
-  }
+  if (extractChoices(text).length >= 2) return "MULTIPLE_CHOICE";
+  if (MATH_EXPRESSION.test(text)) return "MATH";
+  if (/(translate|translation|แปล|ภาษาอังกฤษ|ภาษาไทย)/i.test(text)) return "TRANSLATION";
   return text.trim() ? "GENERAL_TEXT" : "UNKNOWN";
+}
+
+function extractChoices(text: string): { index: number; key: string; text: string }[] {
+  const lines = text.split(/\n+/).map((line) => line.trim());
+  const letters = lines.flatMap((line, index) => { const match = line.match(LETTER_OPTION); return match ? [{ index, key: match[1].toUpperCase(), text: line.replace(/^\(?\S[.)]\s+/, "").trim() }] : []; });
+  if (letters.length >= 2) return letters;
+  if (!QUESTION_CUE.test(text)) return [];
+  return lines.flatMap((line, index) => { const match = line.match(NUMBER_OPTION); return match ? [{ index, key: match[1], text: line.replace(/^\(?\d[.)]\s+/, "").trim() }] : []; });
 }
 
 export function parseMultipleChoice(text: string): Question | null {
   const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
-  const choiceIndex = lines.findIndex((line) => /^[a-d][.)]\s+/i.test(line));
-  if (choiceIndex < 0) return null;
-  const choices = lines.slice(choiceIndex).flatMap((line) => {
-    const match = line.match(/^([a-d])[.)]\s+(.+)$/i);
-    return match ? [{ key: match[1].toUpperCase(), text: match[2].trim() }] : [];
-  });
+  const choices = extractChoices(lines.join("\n"));
   if (choices.length < 2) return null;
-  return { question: lines.slice(0, choiceIndex).join(" "), choices };
+  return { question: lines.slice(0, choices[0].index).join(" "), choices: choices.map(({ key, text: choice }) => ({ key, text: choice })) };
 }
 
 export interface OCRService {
   recognize(imageDataUrl: string | undefined, language: OCRResult["language"]): Promise<OCRResult>;
 }
 
-export type ProviderState = "initializing" | "ready" | "unavailable" | "error" | "demo";
+export type ProviderState = "initializing" | "ready" | "unavailable" | "error" | "web";
+
+export type ScreenTutorErrorCode = "unavailable" | "request_failed" | "invalid_response" | "capture_unavailable" | "timeout" | "no_text";
 
 export class ScreenTutorError extends Error {
-  readonly code: "unavailable" | "request_failed" | "invalid_response" | "capture_unavailable" | "timeout";
-  constructor(code: "unavailable" | "request_failed" | "invalid_response" | "capture_unavailable" | "timeout", message: string) {
+  readonly code: ScreenTutorErrorCode;
+  constructor(code: ScreenTutorErrorCode, message: string) {
     super(message);
     this.name = "ScreenTutorError";
     this.code = code;
   }
+}
+
+/** Screen capture, region selection and the global shortcut exist only in the desktop app. */
+export function hasDesktopBridge(): boolean {
+  return typeof window !== "undefined" && Boolean(window.screenTutor);
+}
+
+export interface OllamaEndpoint { url: string; local: boolean }
+
+/** Accepts only plain http(s) addresses; `local` tells the UI whether screen text stays on this computer. */
+export function parseOllamaUrl(value: string): OllamaEndpoint | null {
+  let url: URL;
+  try { url = new URL(value.trim()); } catch { return null; }
+  if ((url.protocol !== "http:" && url.protocol !== "https:") || url.username || url.password) return null;
+  const host = url.hostname.replace(/^\[|\]$/g, "");
+  const local = host === "localhost" || host.endsWith(".localhost") || host === "::1" || /^127\./.test(host);
+  return { url: url.origin + url.pathname.replace(/\/+$/, ""), local };
 }
 
 export function parseAnalysis(raw: string, type: ContentType, processingTime: number): AnalysisResult {
@@ -107,30 +139,47 @@ export const captureService = {
   },
 };
 
+// The OCR runtime and language data are copied next to the app (see scripts/copy-ocr-assets.mjs),
+// so reading a screen never depends on a third-party CDN.
+export const OCR_ASSET_PATH = "/screentutor-ocr";
+
 export async function recognizeImage(imageDataUrl: string | undefined, language: OCRResult["language"]): Promise<OCRResult> {
   const started = performance.now();
   if (!imageDataUrl) {
     return { text: "", cleanedText: "", language, processingTime: Math.round(performance.now() - started) };
   }
-  const { createWorker } = await import("tesseract.js");
-  const worker = await createWorker(language === "auto" ? "eng" : language);
-  const result = await worker.recognize(imageDataUrl);
-  const text = result.data.text;
-  await worker.terminate();
-  return { text, cleanedText: cleanOcrText(text), confidence: result.data.confidence, language, processingTime: Math.round(performance.now() - started) };
+  const { createWorker, OEM } = await import("tesseract.js");
+  const worker = await createWorker(language === "auto" ? "eng" : language, OEM.LSTM_ONLY, {
+    workerPath: `${OCR_ASSET_PATH}/worker.min.js`,
+    corePath: OCR_ASSET_PATH,
+    langPath: OCR_ASSET_PATH,
+    workerBlobURL: false,
+  });
+  try {
+    const result = await worker.recognize(imageDataUrl);
+    const text = result.data.text;
+    return { text, cleanedText: cleanOcrText(text), confidence: result.data.confidence, language, processingTime: Math.round(performance.now() - started) };
+  } finally {
+    await worker.terminate();
+  }
 }
 
 export const ocrService: OCRService = { recognize: recognizeImage };
 
+function withTimeout(signal: AbortSignal | undefined, ms: number): AbortSignal {
+  const timeout = AbortSignal.timeout(ms);
+  return signal && typeof AbortSignal.any === "function" ? AbortSignal.any([signal, timeout]) : timeout;
+}
+
 export class OllamaProvider {
   private readonly baseUrl: string;
 
-  constructor(baseUrl: string) { this.baseUrl = baseUrl; }
+  constructor(baseUrl: string) { this.baseUrl = baseUrl.replace(/\/+$/, ""); }
 
-  async health(): Promise<Exclude<ProviderState, "initializing" | "demo">> {
+  async health(signal?: AbortSignal): Promise<Exclude<ProviderState, "initializing" | "web">> {
     let response: Response;
     try {
-      response = await fetch(`${this.baseUrl.replace(/\/$/, "")}/api/tags`, { signal: AbortSignal.timeout(10_000) });
+      response = await fetch(`${this.baseUrl}/api/tags`, { signal: withTimeout(signal, 10_000) });
     } catch {
       return "unavailable";
     }
@@ -144,8 +193,13 @@ export class OllamaProvider {
     }
   }
 
-  async models(): Promise<OllamaModel[]> {
-    const response = await fetch(`${this.baseUrl.replace(/\/$/, "")}/api/tags`);
+  async models(signal?: AbortSignal): Promise<OllamaModel[]> {
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}/api/tags`, { signal: withTimeout(signal, 10_000) });
+    } catch {
+      throw new ScreenTutorError("unavailable", "Ollama is not currently available.");
+    }
     if (!response.ok) throw new ScreenTutorError("unavailable", "Ollama is not currently available.");
     let payload: unknown;
     try { payload = await response.json(); } catch { throw new ScreenTutorError("invalid_response", "Ollama returned an unreadable model list."); }
@@ -162,11 +216,11 @@ export class OllamaProvider {
     const prompt = `${system}\n\nContent type: ${request.contentType}\nLearning mode: ${request.learningMode}\n\n<SCREEN_CONTENT>\n${request.text}\n</SCREEN_CONTENT>\n\nReturn JSON with title, summary, details when useful, answer and answer_text for multiple choice, and confidence from 0 to 1.`;
     let response: Response;
     try {
-      response = await fetch(`${this.baseUrl.replace(/\/$/, "")}/api/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: request.model, prompt, stream: false, format: "json", options: { temperature: request.temperature } }),
-      signal: AbortSignal.timeout(30_000),
+      response = await fetch(`${this.baseUrl}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: request.model, prompt, stream: false, format: "json", options: { temperature: request.temperature } }),
+        signal: AbortSignal.timeout(30_000),
       });
     } catch (error) {
       if (error instanceof DOMException && error.name === "TimeoutError") throw new ScreenTutorError("timeout", "Ollama did not respond in time. Please retry.");

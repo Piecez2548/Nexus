@@ -13,6 +13,8 @@ const MIME_TYPES = {
   ".ico": "image/x-icon",
   ".woff": "font/woff",
   ".woff2": "font/woff2",
+  ".wasm": "application/wasm",
+  ".gz": "application/gzip",
 };
 
 // A tiny local-only static server for the packaged build. Electron's

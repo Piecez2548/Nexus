@@ -19,10 +19,9 @@ const defaults: AppSettings = {
   temperature: 0.2,
   ocrLanguage: "tha+eng",
   learningMode: "explain",
-  hotkey: "Ctrl + Shift + Space",
-  storeHistory: true,
+  // Screen text is saved only when the user opts in; it is stored unencrypted in this browser.
+  storeHistory: false,
   developerMode: false,
-  theme: "system",
 };
 
 export const useScreenTutorStore = create<ScreenTutorState>()(

@@ -83,10 +83,8 @@ export interface AppSettings {
   temperature: number;
   ocrLanguage: OcrLanguage;
   learningMode: LearningMode;
-  hotkey: string;
   storeHistory: boolean;
   developerMode: boolean;
-  theme: "system" | "light" | "dark";
 }
 
 export interface ProcessingMetrics {
