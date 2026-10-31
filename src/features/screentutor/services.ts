@@ -34,7 +34,10 @@ const STACK_FRAME = /^\s*at\s+\S+.*:\d+/m;
 // so numbered steps ("1. Preheat the oven") are not mistaken for answer options.
 const LETTER_OPTION = /^\s*\(?([a-eA-Eก-ง])[.)]\s+\S/;
 const NUMBER_OPTION = /^\s*\(?([1-5])[.)]\s+\S/;
-const QUESTION_CUE = /\?|ข้อใด|เลือก|\b(which|choose|select|pick)\b/i;
+const FIRST_TOKEN_TIMEOUT = 180_000;
+// "A. Mars B. Jupiter C. Venus" on one line: break before each marker that follows a space and the previous option's text.
+const INLINE_LETTER_OPTIONS = /(?<=\S)\s+(?=\(?[A-E][.)]\s+\S)/g;
+const QUESTION_CUE =/\?|ข้อใด|เลือก|\b(which|choose|select|pick)\b/i;
 
 // Arithmetic needs digits on both sides of an operator. Unspaced "-" and "/" are left out on purpose:
 // they are dates (2026-10-30, 30/10/2026), phone numbers and ranges far more often than subtraction.
@@ -50,7 +53,13 @@ export function classifyContent(text: string): ContentType {
   return text.trim() ? "GENERAL_TEXT" : "UNKNOWN";
 }
 
-function extractChoices(text: string): { index: number; key: string; text: string }[] {
+/** Put options that share a line on their own lines; a single "A." in prose is left alone. */
+function splitInlineOptions(text: string): string {
+  return text.split("\n").map((line) => ((line.match(/(?:^|\s)\(?[A-E][.)]\s+\S/g) ?? []).length >= 2 ? line.replace(INLINE_LETTER_OPTIONS, "\n") : line)).join("\n");
+}
+
+function extractChoices(source: string): { index: number; key: string; text: string }[] {
+  const text = splitInlineOptions(source);
   const lines = text.split(/\n+/).map((line) => line.trim());
   const letters = lines.flatMap((line, index) => { const match = line.match(LETTER_OPTION); return match ? [{ index, key: match[1].toUpperCase(), text: line.replace(/^\(?\S[.)]\s+/, "").trim() }] : []; });
   if (letters.length >= 2) return letters;
@@ -59,7 +68,7 @@ function extractChoices(text: string): { index: number; key: string; text: strin
 }
 
 export function parseMultipleChoice(text: string): Question | null {
-  const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
+  const lines = splitInlineOptions(text).split(/\n+/).map((line) => line.trim()).filter(Boolean);
   const choices = extractChoices(lines.join("\n"));
   if (choices.length < 2) return null;
   return { question: lines.slice(0, choices[0].index).join(" "), choices: choices.map(({ key, text: choice }) => ({ key, text: choice })) };
@@ -447,7 +456,8 @@ export class OllamaProvider {
     let timedOut = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const arm = (ms: number) => { clearTimeout(timer); timer = setTimeout(() => { timedOut = true; controller.abort(); }, ms); };
-    arm(60_000);
+    // A model that is still loading into memory can stay silent for minutes before its first token.
+    arm(FIRST_TOKEN_TIMEOUT);
     let response: Response;
     try {
       response = await fetch(`${this.baseUrl}/api/generate`, {
@@ -480,7 +490,7 @@ export class OllamaProvider {
       const decoder = new TextDecoder();
       let buffer = "";
       for (;;) {
-        arm(60_000);
+        arm(sawResponse ? 60_000 : FIRST_TOKEN_TIMEOUT);
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });

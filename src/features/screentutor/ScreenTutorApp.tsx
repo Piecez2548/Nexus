@@ -212,6 +212,7 @@ export default function ScreenTutorApp() {
   const attachMini = (win: Window) => {
     setMini(win);
     win.addEventListener("pagehide", () => setMini(null));
+    win.addEventListener("keydown", (event) => hotkeyRef.current(event));
   };
 
   const openMini = async () => {
@@ -244,6 +245,19 @@ export default function ScreenTutorApp() {
       await analyzePicked(await cropByFraction(frame, area));
     } catch (error) { fail(error); }
   };
+
+  // Alt+Shift+C reads the saved area while sharing; it works in this page and in the mini window (the browser has no global hotkeys).
+  const hotkeyRef = useRef((_event: KeyboardEvent) => {});
+  useEffect(() => {
+    hotkeyRef.current = (event) => {
+      if (sharing && event.altKey && event.shiftKey && event.code === "KeyC") { event.preventDefault(); void captureShared(false); }
+    };
+  });
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => hotkeyRef.current(event);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const cropDone = (image: string, fraction: PixelBox | null) => {
     if (fraction && sharing) setArea(fraction);

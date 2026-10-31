@@ -9,6 +9,12 @@ describe("ScreenTutor text pipeline", () => {
 
   it("classifies multiple choice and programming errors", () => {
     expect(classifyContent("Choose one\nA. First\nB. Second\nC. Third")).toBe("MULTIPLE_CHOICE");
+    expect(classifyContent("Which planet is largest? A. Mars B. Jupiter C. Venus")).toBe("MULTIPLE_CHOICE");
+    expect(parseMultipleChoice("Which planet is largest? A. Mars B. Jupiter C. Venus")).toEqual({
+      question: "Which planet is largest?",
+      choices: [{ key: "A", text: "Mars" }, { key: "B", text: "Jupiter" }, { key: "C", text: "Venus" }],
+    });
+    expect(classifyContent("Plan A. is to wait, nothing else here")).toBe("GENERAL_TEXT");
     expect(classifyContent("TypeError: cannot read property")).toBe("PROGRAMMING_ERROR");
   });
 
