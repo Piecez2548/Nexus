@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { classifyContent, cleanOcrText, parseMultipleChoice, parseOllamaUrl, OllamaProvider, ScreenTutorError } from "./services";
+import { classifyContent, cleanOcrText, parseMultipleChoice, parseOllamaUrl, OllamaProvider, ScreenTutorError, toImageRect, historyToMarkdown, buildSearchQuery, googleSearch, toFraction } from "./services";
 import type { AnalysisRequest } from "./types";
 
 describe("ScreenTutor text pipeline", () => {
@@ -96,5 +96,72 @@ describe("ScreenTutor provider integrity", () => {
   it("fails closed when a real desktop capture bridge is missing", async () => {
     vi.stubGlobal("window", { screenTutor: undefined });
     await expect((await import("./services")).captureService.captureRegion({ x: 0, y: 0, width: 100, height: 100 })).rejects.toBeInstanceOf(ScreenTutorError);
+  });
+});
+
+describe("toImageRect", () => {
+  it("scales a drag on the shown image to natural pixels", () => {
+    expect(toImageRect({ x: 10, y: 20, width: 50, height: 40 }, { width: 400, height: 300 }, { width: 1600, height: 1200 })).toEqual({ x: 40, y: 80, width: 200, height: 160 });
+  });
+  it("clamps to the image and rejects tiny selections", () => {
+    expect(toImageRect({ x: 390, y: 290, width: 50, height: 50 }, { width: 400, height: 300 }, { width: 400, height: 300 })).toEqual(null);
+    expect(toImageRect({ x: 300, y: 200, width: 500, height: 500 }, { width: 400, height: 300 }, { width: 400, height: 300 })).toEqual({ x: 300, y: 200, width: 100, height: 100 });
+    expect(toImageRect({ x: 0, y: 0, width: 3, height: 3 }, { width: 400, height: 300 }, { width: 400, height: 300 })).toBeNull();
+  });
+});
+
+describe("streamed analysis", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const request: AnalysisRequest = { text: "t", contentType: "GENERAL_TEXT", learningMode: "explain", model: "m", temperature: 0.2 };
+  it("joins streamed chunks and reports progress", async () => {
+    const lines = [{ response: '{"summary":"Hel' }, { response: 'lo"}' }, { response: "", done: true }].map((line) => JSON.stringify(line)).join("\n");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(lines, { status: 200 })));
+    const progress = vi.fn();
+    await expect(new OllamaProvider("http://localhost:11434").analyze(request, progress)).resolves.toMatchObject({ summary: "Hello" });
+    expect(progress).toHaveBeenCalled();
+  });
+  it("asks for step-by-step depth when a previous answer is supplied", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ response: '{"summary":"x"}' }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await new OllamaProvider("http://localhost:11434").analyze({ ...request, previousSummary: "Short answer" });
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).prompt).toContain("Short answer");
+  });
+});
+
+describe("historyToMarkdown", () => {
+  it("includes the source text, answer and explanation", () => {
+    const markdown = historyToMarkdown([{ id: "1", timestamp: "2026-10-31T00:00:00Z", ocrText: "Q?\nA. x", contentType: "MULTIPLE_CHOICE", processingTime: 1, analysis: { type: "MULTIPLE_CHOICE", title: "Best answer", summary: "Because.", answer: "A", answerText: "x", processingTime: 1 } }]);
+    expect(markdown).toContain("**Answer:** A — x");
+    expect(markdown).toContain("> Q?\n> A. x");
+  });
+});
+
+describe("Google research", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("searches with the question only, not the answer options", () => {
+    expect(buildSearchQuery("Which planet is largest?\nA. Mars\nB. Jupiter")).toBe("Which planet is largest?");
+    expect(buildSearchQuery("x".repeat(400))).toHaveLength(150);
+  });
+  it("keeps only https results and sends the key to Google only", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ items: [{ title: "A", link: "https://a.example", snippet: "s  1" }, { title: "B", link: "http://b.example", snippet: "" }, { nope: 1 }] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(googleSearch("q", "KEY", "CX")).resolves.toEqual([{ title: "A", link: "https://a.example", snippet: "s 1" }]);
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/^https:\/\/www\.googleapis\.com\/customsearch\/v1\?/);
+  });
+  it("explains a refused search without leaking details", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("quota key=KEY", { status: 403 })));
+    await expect(googleSearch("q", "KEY", "CX")).rejects.toMatchObject({ code: "request_failed", message: expect.not.stringContaining("KEY") });
+  });
+  it("puts search results in the prompt as untrusted reference data", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ response: '{"summary":"x"}' }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await new OllamaProvider("http://localhost:11434").analyze({ text: "t", contentType: "GENERAL_TEXT", learningMode: "explain", model: "m", temperature: 0.2, sources: [{ title: "Doc", link: "https://d.example", snippet: "fact" }] });
+    const { prompt } = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(prompt).toContain("<SEARCH_RESULTS>");
+    expect(prompt).toContain("[1] Doc: fact");
+    expect(prompt).toContain("untrusted");
+  });
+  it("saves a selection as fractions of the frame", () => {
+    expect(toFraction({ x: 100, y: 50, width: 200, height: 100 }, { width: 1000, height: 500 })).toEqual({ x: 0.1, y: 0.1, width: 0.2, height: 0.2 });
   });
 });

@@ -47,9 +47,21 @@ export interface AnalysisRequest {
   learningMode: LearningMode;
   model: string;
   temperature: number;
+  /** Set when the learner asks for a deeper explanation of an answer they already saw. */
+  previousSummary?: string;
+  /** Web results found for the question; untrusted reference material. */
+  sources?: SearchHit[];
+}
+
+export interface SearchHit {
+  title: string;
+  link: string;
+  snippet: string;
 }
 
 export interface AnalysisResult {
+  /** Pages the answer was grounded on, when Google research was on. */
+  sources?: SearchHit[];
   source?: "ollama" | "demo";
   type: ContentType;
   answer?: string;
@@ -85,6 +97,10 @@ export interface AppSettings {
   learningMode: LearningMode;
   storeHistory: boolean;
   developerMode: boolean;
+  /** Look the question up on Google before asking the AI. */
+  research: boolean;
+  googleApiKey: string;
+  googleCx: string;
 }
 
 export interface ProcessingMetrics {

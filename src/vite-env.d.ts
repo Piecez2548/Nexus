@@ -5,6 +5,7 @@ import type { ScreenRegion } from "./features/screentutor/types";
 
 declare global {
   interface Window {
+    documentPictureInPicture?: { requestWindow: (options?: { width?: number; height?: number }) => Promise<Window> };
     screenTutor?: {
       captureRegion: (region: ScreenRegion) => Promise<string>;
       selectRegion: () => Promise<ScreenRegion | null>;

@@ -89,13 +89,31 @@ describe("ScreenTutor provider state UI", () => {
     expect(screen.getByText("Ollama connected")).toBeInTheDocument();
   });
 
-  it("is honest in a plain browser: no probing, capture disabled, desktop app required", async () => {
+  it("works in a plain browser: probes Ollama and offers screen capture and image input, not a fake region", async () => {
     Reflect.deleteProperty(window, "screenTutor");
+    providerMock.health.mockResolvedValue("ready");
+    providerMock.models.mockResolvedValue([{ name: "local-model" }]);
     render(<ScreenTutorApp />);
-    expect(await screen.findAllByText("Desktop app required")).not.toHaveLength(0);
-    expect(screen.getByRole("button", { name: "Test capture" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /Select screen region/ })).toBeDisabled();
-    expect(providerMock.health).not.toHaveBeenCalled();
+    expect(await screen.findByText("Ollama connected")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Choose image/ })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: /Select screen region/ })).not.toBeInTheDocument();
+  });
+
+  it("reads a pasted screenshot, lets the user pick the whole image, then analyses it", async () => {
+    Reflect.deleteProperty(window, "screenTutor");
+    providerMock.health.mockResolvedValue("ready");
+    providerMock.models.mockResolvedValue([{ name: "local-model" }]);
+    providerMock.recognizeImage.mockResolvedValue({ cleanedText: "Explain photosynthesis", text: "Explain photosynthesis", language: "eng", processingTime: 1 });
+    providerMock.analyze.mockResolvedValue({ source: "ollama", type: "GENERAL_TEXT", title: "T", summary: "Plants make food", processingTime: 5 });
+    render(<ScreenTutorApp />);
+    await screen.findByText("Ollama connected");
+    const file = new File(["x"], "shot.png", { type: "image/png" });
+    const paste = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(paste, "clipboardData", { value: { files: [file] } });
+    document.body.dispatchEvent(paste);
+    fireEvent.click(await screen.findByRole("button", { name: "Read whole image" }));
+    expect(await screen.findByText("Plants make food")).toBeInTheDocument();
+    expect(providerMock.recognizeImage).toHaveBeenCalledWith(expect.stringContaining("data:image/png"), "eng");
   });
 
   it("opens the help dialog and closes it with Escape", async () => {
