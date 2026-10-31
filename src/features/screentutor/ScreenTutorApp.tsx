@@ -4,7 +4,7 @@ import {
   ArrowLeft, BookOpen, Check, CircleHelp, Clipboard, Clock3, Copy, Crop, Eye, FileText, Keyboard,
   Download, ExternalLink, ImageUp, Menu, MonitorUp, MoreHorizontal, Play, RotateCcw, Search, Settings2, ShieldCheck, Sparkles, Square, Trash2, TriangleAlert, X,
 } from "lucide-react";
-import { hasBrowserCapture, buildSearchQuery, captureService, classifyContent, cleanOcrText, cropByFraction, cropImage, googleSearch, hasDesktopBridge, hasMiniWindow, historyToMarkdown, OllamaProvider, openMiniWindow, parseOllamaUrl, readImageFile, recognizeImage, ScreenTutorError, ShareSession, toFraction, toImageRect, type OllamaEndpoint, type ProviderState } from "./services";
+import { hasBrowserCapture, markClipboardImageUsed, readNewClipboardImage, buildSearchQuery, captureService, classifyContent, cleanOcrText, cropByFraction, cropImage, googleSearch, hasDesktopBridge, hasMiniWindow, historyToMarkdown, OllamaProvider, openMiniWindow, parseOllamaUrl, readImageFile, recognizeImage, ScreenTutorError, ShareSession, toFraction, toImageRect, type OllamaEndpoint, type ProviderState } from "./services";
 import { useScreenTutorStore } from "./store";
 import type { AnalysisResult, ContentType, HistoryEntry, ScreenRegion, SearchHit } from "./types";
 import "./screenTutor.css";
@@ -212,7 +212,16 @@ export default function ScreenTutorApp() {
   const attachMini = (win: Window) => {
     setMini(win);
     win.addEventListener("pagehide", () => setMini(null));
-    win.addEventListener("keydown", (event) => hotkeyRef.current(event));
+    watchKeys(win);
+  };
+
+  const watchKeys = (win: Window) => {
+    let ctrlAlone = false;
+    const onKeyDown = (event: KeyboardEvent) => { ctrlAlone = event.key === "Control" && !event.repeat; hotkeyRef.current(event); };
+    const onKeyUp = (event: KeyboardEvent) => { if (event.key === "Control" && ctrlAlone) { ctrlAlone = false; void tapRef.current(win); } };
+    win.addEventListener("keydown", onKeyDown);
+    win.addEventListener("keyup", onKeyUp);
+    return () => { win.removeEventListener("keydown", onKeyDown); win.removeEventListener("keyup", onKeyUp); };
   };
 
   const openMini = async () => {
@@ -246,18 +255,23 @@ export default function ScreenTutorApp() {
     } catch (error) { fail(error); }
   };
 
-  // Alt+Shift+C reads the saved area while sharing; it works in this page and in the mini window (the browser has no global hotkeys).
+  // Tap Ctrl (alone) in this page or the mini window: read the screenshot Win+Shift+S just put on the clipboard,
+  // or, with none, capture the saved area of the shared screen. Alt+Shift+C always captures the shared screen.
+  // The browser only sees keys while one of its windows has focus; there are no global hotkeys.
   const hotkeyRef = useRef((_event: KeyboardEvent) => {});
+  const tapRef = useRef(async (_win: Window) => {});
   useEffect(() => {
     hotkeyRef.current = (event) => {
       if (sharing && event.altKey && event.shiftKey && event.code === "KeyC") { event.preventDefault(); void captureShared(false); }
     };
+    tapRef.current = async (win) => {
+      if (busyNow) return;
+      const clip = await readNewClipboardImage(win.navigator.clipboard);
+      if (clip) await openImageFile(clip);
+      else if (sharing) await captureShared(false);
+    };
   });
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => hotkeyRef.current(event);
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  useEffect(() => watchKeys(window), []);
 
   const cropDone = (image: string, fraction: PixelBox | null) => {
     if (fraction && sharing) setArea(fraction);
@@ -278,7 +292,7 @@ export default function ScreenTutorApp() {
       const target = event.target as HTMLElement | null;
       if (target && /^(input|textarea|select)$/i.test(target.tagName)) return;
       const file = [...(event.clipboardData?.files ?? [])].find((item) => item.type.startsWith("image/"));
-      if (file) { event.preventDefault(); void openRef.current(file); }
+      if (file) { event.preventDefault(); void markClipboardImageUsed(file); void openRef.current(file); }
     };
     document.addEventListener("paste", onPaste);
     return () => document.removeEventListener("paste", onPaste);
@@ -561,7 +575,7 @@ function MiniPanel({ floating, sharing, status, progress, analysis, hasArea, mes
           <div className="st-mini-body" aria-live="polite">
             {label && <p className="st-mini-note"><span className="st-live-dot" />{label}</p>}
             {message && <p className="st-mini-error" role="alert">{message}</p>}
-            {!label && !message && !analysis && <p className="st-mini-note">{sharing ? (hasArea ? "Press Capture to read your saved area." : "Pick the area that holds your questions.") : "Sharing has stopped."}</p>}
+            {!label && !message && !analysis && <p className="st-mini-note">{sharing ? (hasArea ? "Press Capture (or tap Ctrl) to read your saved area, or tap Ctrl after Win+Shift+S to read the screenshot." : "Pick the area that holds your questions.") : "Sharing has stopped."}</p>}
             {!label && analysis && (
               <div className="st-mini-result">
                 {analysis.answer && <div className="st-answer-block"><span>Answer</span><strong>{analysis.answer} <Check size={18} /></strong>{analysis.answerText && <p>{analysis.answerText}</p>}</div>}
