@@ -8,6 +8,10 @@ Nexus brings finance, trading notes, and personal routines into one privacy-cons
 
 The repository is maintained as a personal/demo product and engineering portfolio. The [production preview](https://nexus-lemon-eight-32.vercel.app/) is authentication-gated; the app can also run locally without cloud credentials.
 
+![Nexus All landing page](docs/screenshots/home.png)
+
+The app screens behind sign-in (finance, trading, routines) are not shown here because they hold personal data; the [live preview](https://nexus-lemon-eight-32.vercel.app/) requires an account.
+
 ## Related repositories
 
 | Repository | Role |
