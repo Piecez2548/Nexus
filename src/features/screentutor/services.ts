@@ -98,7 +98,7 @@ export interface OCRService {
 
 export type ProviderState = "initializing" | "ready" | "unavailable" | "error";
 
-export type ScreenTutorErrorCode = "unavailable" | "request_failed" | "invalid_response" | "capture_unavailable" | "timeout" | "no_text";
+export type ScreenTutorErrorCode = "unavailable" | "request_failed" | "invalid_response" | "capture_unavailable" | "timeout" | "no_text" | "ocr_failed";
 
 export class ScreenTutorError extends Error {
   readonly code: ScreenTutorErrorCode;
@@ -365,14 +365,21 @@ export async function recognizeImage(imageDataUrl: string | undefined, language:
     return { text: "", cleanedText: "", language, processingTime: Math.round(performance.now() - started) };
   }
   const prepared = await preprocessForOcr(imageDataUrl);
-  const worker = await getOcrWorker(language === "auto" ? "eng" : language);
+  let worker: OcrWorker;
+  try {
+    worker = await getOcrWorker(language === "auto" ? "eng" : language);
+  } catch (error) {
+    console.error("ScreenTutor OCR could not start", error);
+    throw new ScreenTutorError("ocr_failed", "Text recognition could not start. Reload the page (Ctrl+Shift+R) and try again.");
+  }
   try {
     const result = await worker.recognize(prepared);
     const text = result.data.text;
     return { text, cleanedText: cleanOcrText(text), confidence: result.data.confidence, language, processingTime: Math.round(performance.now() - started) };
   } catch (error) {
     await releaseOcrWorker();
-    throw error;
+    console.error("ScreenTutor OCR failed", error);
+    throw new ScreenTutorError("ocr_failed", "The image could not be read. Try a clearer or larger area.");
   } finally {
     releaseTimer = setTimeout(() => void releaseOcrWorker(), 60_000);
   }

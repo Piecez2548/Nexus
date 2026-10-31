@@ -99,7 +99,7 @@ describe("ScreenTutor provider state UI", () => {
     expect(screen.queryByRole("button", { name: /Select screen region/ })).not.toBeInTheDocument();
   });
 
-  it("reads a pasted screenshot, lets the user pick the whole image, then analyses it", async () => {
+  it("reads a pasted screenshot straight away without asking where to crop", async () => {
     Reflect.deleteProperty(window, "screenTutor");
     providerMock.health.mockResolvedValue("ready");
     providerMock.models.mockResolvedValue([{ name: "local-model" }]);
@@ -111,7 +111,6 @@ describe("ScreenTutor provider state UI", () => {
     const paste = new Event("paste", { bubbles: true, cancelable: true });
     Object.defineProperty(paste, "clipboardData", { value: { files: [file] } });
     document.body.dispatchEvent(paste);
-    fireEvent.click(await screen.findByRole("button", { name: "Read whole image" }));
     expect(await screen.findByText("Plants make food")).toBeInTheDocument();
     expect(providerMock.recognizeImage).toHaveBeenCalledWith(expect.stringContaining("data:image/png"), "eng");
   });

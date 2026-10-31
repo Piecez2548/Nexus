@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
-    "build:release": "npm run build && npm run check:bundle",
+    "build:release": "npm run build && npm run check:bundle && node scripts/copy-screentutor-ocr.mjs dist",
     "build:analyze": "tsc -b && cross-env ANALYZE=true vite build",
     "lint": "oxlint",
     "preview": "vite preview",

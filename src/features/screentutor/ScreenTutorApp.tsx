@@ -182,7 +182,8 @@ export default function ScreenTutorApp() {
       if (error.code === "unavailable") setProviderState("unavailable");
       else if (error.code === "invalid_response" || error.code === "request_failed" || error.code === "timeout") setProviderState("error");
     }
-    setNotice(error instanceof ScreenTutorError ? error.message : "ScreenTutor could not complete the request. Please retry.");
+    if (!(error instanceof ScreenTutorError)) console.error("ScreenTutor request failed", error);
+    setNotice(error instanceof ScreenTutorError ? error.message : `ScreenTutor could not complete the request${error instanceof Error && error.message ? `: ${error.message}` : ""}. Please retry.`);
   };
 
   /** Desktop app: capture the saved region and analyse it. */
@@ -251,7 +252,8 @@ export default function ScreenTutorApp() {
 
   const openImageFile = async (file: File | undefined) => {
     if (!file || busyNow) return;
-    try { setPendingImage(await readImageFile(file)); } catch (error) { fail(error); }
+    // A pasted, dropped or chosen image is read straight away; "Select a different area" in the result narrows it.
+    try { await analyzePicked(await readImageFile(file)); } catch (error) { fail(error); }
   };
 
   // Paste a screenshot (Win+Shift+S, then Ctrl+V) anywhere on the page, except while typing in a field.
