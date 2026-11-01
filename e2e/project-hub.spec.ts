@@ -23,7 +23,7 @@ for (const width of [320,390,768,1280,1920]) {
     await page.setViewportSize({width,height:900});
     await page.goto('/projects/index.html');
     await page.evaluate(() => document.fonts.ready);
-    await expect(page.locator('.hero-image')).toBeVisible();
+    await expect(page.locator('.hero-orbit')).toBeVisible();
     expect(await page.evaluate(() => innerWidth)).toBe(width);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     await expect(page.getByRole('heading', {name:'Nexus Main',exact:true})).toBeVisible();
@@ -52,7 +52,7 @@ test('workspace arrival is static with or without reduced motion', async ({page}
 
 test('keyboard skip link, focus contrast and section navigation', async ({page}) => {
   await page.goto('/projects/index.html');
-  await expect(page.locator('.hero-image')).toBeVisible();
+  await expect(page.locator('.hero-orbit')).toBeVisible();
   await expect(page.getByRole('button',{name:'เมนูบัญชี Nexus Preview'})).toBeVisible();
   await page.keyboard.press('Tab');
   await expect(page.locator('.skip-link')).toBeFocused();

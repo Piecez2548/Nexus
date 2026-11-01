@@ -6,9 +6,8 @@ test("All static design reflows without overlap or video downloads", async ({ pa
   for (const width of [320, 390, 768, 1280, 1920, 2560]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.goto("/projects");
-    const scene = page.locator(".hero-image");
+    const scene = page.locator(".hero-orbit");
     await expect(scene).toBeVisible();
-    await expect.poll(() => scene.locator("img").evaluate((el: HTMLImageElement) => el.complete && el.naturalWidth > 0)).toBe(true);
     const sceneBox = (await scene.boundingBox())!;
     const contentBox = (await page.locator(".hero-content").boundingBox())!;
     expect(contentBox.x + contentBox.width <= sceneBox.x + 1 || contentBox.y + contentBox.height <= sceneBox.y + 1).toBe(true);

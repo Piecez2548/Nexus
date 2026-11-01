@@ -77,8 +77,8 @@ for (const width of [390, 1280]) {
     await page.goto("/projects");
     await expect(page.locator(".project-hub")).toBeVisible();
     await expect(page.locator("#lock-pin")).toHaveCount(0);
-    await expect(page.locator(".hero-image")).toBeVisible();
-    await expect(page.locator(".hero-image")).toHaveCSS("filter", "none");
+    await expect(page.locator(".hero-orbit")).toBeVisible();
+    await expect(page.locator(".panel.on")).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`all-restored-${width}.png`), fullPage: true, animations: "disabled" });
   });
 }

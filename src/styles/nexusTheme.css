@@ -1,6 +1,9 @@
 /* Shared Nexus theme. Canonical source for Main, All, login and Tools. */
 @font-face{font-family:Manrope;src:url('/projects/assets/manrope-latin.woff2') format('woff2');font-weight:200 800;font-display:optional}
 @font-face{font-family:'Noto Sans Thai';src:url('/projects/assets/noto-sans-thai.woff2') format('woff2');font-weight:100 900;font-display:optional;unicode-range:U+0E00-0E7F}
+@font-face{font-family:'Cormorant Garamond';src:url('/projects/assets/cormorant-garamond-latin.woff2') format('woff2');font-style:normal;font-weight:400 600;font-display:swap}
+@font-face{font-family:'Cormorant Garamond';src:url('/projects/assets/cormorant-garamond-italic-latin.woff2') format('woff2');font-style:italic;font-weight:400 500;font-display:swap}
+@font-face{font-family:'JetBrains Mono';src:url('/projects/assets/jetbrains-mono-latin.woff2') format('woff2');font-weight:400 500;font-display:swap}
 
 :root {
   font-family: Manrope, 'Noto Sans Thai', sans-serif;
