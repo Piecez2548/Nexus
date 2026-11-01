@@ -16,10 +16,10 @@ test("navigation refreshes an old shell while retaining offline access and local
     }
   });
   await page.reload();
-  await expect(page.locator("#hero-title")).toContainText("ทุกพื้นที่ทำงาน");
+  await expect(page.locator("#hero-title")).toContainText("workspaces");
   expect(await page.evaluate(() => localStorage.getItem("nexus-update-test-sentinel"))).toBe("keep");
   await context.setOffline(true);
   await page.reload();
-  await expect(page.locator("#hero-title")).toContainText("ทุกพื้นที่ทำงาน");
+  await expect(page.locator("#hero-title")).toContainText("workspaces");
   await context.setOffline(false);
 });

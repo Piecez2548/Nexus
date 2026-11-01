@@ -1,10 +1,11 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import { MemoryRouter } from "react-router-dom";
 import AuthGate from "@/features/sync/components/AuthGate";
 import { useAuthStore } from "@/features/sync/store/authStore";
 import ProjectHub from "./ProjectHub";
+import { hubProjects } from "./projects";
 
 vi.mock("@/lib/supabaseClient", () => ({ isSyncConfigured: true, supabase: null }));
 vi.mock("@/features/sync/syncEngine", () => ({ runFullSync: vi.fn() }));
@@ -23,6 +24,23 @@ describe("project hub shared authentication", () => {
     render(<ProjectHub />, { wrapper: MemoryRouter });
     expect(screen.getByRole("link", { name: "เข้าสู่ระบบ" })).toHaveAttribute("href", "/projects?returnTo=%2Fdashboard");
     expect(document.documentElement.lang).toBe("th");
+  });
+
+  it("renders one real link per project and a counter derived from the list", () => {
+    render(<ProjectHub />, { wrapper: MemoryRouter });
+    const panels = Array.from(document.querySelectorAll<HTMLAnchorElement>(".accordion a.panel"));
+    expect(panels).toHaveLength(hubProjects.length);
+    panels.forEach((panel, index) => {
+      expect(panel).toHaveAttribute("href", hubProjects[index].href);
+      expect(panel).toHaveAccessibleName(hubProjects[index].label);
+    });
+    const total = String(hubProjects.length).padStart(2, "0");
+    expect(document.querySelector(".counter")).toHaveTextContent(`01 / ${total}`);
+    expect(panels[0]).toHaveClass("on");
+    fireEvent.pointerEnter(panels[2], { pointerType: "mouse" });
+    expect(panels[2]).toHaveClass("on");
+    expect(panels[0]).not.toHaveClass("on");
+    expect(document.querySelector(".counter")).toHaveTextContent(`03 / ${total}`);
   });
 
   it("does not mount project links or hub styles before login", () => {
