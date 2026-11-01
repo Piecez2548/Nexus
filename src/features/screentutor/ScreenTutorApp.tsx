@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { createPortal } from "react-dom";
 import {
   ArrowLeft, BookOpen, Check, CircleHelp, Clipboard, Clock3, Copy, Crop, Eye, FileText, Keyboard,
-  Download, ExternalLink, ImageUp, Menu, MonitorUp, MoreHorizontal, Play, RotateCcw, Search, Settings2, ShieldCheck, Sparkles, Square, Trash2, TriangleAlert, X,
+  Download, ExternalLink, ImageUp, Menu, MonitorUp, MoreHorizontal, Play, RotateCcw, Search, Settings2, ShieldCheck, Sparkles, Trash2, TriangleAlert, X,
 } from "lucide-react";
-import { hasBrowserCapture, markClipboardImageUsed, readNewClipboardImage, buildSearchQuery, captureService, classifyContent, cleanOcrText, cropByFraction, cropImage, googleSearch, hasDesktopBridge, hasMiniWindow, historyToMarkdown, OllamaProvider, openMiniWindow, parseOllamaUrl, readImageFile, recognizeImage, ScreenTutorError, ShareSession, toFraction, toImageRect, type OllamaEndpoint, type ProviderState } from "./services";
+import { markClipboardImageUsed, readNewClipboardImage, buildSearchQuery, captureService, classifyContent, cleanOcrText, cropImage, googleSearch, hasDesktopBridge, hasMiniWindow, historyToMarkdown, OllamaProvider, openMiniWindow, parseOllamaUrl, readImageFile, recognizeImage, ScreenTutorError, toFraction, toImageRect, type OllamaEndpoint, type ProviderState } from "./services";
 import { useScreenTutorStore } from "./store";
 import type { AnalysisResult, ContentType, HistoryEntry, ScreenRegion, SearchHit } from "./types";
 import "./screenTutor.css";
@@ -64,15 +64,11 @@ export default function ScreenTutorApp() {
   const [dragging, setDragging] = useState(false);
   const [lastImage, setLastImage] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
-  const share = useMemo(() => new ShareSession(), []);
-  const [sharing, setSharing] = useState(false);
-  const [area, setArea] = useState<PixelBox | null>(null);
   const [mini, setMini] = useState<Window | null>(null);
   const [floating, setFloating] = useState(false);
   const miniOpen = mini !== null || floating;
   const miniOpenRef = useRef(false);
   useEffect(() => { miniOpenRef.current = miniOpen; });
-  useEffect(() => () => share.stop(), [share]);
   const fileInput = useRef<HTMLInputElement>(null);
   const { settings, region, history, setRegion, setSettings, addHistory, deleteHistory, clearHistory } = useScreenTutorStore();
   const endpoint = useMemo(() => parseOllamaUrl(settings.ollamaUrl), [settings.ollamaUrl]);
@@ -124,6 +120,8 @@ export default function ScreenTutorApp() {
   };
 
   const busyNow = status === "capturing" || status === "reading" || status === "searching" || status === "thinking";
+  const busyRef = useRef(false);
+  useEffect(() => { busyRef.current = busyNow; });
 
   /** A failed check or analysis must not lock the app: look again before refusing. */
   const ensureProvider = async (): Promise<string> => {
@@ -147,14 +145,10 @@ export default function ScreenTutorApp() {
   const analyzeText = async (text: string, started: number, model: string, previousSummary?: string) => {
     setOcrText(text);
     let sources: SearchHit[] | undefined;
-    if (settings.research) {
-      if (!settings.googleApiKey || !settings.googleCx) {
-        setNotice("Google research is on but no API key and search engine ID are set. Add them in Settings. Answering without web results.");
-      } else {
-        setStatus("searching");
-        try { sources = await googleSearch(buildSearchQuery(text), settings.googleApiKey, settings.googleCx); }
-        catch (error) { setNotice(`${error instanceof ScreenTutorError ? error.message : "Google search failed."} Answering without web results.`); }
-      }
+    if (settings.googleApiKey && settings.googleCx) {
+      setStatus("searching");
+      try { sources = await googleSearch(buildSearchQuery(text), settings.googleApiKey, settings.googleCx); }
+      catch (error) { setNotice(`${error instanceof ScreenTutorError ? error.message : "Google search failed."} Answering without web results.`); }
     }
     setStatus("thinking");
     setProgress(0);
@@ -212,17 +206,26 @@ export default function ScreenTutorApp() {
   const attachMini = (win: Window) => {
     setMini(win);
     win.addEventListener("pagehide", () => setMini(null));
-    watchKeys(win);
+    const stopWatching = watchClipboard(win);
+    win.addEventListener("pagehide", stopWatching);
   };
 
-  const watchKeys = (win: Window) => {
-    let ctrlAlone = false;
-    const onKeyDown = (event: KeyboardEvent) => { ctrlAlone = event.key === "Control" && !event.repeat; hotkeyRef.current(event); };
-    const onKeyUp = (event: KeyboardEvent) => { if (event.key === "Control" && ctrlAlone) { ctrlAlone = false; void tapRef.current(win); } };
-    win.addEventListener("keydown", onKeyDown);
-    win.addEventListener("keyup", onKeyUp);
-    return () => { win.removeEventListener("keydown", onKeyDown); win.removeEventListener("keyup", onKeyUp); };
+  // A browser only reads the clipboard for a window that has focus, so a fresh Win+Shift+S crop is picked up as soon as
+  // this page or the mini window is in front, and again while it stays there. It cannot be seen from another program.
+  const watchClipboard = (win: Window) => {
+    const check = () => {
+      if (busyRef.current || !win.document.hasFocus()) return;
+      void readNewClipboardImage(win.navigator.clipboard).then((clip) => { if (clip) void openRef.current(clip); });
+    };
+    const timer = win.setInterval(check, 700);
+    win.addEventListener("focus", check);
+    return () => { win.clearInterval(timer); win.removeEventListener("focus", check); };
   };
+  useEffect(() => {
+    // Whatever is on the clipboard when the page opens is old news.
+    void readNewClipboardImage();
+    return watchClipboard(window);
+  }, []);
 
   const openMini = async () => {
     if (!hasMiniWindow()) { setFloating(true); return; }
@@ -231,52 +234,7 @@ export default function ScreenTutorApp() {
 
   const closeMini = () => { mini?.close(); setMini(null); setFloating(false); };
 
-  /** Share the screen once; every later question is one click (or the mini window's Capture button). */
-  const startSharing = async () => {
-    if (busyNow || sharing) return;
-    try {
-      // The mini window needs this click's user activation, so it opens before the screen picker does.
-      await openMini();
-      await share.start(() => { setSharing(false); closeMini(); setNotice("Screen sharing stopped."); });
-      setSharing(true);
-      setArea(null);
-    } catch (error) { closeMini(); fail(error); }
-  };
-
-  const stopSharing = () => { share.stop(); setSharing(false); closeMini(); };
-
-  /** Read the saved area from the live screen; with no saved area (or when asked) let the learner drag one first. */
-  const captureShared = async (pick = false) => {
-    if (busyNow) return;
-    try {
-      const frame = share.grabFrame();
-      if (pick || !area) { setPendingImage(frame); return; }
-      await analyzePicked(await cropByFraction(frame, area));
-    } catch (error) { fail(error); }
-  };
-
-  // Tap Ctrl (alone) in this page or the mini window: read the screenshot Win+Shift+S just put on the clipboard,
-  // or, with none, capture the saved area of the shared screen. Alt+Shift+C always captures the shared screen.
-  // The browser only sees keys while one of its windows has focus; there are no global hotkeys.
-  const hotkeyRef = useRef((_event: KeyboardEvent) => {});
-  const tapRef = useRef(async (_win: Window) => {});
-  useEffect(() => {
-    hotkeyRef.current = (event) => {
-      if (sharing && event.altKey && event.shiftKey && event.code === "KeyC") { event.preventDefault(); void captureShared(false); }
-    };
-    tapRef.current = async (win) => {
-      if (busyNow) return;
-      const clip = await readNewClipboardImage(win.navigator.clipboard);
-      if (clip) await openImageFile(clip);
-      else if (sharing) await captureShared(false);
-    };
-  });
-  useEffect(() => watchKeys(window), []);
-
-  const cropDone = (image: string, fraction: PixelBox | null) => {
-    if (fraction && sharing) setArea(fraction);
-    void analyzePicked(image);
-  };
+  const cropDone = (image: string) => { void analyzePicked(image); };
 
   const openImageFile = async (file: File | undefined) => {
     if (!file || busyNow) return;
@@ -341,7 +299,7 @@ export default function ScreenTutorApp() {
           <div className="st-topbar-actions"><ConnectionPill state={providerState} /><button className="st-icon-button" aria-label="Help" onClick={() => setShowHelp(true)}><CircleHelp size={19} /></button></div>
         </header>
         <div className="st-content">
-          {page === "home" && <HomeView desktop={desktop} sharing={sharing} miniOpen={miniOpen} hasArea={Boolean(area)} onShare={() => void startSharing()} onShared={(pick) => void captureShared(pick)} onStopShare={stopSharing} onOpenMini={() => void openMini()} onImage={() => fileInput.current?.click()} region={region} settings={settings} status={status} progress={progress} providerState={providerState} local={local} onSelect={() => void chooseRegion()} onCapture={() => void runAnalysis()} onRetry={() => void checkProvider()} onDebug={() => setShowDebug(true)} onSettings={() => goTo("settings")} />}
+          {page === "home" && <HomeView desktop={desktop} miniOpen={miniOpen} onOpenMini={() => void openMini()} onImage={() => fileInput.current?.click()} region={region} settings={settings} status={status} progress={progress} providerState={providerState} local={local} onSelect={() => void chooseRegion()} onCapture={() => void runAnalysis()} onRetry={() => void checkProvider()} onDebug={() => setShowDebug(true)} onSettings={() => goTo("settings")} />}
           {page === "history" && <HistoryView history={history} saving={settings.storeHistory} onDelete={deleteHistory} onClear={clearHistory} onOpen={(entry) => { setOcrText(entry.ocrText); setAnalysis(entry.analysis); setShowCapture(true); }} />}
           {page === "settings" && <SettingsView desktop={desktop} settings={settings} region={region} models={models} endpoint={endpoint} onSettings={setSettings} onSelect={() => void chooseRegion()} onReset={() => setRegion(null)} onClear={clearHistory} />}
         </div>
@@ -352,10 +310,10 @@ export default function ScreenTutorApp() {
       {miniOpen && (() => {
         const panel = (
           <MiniPanel
-            floating={!mini} sharing={sharing} status={status} progress={progress} analysis={analysis} hasArea={Boolean(area)}
-            message={status === "error" ? notice : null} research={settings.research} onResearch={(research) => setSettings({ research })}
+            floating={!mini} status={status} progress={progress} analysis={analysis}
+            message={status === "error" ? notice : null}
             pendingImage={pendingImage} onCropDone={cropDone} onCropCancel={() => { setPendingImage(null); setStatus("idle"); }}
-            onCapture={(pick) => void captureShared(pick)} onStop={stopSharing} onClose={closeMini} onDeeper={() => void reanalyze(ocrText, true)}
+            onClose={closeMini} onDeeper={() => void reanalyze(ocrText, true)}
           />
         );
         return mini ? createPortal(panel, mini.document.body) : panel;
@@ -373,9 +331,9 @@ function ConnectionPill({ state }: { state: ProviderState }) {
   return <div className={`st-connection ${state === "ready" ? "connected" : ""}`} role="status"><span />{label}</div>;
 }
 
-interface HomeProps { progress: number; desktop: boolean; sharing: boolean; miniOpen: boolean; hasArea: boolean; onShare: () => void; onShared: (pick: boolean) => void; onStopShare: () => void; onOpenMini: () => void; onImage: () => void; region: ScreenRegion | null; settings: Settings; status: string; providerState: ProviderState; local: boolean; onSelect: () => void; onCapture: () => void; onRetry: () => void; onDebug: () => void; onSettings: () => void }
+interface HomeProps { progress: number; desktop: boolean; miniOpen: boolean; onOpenMini: () => void; onImage: () => void; region: ScreenRegion | null; settings: Settings; status: string; providerState: ProviderState; local: boolean; onSelect: () => void; onCapture: () => void; onRetry: () => void; onDebug: () => void; onSettings: () => void }
 
-function HomeView({ progress, desktop, sharing, miniOpen, hasArea, onShare, onShared, onStopShare, onOpenMini, onImage, region, settings, status, providerState, local, onSelect, onCapture, onRetry, onDebug, onSettings }: HomeProps) {
+function HomeView({ progress, desktop, miniOpen, onOpenMini, onImage, region, settings, status, providerState, local, onSelect, onCapture, onRetry, onDebug, onSettings }: HomeProps) {
   const busy = ["capturing", "reading", "thinking"].includes(status);
   const busyLabel = status === "thinking" && progress ? `Thinking... ${progress}` : `${status[0].toUpperCase()}${status.slice(1)}...`;
   const aiValue = providerState === "ready" ? (settings.model || "Model not selected") : providerState === "error" ? "Provider error" : "AI unavailable";
@@ -386,26 +344,19 @@ function HomeView({ progress, desktop, sharing, miniOpen, hasArea, onShare, onSh
         <div className="st-hero-copy">
           <div className="st-live-line"><span className="st-live-dot" />Ready when you are</div>
           <h2>Make sense of<br /><em>what's on screen.</em></h2>
-          <p>{desktop ? "Select a region, press your shortcut" : "Share your screen once, drag over a question"}, and get an answer in a small window without leaving what you are doing. {local ? "Nothing leaves this device." : "Your screen text is sent to the AI server you configured."}</p>
+          <p>{desktop ? "Select a region, press your shortcut" : "Press Win+Shift+S and crop a question"}, and get an answer in a small window without leaving what you are doing. {local ? "Nothing leaves this device." : "Your screen text is sent to the AI server you configured."}</p>
           <div className="st-hero-actions">
             {desktop ? (
               <>
                 <button className="st-primary" onClick={onSelect}><Crop size={17} />Select screen region</button>
                 <button className="st-secondary" onClick={onCapture} disabled={busy}><Play size={16} />{busy ? busyLabel : "Test capture"}</button>
               </>
-            ) : sharing ? (
-              <>
-                <button className="st-primary" onClick={() => onShared(!hasArea)} disabled={busy}><Crop size={17} />{busy ? busyLabel : hasArea ? "Capture saved area" : "Pick area"}</button>
-                {hasArea && <button className="st-secondary" onClick={() => onShared(true)} disabled={busy}>Pick new area</button>}
-                {!miniOpen && <button className="st-secondary" onClick={onOpenMini}><ExternalLink size={16} />Mini window</button>}
-                <button className="st-secondary" onClick={onStopShare}><Square size={15} />Stop sharing</button>
-              </>
             ) : (
-              <button className="st-primary" onClick={onShare} disabled={busy || !hasBrowserCapture()}><MonitorUp size={17} />{busy ? busyLabel : "Share screen"}</button>
+              <button className="st-primary" onClick={onOpenMini} disabled={miniOpen}><ExternalLink size={17} />{miniOpen ? "Mini window open" : "Open mini window"}</button>
             )}
             <button className="st-secondary" onClick={onImage} disabled={busy}><ImageUp size={16} />Choose image</button>
           </div>
-          <p className="st-hint">Or paste a screenshot with <kbd>Ctrl</kbd><b>+</b><kbd>V</kbd> or drop an image anywhere. Win+Shift+S makes one.</p>
+          <p className="st-hint">Crop with <kbd>Win</kbd><b>+</b><kbd>Shift</kbd><b>+</b><kbd>S</kbd>; it is read as soon as this page or the mini window is in front. <kbd>Ctrl</kbd><b>+</b><kbd>V</kbd> or dropping an image works too.</p>
         </div>
         <div className="st-hero-visual">
           <p role="note">Sample preview — not generated from your screen.</p>
@@ -445,8 +396,8 @@ function HelpDialog({ desktop, onClose }: { desktop: boolean; onClose: () => voi
       <div className="st-help-dialog" role="dialog" aria-modal="true" aria-labelledby="st-help-title" tabIndex={-1} ref={ref}>
         <div className="st-drawer-head"><h2 id="st-help-title">How ScreenTutor works</h2><button className="st-icon-button" aria-label="Close help" onClick={onClose}><X size={19} /></button></div>
         <ol className="st-help-steps">
-          <li><strong>{desktop ? "Select a region." : "Share your screen."}</strong> {desktop ? "Choose the part of your screen you want read." : "Click Share screen once and pick what to share. A small always-on-top window opens (Chrome or Edge). Drag over the question to save the area; after that, one click in the mini window reads it again."}</li>
-          <li><strong>{desktop ? "Press Ctrl + Shift + Space or use Test capture." : "Analyse."}</strong> ScreenTutor reads the text on your device; the image is never uploaded. With Google research on, only a short search phrase is sent to Google.</li>
+          <li><strong>{desktop ? "Select a region." : "Crop the question."}</strong> {desktop ? "Choose the part of your screen you want read." : "Open the mini window (Chrome or Edge keep it on top), press Win+Shift+S and crop the question. The crop is read when the mini window or this page is in front, so click the mini window once after cropping if nothing happens."}</li>
+          <li><strong>{desktop ? "Press Ctrl + Shift + Space or use Test capture." : "Analyse."}</strong> ScreenTutor reads the text on your device; the image is never uploaded. With a Google key set, only a short search phrase is sent to Google.</li>
           <li><strong>Get an explanation</strong> from the Ollama model you picked in Settings.</li>
         </ol>
         {!desktop && <p className="st-help-note">The browser version has no saved region or global shortcut; those need the desktop app. {OLLAMA_CORS_HINT}</p>}
@@ -516,12 +467,12 @@ function CropSurface({ image, onChange }: { image: string; onChange: (selection:
   );
 }
 
-function CropDialog({ image, onCancel, onAnalyze }: { image: string; onCancel: () => void; onAnalyze: (image: string, fraction: PixelBox | null) => void }) {
+function CropDialog({ image, onCancel, onAnalyze }: { image: string; onCancel: () => void; onAnalyze: (image: string) => void }) {
   const ref = useDialog<HTMLDivElement>(onCancel);
   const [selection, setSelection] = useState<Selection | null>(null);
   const submit = async (whole: boolean) => {
-    if (whole || !selection) return onAnalyze(image, null);
-    onAnalyze(await cropImage(image, selection.rect), selection.fraction);
+    if (whole || !selection) return onAnalyze(image);
+    onAnalyze(await cropImage(image, selection.rect));
   };
   return (
     <div className="st-drawer-layer">
@@ -540,14 +491,12 @@ function Sources({ sources }: { sources?: SearchHit[] }) {
 }
 
 interface MiniProps {
-  floating: boolean; sharing: boolean; status: string; progress: number; analysis: AnalysisResult | null; hasArea: boolean; message: string | null;
-  research: boolean; onResearch: (on: boolean) => void; pendingImage: string | null;
-  onCropDone: (image: string, fraction: PixelBox | null) => void; onCropCancel: () => void;
-  onCapture: (pick: boolean) => void; onStop: () => void; onClose: () => void; onDeeper: () => void;
+  floating: boolean; status: string; progress: number; analysis: AnalysisResult | null; message: string | null;
+  pendingImage: string | null; onCropDone: (image: string) => void; onCropCancel: () => void; onClose: () => void; onDeeper: () => void;
 }
 
 /** The small answer window: lives in an always-on-top Picture-in-Picture window, or floats at the top right of the page. */
-function MiniPanel({ floating, sharing, status, progress, analysis, hasArea, message, research, onResearch, pendingImage, onCropDone, onCropCancel, onCapture, onStop, onClose, onDeeper }: MiniProps) {
+function MiniPanel({ floating, status, progress, analysis, message, pendingImage, onCropDone, onCropCancel, onClose, onDeeper }: MiniProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const busy = ["capturing", "reading", "searching", "thinking"].includes(status);
   const label = status === "reading" ? "Reading the screen..." : status === "searching" ? "Searching Google..." : status === "thinking" ? `Thinking...${progress ? ` ${progress}` : ""}` : status === "capturing" ? "Capturing..." : null;
@@ -560,22 +509,16 @@ function MiniPanel({ floating, sharing, status, progress, analysis, hasArea, mes
           <p className="st-mini-note">Drag over the question.</p>
           <div className="st-crop-stage"><CropSurface image={pendingImage} onChange={setSelection} /></div>
           <div className="st-mini-actions">
-            <button className="st-primary" disabled={!selection} onClick={async () => { if (selection) onCropDone(await cropImage(pendingImage, selection.rect), selection.fraction); }}>Read selection</button>
+            <button className="st-primary" disabled={!selection} onClick={async () => { if (selection) onCropDone(await cropImage(pendingImage, selection.rect)); }}>Read selection</button>
             <button className="st-secondary" onClick={onCropCancel}>Cancel</button>
           </div>
         </div>
       ) : (
         <>
-          <div className="st-mini-actions">
-            {sharing && <button className="st-primary" disabled={busy} onClick={() => onCapture(!hasArea)}><Crop size={15} />{hasArea ? "Capture" : "Pick area"}</button>}
-            {sharing && hasArea && <button className="st-secondary" disabled={busy} onClick={() => onCapture(true)}>New area</button>}
-            {sharing && <button className="st-secondary" onClick={onStop}><Square size={13} />Stop</button>}
-          </div>
-          <label className="st-mini-toggle"><input type="checkbox" checked={research} onChange={(event) => onResearch(event.target.checked)} />Search Google first</label>
           <div className="st-mini-body" aria-live="polite">
             {label && <p className="st-mini-note"><span className="st-live-dot" />{label}</p>}
             {message && <p className="st-mini-error" role="alert">{message}</p>}
-            {!label && !message && !analysis && <p className="st-mini-note">{sharing ? (hasArea ? "Press Capture (or tap Ctrl) to read your saved area, or tap Ctrl after Win+Shift+S to read the screenshot." : "Pick the area that holds your questions.") : "Sharing has stopped."}</p>}
+            {!label && !message && !analysis && <p className="st-mini-note">Press Win+Shift+S and crop a question. Click here once if the answer does not start by itself.</p>}
             {!label && analysis && (
               <div className="st-mini-result">
                 {analysis.answer && <div className="st-answer-block"><span>Answer</span><strong>{analysis.answer} <Check size={18} /></strong>{analysis.answerText && <p>{analysis.answerText}</p>}</div>}
@@ -665,8 +608,7 @@ function SettingsView({ desktop, settings, region, models, endpoint, onSettings,
         <SettingRow label="Model" help="Discovered from your Ollama installation."><select className="st-setting-input" aria-label="Model" value={settings.model} onChange={(event) => onSettings({ model: event.target.value })}><option value="">Select a model</option>{models.map((model) => <option key={model} value={model}>{model}</option>)}</select></SettingRow>
         <SettingRow label="Temperature" help="Lower values keep explanations focused."><input className="st-range" aria-label="Temperature" type="range" min="0" max="1" step="0.1" value={settings.temperature} onChange={(event) => onSettings({ temperature: Number(event.target.value) })} /><output>{settings.temperature.toFixed(1)}</output></SettingRow>
       </SettingSection>
-      <SettingSection title="Web research" description="Look the question up on Google before the AI answers, and cite the pages used.">
-        <ToggleRow label="Search Google automatically" help="Sends a short search phrase (the question, up to 150 characters) to Google. The screenshot never leaves your device." checked={settings.research} onChange={(checked) => onSettings({ research: checked })} />
+      <SettingSection title="Web research" description="With both fields filled in, every question is looked up on Google before the AI answers, and the pages used are cited. Only a short search phrase (up to 150 characters) leaves your device.">
         <SettingRow label="Google API key" help="Create one for the Custom Search JSON API (about 100 free searches a day). Kept in this browser only."><input className="st-setting-input" type="password" autoComplete="off" spellCheck={false} aria-label="Google API key" value={settings.googleApiKey} onChange={(event) => onSettings({ googleApiKey: event.target.value.trim() })} /></SettingRow>
         <SettingRow label="Search engine ID" help="The “cx” of a Programmable Search Engine set to search the entire web."><input className="st-setting-input" autoComplete="off" spellCheck={false} aria-label="Search engine ID" value={settings.googleCx} onChange={(event) => onSettings({ googleCx: event.target.value.trim() })} /></SettingRow>
       </SettingSection>
