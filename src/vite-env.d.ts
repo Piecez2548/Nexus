@@ -12,6 +12,7 @@ declare global {
       showResult: () => void;
       onHotkey: (callback: () => void) => () => void;
       onClipboardImage?: (callback: (imageDataUrl: string) => void) => () => void;
+      onPanelState?: (callback: (open: boolean) => void) => () => void;
       setPanelOpen?: (open: boolean) => void;
       setAutoRead?: (on: boolean) => void;
     };

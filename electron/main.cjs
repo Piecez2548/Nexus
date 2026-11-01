@@ -1,9 +1,27 @@
-const { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, ipcMain, screen } = require("electron");
+const { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, ipcMain, net, screen, session, shell } = require("electron");
 const crypto = require("node:crypto");
 const path = require("node:path");
 const { startStaticServer } = require("./staticServer.cjs");
 
 const devServerUrl = process.env.VITE_DEV_SERVER_URL;
+// The desktop app shows the live site, so every deploy reaches it; offline it falls back to the bundled build.
+const WEB_URL = process.env.SCREENTUTOR_WEB_URL || "https://nexus-lemon-eight-32.vercel.app";
+let appOrigin = "";
+
+function isTrusted(event) {
+  try { return new URL(event.senderFrame.url).origin === appOrigin; } catch { return false; }
+}
+
+// Pages in these windows can use the desktop bridge, so they may only ever show the app itself; other links open in the browser.
+function lockToApp(win) {
+  const external = (url) => { if (/^https:\/\//i.test(url)) void shell.openExternal(url); };
+  win.webContents.setWindowOpenHandler(({ url }) => { external(url); return { action: "deny" }; });
+  win.webContents.on("will-navigate", (event, url) => {
+    if (new URL(url).origin === appOrigin) return;
+    event.preventDefault();
+    external(url);
+  });
+}
 let staticServer = null;
 let mainWindow = null;
 let regionSelectorWindow = null;
@@ -19,7 +37,8 @@ function finishRegionSelection(region) {
   resolve?.(region);
 }
 
-ipcMain.handle("screen-tutor:capture-region", async (_event, region) => {
+ipcMain.handle("screen-tutor:capture-region", async (event, region) => {
+  if (!isTrusted(event)) throw new Error("Untrusted caller.");
   if (!region || region.width <= 0 || region.height <= 0 || region.width > 10000 || region.height > 10000) {
     throw new Error("Invalid capture region.");
   }
@@ -40,7 +59,8 @@ ipcMain.handle("screen-tutor:capture-region", async (_event, region) => {
   return crop.toDataURL();
 });
 
-ipcMain.handle("screen-tutor:select-region", async () => {
+ipcMain.handle("screen-tutor:select-region", async (event) => {
+  if (!isTrusted(event)) return null;
   if (regionSelectorWindow) return null;
 
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()) ?? screen.getPrimaryDisplay();
@@ -144,6 +164,7 @@ function panelBounds(open) {
 
 function slidePanel(open) {
   if (!panelWindow || panelWindow.isDestroyed()) return;
+  panelWindow.webContents.send("screen-tutor:panel-state", open);
   clearInterval(panelAnimation);
   const from = panelWindow.getBounds();
   const to = panelBounds(open);
@@ -185,6 +206,7 @@ function createPanel(url) {
     },
   });
   panelWindow = win;
+  lockToApp(win);
   win.setAlwaysOnTop(true, "screen-saver");
   win.once("ready-to-show", () => win.showInactive());
   win.on("closed", () => { if (panelWindow === win) panelWindow = null; });
@@ -231,22 +253,51 @@ function createWindow(url) {
   });
 
   mainWindow = win;
+  lockToApp(win);
   win.on("closed", () => { if (mainWindow === win) app.quit(); });
 
   win.loadURL(url);
   if (devServerUrl) win.webContents.openDevTools({ mode: "detach" });
 }
 
+async function webReachable() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+  try {
+    return (await net.fetch(`${WEB_URL}/screentutor`, { method: "HEAD", signal: controller.signal })).ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function resolveAppUrl() {
   if (devServerUrl) return devServerUrl;
+  if (await webReachable()) {
+    // A stale service worker would keep serving the previous deploy; settings and history in local storage are untouched.
+    await session.defaultSession.clearStorageData({ storages: ["serviceworkers", "cachestorage"] });
+    return WEB_URL;
+  }
 
   const { server, url } = await startStaticServer(path.join(__dirname, "..", "dist"));
   staticServer = server;
   return url;
 }
 
+// One copy only: starting it again (for example from the website's button) just slides the panel back out.
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) app.quit();
+app.on("second-instance", () => {
+  if (!panelWindow || panelWindow.isDestroyed()) return;
+  panelWindow.showInactive();
+  slidePanel(true);
+});
+
 app.whenReady().then(async () => {
+  if (!gotLock) return;
   const url = await resolveAppUrl();
+  appOrigin = new URL(url).origin;
   createWindow(`${url}/screentutor`);
   createPanel(url);
   watchClipboard();

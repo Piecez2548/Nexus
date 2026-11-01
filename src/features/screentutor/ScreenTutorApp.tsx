@@ -267,6 +267,8 @@ export default function ScreenTutorApp() {
   const changeAutoRead = (on: boolean) => { setAutoRead(on); window.screenTutor?.setAutoRead?.(on); };
   // The desktop app watches the clipboard in the background and hands over every new crop.
   useEffect(() => (panelMode ? window.screenTutor?.onClipboardImage?.((image) => void pickRef.current(image)) : undefined), [panelMode]);
+  // The desktop app can slide the panel itself (a second launch from the website does), so follow its state.
+  useEffect(() => (panelMode ? window.screenTutor?.onPanelState?.(setPanelOpen) : undefined), [panelMode]);
   // A finished answer slides the panel back out.
   useEffect(() => { if (panelMode && (status === "done" || status === "error")) togglePanel(true); }, [panelMode, status]);
 
@@ -379,11 +381,14 @@ function HomeView({ progress, desktop, miniOpen, onOpenMini, onImage, region, se
                 <button className="st-secondary" onClick={onCapture} disabled={busy}><Play size={16} />{busy ? busyLabel : "Test capture"}</button>
               </>
             ) : (
-              <button className="st-primary" onClick={onOpenMini} disabled={miniOpen}><ExternalLink size={17} />{miniOpen ? "Mini window open" : "Open mini window"}</button>
+              <>
+                <button className="st-primary" onClick={onOpenMini} disabled={miniOpen}><ExternalLink size={17} />{miniOpen ? "Mini window open" : "Open mini window"}</button>
+                <button className="st-secondary" onClick={() => { window.location.href = "screentutor://open"; }}><MonitorUp size={16} />Open desktop panel</button>
+              </>
             )}
             <button className="st-secondary" onClick={onImage} disabled={busy}><ImageUp size={16} />Choose image</button>
           </div>
-          <p className="st-hint">Crop with <kbd>Win</kbd><b>+</b><kbd>Shift</kbd><b>+</b><kbd>S</kbd>; it is read as soon as this page or the mini window is in front. <kbd>Ctrl</kbd><b>+</b><kbd>V</kbd> or dropping an image works too.</p>
+          <p className="st-hint">Crop with <kbd>Win</kbd><b>+</b><kbd>Shift</kbd><b>+</b><kbd>S</kbd>; it is read as soon as this page or the mini window is in front. <kbd>Ctrl</kbd><b>+</b><kbd>V</kbd> or dropping an image works too. The desktop panel reads every crop by itself and needs <code>Register-ScreenTutor-Protocol.bat</code> run once (Windows).</p>
         </div>
         <div className="st-hero-visual">
           <p role="note">Sample preview — not generated from your screen.</p>
