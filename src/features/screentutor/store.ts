@@ -22,9 +22,7 @@ const defaults: AppSettings = {
   // Screen text is saved only when the user opts in; it is stored unencrypted in this browser.
   storeHistory: false,
   developerMode: false,
-  research: false,
-  googleApiKey: "",
-  googleCx: "",
+  tavilyApiKey: "",
 };
 
 export const useScreenTutorStore = create<ScreenTutorState>()(

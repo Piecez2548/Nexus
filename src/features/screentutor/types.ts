@@ -60,7 +60,7 @@ export interface SearchHit {
 }
 
 export interface AnalysisResult {
-  /** Pages the answer was grounded on, when Google research was on. */
+  /** Pages the answer was grounded on, when a web search key is set. */
   sources?: SearchHit[];
   source?: "ollama" | "demo";
   type: ContentType;
@@ -97,10 +97,8 @@ export interface AppSettings {
   learningMode: LearningMode;
   storeHistory: boolean;
   developerMode: boolean;
-  /** Look the question up on Google before asking the AI. */
-  research: boolean;
-  googleApiKey: string;
-  googleCx: string;
+  /** Tavily API key; with it, every question is looked up on the web before the AI answers. */
+  tavilyApiKey: string;
 }
 
 export interface ProcessingMetrics {

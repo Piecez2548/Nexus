@@ -4,7 +4,7 @@ import {
   ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Check, CircleHelp, Clipboard, Clock3, Copy, Crop, Eye, FileText, Keyboard,
   Download, ExternalLink, ImageUp, Menu, MonitorUp, MoreHorizontal, Play, RotateCcw, Search, Settings2, ShieldCheck, Sparkles, Trash2, TriangleAlert, X,
 } from "lucide-react";
-import { markClipboardImageUsed, readNewClipboardImage, buildSearchQuery, captureService, classifyContent, cleanOcrText, cropImage, googleSearch, hasDesktopBridge, hasMiniWindow, historyToMarkdown, OllamaProvider, openMiniWindow, parseOllamaUrl, readImageFile, recognizeImage, ScreenTutorError, toFraction, toImageRect, type OllamaEndpoint, type ProviderState } from "./services";
+import { markClipboardImageUsed, readNewClipboardImage, buildSearchQuery, captureService, classifyContent, cleanOcrText, cropImage, hasDesktopBridge, hasMiniWindow, historyToMarkdown, OllamaProvider, openMiniWindow, parseOllamaUrl, readImageFile, recognizeImage, ScreenTutorError, toFraction, toImageRect, webSearch, type OllamaEndpoint, type ProviderState } from "./services";
 import { useScreenTutorStore } from "./store";
 import type { AnalysisResult, ContentType, HistoryEntry, ScreenRegion, SearchHit } from "./types";
 import "./screenTutor.css";
@@ -145,14 +145,14 @@ export default function ScreenTutorApp() {
     await analyzeText(recognized, started, model);
   };
 
-  /** Classify the text, optionally look it up on Google, and ask Ollama; also used to re-run after OCR fixes or for more depth. */
+  /** Classify the text, optionally look it up on the web, and ask Ollama; also used to re-run after OCR fixes or for more depth. */
   const analyzeText = async (text: string, started: number, model: string, previousSummary?: string) => {
     setOcrText(text);
     let sources: SearchHit[] | undefined;
-    if (settings.googleApiKey && settings.googleCx) {
+    if (settings.tavilyApiKey) {
       setStatus("searching");
-      try { sources = await googleSearch(buildSearchQuery(text), settings.googleApiKey, settings.googleCx); }
-      catch (error) { setNotice(`${error instanceof ScreenTutorError ? error.message : "Google search failed."} Answering without web results.`); }
+      try { sources = await webSearch(buildSearchQuery(text), settings.tavilyApiKey); }
+      catch (error) { setNotice(`${error instanceof ScreenTutorError ? error.message : "The web search failed."} Answering without web results.`); }
     }
     setStatus("thinking");
     setProgress(0);
@@ -429,7 +429,7 @@ function HelpDialog({ desktop, onClose }: { desktop: boolean; onClose: () => voi
         <div className="st-drawer-head"><h2 id="st-help-title">How ScreenTutor works</h2><button className="st-icon-button" aria-label="Close help" onClick={onClose}><X size={19} /></button></div>
         <ol className="st-help-steps">
           <li><strong>{desktop ? "Select a region." : "Crop the question."}</strong> {desktop ? "Choose the part of your screen you want read." : "Open the mini window (Chrome or Edge keep it on top), press Win+Shift+S and crop the question. The crop is read when the mini window or this page is in front, so click the mini window once after cropping if nothing happens."}</li>
-          <li><strong>{desktop ? "Press Ctrl + Shift + Space or use Test capture." : "Analyse."}</strong> ScreenTutor reads the text on your device; the image is never uploaded. With a Google key set, only a short search phrase is sent to Google.</li>
+          <li><strong>{desktop ? "Press Ctrl + Shift + Space or use Test capture." : "Analyse."}</strong> ScreenTutor reads the text on your device; the image is never uploaded. With a Tavily key set, only a short search phrase is sent to Tavily.</li>
           <li><strong>Get an explanation</strong> from the Ollama model you picked in Settings.</li>
         </ol>
         {!desktop && <p className="st-help-note">The browser version has no saved region or global shortcut; those need the desktop app. {OLLAMA_CORS_HINT}</p>}
@@ -532,7 +532,7 @@ interface MiniProps {
 function MiniPanel({ floating, status, progress, analysis, message, pendingImage, onCropDone, onCropCancel, onClose, onDeeper, autoRead, onAutoRead }: MiniProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const busy = ["capturing", "reading", "searching", "thinking"].includes(status);
-  const label = status === "reading" ? "Reading the screen..." : status === "searching" ? "Searching Google..." : status === "thinking" ? `Thinking...${progress ? ` ${progress}` : ""}` : status === "capturing" ? "Capturing..." : null;
+  const label = status === "reading" ? "Reading the screen..." : status === "searching" ? "Searching the web..." : status === "thinking" ? `Thinking...${progress ? ` ${progress}` : ""}` : status === "capturing" ? "Capturing..." : null;
   const choosing = pendingImage && !floating;
   return (
     <aside className={`st-mini ${floating ? "st-mini-floating" : ""}`} aria-label="ScreenTutor mini window">
@@ -558,7 +558,7 @@ function MiniPanel({ floating, status, progress, analysis, message, pendingImage
                 {analysis.answer && <div className="st-answer-block"><span>Answer</span><strong>{analysis.answer} <Check size={18} /></strong>{analysis.answerText && <p>{analysis.answerText}</p>}</div>}
                 <div className="st-explanation"><span>{analysis.answer ? "Why" : analysis.title}</span><p>{analysis.summary}</p>{analysis.details && <small>{analysis.details}</small>}</div>
                 <Sources sources={analysis.sources} />
-                {!analysis.sources?.length && (analysis.type === "GENERAL_TEXT" || analysis.type === "MULTIPLE_CHOICE") && <p className="st-mini-note">From the AI's memory only. Add a Google key in Settings to check facts online.</p>}
+                {!analysis.sources?.length && (analysis.type === "GENERAL_TEXT" || analysis.type === "MULTIPLE_CHOICE") && <p className="st-mini-note">From the AI's memory only. Add a Tavily key in Settings to check facts online.</p>}
                 <div className="st-mini-actions">
                   <button className="st-result-action" onClick={() => void navigator.clipboard?.writeText(`${analysis.answer ? `${analysis.answer}: ${analysis.answerText ?? ""}\n` : ""}${analysis.summary}`)}><Copy size={14} />Copy</button>
                   <button className="st-result-action" disabled={busy} onClick={onDeeper}>Explain more</button>
@@ -643,9 +643,8 @@ function SettingsView({ desktop, settings, region, models, endpoint, onSettings,
         <SettingRow label="Model" help="Discovered from your Ollama installation."><select className="st-setting-input" aria-label="Model" value={settings.model} onChange={(event) => onSettings({ model: event.target.value })}><option value="">Select a model</option>{models.map((model) => <option key={model} value={model}>{model}</option>)}</select></SettingRow>
         <SettingRow label="Temperature" help="Lower values keep explanations focused."><input className="st-range" aria-label="Temperature" type="range" min="0" max="1" step="0.1" value={settings.temperature} onChange={(event) => onSettings({ temperature: Number(event.target.value) })} /><output>{settings.temperature.toFixed(1)}</output></SettingRow>
       </SettingSection>
-      <SettingSection title="Web research" description="With both fields filled in, every question is looked up on Google before the AI answers, and the pages used are cited. Only a short search phrase (up to 150 characters) leaves your device.">
-        <SettingRow label="Google API key" help="Create one for the Custom Search JSON API (about 100 free searches a day). Kept in this browser only."><input className="st-setting-input" type="password" autoComplete="off" spellCheck={false} aria-label="Google API key" value={settings.googleApiKey} onChange={(event) => onSettings({ googleApiKey: event.target.value.trim() })} /></SettingRow>
-        <SettingRow label="Search engine ID" help="The “cx” of a Programmable Search Engine set to search the entire web."><input className="st-setting-input" autoComplete="off" spellCheck={false} aria-label="Search engine ID" value={settings.googleCx} onChange={(event) => onSettings({ googleCx: event.target.value.trim() })} /></SettingRow>
+      <SettingSection title="Web research" description="With a key, every question is looked up on the web (Tavily) before the AI answers, and the pages used are cited. Only a short search phrase (up to 150 characters) leaves your device.">
+        <SettingRow label="Tavily API key" help="Free at tavily.com (about 1,000 searches a month, no card). Kept in this browser only."><input className="st-setting-input" type="password" autoComplete="off" spellCheck={false} aria-label="Tavily API key" value={settings.tavilyApiKey} onChange={(event) => onSettings({ tavilyApiKey: event.target.value.trim() })} /></SettingRow>
       </SettingSection>
       <SettingSection title="Reading preferences" description="Choose how ScreenTutor interprets your capture.">
         <SettingRow label="OCR language" help="Thai + English is recommended for mixed content."><select className="st-setting-input" aria-label="OCR language" value={settings.ocrLanguage} onChange={(event) => onSettings({ ocrLanguage: event.target.value as Settings["ocrLanguage"] })}>{Object.entries(languageLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></SettingRow>

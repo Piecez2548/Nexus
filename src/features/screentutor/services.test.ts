@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { classifyContent, cleanOcrText, parseMultipleChoice, parseOllamaUrl, OllamaProvider, ScreenTutorError, toImageRect, historyToMarkdown, buildSearchQuery, googleSearch, toFraction } from "./services";
+import { classifyContent, cleanOcrText, parseMultipleChoice, parseOllamaUrl, OllamaProvider, ScreenTutorError, toImageRect, historyToMarkdown, buildSearchQuery, webSearch, toFraction } from "./services";
 import type { AnalysisRequest } from "./types";
 
 describe("ScreenTutor text pipeline", () => {
@@ -142,21 +142,23 @@ describe("historyToMarkdown", () => {
   });
 });
 
-describe("Google research", () => {
+describe("Web research", () => {
   afterEach(() => vi.unstubAllGlobals());
   it("searches with the question only, not the answer options", () => {
     expect(buildSearchQuery("Which planet is largest?\nA. Mars\nB. Jupiter")).toBe("Which planet is largest?");
     expect(buildSearchQuery("x".repeat(400))).toHaveLength(150);
   });
-  it("keeps only https results and sends the key to Google only", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ items: [{ title: "A", link: "https://a.example", snippet: "s  1" }, { title: "B", link: "http://b.example", snippet: "" }, { nope: 1 }] }), { status: 200 }));
+  it("keeps only https results and sends the key to Tavily only", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ results: [{ title: "A", url: "https://a.example", content: "s  1" }, { title: "B", url: "http://b.example", content: "" }, { nope: 1 }] }), { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
-    await expect(googleSearch("q", "KEY", "CX")).resolves.toEqual([{ title: "A", link: "https://a.example", snippet: "s 1" }]);
-    expect(String(fetchMock.mock.calls[0][0])).toMatch(/^https:\/\/www\.googleapis\.com\/customsearch\/v1\?/);
+    await expect(webSearch("q", "KEY")).resolves.toEqual([{ title: "A", link: "https://a.example", snippet: "s 1" }]);
+    expect(String(fetchMock.mock.calls[0][0])).toBe("https://api.tavily.com/search");
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer KEY");
+    expect(String(fetchMock.mock.calls[0][1].body)).not.toContain("KEY");
   });
   it("explains a refused search without leaking details", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("quota key=KEY", { status: 403 })));
-    await expect(googleSearch("q", "KEY", "CX")).rejects.toMatchObject({ code: "request_failed", message: expect.not.stringContaining("KEY") });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("quota key=KEY", { status: 401 })));
+    await expect(webSearch("q", "KEY")).rejects.toMatchObject({ code: "request_failed", message: expect.not.stringContaining("KEY") });
   });
   it("puts search results in the prompt as untrusted reference data", async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ response: '{"summary":"x"}' }), { status: 200 }));

@@ -80,24 +80,28 @@ export function buildSearchQuery(text: string): string {
   return question.replace(/\s+/g, " ").trim().slice(0, 150);
 }
 
-export async function googleSearch(query: string, apiKey: string, cx: string, signal?: AbortSignal): Promise<SearchHit[]> {
-  const url = new URL("https://www.googleapis.com/customsearch/v1");
-  url.search = new URLSearchParams({ key: apiKey, cx, q: query, num: "5" }).toString();
+/** Tavily web search. The key travels in a header to Tavily only; the results are untrusted reference text for the AI. */
+export async function webSearch(query: string, apiKey: string, signal?: AbortSignal): Promise<SearchHit[]> {
   let response: Response;
   try {
-    response = await fetch(url, { signal: withTimeout(signal, 15_000) });
+    response = await fetch("https://api.tavily.com/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ query, max_results: 5, search_depth: "basic" }),
+      signal: withTimeout(signal, 20_000),
+    });
   } catch {
-    throw new ScreenTutorError("unavailable", "Google search could not be reached.");
+    throw new ScreenTutorError("unavailable", "The web search could not be reached.");
   }
-  if (!response.ok) throw new ScreenTutorError("request_failed", "Google refused the search. Check the API key, search engine ID and daily quota in Settings.");
+  if (!response.ok) throw new ScreenTutorError("request_failed", "The web search refused the request. Check the Tavily API key and your monthly credits in Settings.");
   let payload: unknown;
-  try { payload = await response.json(); } catch { throw new ScreenTutorError("invalid_response", "Google returned an unreadable result."); }
-  const items = payload && typeof payload === "object" && "items" in payload && Array.isArray(payload.items) ? payload.items : [];
-  return items.flatMap((item: unknown) => {
+  try { payload = await response.json(); } catch { throw new ScreenTutorError("invalid_response", "The web search returned an unreadable result."); }
+  const results = payload && typeof payload === "object" && "results" in payload && Array.isArray(payload.results) ? payload.results : [];
+  return results.flatMap((item: unknown) => {
     if (!item || typeof item !== "object") return [];
-    const { title, link, snippet } = item as Record<string, unknown>;
-    if (typeof title !== "string" || typeof link !== "string" || !/^https:\/\//i.test(link)) return [];
-    return [{ title, link, snippet: typeof snippet === "string" ? snippet.replace(/\s+/g, " ").trim() : "" }];
+    const { title, url, content } = item as Record<string, unknown>;
+    if (typeof title !== "string" || typeof url !== "string" || !/^https:\/\//i.test(url)) return [];
+    return [{ title, link: url, snippet: typeof content === "string" ? content.replace(/\s+/g, " ").trim().slice(0, 500) : "" }];
   });
 }
 
