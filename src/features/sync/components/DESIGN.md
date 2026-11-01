@@ -1,3 +1,5 @@
+> Vault redesign (2026-11-01): `LoginScreen.tsx` / `loginScreen.css` now follow the "Login 2 · Vault" design: centred seal with a progress ring (`loginProgress.ts`), pill tabs, orbit backdrop, three-state submit button bound to the auth store, strength meter on sign-up. Dark uses Obsidian/Surface/Lavender/Ivory/Muted from the design; Light and Mono keep the shared tokens. All motion is wrapped in `prefers-reduced-motion: no-preference`. The two-column story layout and the hero image described below are superseded; auth behavior, field names and validation are unchanged.
+
 > Current user direction (2026-08-31): black–purple, superseding earlier green/mint guidance below. Canvas #0c0b10, surface #19171f, accent #b69aff with #211337 ink; light action #6d28d9 with white ink. Restore the original All hero scene with purple lighting; do not remove it for formality. Preserve semantic success/income colors and stored Light/System/Mono preferences.
 
 ---
