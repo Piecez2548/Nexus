@@ -41,7 +41,7 @@ export default function ProjectHubContent({ account }: { account: ReactNode }) {
       <div className="hub-inner">
         <header className="site-header">
           <a className="brand" href="/projects" aria-label="Nexus หน้าหลัก">
-            <span className="brand-mark" aria-hidden="true">P</span>
+            <span className="brand-mark" aria-hidden="true">N</span>
             <span className="brand-name" lang="en">nexus<span>.</span></span>
           </a>
           <nav aria-label="เมนูหลัก"><a href="#projects">พื้นที่ทำงาน</a><a href="#about">เกี่ยวกับ Nexus</a></nav>
@@ -64,7 +64,7 @@ export default function ProjectHubContent({ account }: { account: ReactNode }) {
               <div className="orbit-mid" />
               <div className="orbit-core" />
               <div className="orbit-dot"><span /></div>
-              <span className="orbit-letter">P</span>
+              <span className="orbit-letter">N</span>
             </div>
           </section>
           <section className="projects" id="projects" aria-labelledby="projects-title" tabIndex={-1}>
