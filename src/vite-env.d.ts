@@ -11,6 +11,9 @@ declare global {
       selectRegion: () => Promise<ScreenRegion | null>;
       showResult: () => void;
       onHotkey: (callback: () => void) => () => void;
+      onClipboardImage?: (callback: (imageDataUrl: string) => void) => () => void;
+      setPanelOpen?: (open: boolean) => void;
+      setAutoRead?: (on: boolean) => void;
     };
   }
 }

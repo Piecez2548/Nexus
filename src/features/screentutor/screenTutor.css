@@ -62,6 +62,10 @@
 
 .st-mini { font-family: Manrope, 'Noto Sans Thai', system-ui, sans-serif; color: var(--st-ink); background: #fbfdf9; display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; min-height: 100vh; box-sizing: border-box; }
 .st-mini-floating { position: fixed; top: 16px; right: 16px; width: min(360px, calc(100vw - 32px)); min-height: 0; max-height: calc(100vh - 32px); overflow: auto; z-index: 90; border: 1px solid var(--st-line); border-radius: 14px; box-shadow: var(--st-shadow); }
+.st-panel-shell { position: fixed; inset: 0; display: flex; background: #fbfdf9; }
+.st-panel-handle { flex: none; width: 28px; border: 0; border-right: 1px solid var(--st-line); background: #e4eee2; color: var(--st-ink); cursor: pointer; display: grid; place-items: center; }
+.st-panel-handle:hover { background: #d5e4d2; }
+.st-panel-shell .st-mini { flex: 1; min-width: 0; min-height: 0; height: 100%; overflow-y: auto; }
 .st-mini-head { display: flex; align-items: center; justify-content: space-between; }
 .st-mini-head strong { display: flex; align-items: center; gap: 6px; font-size: 13px; }
 .st-mini-actions { display: flex; flex-wrap: wrap; gap: 8px; }

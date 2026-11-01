@@ -1,4 +1,5 @@
-const { app, BrowserWindow, desktopCapturer, globalShortcut, ipcMain, screen } = require("electron");
+const { app, BrowserWindow, clipboard, desktopCapturer, globalShortcut, ipcMain, screen } = require("electron");
+const crypto = require("node:crypto");
 const path = require("node:path");
 const { startStaticServer } = require("./staticServer.cjs");
 
@@ -120,6 +121,100 @@ ipcMain.on("screen-tutor:show-result", (event) => {
   mainWindow.focus();
 });
 
+// The answer panel: a small always-on-top window that slides in from the right edge of the screen. The page draws a
+// 28px arrow handle at its left edge; sliding it away leaves only the handle visible.
+const PANEL_WIDTH = 408;
+const PANEL_HANDLE = 28;
+const CLIPBOARD_POLL_MS = 600;
+let panelWindow = null;
+let panelAnimation = null;
+let autoRead = true;
+let lastClipboardSignature = "";
+let clipboardTimer = null;
+
+function panelBounds(open) {
+  const area = screen.getPrimaryDisplay().workArea;
+  return {
+    x: area.x + area.width - (open ? PANEL_WIDTH : PANEL_HANDLE),
+    y: area.y + 60,
+    width: PANEL_WIDTH,
+    height: Math.min(640, area.height - 80),
+  };
+}
+
+function slidePanel(open) {
+  if (!panelWindow || panelWindow.isDestroyed()) return;
+  clearInterval(panelAnimation);
+  const from = panelWindow.getBounds();
+  const to = panelBounds(open);
+  const steps = 10;
+  let step = 0;
+  panelAnimation = setInterval(() => {
+    step += 1;
+    const eased = 1 - Math.pow(1 - step / steps, 3);
+    if (!panelWindow || panelWindow.isDestroyed()) return clearInterval(panelAnimation);
+    panelWindow.setBounds({ ...to, x: Math.round(from.x + (to.x - from.x) * eased) });
+    if (step >= steps) clearInterval(panelAnimation);
+  }, 16);
+}
+
+ipcMain.on("screen-tutor:panel-open", (event, open) => {
+  if (panelWindow && event.sender === panelWindow.webContents) slidePanel(Boolean(open));
+});
+
+ipcMain.on("screen-tutor:auto-read", (event, on) => {
+  if (panelWindow && event.sender === panelWindow.webContents) autoRead = Boolean(on);
+});
+
+function createPanel(url) {
+  const win = new BrowserWindow({
+    ...panelBounds(true),
+    frame: false,
+    resizable: false,
+    maximizable: false,
+    minimizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    show: false,
+    backgroundColor: "#fbfdf9",
+    webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  panelWindow = win;
+  win.setAlwaysOnTop(true, "screen-saver");
+  win.once("ready-to-show", () => win.showInactive());
+  win.on("closed", () => { if (panelWindow === win) panelWindow = null; });
+  void win.loadURL(`${url}/screentutor?panel=1`);
+}
+
+// A sampled fingerprint is enough to tell one screenshot from the next without hashing every pixel.
+function imageSignature(image) {
+  if (image.isEmpty()) return "";
+  const { width, height } = image.getSize();
+  const bitmap = image.toBitmap();
+  const stride = Math.max(1, Math.floor(bitmap.length / 8192));
+  const sample = Buffer.alloc(Math.ceil(bitmap.length / stride));
+  for (let i = 0, j = 0; i < bitmap.length; i += stride, j += 1) sample[j] = bitmap[i];
+  return `${width}x${height}:${crypto.createHash("md5").update(sample).digest("hex")}`;
+}
+
+// Win+Shift+S puts the crop on the clipboard; read every new one in the background, whichever window has focus.
+function watchClipboard() {
+  lastClipboardSignature = imageSignature(clipboard.readImage());
+  clipboardTimer = setInterval(() => {
+    const image = clipboard.readImage();
+    const signature = imageSignature(image);
+    if (signature === lastClipboardSignature) return;
+    lastClipboardSignature = signature;
+    if (!signature || !autoRead || !panelWindow || panelWindow.isDestroyed()) return;
+    panelWindow.webContents.send("screen-tutor:clipboard-image", image.toDataURL());
+  }, CLIPBOARD_POLL_MS);
+}
+
 function createWindow(url) {
   const win = new BrowserWindow({
     width: 1440,
@@ -136,6 +231,7 @@ function createWindow(url) {
   });
 
   mainWindow = win;
+  win.on("closed", () => { if (mainWindow === win) app.quit(); });
 
   win.loadURL(url);
   if (devServerUrl) win.webContents.openDevTools({ mode: "detach" });
@@ -151,7 +247,9 @@ async function resolveAppUrl() {
 
 app.whenReady().then(async () => {
   const url = await resolveAppUrl();
-  createWindow(url);
+  createWindow(`${url}/screentutor`);
+  createPanel(url);
+  watchClipboard();
   const registered = globalShortcut.register("CommandOrControl+Shift+Space", () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     mainWindow.webContents.send("screen-tutor:hotkey");
@@ -159,12 +257,13 @@ app.whenReady().then(async () => {
   if (!registered) console.error("Unable to register ScreenTutor global shortcut.");
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow(url);
+    if (BrowserWindow.getAllWindows().length === 0) createWindow(`${url}/screentutor`);
   });
 });
 
 app.on("window-all-closed", () => {
   globalShortcut.unregisterAll();
+  clearInterval(clipboardTimer);
   staticServer?.close();
   if (process.platform !== "darwin") app.quit();
 });

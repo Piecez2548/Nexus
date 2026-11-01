@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowLeft, BookOpen, Check, CircleHelp, Clipboard, Clock3, Copy, Crop, Eye, FileText, Keyboard,
+  ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Check, CircleHelp, Clipboard, Clock3, Copy, Crop, Eye, FileText, Keyboard,
   Download, ExternalLink, ImageUp, Menu, MonitorUp, MoreHorizontal, Play, RotateCcw, Search, Settings2, ShieldCheck, Sparkles, Trash2, TriangleAlert, X,
 } from "lucide-react";
 import { markClipboardImageUsed, readNewClipboardImage, buildSearchQuery, captureService, classifyContent, cleanOcrText, cropImage, googleSearch, hasDesktopBridge, hasMiniWindow, historyToMarkdown, OllamaProvider, openMiniWindow, parseOllamaUrl, readImageFile, recognizeImage, ScreenTutorError, toFraction, toImageRect, type OllamaEndpoint, type ProviderState } from "./services";
@@ -49,6 +49,10 @@ function useDialog<T extends HTMLElement>(onClose: () => void) {
 
 export default function ScreenTutorApp() {
   const desktop = useMemo(() => hasDesktopBridge(), []);
+  // The desktop app's slide-out window loads this same page with ?panel=1 and shows only the answer panel.
+  const panelMode = useMemo(() => hasDesktopBridge() && new URLSearchParams(window.location.search).has("panel"), []);
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [autoRead, setAutoRead] = useState(true);
   const [page, setPage] = useState<Page>("home");
   const [showCapture, setShowCapture] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
@@ -222,6 +226,7 @@ export default function ScreenTutorApp() {
     return () => { win.clearInterval(timer); win.removeEventListener("focus", check); };
   };
   useEffect(() => {
+    if (panelMode) return;
     // Whatever is on the clipboard when the page opens is old news.
     void readNewClipboardImage();
     return watchClipboard(window);
@@ -256,6 +261,15 @@ export default function ScreenTutorApp() {
     return () => document.removeEventListener("paste", onPaste);
   }, []);
 
+  const pickRef = useRef(analyzePicked);
+  useEffect(() => { pickRef.current = analyzePicked; });
+  const togglePanel = (open: boolean) => { setPanelOpen(open); window.screenTutor?.setPanelOpen?.(open); };
+  const changeAutoRead = (on: boolean) => { setAutoRead(on); window.screenTutor?.setAutoRead?.(on); };
+  // The desktop app watches the clipboard in the background and hands over every new crop.
+  useEffect(() => (panelMode ? window.screenTutor?.onClipboardImage?.((image) => void pickRef.current(image)) : undefined), [panelMode]);
+  // A finished answer slides the panel back out.
+  useEffect(() => { if (panelMode && (status === "done" || status === "error")) togglePanel(true); }, [panelMode, status]);
+
   useEffect(() => {
     if (!desktop) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -265,6 +279,19 @@ export default function ScreenTutorApp() {
     const removeGlobalHotkey = window.screenTutor?.onHotkey(() => void runAnalysis());
     return () => { window.removeEventListener("keydown", onKeyDown); removeGlobalHotkey?.(); };
   });
+
+  if (panelMode) {
+    return (
+      <div className="st-panel-shell">
+        <button className="st-panel-handle" aria-label={panelOpen ? "Slide ScreenTutor away" : "Slide ScreenTutor out"} aria-expanded={panelOpen} onClick={() => togglePanel(!panelOpen)}>{panelOpen ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}</button>
+        <MiniPanel
+          floating={false} status={status} progress={progress} analysis={analysis} message={status === "error" ? notice : null}
+          pendingImage={null} onCropDone={cropDone} onCropCancel={() => setStatus("idle")} onClose={() => togglePanel(false)} onDeeper={() => void reanalyze(ocrText, true)}
+          autoRead={autoRead} onAutoRead={changeAutoRead}
+        />
+      </div>
+    );
+  }
 
   const goTo = (next: Page) => { setPage(next); setMobileNav(false); };
   const pageTitle = page === "home" ? "Workspace" : page === "history" ? "History" : "Settings";
@@ -493,17 +520,18 @@ function Sources({ sources }: { sources?: SearchHit[] }) {
 interface MiniProps {
   floating: boolean; status: string; progress: number; analysis: AnalysisResult | null; message: string | null;
   pendingImage: string | null; onCropDone: (image: string) => void; onCropCancel: () => void; onClose: () => void; onDeeper: () => void;
+  autoRead?: boolean; onAutoRead?: (on: boolean) => void;
 }
 
 /** The small answer window: lives in an always-on-top Picture-in-Picture window, or floats at the top right of the page. */
-function MiniPanel({ floating, status, progress, analysis, message, pendingImage, onCropDone, onCropCancel, onClose, onDeeper }: MiniProps) {
+function MiniPanel({ floating, status, progress, analysis, message, pendingImage, onCropDone, onCropCancel, onClose, onDeeper, autoRead, onAutoRead }: MiniProps) {
   const [selection, setSelection] = useState<Selection | null>(null);
   const busy = ["capturing", "reading", "searching", "thinking"].includes(status);
   const label = status === "reading" ? "Reading the screen..." : status === "searching" ? "Searching Google..." : status === "thinking" ? `Thinking...${progress ? ` ${progress}` : ""}` : status === "capturing" ? "Capturing..." : null;
   const choosing = pendingImage && !floating;
   return (
     <aside className={`st-mini ${floating ? "st-mini-floating" : ""}`} aria-label="ScreenTutor mini window">
-      <div className="st-mini-head"><strong><Eye size={15} />ScreenTutor</strong>{floating && <button className="st-icon-button" aria-label="Close mini window" onClick={onClose}><X size={16} /></button>}</div>
+      <div className="st-mini-head"><strong><Eye size={15} />ScreenTutor</strong>{floating && <button className="st-icon-button" aria-label="Close mini window" onClick={onClose}><X size={16} /></button>}{onAutoRead && <label className="st-mini-toggle"><input type="checkbox" checked={autoRead} onChange={(event) => onAutoRead(event.target.checked)} />Auto-read crops</label>}</div>
       {choosing ? (
         <div className="st-mini-body">
           <p className="st-mini-note">Drag over the question.</p>
@@ -518,12 +546,14 @@ function MiniPanel({ floating, status, progress, analysis, message, pendingImage
           <div className="st-mini-body" aria-live="polite">
             {label && <p className="st-mini-note"><span className="st-live-dot" />{label}</p>}
             {message && <p className="st-mini-error" role="alert">{message}</p>}
-            {!label && !message && !analysis && <p className="st-mini-note">Press Win+Shift+S and crop a question. Click here once if the answer does not start by itself.</p>}
+            {!label && !message && !analysis && <p className="st-mini-note">{onAutoRead ? "Press Win+Shift+S and crop a question. The answer appears here by itself." : "Press Win+Shift+S and crop a question. Click here once if the answer does not start by itself."}</p>}
             {!label && analysis && (
               <div className="st-mini-result">
+                {analysis.confidence !== undefined && analysis.confidence < 0.5 && <p className="st-mini-error" role="note">Not sure about this one. Check the answer before you rely on it.</p>}
                 {analysis.answer && <div className="st-answer-block"><span>Answer</span><strong>{analysis.answer} <Check size={18} /></strong>{analysis.answerText && <p>{analysis.answerText}</p>}</div>}
                 <div className="st-explanation"><span>{analysis.answer ? "Why" : analysis.title}</span><p>{analysis.summary}</p>{analysis.details && <small>{analysis.details}</small>}</div>
                 <Sources sources={analysis.sources} />
+                {!analysis.sources?.length && (analysis.type === "GENERAL_TEXT" || analysis.type === "MULTIPLE_CHOICE") && <p className="st-mini-note">From the AI's memory only. Add a Google key in Settings to check facts online.</p>}
                 <div className="st-mini-actions">
                   <button className="st-result-action" onClick={() => void navigator.clipboard?.writeText(`${analysis.answer ? `${analysis.answer}: ${analysis.answerText ?? ""}\n` : ""}${analysis.summary}`)}><Copy size={14} />Copy</button>
                   <button className="st-result-action" disabled={busy} onClick={onDeeper}>Explain more</button>

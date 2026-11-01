@@ -11,4 +11,11 @@ contextBridge.exposeInMainWorld("screenTutor", {
     ipcRenderer.on("screen-tutor:hotkey", listener);
     return () => ipcRenderer.removeListener("screen-tutor:hotkey", listener);
   },
+  onClipboardImage: (callback) => {
+    const listener = (_event, imageDataUrl) => callback(imageDataUrl);
+    ipcRenderer.on("screen-tutor:clipboard-image", listener);
+    return () => ipcRenderer.removeListener("screen-tutor:clipboard-image", listener);
+  },
+  setPanelOpen: (open) => ipcRenderer.send("screen-tutor:panel-open", Boolean(open)),
+  setAutoRead: (on) => ipcRenderer.send("screen-tutor:auto-read", Boolean(on)),
 });
