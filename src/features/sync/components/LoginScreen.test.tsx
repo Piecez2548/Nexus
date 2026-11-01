@@ -116,6 +116,77 @@ describe("LoginScreen", () => {
     expect(email.parentElement?.querySelector(".text-emerald-400")).toBeInTheDocument();
   });
 
+  it("toggles password visibility with an accessible button", async () => {
+    const user = userEvent.setup();
+    render(<LoginScreen />);
+
+    const password = screen.getByLabelText("Password");
+    expect(password).toHaveAttribute("type", "password");
+    await user.click(screen.getByRole("button", { name: "Show password" }));
+    expect(password).toHaveAttribute("type", "text");
+    await user.click(screen.getByRole("button", { name: "Hide password" }));
+    expect(password).toHaveAttribute("type", "password");
+  });
+
+  it("clears typed values when switching tabs and keeps the right autocomplete hints", async () => {
+    const user = userEvent.setup();
+    render(<LoginScreen />);
+
+    await user.type(screen.getByLabelText("Email"), "a@b.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
+    expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "current-password");
+
+    await user.click(screen.getByRole("tab", { name: "Sign Up" }));
+    expect(screen.getByLabelText("Email")).toHaveValue("");
+    expect(screen.getByLabelText("Password")).toHaveValue("");
+    expect(screen.getByLabelText("Email")).toHaveAttribute("type", "email");
+    expect(screen.getByLabelText("Password")).toHaveAttribute("autocomplete", "new-password");
+    expect(screen.getByLabelText("First Name")).toHaveAttribute("autocomplete", "given-name");
+  });
+
+  it("fills the seal ring as the form is completed and unlocks when ready", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<LoginScreen />);
+    const ring = () => container.querySelector(".seal-ring") as SVGElement;
+
+    expect(ring().getAttribute("stroke-dashoffset")).toBe("320.44");
+    await user.type(screen.getByLabelText("Email"), "a@b.com");
+    expect(Number(ring().getAttribute("stroke-dashoffset"))).toBeCloseTo(160.22, 1);
+    await user.type(screen.getByLabelText("Password"), "123456");
+    expect(Number(ring().getAttribute("stroke-dashoffset"))).toBe(0);
+    expect(ring()).toHaveClass("full");
+  });
+
+  it("shows a strength meter only when signing up", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<LoginScreen />);
+    expect(container.querySelector(".login-strength")).toBeNull();
+
+    await user.click(screen.getByRole("tab", { name: "Sign Up" }));
+    expect(screen.getByText("At least 8 characters")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Password"), "Abcdef1!");
+    expect(container.querySelectorAll(".login-strength .on")).toHaveLength(4);
+    expect(screen.getByText("Strong")).toBeInTheDocument();
+  });
+
+  it("disables the submit button while the request is pending so it cannot be sent twice", async () => {
+    let finish: (value: unknown) => void = () => {};
+    mockSignInWithPassword.mockReturnValue(new Promise((resolve) => { finish = resolve; }));
+
+    const user = userEvent.setup();
+    render(<LoginScreen />);
+    await user.type(screen.getByLabelText("Email"), "a@b.com");
+    await user.type(screen.getByLabelText("Password"), "password123");
+    await user.click(screen.getByRole("button", { name: "Sign In" }));
+
+    const busy = await screen.findByRole("button", { name: /Verifying/ });
+    expect(busy).toBeDisabled();
+    await user.click(busy);
+    expect(mockSignInWithPassword).toHaveBeenCalledTimes(1);
+    finish({ data: { user: null }, error: { message: "nope" } });
+    expect(await screen.findByRole("alert")).toHaveTextContent("nope");
+  });
+
   it("shows an error message on failed sign-in", async () => {
     mockSignInWithPassword.mockResolvedValue({ data: { user: null }, error: { message: "Invalid credentials" } });
 
