@@ -20,6 +20,7 @@ export const hubProjects: HubProject[] = [
   { id: "datalens", title: "DataLens", category: "Tools", description: "วิเคราะห์ CSV ตรวจคุณภาพข้อมูล และสำรวจกราฟ", tags: ["CSV", "Data quality", "Charts"], href: "https://datalens-kappa-one.vercel.app/", label: "เข้าสู่ DataLens" },
   { id: "algoviz", title: "AlgoViz", category: "Learning", description: "เรียนรู้ algorithm ผ่าน visualization แบบทีละขั้น", tags: ["Algorithms", "Visualization"], href: "https://algoviz-brown-kappa.vercel.app/", label: "เข้าสู่ AlgoViz" },
   { id: "screentutor", title: "ScreenTutor", category: "Learning", description: "อ่านหน้าจอ อธิบายเนื้อหา และเรียนรู้ด้วย AI บนเครื่อง", tags: ["OCR", "Local AI"], href: "/screentutor", label: "เปิด ScreenTutor" },
+  { id: "xau", title: "XAU Dashboard", category: "Trading", description: "ดูผลบอทเทรดทอง XAUUSD แบบอ่านอย่างเดียว ไม่มีคำสั่งเทรด", tags: ["XAUUSD", "Bot", "Read only"], href: "https://xau-dashboard-omega.vercel.app/", label: "เข้าสู่ XAU Dashboard", requiresLogin: true },
 ];
 
 const numberWords = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];

@@ -86,6 +86,7 @@
 .project-hub .g1 .bg{background:conic-gradient(from 200deg at 50% 62%,var(--p-surface),var(--p-violet),var(--p-lavender),var(--p-surface))}
 .project-hub .g2 .bg{background:linear-gradient(160deg,var(--p-lavender) 0%,var(--p-violet) 46%,var(--p-surface) 100%)}
 .project-hub .g3 .bg{background:radial-gradient(70% 70% at 70% 28%,var(--p-ivory) 0%,var(--p-lavender) 24%,#7452ad99 55%,var(--p-surface) 82%)}
+.project-hub .g5 .bg{background:radial-gradient(90% 70% at 78% 22%,var(--p-lavender) 0%,#b69af500 55%),linear-gradient(20deg,var(--p-violet),var(--p-surface) 70%)}
 .project-hub .g4 .bg{background:repeating-linear-gradient(115deg,#b69af500 0 22px,#b69af52e 22px 23px),linear-gradient(200deg,var(--p-violet),var(--p-surface) 72%)}
 .project-hub .scrim{position:absolute;inset:0;background:linear-gradient(180deg,#0b0a0f1a 0%,#0b0a0f26 40%,#0b0a0feb 100%)}
 .project-hub .col{position:absolute;left:50%;bottom:28px;transform:translateX(-50%) rotate(180deg);writing-mode:vertical-rl;white-space:nowrap;font-family:var(--serif);font-size:32px;font-weight:500;line-height:1;letter-spacing:.01em;transition:opacity .3s ease}

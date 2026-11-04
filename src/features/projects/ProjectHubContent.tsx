@@ -82,7 +82,7 @@ export default function ProjectHubContent({ account }: { account: ReactNode }) {
               {hubProjects.map((project, index) => (
                 <a
                   key={project.id}
-                  className={`panel g${index % 5}${index === active ? " on" : ""}`}
+                  className={`panel g${index % 6}${index === active ? " on" : ""}`}
                   href={project.href}
                   aria-label={project.label}
                   onPointerEnter={(event) => { if (event.pointerType === "mouse") setActive(index); }}
@@ -111,7 +111,7 @@ export default function ProjectHubContent({ account }: { account: ReactNode }) {
                 </a>
               ))}
             </div>
-            <p className="project-note">มีเพียง Nexus Main ที่ต้องเข้าสู่ระบบ เครื่องมืออื่นทั้งหมดใช้งานได้ทันทีโดยไม่ต้องมีบัญชี</p>
+            <p className="project-note">Nexus Main ใช้บัญชี Nexus ส่วน XAU Dashboard มีการล็อกอินของตัวเอง (รหัสผ่าน + 2FA) เครื่องมืออื่นทั้งหมดใช้งานได้ทันทีโดยไม่ต้องมีบัญชี</p>
           </section>
         </main>
         <footer id="about">
