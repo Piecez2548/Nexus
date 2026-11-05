@@ -10,11 +10,6 @@ describe("application entry route", () => {
     expect(matchRoutes(routes, pathname)?.some((match) => match.route.id?.startsWith("nexus-all-") === true)).toBe(true);
   });
 
-  it("opens ScreenTutor only at its explicit route", () => {
-    expect(matchRoutes(routes, "/screentutor")?.some((match) => match.route.id === "screentutor")).toBe(true);
-    expect(matchRoutes(routes, "/")?.some((match) => match.route.id === "screentutor")).toBe(false);
-  });
-
   it.each(["/algoviz", "/algoviz/nope", "/algoviz/search/extra"])("sends %s to the AlgoViz site, never behind Main's sign-in", (pathname) => {
     const matches = matchRoutes(routes, pathname) ?? [];
     expect(matches.some((match) => match.route.id === "algoviz-redirect")).toBe(true);

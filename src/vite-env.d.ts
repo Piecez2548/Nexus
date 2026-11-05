@@ -1,21 +1,9 @@
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-pwa/client" />
 
-import type { ScreenRegion } from "./features/screentutor/types";
-
 declare global {
   interface Window {
     documentPictureInPicture?: { requestWindow: (options?: { width?: number; height?: number }) => Promise<Window> };
-    screenTutor?: {
-      captureRegion: (region: ScreenRegion) => Promise<string>;
-      selectRegion: () => Promise<ScreenRegion | null>;
-      showResult: () => void;
-      onHotkey: (callback: () => void) => () => void;
-      onClipboardImage?: (callback: (imageDataUrl: string) => void) => () => void;
-      onPanelState?: (callback: (open: boolean) => void) => () => void;
-      setPanelOpen?: (open: boolean) => void;
-      setAutoRead?: (on: boolean) => void;
-    };
   }
 }
 
