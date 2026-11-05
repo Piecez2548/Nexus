@@ -20,6 +20,7 @@
 .project-hub .hub-ambient::after{content:"";position:absolute;inset:0;background-image:linear-gradient(color-mix(in srgb,var(--h-ink) 5%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--h-ink) 5%,transparent) 1px,transparent 1px);background-size:72px 72px;
   mask-image:radial-gradient(70% 70% at 60% 25%,#000 0%,transparent 78%)}
 .project-hub .hub-inner{position:relative;max-width:1280px;margin-inline:auto;padding-inline:clamp(20px,5vw,64px)}
+.project-hub{padding-top:max(env(safe-area-inset-top),var(--safe-area-inset-top,0px));padding-bottom:max(env(safe-area-inset-bottom),var(--safe-area-inset-bottom,0px))}
 .project-hub .skip-link{position:fixed;left:20px;top:16px;transform:translateY(-180%);z-index:10;background:var(--h-btn);color:var(--h-btn-ink);padding:12px 20px;border-radius:8px}
 .project-hub .skip-link:focus{transform:none}
 
