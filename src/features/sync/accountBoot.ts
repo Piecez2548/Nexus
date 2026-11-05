@@ -4,7 +4,7 @@ import { installToolsSessionLinks } from "@/features/sync/toolsSession";
 import { installLockSync } from "@/store/appLock/installLockSync";
 
 // Account-side startup that used to run in main.tsx. It lives here so public
-// pages (All, AlgoViz, ScreenTutor) stay off the Dexie/lock/Supabase stack;
+// pages (All, AlgoViz) stay off the Dexie/lock/Supabase stack;
 // AuthGate and the signed-in hub call it before any account UI renders.
 let cleanup: (() => void) | null = null;
 

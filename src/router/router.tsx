@@ -32,7 +32,6 @@ import {
   Settings,
   NotFound,
   ProjectHub,
-  ScreenTutor,
 } from "./lazyPages";
 
 import PasswordRecoveryScreen from "@/features/sync/components/PasswordRecoveryScreen";
@@ -42,7 +41,6 @@ const MainRoute = lazy(() => import("./MainRoute"));
 export const appRoutes = [
   { path: "/forgot-password", element: <Suspense fallback={null}><PasswordRecoveryScreen /></Suspense> },
   { id: "algoviz-redirect", path: "/algoviz/*", element: <AlgoVizRedirect /> },
-  { id: "screentutor", path: "/screentutor", element: <Suspense fallback={<div aria-busy="true">Loading ScreenTutor…</div>}><ScreenTutor /></Suspense> },
   { element: <AccountRouteGate />, children: [
   { id: "nexus-all-root", path: "/", element: projectHub },
   { id: "nexus-all-index", path: "/index.html", element: projectHub },

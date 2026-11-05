@@ -16,19 +16,18 @@ The app screens behind sign-in (finance, trading, routines) are not shown here b
 
 | Repository | Role |
 | --- | --- |
-| **Nexus** (this repo) | Source workspace: shared modules, Android and desktop shells |
+| **Nexus** (this repo) | Source workspace: shared modules and the Android shell |
 | [Nexus-Main](https://github.com/Piecez2548/Nexus-Main) | Independently deployable web/Android build of the finance and planning workspace |
 | [Nexus-Tools](https://github.com/Piecez2548/Nexus-Tools) | Bilingual PDF, image, OCR, QR and business-document toolkit |
-| [ScreenTutor](https://github.com/Piecez2548/ScreenTutor) | Standalone local-first screen learning assistant |
 
-Routes: Nexus All is the entry point at `/`; Nexus Main lives under `/dashboard`; ScreenTutor is at `/screentutor`.
+Routes: Nexus All is the entry point at `/`; Nexus Main lives under `/dashboard`.
 
 ## What this project demonstrates
 
 - A feature-first architecture with a consistent store → service → repository boundary.
 - Offline-first IndexedDB storage with optional end-to-end encrypted multi-device sync.
 - Explainable, deterministic financial analytics that run on-device.
-- Cross-platform delivery through Vite, Capacitor Android, and Electron.
+- Cross-platform delivery through Vite and Capacitor Android.
 - Production-minded engineering: accessibility checks, bundle budgets, typed builds, integration tests, and CI release gates.
 
 ## Capabilities
@@ -66,7 +65,7 @@ Each domain lives under `src/features/<name>/`. Shared UI and cross-cutting infr
 - Zustand, React Router, React Hook Form, Zod
 - Dexie/IndexedDB, Web Crypto API, Supabase (optional)
 - Tesseract.js, jsQR, Recharts, Leaflet
-- Capacitor 8 for Android and Electron for desktop
+- Capacitor 8 for Android
 - Vitest, Testing Library, Playwright, and Oxlint
 
 ## Run locally
@@ -79,33 +78,6 @@ npm run dev
 ```
 
 The app starts at `http://localhost:5173` and works without a `.env` file. Copy `.env.example` only when you need optional Supabase sync or Sentry monitoring.
-
-## ScreenTutor (desktop feature)
-
-ScreenTutor needs a supported desktop capture bridge plus a working Ollama provider for real analysis.
-
-### Setup (Windows 11)
-
-```powershell
-npm ci
-# Install Ollama from https://ollama.com/download/windows, then:
-ollama serve
-ollama pull qwen2.5:3b
-npm run electron:dev
-```
-
-The browser preview is also available with `npm run dev`; browser-based screen capture is unavailable, so no analysis is produced there. For cross-app capture, run the Electron desktop wrapper with `npm run electron:dev`: `Ctrl + Shift + Space` works over other Windows programs, and `Select screen region` opens a native always-on-top desktop selector. Ollama must be running and have a selected model; provider failure is reported instead of replaced with sample output.
-
-### MVP features
-
-- Region selection with saved coordinates and reset/change controls.
-- Thai, English, and Thai + English OCR through a replaceable `OCRService` boundary.
-- Lightweight content classification for multiple-choice, programming errors, translation, math, and general text.
-- Ollama health/model discovery and structured JSON analysis with prompt-injection boundaries.
-- Non-blocking result overlay, OCR debug panel, local searchable history, and settings.
-- Keyboard navigation, visible focus states, responsive layout, and local-only persistence.
-
-See [docs/SCREENTUTOR_MVP.md](docs/SCREENTUTOR_MVP.md) for architecture, validation results, limitations, and the next recommended task.
 
 ## Quality checks
 
