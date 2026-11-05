@@ -15,7 +15,7 @@ for (const mode of ["dark", "light", "mono"]) {
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "เข้าสู่ Nexus Tools", exact: true })).toBeFocused();
     await expect(page.getByRole("link", { name: "เข้าสู่ Nexus Tools", exact: true })).toHaveClass(/(^| )on( |$)/);
-    await expect(page.locator(".counter")).toHaveText("02 / 06");
+    await expect(page.locator(".counter")).toHaveText("02 / 05");
     await expect(page.getByRole("link", { name: "เข้าสู่ Nexus Tools", exact: true })).toHaveAttribute("href", "https://nexus-tools-chi.vercel.app/");
   });
 }
