@@ -32,6 +32,7 @@
 .sat-ivory{bottom:-4px;left:calc(50% - 4px);width:8px;height:8px;background:var(--lg-ink);box-shadow:0 0 18px 3px color-mix(in srgb,var(--lg-ink) 50%,transparent)}
 
 .login-shell{position:relative;flex:1;display:flex;flex-direction:column;width:100%;max-width:1280px;margin-inline:auto;padding-inline:clamp(20px,5vw,64px)}
+.login-shell{padding-top:max(env(safe-area-inset-top),var(--safe-area-inset-top,0px));padding-bottom:max(env(safe-area-inset-bottom),var(--safe-area-inset-bottom,0px))}
 
 /* Header */
 .login-header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-block:32px}
