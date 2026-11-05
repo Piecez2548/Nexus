@@ -4,7 +4,7 @@ for (const mode of ["dark", "light", "mono"]) {
   test(`static All works with keyboard and expanding panels in ${mode}`, async ({ page }) => {
     await page.addInitScript(themeMode => localStorage.setItem("nexus-app-settings", JSON.stringify({ state: { themeMode }, version: 0 })), mode);
     await page.goto("/projects");
-    await expect(page.locator("#hero-title")).toHaveText("Six workspaces.One quiet place.");
+    await expect(page.locator("#hero-title")).toHaveText("Five workspaces.One quiet place.");
     await expect(page.locator("video, #motion-toggle")).toHaveCount(0);
     await page.keyboard.press("Tab");
     await expect(page.locator(".skip-link")).toBeFocused();
