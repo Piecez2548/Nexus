@@ -36,3 +36,128 @@
 @media (max-width: 639px) {
   .dashboard-chart-empty { min-height: 200px; }
 }
+
+/* ---------- 2026-11 redesign: aurora hero, staggered entrance, hover polish ---------- */
+@keyframes dash-rise {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes dash-aurora {
+  0%, 100% { transform: translate3d(-6%, -4%, 0) scale(1); }
+  50% { transform: translate3d(8%, 6%, 0) scale(1.15); }
+}
+@keyframes dash-sheen {
+  from { transform: translateX(-120%) skewX(-18deg); }
+  to { transform: translateX(260%) skewX(-18deg); }
+}
+@keyframes dash-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes dash-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* Hero: layered aurora glow + one-time sheen across the heading */
+.nexus-dashboard .dashboard-heading {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: 0 18px 50px -28px color-mix(in srgb, var(--main-accent-text) 70%, transparent);
+}
+.nexus-dashboard .dashboard-heading::before,
+.nexus-dashboard .dashboard-heading::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(46px);
+  pointer-events: none;
+}
+.nexus-dashboard .dashboard-heading::before {
+  width: 260px; height: 260px; right: -60px; top: -110px;
+  background: color-mix(in srgb, var(--main-accent-text) 38%, transparent);
+  animation: dash-aurora 14s ease-in-out infinite;
+}
+.nexus-dashboard .dashboard-heading::after {
+  width: 200px; height: 200px; left: 25%; bottom: -120px;
+  background: color-mix(in srgb, #38bdf8 24%, transparent);
+  animation: dash-aurora 18s ease-in-out infinite reverse;
+}
+.nexus-dashboard .dashboard-heading h1 {
+  background: linear-gradient(90deg, var(--nexus-ink), color-mix(in srgb, var(--main-accent-text) 80%, var(--nexus-ink)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.nexus-dashboard .dashboard-heading .nexus-primary-action {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 26px -10px color-mix(in srgb, var(--main-accent-text) 80%, transparent);
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 160ms ease;
+}
+.nexus-dashboard .dashboard-heading .nexus-primary-action::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, #ffffff40, transparent);
+  transform: translateX(-120%) skewX(-18deg);
+}
+.nexus-dashboard .dashboard-heading .nexus-primary-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px -10px color-mix(in srgb, var(--main-accent-text) 90%, transparent);
+}
+.nexus-dashboard .dashboard-heading .nexus-primary-action:hover::after { animation: dash-sheen 800ms ease; }
+.nexus-dashboard .dashboard-heading .nexus-primary-action:active { transform: translateY(0) scale(.97); }
+
+/* Staggered entrance for every top-level block and card in the grids */
+.nexus-dashboard > *,
+.nexus-dashboard .grid > * {
+  animation: dash-rise 560ms cubic-bezier(.2, .8, .2, 1) both;
+}
+.nexus-dashboard > :nth-child(2) { animation-delay: 60ms; }
+.nexus-dashboard > :nth-child(3) { animation-delay: 110ms; }
+.nexus-dashboard > :nth-child(4) { animation-delay: 160ms; }
+.nexus-dashboard > :nth-child(5) { animation-delay: 210ms; }
+.nexus-dashboard > :nth-child(n+6) { animation-delay: 260ms; }
+.nexus-dashboard .grid > :nth-child(1) { animation-delay: 120ms; }
+.nexus-dashboard .grid > :nth-child(2) { animation-delay: 190ms; }
+.nexus-dashboard .grid > :nth-child(3) { animation-delay: 260ms; }
+.nexus-dashboard .grid > :nth-child(4) { animation-delay: 330ms; }
+.nexus-dashboard .grid > :nth-child(5) { animation-delay: 400ms; }
+.nexus-dashboard .grid > :nth-child(n+6) { animation-delay: 470ms; }
+
+/* Panels: soft depth + lift on hover */
+.nexus-dashboard .grid > .rounded-2xl {
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  box-shadow: 0 1px 2px #0000000a;
+}
+.nexus-dashboard .grid > .rounded-2xl:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--main-accent-text) 45%, var(--nexus-line));
+  box-shadow: 0 22px 40px -24px color-mix(in srgb, var(--main-accent-text) 55%, transparent);
+}
+
+/* Progress bars grow from the left on load */
+.nexus-dashboard .h-2.rounded-full > div {
+  transform-origin: left center;
+  animation: dash-grow 900ms cubic-bezier(.2, .8, .2, 1) 350ms both;
+}
+
+/* Empty-state icon gently floats */
+.dashboard-chart-empty > svg { animation: dash-float 4s ease-in-out infinite; }
+
+/* Mono theme stays calm */
+.mono .nexus-dashboard .dashboard-heading::before,
+.mono .nexus-dashboard .dashboard-heading::after { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nexus-dashboard *,
+  .nexus-dashboard *::before,
+  .nexus-dashboard *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

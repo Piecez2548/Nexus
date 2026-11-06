@@ -6,12 +6,28 @@
     color-mix(in srgb, var(--summary-color) var(--summary-tint), var(--nexus-surface)),
     var(--nexus-surface));
   color: var(--nexus-ink);
-  transition: border-color 160ms ease;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 160ms ease, transform 220ms ease, box-shadow 220ms ease;
 }
+.nexus-summary-card::after {
+  content: "";
+  position: absolute;
+  width: 120px; height: 120px; right: -40px; bottom: -60px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--summary-color) 22%, transparent);
+  filter: blur(28px);
+  pointer-events: none;
+  transition: transform 400ms ease;
+}
+.nexus-summary-card:hover { transform: translateY(-4px); box-shadow: 0 20px 36px -22px var(--summary-color); }
+.nexus-summary-card:hover::after { transform: scale(1.5); }
+.nexus-summary-card:hover .nexus-summary-icon { transform: rotate(-8deg) scale(1.08); }
 .dark .nexus-summary-card { --summary-tint: 23%; }
 .nexus-summary-card:hover { border-color: var(--summary-color); }
 .nexus-summary-card h2 { font-variant-numeric: tabular-nums; }
 .nexus-summary-icon {
+  transition: transform 260ms cubic-bezier(.3, 1.6, .5, 1);
   background: color-mix(in srgb, var(--summary-color) 12%, var(--nexus-surface));
   color: var(--nexus-ink);
   border: 1px solid color-mix(in srgb, var(--summary-color) 55%, var(--nexus-line));
@@ -22,5 +38,6 @@
 }
 .mono .nexus-summary-card { --summary-color: #71717a !important; --summary-tint: 5%; }
 @media (prefers-reduced-motion: reduce) {
-  .nexus-summary-card { transition: none; }
+  .nexus-summary-card, .nexus-summary-icon, .nexus-summary-card::after { transition: none; }
+  .nexus-summary-card:hover, .nexus-summary-card:hover .nexus-summary-icon { transform: none; }
 }
