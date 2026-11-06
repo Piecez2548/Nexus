@@ -11,6 +11,10 @@ import MobileRowCard from "@/components/ui/MobileRowCard";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { Transaction, TransactionType } from "@/features/finance/types";
 
+// Identical fixed-size, centered cell for every row action so star / edit / delete line up.
+const ACTION_BTN =
+  "inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 transition";
+
 interface Props {
   transactions?: Transaction[];
 }
@@ -201,7 +205,7 @@ export default function TransactionTable({
                     onClick={() => handleToggleFavorite(item)}
                     aria-label={item.favorite ? `Unfavorite ${item.title}` : `Favorite ${item.title}`}
                     aria-pressed={Boolean(item.favorite)}
-                    className={`rounded-lg p-2 transition hover:bg-amber-500/20 hover:text-amber-400 ${
+                    className={`${ACTION_BTN} hover:bg-amber-500/20 hover:text-amber-400 ${
                       item.favorite ? "text-amber-400" : ""
                     }`}
                   >
@@ -211,7 +215,7 @@ export default function TransactionTable({
                   <button
                     onClick={() => openTransactionDrawer(item)}
                     aria-label={`Edit ${item.title}`}
-                    className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
+                    className={`${ACTION_BTN} hover:bg-brand-600/20 hover:text-brand-400`}
                   >
                     <Pencil size={16} />
                   </button>
@@ -219,7 +223,7 @@ export default function TransactionTable({
                   <button
                     onClick={() => handleDelete(item)}
                     aria-label={`Delete ${item.title}`}
-                    className="rounded-lg p-2 transition hover:bg-red-600/20 hover:text-red-400"
+                    className={`${ACTION_BTN} hover:bg-red-600/20 hover:text-red-400`}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -312,13 +316,13 @@ export default function TransactionTable({
 
                   <td className="px-6 py-4">
 
-                    <div className="flex justify-center gap-3">
+                    <div className="flex items-center justify-center gap-2">
 
                       <button
                         onClick={() => handleToggleFavorite(item)}
                         aria-label={item.favorite ? `Unfavorite ${item.title}` : `Favorite ${item.title}`}
                         aria-pressed={Boolean(item.favorite)}
-                        className={`rounded-lg p-2 transition hover:bg-amber-500/20 hover:text-amber-400 ${
+                        className={`${ACTION_BTN} hover:bg-amber-500/20 hover:text-amber-400 ${
                           item.favorite ? "text-amber-400" : ""
                         }`}
                       >
@@ -328,7 +332,7 @@ export default function TransactionTable({
                       <button
                         onClick={() => openTransactionDrawer(item)}
                         aria-label={`Edit ${item.title}`}
-                        className="rounded-lg p-2 transition hover:bg-brand-600/20 hover:text-brand-400"
+                        className={`${ACTION_BTN} hover:bg-brand-600/20 hover:text-brand-400`}
                       >
                         <Pencil size={18} />
                       </button>
@@ -336,7 +340,7 @@ export default function TransactionTable({
                       <button
                         onClick={() => handleDelete(item)}
                         aria-label={`Delete ${item.title}`}
-                        className="rounded-lg p-2 transition hover:bg-red-600/20 hover:text-red-400"
+                        className={`${ACTION_BTN} hover:bg-red-600/20 hover:text-red-400`}
                       >
                         <Trash2 size={18} />
                       </button>
