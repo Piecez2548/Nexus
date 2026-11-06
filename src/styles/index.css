@@ -39,6 +39,12 @@ body,
     height: 100%;
 }
 
+/* Desktop: scale rem-based UI to ~80% (matches what looked right at 80% browser zoom).
+   Phones keep 100% so touch targets and inputs stay full size. */
+@media (min-width: 1024px) {
+    html { font-size: 80%; }
+}
+
 body {
     margin: 0;
 }
