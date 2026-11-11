@@ -6,11 +6,13 @@ export interface Toast {
   id: number;
   type: ToastType;
   message: string;
+  // Optional one-tap action (e.g. "Undo") rendered next to the message.
+  action?: { label: string; onClick: () => void };
 }
 
 interface ToastState {
   toasts: Toast[];
-  show: (type: ToastType, message: string) => void;
+  show: (type: ToastType, message: string, options?: { action?: Toast["action"]; durationMs?: number }) => void;
   dismiss: (id: number) => void;
 }
 
@@ -20,11 +22,11 @@ let nextId = 1;
 export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
 
-  show(type, message) {
+  show(type, message, options) {
     const id = nextId++;
-    set({ toasts: [...get().toasts, { id, type, message }] });
+    set({ toasts: [...get().toasts, { id, type, message, action: options?.action }] });
 
-    setTimeout(() => get().dismiss(id), DURATION_MS);
+    setTimeout(() => get().dismiss(id), options?.durationMs ?? DURATION_MS);
   },
 
   dismiss(id) {

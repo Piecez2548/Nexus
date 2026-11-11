@@ -6,6 +6,7 @@ import { Capacitor } from "@capacitor/core";
 
 import { PaymentNotificationCapture } from "@/features/finance/notificationCapture/native/notificationCapturePlugin";
 import { useTranslation } from "@/i18n/useTranslation";
+import { useNotificationAutoSaveStore } from "@/features/finance/notificationCapture/store/notificationAutoSaveStore";
 import SettingsCard from "./SettingsCard";
 
 // Payment Notification Capture (Phase 1): opt-in toggle, gated on Android's
@@ -19,6 +20,8 @@ export default function NotificationCaptureSettings() {
   const { t } = useTranslation();
   const [accessGranted, setAccessGranted] = useState<boolean | null>(null);
   const [enabled, setEnabled] = useState(false);
+  const autoSave = useNotificationAutoSaveStore((s) => s.enabled);
+  const setAutoSave = useNotificationAutoSaveStore((s) => s.setEnabled);
 
   async function refresh(): Promise<void> {
     const [access, capture] = await Promise.all([PaymentNotificationCapture.checkAccess(), PaymentNotificationCapture.isCaptureEnabled()]);
@@ -74,6 +77,25 @@ export default function NotificationCaptureSettings() {
           >
             <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${enabled ? "left-5" : "left-0.5"}`} />
           </button>
+        </div>
+      )}
+
+      {accessGranted === true && enabled && (
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-sm">{t("settings.notificationAutoSaveEnable")}</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={autoSave}
+              aria-label={t("settings.notificationAutoSaveEnable")}
+              onClick={() => setAutoSave(!autoSave)}
+              className={`relative h-6 w-11 shrink-0 rounded-full transition ${autoSave ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-700"}`}
+            >
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${autoSave ? "left-5" : "left-0.5"}`} />
+            </button>
+          </div>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("settings.notificationAutoSaveNote")}</p>
         </div>
       )}
     </SettingsCard>

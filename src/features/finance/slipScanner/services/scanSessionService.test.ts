@@ -164,6 +164,20 @@ describe("createScanSession", () => {
     expect(run2.skipped).toBe(2);
   });
 
+  it("sinceCursor limits a fresh incremental run to newer assets", async () => {
+    const provider = new FakeProvider([asset("old", 1, [1]), asset("mid", 2, [2]), asset("new", 3, [3])]);
+    const run = await createScanSession({
+      provider,
+      options: { source: "fake", incremental: true, sinceCursor: "2026-01-15T00:00:00.000Z" },
+    }).done;
+
+    expect(run.status).toBe("completed");
+    expect(run.done).toBe(2);
+    expect(run.total).toBe(2);
+    // Only the two newer assets were read and cached; "old" was never touched.
+    expect(await db.slipScanCache.count()).toBe(2);
+  });
+
   it("a date range only processes assets inside its bounds", async () => {
     const assets = [asset("jan", 1, [1]), asset("feb", 2, [2]), asset("mar", 3, [3])];
     const run = await createScanSession({

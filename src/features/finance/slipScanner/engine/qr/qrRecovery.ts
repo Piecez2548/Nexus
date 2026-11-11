@@ -48,12 +48,17 @@ export async function recoverQr(bytes: Uint8Array, options: QrRecoveryOptions = 
     if (original !== null) return { payload: original, recoveredBy: "original", attempts };
   }
 
+  // Checked before the generator is touched (building a variant is itself a
+  // full bitmap decode + transform) and again after each failed attempt, so a
+  // cap of N costs exactly N variants, never N+1.
+  if (attempts >= maxAttempts) return { payload: null, recoveredBy: null, attempts };
+
   for await (const variant of variants(bytes)) {
-    if (attempts >= maxAttempts) break;
     if (options.isCancelled?.()) break;
     attempts += 1;
     const payload = decodeVariant(variant.imageData);
     if (payload !== null) return { payload, recoveredBy: variant.label, attempts };
+    if (attempts >= maxAttempts) break;
   }
 
   return { payload: null, recoveredBy: null, attempts };

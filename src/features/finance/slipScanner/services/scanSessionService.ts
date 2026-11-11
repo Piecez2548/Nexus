@@ -151,6 +151,7 @@ export function createScanSession(params: ScanSessionParams): ScanSession {
       progress.failed = resumable.failed;
       await scanRunRepository.checkpoint(runId, { status: "running" });
     } else {
+      if (resumeAllowed) cursor = params.options.sinceCursor;
       const bounds = boundsFor(resumeAllowed ? cursor : undefined, dateRange);
       progress.total = await params.provider.count(bounds);
       runId = await scanRunRepository.create({
