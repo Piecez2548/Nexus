@@ -8,12 +8,10 @@ import { useGoalMilestoneEventStore } from "@/features/finance/store/goalMilesto
 import { useWorkoutEntryStore } from "@/features/workouts/store/workoutEntryStore";
 import { useBudgetProgress } from "@/features/finance/hooks/useBudgetProgress";
 import { useNetWorthStats } from "@/features/finance/hooks/useNetWorthStats";
-import { useTradingStats } from "@/features/trading/hooks/useTradingStats";
 import { useNowTick } from "@/features/schedule/hooks/useNowTick";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useNetWorthItemStore } from "@/features/finance/store/netWorthItemStore";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
 
 import { buildExecutiveContext } from "@/features/executive/engine/buildExecutiveContext";
 import { calculateExecutivePriorities } from "@/features/executive/engine/calculateExecutivePriorities";
@@ -30,7 +28,7 @@ export interface ExecutiveDashboardState {
 }
 
 // Orchestration only -- every number here comes from an existing store or
-// an existing hook (useBudgetProgress/useNetWorthStats/useTradingStats),
+// an existing hook (useBudgetProgress/useNetWorthStats),
 // read once here and handed to the pure engine functions. No new fetch, no
 // new Dexie table, no computation this hook owns itself.
 export function useExecutiveDashboard(): ExecutiveDashboardState {
@@ -41,20 +39,18 @@ export function useExecutiveDashboard(): ExecutiveDashboardState {
   const { events: goalMilestoneEvents, loadEvents } = useGoalMilestoneEventStore();
   const { entries: workoutEntries, loading: workoutsLoading, error: workoutsError, loadEntries } = useWorkoutEntryStore();
 
-  // useBudgetProgress/useNetWorthStats/useTradingStats only read whatever is
-  // already in these stores -- unlike the six stores above, none of them
-  // trigger their own load. Without loading these explicitly here, landing
-  // on /executive directly (without having first visited /finance or
-  // /trading in this session) would silently show zeroed-out Finance/
-  // Trading snapshots even though real data exists in Dexie.
+  // useBudgetProgress/useNetWorthStats only read whatever is already in
+  // these stores -- unlike the six stores above, neither triggers its own
+  // load. Without loading these explicitly here, landing on /executive
+  // directly (without having first visited /finance in this session) would
+  // silently show a zeroed-out Finance snapshot even though real data
+  // exists in Dexie.
   const { loading: transactionsLoading, error: transactionsError, loadTransactions } = useTransactionStore();
   const { loading: budgetsLoading, error: budgetsError, loadBudgets } = useBudgetStore();
   const { loading: netWorthLoading, error: netWorthError, loadItems: loadNetWorthItems } = useNetWorthItemStore();
-  const { loading: tradesLoading, error: tradesError, loadTrades } = useTradeStore();
 
   const budgetProgress = useBudgetProgress();
   const netWorthStats = useNetWorthStats();
-  const tradingStats = useTradingStats();
 
   const loadAll = useCallback(() => {
     loadTodos();
@@ -66,7 +62,6 @@ export function useExecutiveDashboard(): ExecutiveDashboardState {
     loadTransactions();
     loadBudgets();
     loadNetWorthItems();
-    loadTrades();
   }, [
     loadTodos,
     loadHabits,
@@ -77,7 +72,6 @@ export function useExecutiveDashboard(): ExecutiveDashboardState {
     loadTransactions,
     loadBudgets,
     loadNetWorthItems,
-    loadTrades,
   ]);
 
   useEffect(() => {
@@ -97,15 +91,9 @@ export function useExecutiveDashboard(): ExecutiveDashboardState {
         workoutEntries,
         budgetProgress,
         netWorthStats,
-        tradingStats: {
-          weeklyPnl: tradingStats.weeklyPnl,
-          winRate: tradingStats.winRate,
-          openPositions: tradingStats.openPositions,
-          totalClosedTrades: tradingStats.totalClosedTrades,
-        },
         now,
       }),
-    [todos, habits, scheduleItems, goals, goalMilestoneEvents, workoutEntries, budgetProgress, netWorthStats, tradingStats, now]
+    [todos, habits, scheduleItems, goals, goalMilestoneEvents, workoutEntries, budgetProgress, netWorthStats, now]
   );
 
   const priorities = useMemo(() => calculateExecutivePriorities(context), [context]);
@@ -119,8 +107,7 @@ export function useExecutiveDashboard(): ExecutiveDashboardState {
     workoutsLoading ||
     transactionsLoading ||
     budgetsLoading ||
-    netWorthLoading ||
-    tradesLoading;
+    netWorthLoading;
   const error =
     todosError ??
     habitsError ??
@@ -130,7 +117,6 @@ export function useExecutiveDashboard(): ExecutiveDashboardState {
     transactionsError ??
     budgetsError ??
     netWorthError ??
-    tradesError ??
     null;
 
   return { context, priorities, summary, loading, error, retry: loadAll };

@@ -15,10 +15,8 @@ export const ENCRYPTABLE_TABLES: SyncTableName[] = [
   "budgets",
   "goals",
   "transactionTemplates",
-  "trades",
   "todos",
   "habits",
-  "holdings",
   "calendarEvents",
   "scheduleItems",
   "goalMilestoneEvents",
@@ -33,9 +31,6 @@ export const ENCRYPTABLE_TABLES: SyncTableName[] = [
   "netWorthSnapshots",
   "subscriptions",
   "budgetPeriodSnapshots",
-  "strategies",
-  "watchlistItems",
-  "economicEvents",
 ];
 
 export const CHUNK_SIZE = 200;

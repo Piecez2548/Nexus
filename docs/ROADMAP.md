@@ -65,7 +65,8 @@ The active scope is an ordinary personal/demo project. See the [Focused project 
 - [x] AI Coach (16-intent keyword-classified Q&A)
 - [x] AI Gateway infrastructure (`src/ai/`) — built and used for the opt-in Claude fallback in AI Coach; other analytics surfaces remain deterministic/local.
 
-### Trading & Portfolio
+### Trading & Portfolio — removed 2026-11-11
+Removed because they overlapped with the separate XAU Dashboard (Dexie v28 drops their tables). The list below records what existed.
 - [x] Trading Journal — full trade CRUD with psychology/session/strategy metadata
 - [x] Trading Dashboard — win rate, profit factor, average RR, max drawdown, expectancy, average holding time, equity curve, drawdown chart, R-multiple risk distribution, per-session stats, per-strategy comparison table, performance calendar
 - [x] Heuristic (non-AI) market-type detection, CSV export

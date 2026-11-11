@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { db } from "@/database/db";
+import { SYNC_TABLE_NAMES } from "@/features/sync/types";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { transactionService } from "@/features/finance/services/transactionService";
@@ -861,56 +862,30 @@ describe("syncEngine", () => {
     expect(push.data.title).toBeUndefined();
   });
 
-  it("pushes and pulls strategies, watchlistItems, and economicEvents through the same generic path as every other table (Deeper Trading Analytics tables)", async () => {
-    await db.strategies.add({ name: "Breakout Pro", syncId: "strat-push-1", updatedAt: "2026-08-21T00:00:00.000Z" } as never);
-    await db.watchlistItems.add({ symbol: "AAPL", market: "stocks", syncId: "watch-push-1", updatedAt: "2026-08-21T00:00:00.000Z" } as never);
-    await db.economicEvents.add({ title: "FOMC Meeting", eventDate: "2099-01-15", syncId: "event-push-1", updatedAt: "2026-08-21T00:00:00.000Z" } as never);
+  it("no longer syncs the retired Trading/Portfolio tables", async () => {
+    const retired = ["trades", "holdings", "strategies", "watchlistItems", "economicEvents"];
+    for (const name of retired) {
+      expect(SYNC_TABLE_NAMES as string[]).not.toContain(name);
+      expect(db.tables.map((table) => table.name)).not.toContain(name);
+    }
 
-    mockFrom.mockImplementation(() => ({
-      upsert: mockUpsert,
-      ...selectResultBuilder({
-        data: [
-          {
-            id: "strat-pull-1",
-            table_name: "strategies",
-            data: { name: "Reversal", syncId: "strat-pull-1", updatedAt: "2026-08-21T00:00:00.000Z" },
-            updated_at: "2026-08-21T00:00:00.000Z",
-            deleted_at: null,
-          },
-          {
-            id: "watch-pull-1",
-            table_name: "watchlistItems",
-            data: { symbol: "TSLA", market: "stocks", syncId: "watch-pull-1", updatedAt: "2026-08-21T00:00:00.000Z" },
-            updated_at: "2026-08-21T00:00:00.000Z",
-            deleted_at: null,
-          },
-          {
-            id: "event-pull-1",
-            table_name: "economicEvents",
-            data: { title: "Rate Decision", eventDate: "2099-02-01", syncId: "event-pull-1", updatedAt: "2026-08-21T00:00:00.000Z" },
-            updated_at: "2026-08-21T00:00:00.000Z",
-            deleted_at: null,
-          },
-        ],
-        error: null,
-      }),
-    }));
+    const builders: ReturnType<typeof selectResultBuilder>[] = [];
+    mockFrom.mockImplementation(() => {
+      const builder = selectResultBuilder({ data: [], error: null });
+      builders.push(builder);
+      return { upsert: mockUpsert, ...builder };
+    });
 
     await runFullSync(USER_ID);
 
-    const pushed = mockUpsert.mock.calls.flatMap((call) => call[0]);
-    expect(pushed.find((p: { table_name: string; id: string }) => p.table_name === "strategies" && p.id === "strat-push-1")).toBeDefined();
-    expect(pushed.find((p: { table_name: string; id: string }) => p.table_name === "watchlistItems" && p.id === "watch-push-1")).toBeDefined();
-    expect(pushed.find((p: { table_name: string; id: string }) => p.table_name === "economicEvents" && p.id === "event-push-1")).toBeDefined();
+    const queriedTables = builders.flatMap((b) =>
+      b.eq.mock.calls.filter(([column]) => column === "table_name").map(([, value]) => value)
+    );
+    expect(queriedTables.length).toBeGreaterThan(0);
+    expect(queriedTables.filter((name) => retired.includes(name))).toEqual([]);
 
-    const pulledStrategy = (await db.strategies.toArray()).find((s) => s.syncId === "strat-pull-1");
-    expect(pulledStrategy).toMatchObject({ name: "Reversal" });
-
-    const pulledWatchlistItem = (await db.watchlistItems.toArray()).find((w) => w.syncId === "watch-pull-1");
-    expect(pulledWatchlistItem).toMatchObject({ symbol: "TSLA" });
-
-    const pulledEvent = (await db.economicEvents.toArray()).find((e) => e.syncId === "event-pull-1");
-    expect(pulledEvent).toMatchObject({ title: "Rate Decision" });
+    const pushed = mockUpsert.mock.calls.flatMap((call) => call[0]) as { table_name: string }[];
+    expect(pushed.filter((p) => retired.includes(p.table_name))).toEqual([]);
   });
 
   it("does not reload any store when a pass pulls no data and dedupes nothing", async () => {
@@ -1007,9 +982,9 @@ describe("syncEngine", () => {
 
   it("refreshes an applied transaction before an unrelated later table finishes pulling", async () => {
     const loadTransactions = vi.spyOn(useTransactionStore.getState(), "loadTransactions");
-    let releaseEconomicEvents!: () => void;
-    const economicEventsBlocked = new Promise<void>((resolve) => {
-      releaseEconomicEvents = resolve;
+    let releaseLastTable!: () => void;
+    const lastTableBlocked = new Promise<void>((resolve) => {
+      releaseLastTable = resolve;
     });
 
     mockFrom.mockImplementation(() => {
@@ -1039,8 +1014,8 @@ describe("syncEngine", () => {
             return;
           }
 
-          if (currentTableName === "economicEvents") {
-            await economicEventsBlocked;
+          if (currentTableName === "budgetPeriodSnapshots") {
+            await lastTableBlocked;
             resolve({ data: [], error: null });
             return;
           }
@@ -1092,7 +1067,7 @@ describe("syncEngine", () => {
       }),
     ]);
 
-    releaseEconomicEvents();
+    releaseLastTable();
     await syncPromise;
     expect(syncFinished).toBe(true);
 
@@ -1141,7 +1116,7 @@ describe("syncEngine", () => {
     await runFullSync(USER_ID);
 
     expect(maxActivePulls).toBe(4);
-    expect(startedTables).toHaveLength(24);
+    expect(startedTables).toHaveLength(SYNC_TABLE_NAMES.length);
     expect(startedTables.slice(0, 4)).toEqual([
       "transactions",
       "accounts",

@@ -3,9 +3,7 @@ import { expect, test } from "@playwright/test";
 const featurePaths = [
   "/finance", "/ai-analytics", "/transactions", "/favorites", "/budget",
   "/goals", "/accounts", "/net-worth", "/subscriptions", "/categories",
-  "/merchants", "/recipients", "/reports", "/trading", "/trading/journal",
-  "/trading/portfolio", "/trading/strategies", "/trading/watchlist",
-  "/trading/economic-calendar", "/executive", "/todo", "/habits",
+  "/merchants", "/recipients", "/reports", "/executive", "/todo", "/habits",
   "/schedule", "/vault", "/workouts",
 ] as const;
 
@@ -14,7 +12,7 @@ test("desktop navigation exposes every Main workspace", async ({ page }) => {
   await page.goto("/dashboard");
 
   const sidebar = page.locator("[data-shell-audit=sidebar]");
-  for (const group of ["Finance", "Trading", "Personal"]) {
+  for (const group of ["Finance", "Personal"]) {
     const trigger = sidebar.getByRole("button", { name: group, exact: true });
     if ((await trigger.getAttribute("aria-expanded")) === "false") await trigger.click();
   }

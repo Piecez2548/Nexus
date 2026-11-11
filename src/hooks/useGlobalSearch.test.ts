@@ -3,27 +3,22 @@ import { act, renderHook } from "@testing-library/react";
 
 import { useGlobalSearch } from "./useGlobalSearch";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { useGoalStore } from "@/features/finance/store/goalStore";
-import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
 import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useAccountStore } from "@/features/finance/store/accountStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useRecipientProfileStore } from "@/features/finance/store/recipientProfileStore";
 import type { Transaction } from "@/features/finance/types";
-import type { Trade } from "@/features/trading/types";
 
 describe("useGlobalSearch", () => {
   beforeEach(() => {
     useTransactionStore.setState({ transactions: [], loading: false, error: null });
-    useTradeStore.setState({ trades: [] });
     useTodoStore.setState({ todos: [] });
     useHabitStore.setState({ habits: [] });
     useGoalStore.setState({ goals: [] });
-    useHoldingStore.setState({ holdings: [] });
     useScheduleItemStore.setState({ items: [] });
     useBudgetStore.setState({ budgets: [] });
     useAccountStore.setState({ accounts: [] });
@@ -60,31 +55,14 @@ describe("useGlobalSearch", () => {
     expect(result.current[0]).toMatchObject({ label: "Starbucks Coffee", path: "/transactions" });
   });
 
-  it("matches trades by symbol or strategy", () => {
-    const trades: Trade[] = [
-      { id: 1, symbol: "AAPL", market: "stocks", direction: "long", status: "open", entryPrice: 100, quantity: 10, entryDate: "2026-07-20", strategy: "Breakout" },
-      { id: 2, symbol: "MSFT", market: "stocks", direction: "long", status: "open", entryPrice: 300, quantity: 5, entryDate: "2026-07-21" },
-    ];
-    useTradeStore.setState({ trades });
-
-    expect(renderHook(() => useGlobalSearch("aapl")).result.current).toHaveLength(1);
-    expect(renderHook(() => useGlobalSearch("breakout")).result.current).toHaveLength(1);
-    expect(renderHook(() => useGlobalSearch("msft")).result.current[0]).toMatchObject({
-      label: "MSFT",
-      path: "/trading/journal",
-    });
-  });
-
-  it("combines results from both transactions and trades", () => {
+  it("combines results from transactions and todos", () => {
     useTransactionStore.setState({
       transactions: [
         { id: 1, title: "AAPL dividend", amount: 50, type: "income", account: "Bank", date: "2026-07-20", status: "completed" },
       ],
     });
-    useTradeStore.setState({
-      trades: [
-        { id: 1, symbol: "AAPL", market: "stocks", direction: "long", status: "open", entryPrice: 100, quantity: 10, entryDate: "2026-07-20" },
-      ],
+    useTodoStore.setState({
+      todos: [{ id: 1, title: "Check AAPL report", priority: "low", completed: false, createdAt: "2026-07-01" }],
     });
 
     const { result } = renderHook(() => useGlobalSearch("aapl"));
@@ -119,16 +97,6 @@ describe("useGlobalSearch", () => {
     const { result } = renderHook(() => useGlobalSearch("emergency"));
     expect(result.current).toHaveLength(1);
     expect(result.current[0]).toMatchObject({ label: "Emergency Fund", path: "/goals" });
-  });
-
-  it("matches a holding by symbol", () => {
-    useHoldingStore.setState({
-      holdings: [{ id: 1, symbol: "VOO", market: "etf", quantity: 3, avgCostPrice: 400, createdAt: "2026-07-01" }],
-    });
-
-    const { result } = renderHook(() => useGlobalSearch("voo"));
-    expect(result.current).toHaveLength(1);
-    expect(result.current[0]).toMatchObject({ label: "VOO", path: "/trading/portfolio" });
   });
 
   it("matches a schedule item by title", () => {

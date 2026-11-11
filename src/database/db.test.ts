@@ -64,3 +64,51 @@ describe("Dexie v8 -> v9 schema upgrade (encryption index trim)", () => {
     await Dexie.delete(TEST_DB_NAME);
   });
 });
+
+describe("Dexie v27 -> v28 upgrade (Trading/Portfolio removal)", () => {
+  const NAME = "NexusDatabase-v27-to-v28-upgrade-test";
+  const RETIRED = ["trades", "holdings", "strategies", "watchlistItems", "economicEvents"];
+
+  it("drops the retired tables with their tombstones and sync cursors, and keeps everything else", async () => {
+    const v27 = new Dexie(NAME);
+    v27.version(27).stores({
+      transactions: "++id,syncId,updatedAt",
+      trades: "++id,syncId,updatedAt",
+      holdings: "++id,syncId,updatedAt",
+      strategies: "++id,syncId,updatedAt",
+      watchlistItems: "++id,symbol,syncId,updatedAt",
+      economicEvents: "++id,eventDate,syncId,updatedAt",
+      syncTombstones: "++id,table,syncId,deletedAt",
+      syncState: "&key",
+    });
+    await v27.open();
+    await v27.table("transactions").add({ title: "Coffee", syncId: "tx-1", updatedAt: "2026-10-01T00:00:00.000Z" });
+    await v27.table("trades").add({ symbol: "AAPL", syncId: "t-1" });
+    await v27.table("holdings").add({ symbol: "VOO", syncId: "h-1" });
+    await v27.table("syncTombstones").bulkAdd([
+      { table: "trades", syncId: "t-0", deletedAt: "2026-10-01" },
+      { table: "transactions", syncId: "tx-0", deletedAt: "2026-10-01" },
+    ]);
+    await v27.table("syncState").bulkPut([
+      { key: "push:trades", value: "x" },
+      { key: "pull:holdings", value: "x" },
+      { key: "backfill:strategies:complete", value: "true" },
+      { key: "push:transactions", value: "keep" },
+    ]);
+    v27.close();
+
+    const { NexusDatabase } = await import("./db");
+    const upgraded = new NexusDatabase(NAME);
+    await upgraded.open();
+
+    const names = upgraded.tables.map((table) => table.name);
+    for (const retired of RETIRED) expect(names).not.toContain(retired);
+
+    expect(await upgraded.transactions.count()).toBe(1);
+    expect((await upgraded.syncTombstones.toArray()).map((t) => t.table)).toEqual(["transactions"]);
+    expect((await upgraded.syncState.toArray()).map((s) => s.key)).toEqual(["push:transactions"]);
+
+    upgraded.close();
+    await Dexie.delete(NAME);
+  });
+});

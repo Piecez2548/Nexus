@@ -1,16 +1,13 @@
 import { useMemo } from "react";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { useGoalStore } from "@/features/finance/store/goalStore";
-import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
 import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useAccountStore } from "@/features/finance/store/accountStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useRecipientProfileStore } from "@/features/finance/store/recipientProfileStore";
-import { getDirectionLabels, getMarketLabels } from "@/features/trading/constants/labels";
 import { getFrequencyLabels } from "@/features/habits/constants/labels";
 import { getPriorityLabels } from "@/features/todo/constants/labels";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -27,11 +24,9 @@ const MAX_RESULTS_PER_GROUP = 5;
 export function useGlobalSearch(query: string): SearchResult[] {
   const { t } = useTranslation();
   const transactions = useTransactionStore((state) => state.transactions);
-  const trades = useTradeStore((state) => state.trades);
   const todos = useTodoStore((state) => state.todos);
   const habits = useHabitStore((state) => state.habits);
   const goals = useGoalStore((state) => state.goals);
-  const holdings = useHoldingStore((state) => state.holdings);
   const scheduleItems = useScheduleItemStore((state) => state.items);
   const budgets = useBudgetStore((state) => state.budgets);
   const accounts = useAccountStore((state) => state.accounts);
@@ -43,8 +38,6 @@ export function useGlobalSearch(query: string): SearchResult[] {
     if (q === "") return [];
 
     const frequencyLabels = getFrequencyLabels(t);
-    const directionLabels = getDirectionLabels(t);
-    const marketLabels = getMarketLabels(t);
     const priorityLabels = getPriorityLabels(t);
 
     const transactionResults: SearchResult[] = transactions
@@ -55,20 +48,6 @@ export function useGlobalSearch(query: string): SearchResult[] {
         label: tx.title,
         sublabel: `${tx.type === "expense" ? "-" : "+"}฿${tx.amount.toLocaleString()} · ${tx.date}`,
         path: "/transactions",
-      }));
-
-    const tradeResults: SearchResult[] = trades
-      .filter(
-        (tr) =>
-          tr.symbol.toLowerCase().includes(q) ||
-          (tr.strategy ?? "").toLowerCase().includes(q)
-      )
-      .slice(0, MAX_RESULTS_PER_GROUP)
-      .map((tr) => ({
-        id: `trade-${tr.id}`,
-        label: tr.symbol,
-        sublabel: `${directionLabels[tr.direction]} · ${tr.entryDate}`,
-        path: "/trading/journal",
       }));
 
     const todoResults: SearchResult[] = todos
@@ -99,16 +78,6 @@ export function useGlobalSearch(query: string): SearchResult[] {
         label: g.name,
         sublabel: `฿${g.currentAmount.toLocaleString()} / ฿${g.targetAmount.toLocaleString()}`,
         path: "/goals",
-      }));
-
-    const holdingResults: SearchResult[] = holdings
-      .filter((h) => h.symbol.toLowerCase().includes(q))
-      .slice(0, MAX_RESULTS_PER_GROUP)
-      .map((h) => ({
-        id: `holding-${h.id}`,
-        label: h.symbol,
-        sublabel: `${marketLabels[h.market]} · ${h.quantity}`,
-        path: "/trading/portfolio",
       }));
 
     const scheduleResults: SearchResult[] = scheduleItems
@@ -163,11 +132,9 @@ export function useGlobalSearch(query: string): SearchResult[] {
 
     return [
       ...transactionResults,
-      ...tradeResults,
       ...todoResults,
       ...habitResults,
       ...goalResults,
-      ...holdingResults,
       ...scheduleResults,
       ...budgetResults,
       ...accountResults,
@@ -178,11 +145,9 @@ export function useGlobalSearch(query: string): SearchResult[] {
     query,
     t,
     transactions,
-    trades,
     todos,
     habits,
     goals,
-    holdings,
     scheduleItems,
     budgets,
     accounts,

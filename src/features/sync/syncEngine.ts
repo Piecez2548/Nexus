@@ -13,10 +13,8 @@ import { useGoalStore } from "@/features/finance/store/goalStore";
 import { useGoalMilestoneEventStore } from "@/features/finance/store/goalMilestoneEventStore";
 import { useRecipientProfileStore } from "@/features/finance/store/recipientProfileStore";
 import { useTransactionTemplateStore } from "@/features/finance/store/transactionTemplateStore";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
-import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
 import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
 import { useVaultEntryStore } from "@/features/vault/store/vaultEntryStore";
 import { useWorkoutExerciseStore } from "@/features/workouts/store/workoutExerciseStore";
@@ -25,9 +23,6 @@ import { useNetWorthItemStore } from "@/features/finance/store/netWorthItemStore
 import { useNetWorthSnapshotStore } from "@/features/finance/store/netWorthSnapshotStore";
 import { useSubscriptionStore } from "@/features/finance/store/subscriptionStore";
 import { useBudgetPeriodSnapshotStore } from "@/features/finance/store/budgetPeriodSnapshotStore";
-import { useStrategyStore } from "@/features/trading/store/strategyStore";
-import { useWatchlistStore } from "@/features/trading/store/watchlistStore";
-import { useEconomicEventStore } from "@/features/trading/store/economicEventStore";
 
 const SYNCED_TABLES = SYNC_TABLE_NAMES;
 
@@ -385,10 +380,8 @@ const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
   budgets: () => useBudgetStore.getState().loadBudgets(),
   goals: () => useGoalStore.getState().loadGoals(),
   transactionTemplates: () => useTransactionTemplateStore.getState().loadTemplates(),
-  trades: () => useTradeStore.getState().loadTrades(),
   todos: () => useTodoStore.getState().loadTodos(),
   habits: () => useHabitStore.getState().loadHabits(),
-  holdings: () => useHoldingStore.getState().loadHoldings(),
   // No UI reads this table anymore (Calendar's UI was retired, but its
   // existing data is deliberately still synced — see the Life Schedule
   // refactor plan) — the generic pullTable() logic already writes the
@@ -404,9 +397,6 @@ const STORE_REFRESHERS: Record<SyncTableName, () => Promise<void>> = {
   netWorthSnapshots: () => useNetWorthSnapshotStore.getState().loadSnapshots(),
   subscriptions: () => useSubscriptionStore.getState().loadSubscriptions(),
   budgetPeriodSnapshots: () => useBudgetPeriodSnapshotStore.getState().loadSnapshots(),
-  strategies: () => useStrategyStore.getState().loadStrategies(),
-  watchlistItems: () => useWatchlistStore.getState().loadWatchlistItems(),
-  economicEvents: () => useEconomicEventStore.getState().loadEconomicEvents(),
 };
 
 // Only reloads (and re-renders) stores whose underlying table actually

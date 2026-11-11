@@ -8,10 +8,10 @@ test.describe("Nexus All theme alignment", () => {
         await page.addInitScript(mode => {
           localStorage.setItem("nexus-app-settings", JSON.stringify({ state: { themeMode: mode, currency: "THB", dateFormat: "DD/MM/YYYY", numberFormat: "1,234.56" }, version: 0 }));
         }, theme);
-        await page.goto("/trading");
+        await page.goto("/accounts");
         const shell = page.locator(".nexus-main");
         await expect(shell).toBeVisible();
-        const add = page.locator("main header").getByRole("button", { name: "Add Trade", exact: true });
+        const add = page.locator("main").getByRole("button", { name: "Add Account", exact: true });
         await expect(add).toBeVisible();
         await page.evaluate(() => document.fonts.ready);
         expect(await shell.evaluate(el => getComputedStyle(el).fontFamily)).toContain("Manrope");
@@ -47,7 +47,7 @@ for (const mode of ["dark", "light", "mono"] as const) {
   test(`all routes inherit the shared palette in ${mode}`, async ({ page }) => {
     await page.addInitScript(themeMode => localStorage.setItem("nexus-app-settings", JSON.stringify({ state: { themeMode }, version: 0 })), mode);
     const expected = mode === "dark" ? "rgb(12, 11, 16)" : mode === "light" ? "rgb(247, 245, 250)" : "rgb(250, 250, 250)";
-    for (const route of ["/projects", "/dashboard", "/finance", "/trading", "/todo", "/habits", "/schedule", "/vault", "/workouts", "/settings", "/missing-page"]) {
+    for (const route of ["/projects", "/dashboard", "/finance", "/budget", "/todo", "/habits", "/schedule", "/vault", "/workouts", "/settings", "/missing-page"]) {
       await page.goto(route);
       const surface = page.locator(route === "/projects" ? ".project-hub" : ".nexus-main");
       await expect(surface).toBeVisible();

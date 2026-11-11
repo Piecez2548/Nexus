@@ -4,7 +4,7 @@ import { Search, X } from "lucide-react";
 import { useModalA11y } from "@/components/ui/useModalA11y";
 
 import { filterCommands, type Command } from "@/platform/commandPalette/commands";
-import { financeMenus, personalMenus, tradingMenus } from "@/layouts/navItems";
+import { financeMenus, personalMenus } from "@/layouts/navItems";
 import { useUIStore } from "@/features/finance/store/uiStore";
 import { useTranslation } from "@/i18n/useTranslation";
 
@@ -30,7 +30,7 @@ export default function CommandPalette({ commands: injected }: Props) {
 
   const commands = useMemo<Command[]>(() => {
     if (injected) return injected;
-    const nav: Command[] = [...financeMenus, ...tradingMenus, ...personalMenus].map((m) => ({
+    const nav: Command[] = [...financeMenus, ...personalMenus].map((m) => ({
       id: `nav:${m.path}`,
       title: t(m.labelKey),
       group: t("common.commandPalette.navigationGroup"),

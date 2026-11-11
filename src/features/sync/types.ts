@@ -8,10 +8,8 @@ export type SyncTableName =
   | "budgets"
   | "goals"
   | "transactionTemplates"
-  | "trades"
   | "todos"
   | "habits"
-  | "holdings"
   | "calendarEvents"
   | "scheduleItems"
   | "goalMilestoneEvents"
@@ -21,10 +19,7 @@ export type SyncTableName =
   | "netWorthItems"
   | "netWorthSnapshots"
   | "subscriptions"
-  | "budgetPeriodSnapshots"
-  | "strategies"
-  | "watchlistItems"
-  | "economicEvents";
+  | "budgetPeriodSnapshots";
 
 export const SYNC_TABLE_NAMES: SyncTableName[] = [
   "transactions",
@@ -34,10 +29,8 @@ export const SYNC_TABLE_NAMES: SyncTableName[] = [
   "budgets",
   "goals",
   "transactionTemplates",
-  "trades",
   "todos",
   "habits",
-  "holdings",
   "calendarEvents",
   "scheduleItems",
   "goalMilestoneEvents",
@@ -48,9 +41,6 @@ export const SYNC_TABLE_NAMES: SyncTableName[] = [
   "netWorthSnapshots",
   "subscriptions",
   "budgetPeriodSnapshots",
-  "strategies",
-  "watchlistItems",
-  "economicEvents",
 ];
 
 export interface Tombstone {

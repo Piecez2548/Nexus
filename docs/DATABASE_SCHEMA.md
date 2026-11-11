@@ -12,28 +12,27 @@ Nexus's only source of truth is a single Dexie (IndexedDB) database, `NexusDatab
 
 ```ts
 class NexusDatabase extends Dexie {
-  transactions; accounts; categories; trades; recipientProfiles; merchants;
-  budgets; goals; transactionTemplates; todos; habits; holdings;
+  transactions; accounts; categories; recipientProfiles; merchants;
+  budgets; goals; transactionTemplates; todos; habits;
   calendarEvents; scheduleItems; goalMilestoneEvents;
   syncTombstones; syncState;
   slipScanRuns; slipScanCache; slipImportHistory;
   vaultEntries; auditLog; workoutExercises; workoutEntries;
   netWorthItems; netWorthSnapshots; subscriptions; budgetPeriodSnapshots;
-  slipScanCandidates; strategies; watchlistItems; economicEvents;
+  slipScanCandidates;
 }
 export const db = new NexusDatabase(); // database name: "NexusDatabase"
 ```
 
 ## IndexedDB Tables
 
-32 tables total. `SyncMeta` = `{syncId?, updatedAt?, deletedAt?}`, mixed into every synced entity by `withSyncMeta()` (`src/utils/syncMeta.ts`) — see [API_INTERFACES.md](API_INTERFACES.md). "Synced?" reflects `SyncTableName` in `src/features/sync/types.ts`, the single source of truth for what the sync engine touches.
+27 tables total (v28 deleted `trades`, `holdings`, `strategies`, `watchlistItems` and `economicEvents` when Trading and Portfolio were removed). `SyncMeta` = `{syncId?, updatedAt?, deletedAt?}`, mixed into every synced entity by `withSyncMeta()` (`src/utils/syncMeta.ts`) — see [API_INTERFACES.md](API_INTERFACES.md). "Synced?" reflects `SyncTableName` in `src/features/sync/types.ts`, the single source of truth for what the sync engine touches.
 
 | Table | Owning module | Synced? | Notes |
 |---|---|---|---|
 | `transactions` | finance | ✅ | |
 | `accounts` | finance | ✅ | |
 | `categories` | finance | ✅ | |
-| `trades` | trading | ✅ | |
 | `recipientProfiles` | finance | ✅ | `recipientKey` stays plaintext even when encryption is on |
 | `merchants` | finance | ❌ | seeded reference data, not personal — excluded from sync by design |
 | `budgets` | finance | ✅ | `category` stays plaintext even when encryption is on |
@@ -41,7 +40,6 @@ export const db = new NexusDatabase(); // database name: "NexusDatabase"
 | `transactionTemplates` | finance | ✅ | Quick Add tiles |
 | `todos` | todo | ✅ | |
 | `habits` | habits | ✅ | |
-| `holdings` | portfolio | ✅ | |
 | `calendarEvents` | **orphaned** (`features/calendar/`) | ✅ | table + type kept only so old rows aren't lost; no feature code reads/writes it — see [MODULES.md](MODULES.md), [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) |
 | `scheduleItems` | schedule | ✅ | |
 | `goalMilestoneEvents` | finance | ✅ | write-once log, no `update` |
@@ -54,14 +52,11 @@ export const db = new NexusDatabase(); // database name: "NexusDatabase"
 | `auditLog` | security | ❌ | device-local, append-only security audit trail (auth/encryption/lock/vault/backup events); bounded at 500 rows |
 | `workoutExercises` | workouts | ✅ | exercise catalog (name/category/icon/color/calorie rates) |
 | `workoutEntries` | workouts | ✅ | logged sessions; GPS `route` points (if any) stored inline |
-| `netWorthItems` | finance (Net Worth, FIN-002) | ✅ | assets/liabilities, one unified model with a `kind` discriminator — no live price feed, manually valued like `holdings` |
+| `netWorthItems` | finance (Net Worth, FIN-002) | ✅ | assets/liabilities, one unified model with a `kind` discriminator — no live price feed, manually valued |
 | `netWorthSnapshots` | finance (Net Worth, FIN-002) | ✅ | write-once-per-day history log (upserted, not appended); one row per calendar day — see `WorkoutEntry`'s `date`-keyed pattern |
 | `subscriptions` | finance (Subscription Manager, FIN-004) | ✅ | independently-managed recurring-payment entity (name/amount/billing frequency/next billing date/status/category/account/note/reminderEnabled/`billingAnchorDay`) — distinct from the pre-existing subscription *detectors*, which only derive a read-only view from transaction history and manage nothing. `billingAnchorDay` (optional, BUG-12) is the true day-of-month billing lands on, persisted separately from `nextBillingDate` so a month-length clamp (Jan 31 -> Feb 28) doesn't permanently lose the original day |
 | `budgetPeriodSnapshots` | finance (Budget Improvements, FIN-001) | ✅ | upsert-by-(budgetSyncId, periodStart) history log of each budget's past-period performance — survives the budget's `amount` being edited later, unlike the always-live-recomputed current view |
 | `slipScanCandidates` | finance (`slipScanner`, BUG-12 stabilization pass) | ❌ | device-local, persists each extracted slip candidate the moment it's produced during a gallery scan — closes a gap where an interrupted scan (app kill, crash, reload) lost work a resume could never re-extract, since the asset was already marked "scanned" in `slipScanCache`. `thumbnailUrl` is deliberately dropped before persisting (a blob: object URL, meaningless once the document that created it is gone) |
-| `strategies` | trading (Strategy Library / Playbook) | ✅ | user-authored playbook entries (entry/exit rules, risk notes) documenting a trading strategy — distinct from `Trade.strategy`, a free-text label on individual trades. No unique-name constraint (names may legitimately repeat) |
-| `watchlistItems` | trading (Watchlist) | ✅ | symbols the user is tracking; `targetPrice` is a plain manual number, no live price feed of any kind (same precedent as `holdings`) |
-| `economicEvents` | trading (Economic Calendar) | ✅ | trading-relevant events the user logs themselves — no external economic-data API (this app has no paid-API dependency anywhere) |
 
 ## Table Schema — version history
 
@@ -216,6 +211,12 @@ watchlistItems: "++id,symbol,syncId,updatedAt"
 // "upcoming events" queries, mirroring workoutEntries' date index.
 // Additive.
 economicEvents: "++id,eventDate,syncId,updatedAt"
+
+// v28 — Trading and Portfolio removed (superseded by the XAU Dashboard).
+// Destructive: deletes the tables, plus syncTombstones rows and
+// push:/pull:/backfill: syncState keys that point at them.
+trades: null, holdings: null, strategies: null,
+watchlistItems: null, economicEvents: null
 ```
 
 ## Indexes

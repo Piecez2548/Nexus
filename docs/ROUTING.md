@@ -28,12 +28,6 @@ The Main routes below are children of the root MainRoute. `/projects` and `/proj
 | `/merchants` | `Merchants` | Finance |
 | `/recipients` | `RecipientProfiles` | Finance |
 | `/reports` | `Reports` | Finance |
-| `/trading` | `TradingDashboard` | Trading |
-| `/trading/journal` | `TradingJournal` | Trading |
-| `/trading/portfolio` | `Portfolio` | Trading |
-| `/trading/strategies` | `Strategies` | Trading |
-| `/trading/watchlist` | `Watchlist` | Trading |
-| `/trading/economic-calendar` | `EconomicCalendar` | Trading |
 | `/executive` | `ExecutiveDashboard` | Personal |
 | `/todo` | `Todo` | Personal |
 | `/habits` | `Habits` | Personal |
@@ -47,13 +41,14 @@ The Main routes below are children of the root MainRoute. `/projects` and `/proj
 
 ## Navigation Flow
 
-`src/layouts/navItems.ts` exports three arrays consumed by both the desktop sidebar and the mobile "more" menu:
+`src/layouts/navItems.ts` exports the daily-use array plus two grouped arrays consumed by both the desktop sidebar and the mobile "more" menu (the Trading group and its `/trading/*` routes were removed on 2026-11-11):
 
 ```ts
 financeMenus: MenuItem[]   // 13 items — financeDashboard, aiAnalytics, transactions, favorites, budget, goals, accounts, netWorth, subscriptions, categories, merchants, recipients, reports
-tradingMenus: MenuItem[]   // 6 items — tradingDashboard, tradingJournal, portfolio, strategies, watchlist, economicCalendar
 personalMenus: MenuItem[]  // 6 items — executive, todo, habits, schedule, vault, workouts
 ```
+
+Neither the sidebar nor the mobile menu links to the external Nexus Tools site any more; it is reachable from the Project Hub.
 
 `MenuItem = { icon: LucideIcon, labelKey: string, path: string }`.
 

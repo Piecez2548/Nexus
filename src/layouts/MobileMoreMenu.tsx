@@ -2,18 +2,15 @@ import { NavLink } from "react-router-dom";
 import { Settings } from "lucide-react";
 
 import Drawer from "@/components/ui/Drawer";
-import NexusToolsLink from "./NexusToolsLink";
 import { useTranslation } from "@/i18n/useTranslation";
 import {
   secondaryFinanceMenus,
-  secondaryTradingMenus,
   secondaryPersonalMenus,
   type MenuItem,
 } from "./navItems";
 
 const SECTIONS: { titleKey: string; items: MenuItem[] }[] = [
   { titleKey: "nav.finance", items: secondaryFinanceMenus },
-  { titleKey: "nav.trading", items: secondaryTradingMenus },
   { titleKey: "nav.personal", items: secondaryPersonalMenus },
 ];
 
@@ -61,7 +58,6 @@ export default function MobileMoreMenu({ open, onClose }: Props) {
           <Settings size={20} />
           {t("nav.settings")}
         </NavLink>
-        <NexusToolsLink onClick={onClose} />
       </div>
     </Drawer>
   );

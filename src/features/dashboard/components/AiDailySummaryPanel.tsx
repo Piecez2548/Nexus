@@ -1,11 +1,10 @@
 import { useEffect, useMemo } from "react";
-import { Sparkles, ArrowDownRight, ArrowUpRight, ListChecks, Flame, Clock, LineChart } from "lucide-react";
+import { Sparkles, ArrowDownRight, ArrowUpRight, ListChecks, Flame, Clock } from "lucide-react";
 
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useNowTick } from "@/features/schedule/hooks/useNowTick";
 import {
   computeDailySummary,
@@ -27,7 +26,6 @@ const ICONS: Record<DailySummaryIcon, typeof Sparkles> = {
   todo: ListChecks,
   habit: Flame,
   schedule: Clock,
-  trade: LineChart,
 };
 
 const HIGHLIGHT_TEXT_CLASS: Record<DailySummaryTone, string> = {
@@ -49,7 +47,6 @@ export default function AiDailySummaryPanel() {
   const { todos, loadTodos } = useTodoStore();
   const { habits, loadHabits } = useHabitStore();
   const { items: scheduleItems, loadItems } = useScheduleItemStore();
-  const { trades } = useTradeStore();
   const now = useNowTick();
   const { t } = useTranslation();
 
@@ -60,8 +57,8 @@ export default function AiDailySummaryPanel() {
   }, [loadTodos, loadHabits, loadItems]);
 
   const summary = useMemo(
-    () => computeDailySummary({ transactions, todos, habits, scheduleItems, trades, now }),
-    [transactions, todos, habits, scheduleItems, trades, now]
+    () => computeDailySummary({ transactions, todos, habits, scheduleItems, now }),
+    [transactions, todos, habits, scheduleItems, now]
   );
 
   return (

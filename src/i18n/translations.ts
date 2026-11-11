@@ -3,7 +3,6 @@
 // while this facade preserves the original translations[language] API.
 import { coreTranslations } from "./locales/core";
 import { financeTranslations } from "./locales/finance";
-import { tradingTranslations } from "./locales/trading";
 import { lifeTranslations } from "./locales/life";
 import { securityTranslations } from "./locales/security";
 import { aiAnalyticsTranslations } from "./locales/aiAnalytics";
@@ -12,7 +11,6 @@ export const translations = {
   en: {
     ...coreTranslations.en,
     ...financeTranslations.en,
-    ...tradingTranslations.en,
     ...lifeTranslations.en,
     ...securityTranslations.en,
     ...aiAnalyticsTranslations.en,
@@ -20,7 +18,6 @@ export const translations = {
   th: {
     ...coreTranslations.th,
     ...financeTranslations.th,
-    ...tradingTranslations.th,
     ...lifeTranslations.th,
     ...securityTranslations.th,
     ...aiAnalyticsTranslations.th,

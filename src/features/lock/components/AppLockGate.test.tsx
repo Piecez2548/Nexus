@@ -33,10 +33,8 @@ const SYNCED_TABLES = [
   "budgets",
   "goals",
   "transactionTemplates",
-  "trades",
   "todos",
   "habits",
-  "holdings",
   "calendarEvents",
   "scheduleItems",
 ] as const;

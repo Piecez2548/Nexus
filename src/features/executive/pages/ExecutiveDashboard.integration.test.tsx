@@ -14,7 +14,6 @@ import { useWorkoutEntryStore } from "@/features/workouts/store/workoutEntryStor
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useNetWorthItemStore } from "@/features/finance/store/netWorthItemStore";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
 import type { NetWorthItem } from "@/features/finance/types";
 
 const now = new Date();
@@ -31,7 +30,6 @@ async function resetAll() {
     db.budgets.clear(),
     db.transactions.clear(),
     db.netWorthItems.clear(),
-    db.trades.clear(),
   ]);
 
   useTodoStore.setState({ todos: [], loading: false, error: null });
@@ -43,7 +41,6 @@ async function resetAll() {
   useBudgetStore.setState({ budgets: [], loading: false, error: null });
   useTransactionStore.setState({ transactions: [], loading: false });
   useNetWorthItemStore.setState({ items: [], loading: false, error: null });
-  useTradeStore.setState({ trades: [], loading: false, error: null });
 }
 
 describe("ExecutiveDashboard (real data flow)", () => {
