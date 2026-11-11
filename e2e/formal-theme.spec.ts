@@ -4,7 +4,7 @@ test("workspace reflow at narrow widths and enlarged text", async ({ page }, tes
   test.setTimeout(90_000);
   for (const width of [320, 390, 768, 1280, 1920]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const route of ["/projects", "/accounts", "/settings", "/trading"]) {
+    for (const route of ["/projects", "/accounts", "/settings", "/budget"]) {
       await page.goto(route);
       await expect(page.locator("main h1")).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${route} ${width}`).toBe(true);
@@ -25,7 +25,7 @@ for (const theme of ["light", "dark", "mono"]) {
     test(`operational actions remain readable: ${theme}, ${width}`, async ({ page }, testInfo) => {
       await page.setViewportSize({ width, height: 900 });
       await page.addInitScript(themeMode => localStorage.setItem("nexus-app-settings", JSON.stringify({ state: { themeMode }, version: 0 })), theme);
-      for (const route of ["accounts", "budget", "trading", "todo", "settings", "projects"]) {
+      for (const route of ["accounts", "budget", "todo", "settings", "projects"]) {
         await page.goto(`/${route}`);
         await expect(page.locator("main h1")).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

@@ -5,7 +5,7 @@ import type { HourWeekdayCell, TimeAnalysisResult } from "@/features/finance/aiA
 
 // A 7x24 weekday x hour intensity grid, using timeAnalyzer.ts's
 // byHourWeekday breakdown. Color-scaling adapted from
-// trading/components/PerformanceCalendar.tsx's intensityClass() — single
+// the (since removed) trading PerformanceCalendar's intensityClass() — single
 // hue here since this is a spending-intensity scale, not P&L.
 const WEEKDAY_KEYS = ["aiAnalytics.weekdays.sun", "aiAnalytics.weekdays.mon", "aiAnalytics.weekdays.tue", "aiAnalytics.weekdays.wed", "aiAnalytics.weekdays.thu", "aiAnalytics.weekdays.fri", "aiAnalytics.weekdays.sat"];
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);

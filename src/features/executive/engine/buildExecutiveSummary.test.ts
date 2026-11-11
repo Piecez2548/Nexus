@@ -13,7 +13,6 @@ function baseContext(overrides: Partial<ExecutiveContext> = {}): ExecutiveContex
     schedule: { current: null, currentProgress: null, next: null, nextDate: null },
     goals: [],
     finance: { netWorth: 0, totalAssets: 0, totalLiabilities: 0, overallBudgetPercentage: null, budgetsOverCount: 0, budgetsNearCount: 0, budgetsTrackedCount: 0 },
-    trading: { weeklyPnl: 0, winRate: 0, openPositions: 0, totalClosedTrades: 0 },
     health: { habitsCheckedInToday: { done: 0, total: 0 }, workoutDaysThisWeek: { done: 0, total: 7 } },
     ...overrides,
   };

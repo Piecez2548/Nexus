@@ -8,7 +8,7 @@ import TopBar from "./TopBar";
 import { db } from "@/database/db";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
+import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useAppSettingsStore } from "@/store/appSettingsStore";
 import { useAppLockStore } from "@/store/appLockStore";
 import { useGamificationStore } from "@/store/gamificationStore";
@@ -32,10 +32,10 @@ describe("TopBar", () => {
   beforeEach(async () => {
     await db.transactions.clear();
     await db.budgets.clear();
-    await db.trades.clear();
+    await db.todos.clear();
     useTransactionStore.setState({ transactions: [], loading: false });
     useBudgetStore.setState({ budgets: [] });
-    useTradeStore.setState({ trades: [], loading: false, error: null });
+    useTodoStore.setState({ todos: [], loading: false, error: null });
     useAppSettingsStore.setState({ themeMode: "light" });
     useAppLockStore.setState({ pinHash: null, salt: null, sessionUnlocked: false, rememberUntil: null });
     useGamificationStore.setState({ xp: 0, streak: 0, lastActiveDate: null });
@@ -150,23 +150,15 @@ describe("TopBar", () => {
   });
 
   it("loads non-notification search data when search is first focused", async () => {
-    await db.trades.add({
-      symbol: "MSFT",
-      market: "stocks",
-      direction: "long",
-      status: "open",
-      entryPrice: 300,
-      quantity: 2,
-      entryDate: "2026-07-21",
-    });
+    await db.todos.add({ title: "Renew MSFT license", priority: "medium", completed: false, createdAt: "2026-07-21" });
 
     renderTopBar();
-    expect(useTradeStore.getState().trades).toEqual([]);
+    expect(useTodoStore.getState().todos).toEqual([]);
 
     const user = userEvent.setup();
     await user.type(screen.getByPlaceholderText("Search anything..."), "msft");
 
-    expect(await screen.findByText("MSFT")).toBeInTheDocument();
+    expect(await screen.findByText("Renew MSFT license")).toBeInTheDocument();
   });
 
   it("shows the current level and streak, with XP progress in the popover", async () => {

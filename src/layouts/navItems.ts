@@ -8,12 +8,6 @@ import {
   Tags,
   Store,
   Users,
-  LineChart,
-  BookOpen,
-  BookMarked,
-  Eye,
-  CalendarClock,
-  Briefcase,
   ListChecks,
   LayoutDashboard,
   Flame,
@@ -58,15 +52,6 @@ export const financeMenus: MenuItem[] = [
   { icon: FileBarChart, labelKey: "nav.reports", path: "/reports" },
 ];
 
-export const tradingMenus: MenuItem[] = [
-  { icon: LineChart, labelKey: "nav.tradingDashboard", path: "/trading" },
-  { icon: BookOpen, labelKey: "nav.tradingJournal", path: "/trading/journal" },
-  { icon: Briefcase, labelKey: "nav.portfolio", path: "/trading/portfolio" },
-  { icon: BookMarked, labelKey: "nav.strategies", path: "/trading/strategies" },
-  { icon: Eye, labelKey: "nav.watchlist", path: "/trading/watchlist" },
-  { icon: CalendarClock, labelKey: "nav.economicCalendar", path: "/trading/economic-calendar" },
-];
-
 export const personalMenus: MenuItem[] = [
   { icon: LayoutGrid, labelKey: "nav.executive", path: "/executive" },
   { icon: ListChecks, labelKey: "nav.todo", path: "/todo" },
@@ -79,5 +64,4 @@ export const personalMenus: MenuItem[] = [
 const DAILY_PATHS = new Set(dailyMenus.map((item) => item.path));
 
 export const secondaryFinanceMenus = financeMenus.filter((item) => !DAILY_PATHS.has(item.path));
-export const secondaryTradingMenus = tradingMenus.filter((item) => !DAILY_PATHS.has(item.path));
 export const secondaryPersonalMenus = personalMenus.filter((item) => !DAILY_PATHS.has(item.path));

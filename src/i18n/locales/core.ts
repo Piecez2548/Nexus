@@ -80,21 +80,14 @@ export const coreTranslations = {
       merchants: "Merchants",
       recipients: "Recipients",
       reports: "Reports",
-      tradingDashboard: "Trading Dashboard",
-      tradingJournal: "Trading Journal",
-      strategies: "Strategies",
-      watchlist: "Watchlist",
-      economicCalendar: "Economic Calendar",
       executive: "Executive",
       todo: "Todo",
       habits: "Habit Tracker",
-      portfolio: "Portfolio",
       schedule: "Life Schedule",
       vault: "Vault",
       workouts: "Workouts",
       settings: "Settings",
       finance: "Finance",
-      trading: "Trading",
       personal: "Personal",
       dailyUse: "Daily use",
       allFeatures: "All features",
@@ -137,9 +130,6 @@ export const coreTranslations = {
         toAccountRequired: "Destination account is required",
         iconRequired: "Icon is required",
         colorRequired: "Color is required",
-        symbolRequired: "Symbol is required",
-        quantityRequired: "Quantity is required",
-        quantityPositive: "Quantity must be greater than 0",
       },
       transaction: {
         toAccountDuplicate: "Source and destination accounts must be different",
@@ -150,16 +140,6 @@ export const coreTranslations = {
       merchant: {
         nameRequired: "Merchant name is required",
         categoryRequired: "Category is required",
-      },
-      strategy: {
-        nameRequired: "Strategy name is required",
-      },
-      watchlist: {
-        symbolRequired: "Symbol is required",
-      },
-      economicEvent: {
-        titleRequired: "Event title is required",
-        eventDateRequired: "Event date is required",
       },
       account: {
         nameRequired: "Account name is required",
@@ -172,16 +152,6 @@ export const coreTranslations = {
       },
       transactionTemplate: {
         nameRequired: "Name is required",
-      },
-      trade: {
-        entryPriceRequired: "Entry price is required",
-        entryPricePositive: "Entry price must be greater than 0",
-        entryDateRequired: "Entry date is required",
-      },
-      holding: {
-        marketRequired: "Market is required",
-        avgCostPriceRequired: "Average cost price is required",
-        avgCostPriceNotNegative: "Average cost price cannot be negative",
       },
       netWorthItem: {
         nameRequired: "Name is required",
@@ -302,21 +272,14 @@ export const coreTranslations = {
       merchants: "ร้านค้า",
       recipients: "ผู้รับเงิน",
       reports: "รายงาน",
-      tradingDashboard: "แดชบอร์ดเทรด",
-      tradingJournal: "บันทึกการเทรด",
-      strategies: "กลยุทธ์",
-      watchlist: "รายการเฝ้าดู",
-      economicCalendar: "ปฏิทินเศรษฐกิจ",
       executive: "Executive",
       todo: "รายการที่ต้องทำ",
       habits: "ติดตามนิสัย",
-      portfolio: "พอร์ตการลงทุน",
       schedule: "ตารางชีวิต",
       vault: "ตู้นิรภัย",
       workouts: "ออกกำลังกาย",
       settings: "ตั้งค่า",
       finance: "การเงิน",
-      trading: "เทรด",
       personal: "ส่วนตัว",
       dailyUse: "ใช้งานประจำวัน",
       allFeatures: "ฟีเจอร์ทั้งหมด",
@@ -359,9 +322,6 @@ export const coreTranslations = {
         toAccountRequired: "กรุณาเลือกบัญชีปลายทาง",
         iconRequired: "กรุณาเลือกไอคอน",
         colorRequired: "กรุณาเลือกสี",
-        symbolRequired: "กรุณากรอกสัญลักษณ์",
-        quantityRequired: "กรุณากรอกจำนวน",
-        quantityPositive: "จำนวนต้องมากกว่า 0",
       },
       transaction: {
         toAccountDuplicate: "บัญชีต้นทางและปลายทางต้องไม่ซ้ำกัน",
@@ -372,16 +332,6 @@ export const coreTranslations = {
       merchant: {
         nameRequired: "กรุณากรอกชื่อร้านค้า",
         categoryRequired: "กรุณาเลือกหมวดหมู่",
-      },
-      strategy: {
-        nameRequired: "กรุณากรอกชื่อกลยุทธ์",
-      },
-      watchlist: {
-        symbolRequired: "กรุณากรอกสัญลักษณ์",
-      },
-      economicEvent: {
-        titleRequired: "กรุณากรอกชื่อเหตุการณ์",
-        eventDateRequired: "กรุณาเลือกวันที่",
       },
       account: {
         nameRequired: "กรุณากรอกชื่อบัญชี",
@@ -394,16 +344,6 @@ export const coreTranslations = {
       },
       transactionTemplate: {
         nameRequired: "กรุณากรอกชื่อ",
-      },
-      trade: {
-        entryPriceRequired: "กรุณากรอกราคาเข้า",
-        entryPricePositive: "ราคาเข้าต้องมากกว่า 0",
-        entryDateRequired: "กรุณาเลือกวันที่เข้า",
-      },
-      holding: {
-        marketRequired: "กรุณาเลือกตลาด",
-        avgCostPriceRequired: "กรุณากรอกราคาต้นทุนเฉลี่ย",
-        avgCostPriceNotNegative: "ราคาต้นทุนต้องไม่ติดลบ",
       },
       netWorthItem: {
         nameRequired: "กรุณากรอกชื่อรายการ",

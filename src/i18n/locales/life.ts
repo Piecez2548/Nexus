@@ -36,12 +36,6 @@ export const lifeTranslations = {
         habitsToday: "Habits Today",
         workoutDays: "Workout Days (7d)",
       },
-      trading: {
-        title: "Trading",
-        weeklyPnl: "Weekly P/L",
-        winRate: "Win Rate",
-        empty: "No closed trades yet",
-      },
       summary: {
         title: "Executive Summary",
         workloadLabel: "Today's workload",
@@ -332,12 +326,6 @@ export const lifeTranslations = {
         title: "สุขภาพ",
         habitsToday: "นิสัยวันนี้",
         workoutDays: "วันออกกำลังกาย (7 วัน)",
-      },
-      trading: {
-        title: "เทรด",
-        weeklyPnl: "กำไร/ขาดทุนรายสัปดาห์",
-        winRate: "อัตราชนะ",
-        empty: "ยังไม่มีเทรดที่ปิดแล้ว",
       },
       summary: {
         title: "สรุปสำหรับผู้บริหาร",

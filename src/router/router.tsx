@@ -18,14 +18,8 @@ import {
   RecipientProfiles,
   Reports,
   ExecutiveDashboard,
-  TradingDashboard,
-  TradingJournal,
-  Strategies,
-  Watchlist,
-  EconomicCalendar,
   Todo,
   Habits,
-  Portfolio,
   LifeSchedule,
   Vault,
   Workouts,
@@ -104,30 +98,6 @@ export const appRoutes = [
       {
         path: "reports",
         element: <Reports />,
-      },
-      {
-        path: "trading",
-        element: <TradingDashboard />,
-      },
-      {
-        path: "trading/journal",
-        element: <TradingJournal />,
-      },
-      {
-        path: "trading/portfolio",
-        element: <Portfolio />,
-      },
-      {
-        path: "trading/strategies",
-        element: <Strategies />,
-      },
-      {
-        path: "trading/watchlist",
-        element: <Watchlist />,
-      },
-      {
-        path: "trading/economic-calendar",
-        element: <EconomicCalendar />,
       },
       {
         path: "executive",

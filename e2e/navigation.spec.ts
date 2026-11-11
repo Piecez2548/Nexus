@@ -25,19 +25,9 @@ test.describe("sidebar navigation", () => {
       await expect(page.getByRole("heading", { name: heading }).first()).toBeVisible();
     }
 
-    // Trading is a separate collapsible group.
-    await page.getByRole("button", { name: "Trading" }).click();
-
-    const tradingLinks: Array<[label: string, heading: string | RegExp]> = [
-      ["Trading Dashboard", "Trading Dashboard"],
-      ["Trading Journal", "Trading Journal"],
-      ["Portfolio", "Portfolio"],
-    ];
-
-    for (const [label, heading] of tradingLinks) {
-      await page.getByRole("link", { name: label, exact: true }).click();
-      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
-    }
+    // Trading/Portfolio and the external Nexus Tools link were removed.
+    await expect(page.getByRole("button", { name: "Trading", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Nexus Tools/ })).toHaveCount(0);
 
     // Personal is a separate collapsible group.
     await page.getByRole("button", { name: "Personal" }).click();

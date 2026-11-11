@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Dashboard period selector", () => {
-  test("switching Day/Month/Year changes income but leaves Portfolio and Budget unaffected", async ({ page }) => {
+  test("switching Day/Month/Year changes income totals by period", async ({ page }) => {
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
 
@@ -47,28 +47,5 @@ test.describe("Dashboard period selector", () => {
     // "Year" widens the window but 2020 is still a different year.
     await page.getByRole("button", { name: "Year" }).click();
     await expect(page.getByText("฿30,000").first()).toBeVisible();
-  });
-
-  test("Portfolio and Budget panels don't change when the period selector is switched", async ({ page }) => {
-    await page.goto("/trading/portfolio");
-    await page.getByRole("button", { name: "Add Holding" }).click();
-    await page.getByLabel("Symbol").fill("AAPL");
-    await page.getByLabel("Quantity").fill("10");
-    await page.getByLabel("Average Cost Price").fill("100");
-    await page.getByRole("button", { name: "Save" }).click();
-    await page.getByLabel("Update current price for AAPL").fill("120");
-    await page.getByRole("button", { name: "Save price for AAPL" }).click();
-    await expect(page.getByText("+200 (+20%)").first()).toBeVisible();
-
-    await page.goto("/dashboard");
-    await expect(page.getByText("+200 (+20%)").first()).toBeVisible();
-    const portfolioPnlBefore = await page.getByText("+200 (+20%)").count();
-    expect(portfolioPnlBefore).toBeGreaterThan(0);
-
-    await page.getByRole("button", { name: "Day" }).click();
-    await expect(page.getByText("+200 (+20%)")).toHaveCount(portfolioPnlBefore);
-
-    await page.getByRole("button", { name: "Year" }).click();
-    await expect(page.getByText("+200 (+20%)")).toHaveCount(portfolioPnlBefore);
   });
 });

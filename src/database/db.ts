@@ -14,10 +14,8 @@ import type {
   Subscription,
   BudgetPeriodSnapshot,
 } from "@/features/finance/types";
-import type { Trade, Strategy, WatchlistItem, EconomicEvent } from "@/features/trading/types";
 import type { Todo } from "@/features/todo/types";
 import type { Habit } from "@/features/habits/types";
-import type { Holding } from "@/features/portfolio/types";
 import type { CalendarEvent } from "@/features/calendar/types";
 import type { ScheduleItem } from "@/features/schedule/types";
 import type { Tombstone, SyncStateRow } from "@/features/sync/types";
@@ -27,12 +25,11 @@ import type { VaultEntry } from "@/features/vault/types";
 import type { AuditLogRow } from "@/features/security/auditLog";
 import type { WorkoutExercise, WorkoutEntry } from "@/features/workouts/types";
 
-class NexusDatabase extends Dexie {
+export class NexusDatabase extends Dexie {
 
   public transactions;
   public accounts;
   public categories;
-  public trades;
   public recipientProfiles;
   public merchants;
   public budgets;
@@ -40,7 +37,6 @@ class NexusDatabase extends Dexie {
   public transactionTemplates;
   public todos;
   public habits;
-  public holdings;
   public calendarEvents;
   public scheduleItems;
   public goalMilestoneEvents;
@@ -58,12 +54,11 @@ class NexusDatabase extends Dexie {
   public subscriptions;
   public budgetPeriodSnapshots;
   public slipScanCandidates;
-  public strategies;
-  public watchlistItems;
-  public economicEvents;
 
-  constructor() {
-    super("NexusDatabase");
+  // The name is overridable only so schema-upgrade tests can open the real
+  // version chain against a throwaway database.
+  constructor(name = "NexusDatabase") {
+    super(name);
 
     this.version(2).stores({
       transactions:
@@ -387,6 +382,28 @@ class NexusDatabase extends Dexie {
         "++id,eventDate,syncId,updatedAt",
     });
 
+    // v28 retires the Trading and Portfolio features (superseded by the
+    // separate XAU Dashboard): their tables are deleted together with any
+    // pending sync tombstones that point at them. Destructive by design --
+    // the user chose to drop this data rather than keep it dormant.
+    this.version(28)
+      .stores({
+        trades: null,
+        holdings: null,
+        strategies: null,
+        watchlistItems: null,
+        economicEvents: null,
+      })
+      .upgrade(async (tx) => {
+        const retired = ["trades", "holdings", "strategies", "watchlistItems", "economicEvents"];
+        await tx.table("syncTombstones").where("table").anyOf(retired).delete();
+        await tx
+          .table("syncState")
+          .where("key")
+          .anyOf(retired.flatMap((t) => [`push:${t}`, `pull:${t}`, `backfill:${t}:complete`]))
+          .delete();
+      });
+
     this.transactions =
       this.table<Transaction, number>("transactions");
 
@@ -395,9 +412,6 @@ class NexusDatabase extends Dexie {
 
     this.categories =
       this.table<Category, number>("categories");
-
-    this.trades =
-      this.table<Trade, number>("trades");
 
     this.recipientProfiles =
       this.table<RecipientProfile, number>("recipientProfiles");
@@ -419,9 +433,6 @@ class NexusDatabase extends Dexie {
 
     this.habits =
       this.table<Habit, number>("habits");
-
-    this.holdings =
-      this.table<Holding, number>("holdings");
 
     this.calendarEvents =
       this.table<CalendarEvent, number>("calendarEvents");
@@ -473,15 +484,6 @@ class NexusDatabase extends Dexie {
 
     this.slipScanCandidates =
       this.table<ScanCandidateEntry, number>("slipScanCandidates");
-
-    this.strategies =
-      this.table<Strategy, number>("strategies");
-
-    this.watchlistItems =
-      this.table<WatchlistItem, number>("watchlistItems");
-
-    this.economicEvents =
-      this.table<EconomicEvent, number>("economicEvents");
   }
 }
 

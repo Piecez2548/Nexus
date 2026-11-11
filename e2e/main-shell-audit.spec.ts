@@ -49,8 +49,8 @@ for (const theme of ["light", "dark", "mono"]) {
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ reducedMotion: "reduce" });
       await page.addInitScript(mode => localStorage.setItem("nexus-app-settings", JSON.stringify({ state: { themeMode: mode }, version: 0 })), theme);
-      await page.goto("/trading");
-      await expect(page.locator("[data-shell-audit=workspace]")).toBeVisible();
+      await page.goto("/budget");
+      await expect(page.locator("main h1")).toBeVisible();
       await page.evaluate(() => document.fonts.ready);
       expect(await bounds(page)).toEqual([]);
       const base = await audit(page);
@@ -80,8 +80,8 @@ for (const theme of ["light", "dark", "mono"]) {
 test("Thai, 200% text, keyboard navigation and command modal", async ({ page }, info) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.addInitScript(() => localStorage.setItem("nexus-language", JSON.stringify({ state: { language: "th" }, version: 0 })));
-  await page.goto("/trading");
-  await expect(page.locator("[data-shell-audit=workspace]")).toBeVisible();
+  await page.goto("/budget");
+  await expect(page.locator("main h1")).toBeVisible();
   await expect(page.locator("html")).toHaveAttribute("lang", "th");
   await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
   expect(await bounds(page)).toEqual([]);
@@ -122,7 +122,7 @@ test("populated notifications and search remain accessible across themes", async
   await expect(page.getByRole("table").getByText("Audit lunch")).toBeVisible();
   for (const theme of ["light", "dark", "mono"]) {
     await page.evaluate(mode => localStorage.setItem("nexus-app-settings", JSON.stringify({ state: { themeMode: mode }, version: 0 })), theme);
-    await page.goto("/trading");
+    await page.goto("/budget");
     await page.getByRole("button", { name: "Notifications", exact: true }).click();
     await expect(page.locator(".main-popover")).toHaveCSS("opacity", "1");
     await expect(page.getByText(/budget is over the limit/)).toBeVisible();
@@ -169,14 +169,14 @@ test("responsive reflow, more menu, forced colors and lazy resources", async ({ 
     })).observe({ type: "layout-shift", buffered: true });
     new PerformanceObserver(list => list.getEntries().forEach(entry => { metrics.longestTask = Math.max(metrics.longestTask, entry.duration); })).observe({ type: "longtask", buffered: true });
   });
-  await page.goto("/trading");
-  await expect(page.locator("[data-shell-audit=workspace]")).toBeVisible();
+  await page.goto("/budget");
+  await expect(page.locator("main h1")).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
   const resources = await page.evaluate(() => performance.getEntriesByType("resource").map(entry => {
     const r = entry as PerformanceResourceTiming;
     return { path: new URL(r.name).pathname, bytes: r.decodedBodySize, type: r.initiatorType };
   }));
-  expect(resources.some(r => /(?:TradeDrawer|TransactionDrawer|jspdf|html2canvas|Workouts)-/.test(r.path))).toBe(false);
+  expect(resources.some(r => /(?:TransactionDrawer|jspdf|html2canvas|Workouts)-/.test(r.path))).toBe(false);
   const metrics = await page.evaluate(() => (window as unknown as { shellMetrics: { cls: number; longestTask: number } }).shellMetrics);
   console.info("Local shell metrics:", JSON.stringify({ ...metrics, decodedScriptInitiatedBytes: resources.filter(r => r.type === "script").reduce((sum, r) => sum + r.bytes, 0), decodedJavascriptBytes: resources.filter(r => r.path.endsWith(".js")).reduce((sum, r) => sum + r.bytes, 0) }));
   expect(metrics.cls).toBeLessThanOrEqual(0.1);

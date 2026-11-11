@@ -76,10 +76,8 @@ const SYNCED_TABLES = [
   "budgets",
   "goals",
   "transactionTemplates",
-  "trades",
   "todos",
   "habits",
-  "holdings",
   "calendarEvents",
   "scheduleItems",
   "goalMilestoneEvents",
@@ -90,9 +88,6 @@ const SYNCED_TABLES = [
   "netWorthSnapshots",
   "subscriptions",
   "budgetPeriodSnapshots",
-  "strategies",
-  "watchlistItems",
-  "economicEvents",
 ] as const;
 
 async function clearAllSyncedTables() {

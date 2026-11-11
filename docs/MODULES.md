@@ -14,17 +14,17 @@ Every domain lives in `src/features/<name>/` with the same internal shape (see [
 
 **Route:** `/` and `/dashboard`.
 
-**Features:** all-time balance + period income/expense/savings with % change vs. previous period; a day/month/year period selector; cash-flow line chart and expense-by-category pie chart; a rule-based (non-LLM) daily summary panel; up to 6 cross-module preview panels (Budget, Habit, Portfolio, Schedule, Todo, Trading), each linking into its own module; recent transactions list.
+**Features:** all-time balance + period income/expense/savings with % change vs. previous period; a day/month/year period selector; cash-flow line chart and expense-by-category pie chart; a rule-based (non-LLM) daily summary panel; up to 4 cross-module preview panels (Budget, Habit, Schedule, Todo), each linking into its own module; recent transactions list.
 
-**Components:** `AiDailySummaryPanel`, `BudgetPreviewPanel`, `CashFlowSection`, `DashboardHeader`, `DashboardPeriodSelector`, `HabitPreviewPanel`, `PortfolioOverviewPanel`, `RecentTransactionsList`, `SchedulePreviewPanel`, `SummaryCardsGrid`, `TodoPreviewPanel`, `TradingOverviewPanel`, `charts/CashFlowLineChart`, `charts/ExpensePieChart`.
+**Components:** `AiDailySummaryPanel`, `BudgetPreviewPanel`, `CashFlowSection`, `DashboardHeader`, `DashboardPeriodSelector`, `HabitPreviewPanel`, `RecentTransactionsList`, `SchedulePreviewPanel`, `SummaryCardsGrid`, `TodoPreviewPanel`, `charts/CashFlowLineChart`, `charts/ExpensePieChart`.
 
 **Services:** none — reads other modules' stores directly (dashboard is a pure aggregation layer, owns no entity of its own).
 
-**Stores:** `dashboardPeriodStore` (own, UI-only: selected granularity). Reads: `transactionStore`, `budgetStore`, `categoryStore`, `tradeStore`, `todoStore`, `habitStore`, `holdingStore`, `scheduleItemStore`.
+**Stores:** `dashboardPeriodStore` (own, UI-only: selected granularity). Reads: `transactionStore`, `budgetStore`, `categoryStore`, `todoStore`, `habitStore`, `scheduleItemStore`.
 
 **Database usage:** none directly — all reads flow through other modules' stores/services/repositories.
 
-**Dependencies:** finance, trading, portfolio, todo, habits, schedule (read-only, for preview data).
+**Dependencies:** finance, todo, habits, schedule (read-only, for preview data).
 
 **Current Status:** Fully implemented.
 
@@ -146,11 +146,13 @@ The core Budget feature (recurring, per-category, live progress) predates this e
 
 ---
 
-## 4. Trading (`src/features/trading/`)
+## 4. Trading (removed 2026-11-11)
+
+Removed together with Portfolio because it overlapped with the separate XAU Dashboard. Dexie v28 drops its tables. The section below is kept as a historical record only.
 
 **Purpose:** A trading journal and performance-analytics dashboard.
 
-**Routes:** `/trading` (dashboard), `/trading/journal`, `/trading/strategies`, `/trading/watchlist`, `/trading/economic-calendar`.
+**Routes (removed):** `/trading` (dashboard), `/trading/journal`, `/trading/strategies`, `/trading/watchlist`, `/trading/economic-calendar`.
 
 **Features:** a shared responsive Trading workspace header across Dashboard and Journal (Dashboard/Journal/Analytics navigation, live trade count and total realized P/L); full trade CRUD (symbol, market, direction, entry/exit, stop-loss/take-profit, quantity, commission/swap/slippage, strategy/setup/session, before/after psychology fields, mistakes/lessons, notes, screenshots, tags); win rate, profit factor, average RR, max drawdown, expectancy (mean realized R-multiple), average holding time, today/weekly/monthly/total P/L; equity curve, drawdown %, daily P/L, and a 6-bucket realized R-multiple risk-distribution chart; per-session (Asian/London/New York/Sydney/overlap) stats; best/worst strategy by cumulative P/L plus a full sortable per-strategy comparison table (trade count/win rate/total P/L/profit factor/average RR); a performance calendar; configurable daily/weekly max-loss limits with a breach banner; a read-only Trade Replay timeline (entry → position → exit → reflection) per trade, reusing only fields already on the Trade record — no external chart/price data; a Strategy Library/Playbook (entry/exit rules, risk notes per named strategy, offered back as `<datalist>` suggestions on the trade form's strategy field); a Watchlist (manual `targetPrice`, no live price feed); an Economic Calendar of user-logged events (no external economic-data API) with an upcoming-events Dashboard widget; heuristic (pattern-matching, not AI) market-type auto-detection from a symbol; CSV export; search/filter by symbol, strategy, direction, result.
 
@@ -164,17 +166,17 @@ The core Budget feature (recurring, per-category, live progress) predates this e
 
 **Dependencies:** none on other feature modules; `dashboard/` and `src/hooks/useGlobalSearch.ts` read this module's store.
 
-**Current Status:** Fully implemented, including everything under "Deeper Trading analytics" in [ROADMAP.md](ROADMAP.md)'s Planned section (expectancy, average holding time, strategy comparison, Strategy Library, Playbook, Trade Replay, Watchlist, Economic Calendar) and risk-management config with a breach banner.
-
-**Future Plans:** AI News/AI Trade Coach remain **not started** — the only items from this module's roadmap entry not yet built.
+**Current Status:** Removed (2026-11-11).
 
 ---
 
-## 5. Portfolio (`src/features/portfolio/`)
+## 5. Portfolio (removed 2026-11-11)
+
+Removed together with Trading. Dexie v28 drops the `holdings` table. Kept as a historical record only.
 
 **Purpose:** A manual buy-and-hold investment tracker — no live price feed, user enters current price manually.
 
-**Route:** `/trading/portfolio`.
+**Route (removed):** `/trading/portfolio`.
 
 **Features:** holding CRUD (symbol, market, quantity, average cost price, current price + last-updated timestamp, notes); cost basis, current value, unrealized P/L and P/L% (percent computed only against priced holdings, so a partially-priced portfolio doesn't understate its P/L%).
 
@@ -186,9 +188,9 @@ The core Budget feature (recurring, per-category, live progress) predates this e
 
 **Database usage:** `holdings`.
 
-**Dependencies:** none; `dashboard/PortfolioOverviewPanel` reads this module's store.
+**Dependencies:** none.
 
-**Current Status:** Fully implemented.
+**Current Status:** Removed (2026-11-11).
 
 **Future Plans:** No live pricing integration; asset allocation breakdown, DCA planner, dividend tracker, and rebalancing suggestions are per [ROADMAP.md](ROADMAP.md) **not started**.
 
@@ -476,13 +478,13 @@ A single dedicated view aggregating every OS-level permission the app requests �
 
 ## 17. Executive (`src/features/executive/`)
 
-**Purpose:** A middle layer above every other module — not a domain of its own, no entity, no source of truth. Reads Todo/Habit/Schedule/Goal/Finance/Trading/Workout data through their own existing stores/hooks and turns it into one deterministic, explainable, prioritized view (EXEC-001).
+**Purpose:** A middle layer above every other module — not a domain of its own, no entity, no source of truth. Reads Todo/Habit/Schedule/Goal/Finance/Workout data through their own existing stores/hooks and turns it into one deterministic, explainable, prioritized view (EXEC-001).
 
 **Route:** `/executive`.
 
 **Features:** today's current/next schedule item; a ranked "Top Priorities" list (overdue todos, at-risk habits, at-risk/deadline-soon goals), each item paired with a plain-language reason (e.g. "3 days overdue," "5-day streak at risk"); an Overdue list; a Goals snapshot (progress bars, at-risk highlighted); Finance/Health/Trading snapshot cards; an Executive Summary panel (workload level — light/moderate/high, a plain threshold over the real priority-item count — top priority, overdue count, at-risk-goals count). No AI/LLM anywhere: every score is a sum of small, named, capped signals, and the summary panel is always labeled "Executive Summary," never "AI says."
 
-**Components:** `TodayScheduleSection`, `PrioritySection`, `OverdueSection`, `GoalsSnapshotSection`, `FinanceSnapshotSection`, `HealthSnapshotSection`, `TradingSnapshotSection`, `ExecutiveSummaryPanel`, composed by `pages/ExecutiveDashboard.tsx`.
+**Components:** `TodayScheduleSection`, `PrioritySection`, `OverdueSection`, `GoalsSnapshotSection`, `FinanceSnapshotSection`, `HealthSnapshotSection`, `ExecutiveSummaryPanel`, composed by `pages/ExecutiveDashboard.tsx`.
 
 **Engine (pure, hook-free, independently tested):** `buildExecutiveContext()` assembles the domain snapshot from already-existing pure functions (`analyzeGoals`, `getCurrentAndNext`, `computeStreak`/`isCompletedToday`, `getLoggedDates`) plus pre-computed Finance/Trading inputs handed in as plain data. `calculateExecutivePriorities()` scores and ranks todo/habit/goal items with an explicit deterministic tie-break (score desc → category → id) rather than relying on sort stability. `buildExecutiveSummary()` derives the workload level and headline stats from the context + ranked priorities.
 
@@ -492,7 +494,7 @@ A single dedicated view aggregating every OS-level permission the app requests �
 
 **Database usage:** none directly, and no new table — every field is read live through the stores/hooks above.
 
-**Dependencies:** todo, habits, schedule, finance (goals, budget, net worth), trading (stats), workouts (read-only, for aggregation only — this module writes nothing back into any of them).
+**Dependencies:** todo, habits, schedule, finance (goals, budget, net worth), workouts (read-only, for aggregation only — this module writes nothing back into any of them).
 
 **Current Status:** Fully implemented (EXEC-001).
 

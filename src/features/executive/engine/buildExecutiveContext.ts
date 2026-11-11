@@ -14,29 +14,19 @@ import type {
   ExecutiveContext,
   ExecutiveFinanceSnapshot,
   ExecutiveHealthSnapshot,
-  ExecutiveTradingSnapshot,
 } from "@/features/executive/types";
 
 // Pre-computed snapshots this builder accepts rather than re-derives: each
-// already has a real, existing hook (useTradingStats/useBudgetProgress/
-// useNetWorthStats) whose own useMemo wraps this exact math. Re-deriving it
-// here from raw transactions/trades would duplicate that business logic
-// (and, for trading specifically, there is no standalone exported pure
-// function to call -- the computation lives only inside useTradingStats'
-// useMemo body) -- so the orchestrating hook calls those hooks itself and
+// already has a real, existing hook (useBudgetProgress/useNetWorthStats)
+// whose own useMemo wraps this exact math. Re-deriving it here from raw
+// transactions would duplicate that business logic -- so the orchestrating
+// hook calls those hooks itself and
 // passes their output straight through, keeping this function hook-free
 // and independently testable with plain data.
 export interface NetWorthSnapshotInput {
   totalAssets: number;
   totalLiabilities: number;
   netWorth: number;
-}
-
-export interface TradingStatsInput {
-  weeklyPnl: number;
-  winRate: number;
-  openPositions: number;
-  totalClosedTrades: number;
 }
 
 export interface ExecutiveContextInput {
@@ -48,7 +38,6 @@ export interface ExecutiveContextInput {
   workoutEntries: WorkoutEntry[];
   budgetProgress: BudgetProgress[];
   netWorthStats: NetWorthSnapshotInput;
-  tradingStats: TradingStatsInput;
   now: Date;
 }
 
@@ -66,15 +55,6 @@ function buildFinanceSnapshot(budgetProgress: BudgetProgress[], netWorthStats: N
     budgetsOverCount: budgetProgress.filter((b) => b.status === "over").length,
     budgetsNearCount: budgetProgress.filter((b) => b.status === "near").length,
     budgetsTrackedCount: budgetProgress.length,
-  };
-}
-
-function buildTradingSnapshot(stats: TradingStatsInput): ExecutiveTradingSnapshot {
-  return {
-    weeklyPnl: stats.weeklyPnl,
-    winRate: stats.winRate,
-    openPositions: stats.openPositions,
-    totalClosedTrades: stats.totalClosedTrades,
   };
 }
 
@@ -100,7 +80,7 @@ function buildHealthSnapshot(habits: Habit[], workoutEntries: WorkoutEntry[], no
 }
 
 export function buildExecutiveContext(input: ExecutiveContextInput): ExecutiveContext {
-  const { todos, habits, scheduleItems, goals, goalMilestoneEvents, workoutEntries, budgetProgress, netWorthStats, tradingStats, now } = input;
+  const { todos, habits, scheduleItems, goals, goalMilestoneEvents, workoutEntries, budgetProgress, netWorthStats, now } = input;
 
   const overdueTodos = todos
     .filter((t) => isTodoOverdue(t, now))
@@ -136,7 +116,6 @@ export function buildExecutiveContext(input: ExecutiveContextInput): ExecutiveCo
     schedule: { current, currentProgress, next, nextDate },
     goals: goalSnapshots,
     finance: buildFinanceSnapshot(budgetProgress, netWorthStats),
-    trading: buildTradingSnapshot(tradingStats),
     health: buildHealthSnapshot(habits, workoutEntries, now),
   };
 }

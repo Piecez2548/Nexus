@@ -7,7 +7,7 @@ for (const mode of ["light", "dark", "mono"]) {
     await page.setViewportSize({ width: 390, height: 900 });
     await page.addInitScript(themeMode => localStorage.setItem("nexus-app-settings", JSON.stringify({ state: { themeMode }, version: 0 })), mode);
     const findings = [];
-    for (const route of ["/dashboard", "/finance", "/transactions", "/favorites", "/accounts", "/net-worth", "/subscriptions", "/categories", "/merchants", "/budget", "/goals", "/recipients", "/reports", "/executive", "/ai-analytics", "/trading", "/trading/journal", "/trading/portfolio", "/trading/strategies", "/trading/watchlist", "/trading/economic-calendar", "/todo", "/habits", "/schedule", "/vault", "/workouts", "/settings", "/projects"]) {
+    for (const route of ["/dashboard", "/finance", "/transactions", "/favorites", "/accounts", "/net-worth", "/subscriptions", "/categories", "/merchants", "/budget", "/goals", "/recipients", "/reports", "/executive", "/ai-analytics", "/todo", "/habits", "/schedule", "/vault", "/workouts", "/settings", "/projects"]) {
       await page.goto(route);
       await expect(page.locator("main h1")).toBeVisible();
       await page.addScriptTag({ content: axe });

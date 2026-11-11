@@ -7,8 +7,6 @@ import SummaryCardsGrid from "@/features/dashboard/components/SummaryCardsGrid";
 import CashFlowSection from "@/features/dashboard/components/CashFlowSection";
 import RecentTransactionsList from "@/features/dashboard/components/RecentTransactionsList";
 import BudgetPreviewPanel from "@/features/dashboard/components/BudgetPreviewPanel";
-import TradingOverviewPanel from "@/features/dashboard/components/TradingOverviewPanel";
-import PortfolioOverviewPanel from "@/features/dashboard/components/PortfolioOverviewPanel";
 import TodoPreviewPanel from "@/features/dashboard/components/TodoPreviewPanel";
 import HabitPreviewPanel from "@/features/dashboard/components/HabitPreviewPanel";
 import SchedulePreviewPanel from "@/features/dashboard/components/SchedulePreviewPanel";
@@ -22,7 +20,6 @@ import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useUIStore } from "@/features/finance/store/uiStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
 import { useDashboardPeriodStore } from "@/features/dashboard/store/dashboardPeriodStore";
 import { useSpendingInsights } from "@/features/finance/hooks/useSpendingInsights";
@@ -39,7 +36,6 @@ export default function Dashboard() {
   const { openTransactionDrawer } = useUIStore();
   const { loadBudgets } = useBudgetStore();
   const { loadCategories } = useCategoryStore();
-  const { loadTrades } = useTradeStore();
   const { granularity } = useDashboardPeriodStore();
 
   const {
@@ -57,8 +53,7 @@ export default function Dashboard() {
     loadTransactions();
     loadBudgets();
     loadCategories();
-    loadTrades();
-  }, [loadTransactions, loadBudgets, loadCategories, loadTrades]);
+  }, [loadTransactions, loadBudgets, loadCategories]);
 
   return (
     <div className="nexus-dashboard space-y-8">
@@ -102,10 +97,6 @@ export default function Dashboard() {
             <HabitPreviewPanel />
 
             <SchedulePreviewPanel />
-
-            <TradingOverviewPanel />
-
-            <PortfolioOverviewPanel />
           </div>
 
           <div className="grid gap-6 xl:grid-cols-3">

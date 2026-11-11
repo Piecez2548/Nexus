@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   Wallet,
-  LineChart,
   ListChecks,
   Settings,
   ChevronDown,
@@ -10,12 +9,10 @@ import {
 import { NavLink, useLocation } from "react-router-dom";
 
 import ThemeToggleSwitch from "@/components/ui/ThemeToggleSwitch";
-import NexusToolsLink from "./NexusToolsLink";
 import { useTranslation } from "@/i18n/useTranslation";
 import {
   dailyMenus,
   secondaryFinanceMenus,
-  secondaryTradingMenus,
   secondaryPersonalMenus,
   type MenuItem,
 } from "./navItems";
@@ -94,7 +91,6 @@ export default function Sidebar() {
   const location = useLocation();
   const { t } = useTranslation();
   const isFinanceActive = secondaryFinanceMenus.some((item) => location.pathname.startsWith(item.path));
-  const isTradingActive = secondaryTradingMenus.some((item) => location.pathname.startsWith(item.path));
   const isPersonalActive = secondaryPersonalMenus.some((item) => location.pathname.startsWith(item.path));
 
   return (
@@ -129,12 +125,9 @@ export default function Sidebar() {
 
         <NavGroup icon={Wallet} labelKey="nav.finance" items={secondaryFinanceMenus} isActive={isFinanceActive} />
 
-        <NavGroup icon={LineChart} labelKey="nav.trading" items={secondaryTradingMenus} isActive={isTradingActive} />
-
         <NavGroup icon={ListChecks} labelKey="nav.personal" items={secondaryPersonalMenus} isActive={isPersonalActive} />
 
         <NavItem icon={Settings} labelKey="nav.settings" path="/settings" />
-        <NexusToolsLink />
 
       </nav>
 

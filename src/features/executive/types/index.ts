@@ -52,13 +52,6 @@ export interface ExecutiveFinanceSnapshot {
   budgetsTrackedCount: number;
 }
 
-export interface ExecutiveTradingSnapshot {
-  weeklyPnl: number;
-  winRate: number;
-  openPositions: number;
-  totalClosedTrades: number;
-}
-
 export interface ExecutiveHealthSnapshot {
   // "done today / total daily habits" -- both numbers real, matching the
   // same shape dashboard/utils/dailySummary.ts already uses.
@@ -102,6 +95,5 @@ export interface ExecutiveContext {
   schedule: ExecutiveScheduleSnapshot;
   goals: ExecutiveGoalSnapshot[];
   finance: ExecutiveFinanceSnapshot;
-  trading: ExecutiveTradingSnapshot;
   health: ExecutiveHealthSnapshot;
 }

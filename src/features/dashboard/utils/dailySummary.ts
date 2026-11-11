@@ -2,15 +2,13 @@ import { toLocalDateString } from "@/utils/localDate";
 import { isCompletedToday, computeStreak } from "@/features/habits/utils/streak";
 import { isActiveOnDate } from "@/features/schedule/utils/activity";
 import { toMinutes } from "@/features/schedule/utils/time";
-import { calculatePnl } from "@/features/trading/utils/pnl";
 import type { Transaction } from "@/features/finance/types";
 import type { Todo } from "@/features/todo/types";
 import type { Habit } from "@/features/habits/types";
 import type { ScheduleItem } from "@/features/schedule/types";
-import type { Trade } from "@/features/trading/types";
 
 export type DailySummaryTone = "positive" | "neutral" | "warning";
-export type DailySummaryIcon = "expense" | "income" | "todo" | "habit" | "schedule" | "trade";
+export type DailySummaryIcon = "expense" | "income" | "todo" | "habit" | "schedule";
 
 export interface DailySummaryHighlight {
   id: string;
@@ -32,14 +30,7 @@ export interface DailySummaryInput {
   todos: Todo[];
   habits: Habit[];
   scheduleItems: ScheduleItem[];
-  trades: Trade[];
   now: Date;
-}
-
-// Matches TradingOverviewPanel's local (un-exported) formatPnl — trading P/L
-// is shown unitless (no currency symbol) everywhere else in the app too.
-function formatSignedPnl(value: number): string {
-  return `${value >= 0 ? "+" : ""}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
 // Active, enabled schedule items today that haven't started yet — shared by
@@ -53,7 +44,7 @@ function upcomingToday(items: ScheduleItem[], now: Date): ScheduleItem[] {
 }
 
 export function computeDailySummary(input: DailySummaryInput): DailySummaryResult {
-  const { transactions, todos, habits, scheduleItems, trades, now } = input;
+  const { transactions, todos, habits, scheduleItems, now } = input;
   const today = toLocalDateString(now);
   const hour = now.getHours();
 
@@ -120,18 +111,6 @@ export function computeDailySummary(input: DailySummaryInput): DailySummaryResul
       key: "dashboard.dailySummary.scheduleUpcomingToday",
       params: { count: upcomingScheduleItems.length },
       tone: "neutral",
-    });
-  }
-
-  const closedToday = trades.filter((t) => t.status === "closed" && t.exitDate === today);
-  if (closedToday.length > 0) {
-    const pnlToday = closedToday.reduce((sum, t) => sum + (calculatePnl(t) ?? 0), 0);
-    highlights.push({
-      id: "tradePnlToday",
-      icon: "trade",
-      key: "dashboard.dailySummary.tradePnlToday",
-      params: { pnl: formatSignedPnl(pnlToday) },
-      tone: pnlToday >= 0 ? "positive" : "warning",
     });
   }
 

@@ -17,7 +17,6 @@ function baseInput(overrides: Partial<ExecutiveContextInput> = {}): ExecutiveCon
     workoutEntries: [],
     budgetProgress: [],
     netWorthStats: { totalAssets: 0, totalLiabilities: 0, netWorth: 0 },
-    tradingStats: { weeklyPnl: 0, winRate: 0, openPositions: 0, totalClosedTrades: 0 },
     now: NOW,
     ...overrides,
   };
@@ -115,16 +114,14 @@ describe("buildExecutiveContext", () => {
     expect(context.finance.budgetsOverCount).toBe(0);
   });
 
-  it("passes trading and net worth snapshots through unchanged (no duplicate computation)", () => {
+  it("passes the net worth snapshot through unchanged (no duplicate computation)", () => {
     const context = buildExecutiveContext(
       baseInput({
         netWorthStats: { totalAssets: 100000, totalLiabilities: 20000, netWorth: 80000 },
-        tradingStats: { weeklyPnl: 500, winRate: 60, openPositions: 2, totalClosedTrades: 10 },
       })
     );
 
     expect(context.finance.netWorth).toBe(80000);
-    expect(context.trading.winRate).toBe(60);
-    expect(context.trading.totalClosedTrades).toBe(10);
+    expect(context).not.toHaveProperty("trading");
   });
 });

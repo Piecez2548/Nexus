@@ -6,11 +6,9 @@ import { useGlobalSearch } from "@/hooks/useGlobalSearch";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import DropdownPanel from "@/components/ui/DropdownPanel";
 import { useTranslation } from "@/i18n/useTranslation";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { useGoalStore } from "@/features/finance/store/goalStore";
-import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
 import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
 import { useAccountStore } from "@/features/finance/store/accountStore";
 import { useCategoryStore } from "@/features/finance/store/categoryStore";
@@ -24,11 +22,9 @@ function GlobalSearch() {
   const ref = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const loadedSearchStores = useRef(false);
-  const loadTrades = useTradeStore((state) => state.loadTrades);
   const loadTodos = useTodoStore((state) => state.loadTodos);
   const loadHabits = useHabitStore((state) => state.loadHabits);
   const loadGoals = useGoalStore((state) => state.loadGoals);
-  const loadHoldings = useHoldingStore((state) => state.loadHoldings);
   const loadScheduleItems = useScheduleItemStore((state) => state.loadItems);
   const loadAccounts = useAccountStore((state) => state.loadAccounts);
   const loadCategories = useCategoryStore((state) => state.loadCategories);
@@ -48,11 +44,9 @@ function GlobalSearch() {
     if (loadedSearchStores.current) return;
     loadedSearchStores.current = true;
     void Promise.all([
-      loadTrades(),
       loadTodos(),
       loadHabits(),
       loadGoals(),
-      loadHoldings(),
       loadScheduleItems(),
       loadAccounts(),
       loadCategories(),

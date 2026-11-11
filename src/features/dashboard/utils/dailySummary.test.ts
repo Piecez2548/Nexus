@@ -4,7 +4,6 @@ import type { Transaction } from "@/features/finance/types";
 import type { Todo } from "@/features/todo/types";
 import type { Habit } from "@/features/habits/types";
 import type { ScheduleItem } from "@/features/schedule/types";
-import type { Trade } from "@/features/trading/types";
 
 const NOW = new Date(2026, 6, 30, 14, 30); // Thu Jul 30 2026, 14:30 local — "today" = 2026-07-30
 const TODAY = "2026-07-30";
@@ -16,7 +15,6 @@ function baseInput(overrides: Partial<DailySummaryInput> = {}): DailySummaryInpu
     todos: [],
     habits: [],
     scheduleItems: [],
-    trades: [],
     now: NOW,
     ...overrides,
   };
@@ -62,19 +60,6 @@ function makeScheduleItem(overrides: Partial<ScheduleItem> = {}): ScheduleItem {
     repeat: { frequency: "daily" },
     enabled: true,
     createdAt: new Date(2026, 6, 1).toISOString(),
-    ...overrides,
-  };
-}
-
-function makeTrade(overrides: Partial<Trade> = {}): Trade {
-  return {
-    symbol: "AAPL",
-    market: "stocks",
-    direction: "long",
-    status: "closed",
-    entryPrice: 100,
-    quantity: 10,
-    entryDate: TODAY,
     ...overrides,
   };
 }
@@ -204,29 +189,6 @@ describe("computeDailySummary", () => {
         })
       );
       expect(result.highlights.find((h) => h.id === "scheduleUpcomingToday")).toBeUndefined();
-    });
-  });
-
-  describe("trading P/L today", () => {
-    it("sums today's closed-trade P/L and tones it positive when >= 0", () => {
-      const result = computeDailySummary(
-        baseInput({ trades: [makeTrade({ entryPrice: 100, exitPrice: 120, quantity: 10, exitDate: TODAY })] })
-      );
-      const highlight = result.highlights.find((h) => h.id === "tradePnlToday");
-      expect(highlight).toMatchObject({ tone: "positive" });
-      expect(highlight?.params.pnl).toBe("+200");
-    });
-
-    it("tones the highlight warning when today's P/L is negative", () => {
-      const result = computeDailySummary(
-        baseInput({ trades: [makeTrade({ entryPrice: 100, exitPrice: 80, quantity: 10, exitDate: TODAY })] })
-      );
-      expect(result.highlights.find((h) => h.id === "tradePnlToday")).toMatchObject({ tone: "warning" });
-    });
-
-    it("excludes the highlight when no trades closed today", () => {
-      const result = computeDailySummary(baseInput({ trades: [makeTrade({ status: "open", exitDate: undefined })] }));
-      expect(result.highlights.find((h) => h.id === "tradePnlToday")).toBeUndefined();
     });
   });
 

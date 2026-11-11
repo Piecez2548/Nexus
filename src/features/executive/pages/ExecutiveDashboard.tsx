@@ -5,7 +5,6 @@ import OverdueSection from "@/features/executive/components/OverdueSection";
 import GoalsSnapshotSection from "@/features/executive/components/GoalsSnapshotSection";
 import FinanceSnapshotSection from "@/features/executive/components/FinanceSnapshotSection";
 import HealthSnapshotSection from "@/features/executive/components/HealthSnapshotSection";
-import TradingSnapshotSection from "@/features/executive/components/TradingSnapshotSection";
 import ExecutiveSummaryPanel from "@/features/executive/components/ExecutiveSummaryPanel";
 import LoadingState from "@/components/ui/LoadingState";
 import ErrorState from "@/components/ui/ErrorState";
@@ -38,10 +37,9 @@ export default function ExecutiveDashboard() {
             <GoalsSnapshotSection goals={context.goals} />
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2">
             <FinanceSnapshotSection finance={context.finance} />
             <HealthSnapshotSection health={context.health} />
-            <TradingSnapshotSection trading={context.trading} />
           </div>
 
           <ExecutiveSummaryPanel summary={summary} />

@@ -17,9 +17,17 @@ describe("MobileMoreMenu", () => {
     expect(screen.getByText("Finance Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Favorites")).toBeInTheDocument();
     expect(screen.getByText("Goals")).toBeInTheDocument();
-    expect(screen.getByText("Trading Journal")).toBeInTheDocument();
     expect(screen.getByText("Todo")).toBeInTheDocument();
     expect(screen.getByText("Settings")).toBeInTheDocument();
+  });
+
+  it("no longer lists Trading, Portfolio or the external Nexus Tools link", () => {
+    render(<MobileMoreMenu open onClose={() => {}} />, { wrapper: MemoryRouter });
+
+    expect(screen.queryByText("Trading")).not.toBeInTheDocument();
+    expect(screen.queryByText("Trading Journal")).not.toBeInTheDocument();
+    expect(screen.queryByText("Portfolio")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Nexus Tools/)).not.toBeInTheDocument();
   });
 
   it("closes when a nav link is clicked", async () => {

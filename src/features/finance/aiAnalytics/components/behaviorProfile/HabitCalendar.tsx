@@ -3,7 +3,7 @@ import ChartFigure from "@/features/finance/aiAnalytics/components/ChartFigure";
 import { useTranslation } from "@/i18n/useTranslation";
 import type { DailyTrendPoint } from "@/features/finance/aiAnalytics/engine/analyzers/spendingAnalysis";
 
-// Structural reuse of trading/components/PerformanceCalendar.tsx's month
+// Structural reuse of the (since removed) trading PerformanceCalendar's month
 // grid (7-col CSS grid, blank leading cells for the month's start weekday)
 // — adapted from P&L intensity to spending intensity. Reuses
 // spendingAnalysis.dailyTrend (already computed for the whole month)

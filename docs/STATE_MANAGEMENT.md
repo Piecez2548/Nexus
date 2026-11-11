@@ -44,14 +44,7 @@ All client state is managed with **Zustand 5** — no Redux, no Context-based st
 | `finance/slipScanner/scanScheduleStore` | scan-schedule config + last-completed-scan time | `persist` to `localStorage`, **not Dexie-backed** | setConfig, markScanned, reset — gates the battery-aware scan scheduler's interval check |
 | `finance/slipScanner/scanStore` | active gallery-scan session status/progress | ephemeral — the live `ScanSession` control handle is held in a module-level variable outside the store, only status/progress are rendered state | start, pause, resume, cancel |
 | `finance/slipScanner/scannerAnalyticsStore` | cumulative scanner run counters (aggregate only, no slip content) | `persist` to `localStorage`, **not Dexie-backed** | recordRun (folds via a pure `mergeRun`), reset |
-| `trading/tradeStore` | `Trade` | fetch-on-mount cache | load, add/update (awards XP on close), delete |
-| `trading/tradingUIStore` | Trade drawer UI | pure UI state | open/close drawer |
-| `trading/riskConfigStore` | daily/weekly max-loss limits | `persist` to `localStorage`, **not Dexie-backed** — trading-specific, kept separate from `appSettingsStore` | setMaxDailyLossLimit, setMaxWeeklyLossLimit (`null` = no limit set, distinct from `0`) |
-| `trading/strategyStore` | `Strategy` | fetch-on-mount cache | load, add, update, delete |
-| `trading/watchlistStore` | `WatchlistItem` | fetch-on-mount cache | load, add, update, delete |
-| `trading/economicEventStore` | `EconomicEvent` | fetch-on-mount cache | load, add, update, delete |
 | `habits/habitStore` | `Habit` | fetch-on-mount cache + reminder scheduling | load, add/update/delete (schedule/cancel native reminders), `checkIn` (idempotent, awards XP) |
-| `portfolio/holdingStore` | `Holding` | fetch-on-mount cache | load, add, update, delete, `updateCurrentPrice` |
 | `schedule/scheduleItemStore` | `ScheduleItem` | fetch-on-mount cache + reminder scheduling | load, add, update, delete |
 | `todo/todoStore` | `Todo` | fetch-on-mount cache | load, add, update, delete, `toggleComplete` (awards XP only on completing) |
 | `vault/vaultEntryStore` | `VaultEntry` | fetch-on-mount cache | load, add, update, delete (each mutation records an audit-log event) |
@@ -87,7 +80,7 @@ Mutations follow the same round-trip: component calls a store action → service
 
 ## Store Responsibilities
 
-Each entity store owns exactly one Dexie table's client-side cache and nothing else — no store spans multiple entities. UI-only stores (`uiStore`, `tradingUIStore`, `dashboardPeriodStore`) hold zero persisted data and exist purely to share drawer-open/period-selection state between a layout-level trigger (e.g. the mobile FAB) and the page/drawer that renders it.
+Each entity store owns exactly one Dexie table's client-side cache and nothing else — no store spans multiple entities. UI-only stores (`uiStore`, `dashboardPeriodStore`) hold zero persisted data and exist purely to share drawer-open/period-selection state between a layout-level trigger (e.g. the mobile FAB) and the page/drawer that renders it.
 
 ## Store Relationships
 

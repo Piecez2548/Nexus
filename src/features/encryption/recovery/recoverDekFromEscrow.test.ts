@@ -213,7 +213,7 @@ describe("recoverDekFromEscrow", () => {
     await useAppLockStore.getState().attachEncryption("1234", originalDek);
     const envelope = await encryptField(originalDek, { title: "Original content" });
     const row = { id: 0, encryptedContent: scenario === "corrupt-envelope" ? { ...envelope, ct: "invalid" } : envelope };
-    await db.table("economicEvents").put(row);
+    await db.table("budgetPeriodSnapshots").put(row);
     useAppLockStore.getState().lock();
     const originalState = useAppLockStore.getState();
     const persisted = localStorage.getItem("nexus-app-lock");
@@ -222,7 +222,7 @@ describe("recoverDekFromEscrow", () => {
     expect(useAppLockStore.getState()).toBe(originalState);
     expect(localStorage.getItem("nexus-app-lock")).toBe(persisted);
     expect(useEncryptionSessionStore.getState().dek).toBeNull();
-    expect(await db.table("economicEvents").get(row.id)).toEqual(row);
+    expect(await db.table("budgetPeriodSnapshots").get(row.id)).toEqual(row);
     expect(await useAppLockStore.getState().unlock("1234", false)).toBe(true);
   });
 

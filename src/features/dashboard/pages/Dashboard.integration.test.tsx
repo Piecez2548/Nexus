@@ -6,11 +6,9 @@ import { MemoryRouter } from "react-router-dom";
 import Dashboard from "./Dashboard";
 import { db } from "@/database/db";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
-import { useTradeStore } from "@/features/trading/store/tradeStore";
 import { useTodoStore } from "@/features/todo/store/todoStore";
 import { useHabitStore } from "@/features/habits/store/habitStore";
 import { toLocalDateString } from "@/features/habits/utils/streak";
-import { useHoldingStore } from "@/features/portfolio/store/holdingStore";
 import { useScheduleItemStore } from "@/features/schedule/store/scheduleItemStore";
 
 const now = new Date();
@@ -20,14 +18,10 @@ describe("Dashboard (real data flow)", () => {
   beforeEach(async () => {
     await db.transactions.clear();
     useTransactionStore.setState({ transactions: [], loading: false });
-    await db.trades.clear();
-    useTradeStore.setState({ trades: [], loading: false, error: null });
     await db.todos.clear();
     useTodoStore.setState({ todos: [], loading: false, error: null });
     await db.habits.clear();
     useHabitStore.setState({ habits: [], loading: false, error: null });
-    await db.holdings.clear();
-    useHoldingStore.setState({ holdings: [], loading: false, error: null });
     await db.scheduleItems.clear();
     useScheduleItemStore.setState({ items: [], loading: false, error: null });
   });
@@ -62,44 +56,11 @@ describe("Dashboard (real data flow)", () => {
     expect(screen.queryByText("No expense data yet")).not.toBeInTheDocument();
   });
 
-  it("shows the AI Daily Summary panel with real data and a real-data trading overview", async () => {
-    const today = toLocalDateString(new Date());
-
-    await db.trades.bulkAdd([
-      {
-        symbol: "AAPL",
-        market: "stocks",
-        direction: "long",
-        status: "closed",
-        entryPrice: 100,
-        exitPrice: 120,
-        quantity: 10,
-        entryDate: today,
-        exitDate: today,
-      },
-      {
-        symbol: "MSFT",
-        market: "stocks",
-        direction: "long",
-        status: "open",
-        entryPrice: 300,
-        quantity: 5,
-        entryDate: today,
-      },
-    ]);
-
+  it("shows the AI Daily Summary panel as a real feature", async () => {
     render(<Dashboard />, { wrapper: MemoryRouter });
 
-    // The AI Daily Summary panel is a real feature now, not a placeholder.
     expect(await screen.findByText("AI Daily Summary")).toBeInTheDocument();
     expect(screen.queryByText("Coming Soon")).not.toBeInTheDocument();
-
-    // Trading overview reflects the real trade data: the AAPL trade closed
-    // today falls within both "today" and the default "month" period window,
-    // so "+200" appears twice (Today's P/L and the period P/L card).
-    expect(await screen.findAllByText("+200")).toHaveLength(2);
-    expect(screen.getByText("100.0%")).toBeInTheDocument(); // win rate
-    expect(screen.getByText("1")).toBeInTheDocument(); // open positions
   });
 
   it("shows the AI Daily Summary panel's empty state with no activity today", async () => {
@@ -181,54 +142,13 @@ describe("Dashboard (real data flow)", () => {
     });
   });
 
-  it("no longer shows Quick Actions, and switching the period selector doesn't affect the exempt Portfolio panel", async () => {
-    await db.holdings.bulkAdd([
-      { symbol: "AAPL", market: "stocks", quantity: 10, avgCostPrice: 100, currentPrice: 120, createdAt: "2026-07-20T00:00:00.000Z" },
-    ] as never[]);
-
+  it("no longer shows Quick Actions, Trading or Portfolio panels", async () => {
     render(<Dashboard />, { wrapper: MemoryRouter });
 
     expect(await screen.findByText("Budget")).toBeInTheDocument();
     expect(screen.queryByText("Quick Actions")).not.toBeInTheDocument();
-
-    const portfolioPnlBefore = screen.getAllByText("+200 (+20%)").length;
-    expect(portfolioPnlBefore).toBeGreaterThan(0);
-
-    // Switching the period must not change Portfolio — confirmed exempt.
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Day" }));
-    expect(screen.getAllByText("+200 (+20%)")).toHaveLength(portfolioPnlBefore);
-
-    await user.click(screen.getByRole("button", { name: "Year" }));
-    expect(screen.getAllByText("+200 (+20%)")).toHaveLength(portfolioPnlBefore);
-  });
-
-  it("reflects real holdings data in the Portfolio overview panel", async () => {
-    await db.holdings.bulkAdd([
-      {
-        symbol: "AAPL",
-        market: "stocks",
-        quantity: 10,
-        avgCostPrice: 100,
-        currentPrice: 120,
-        createdAt: "2026-07-20T00:00:00.000Z",
-      },
-      {
-        symbol: "BTC",
-        market: "crypto",
-        quantity: 1,
-        avgCostPrice: 50000,
-        createdAt: "2026-07-20T00:00:00.000Z",
-      },
-    ] as never[]);
-
-    render(<Dashboard />, { wrapper: MemoryRouter });
-
-    // 2 holdings, only 1 priced -> a partial-sum caveat and a real P/L from
-    // the priced holding alone (the unpriced BTC contributes 0 to the total).
-    expect(await screen.findByText("51,000")).toBeInTheDocument(); // total cost basis
-    expect(screen.getByText("+200 (+20%)")).toBeInTheDocument();
-    expect(screen.getByText(/1 of 2 priced/i)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Trading" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Portfolio" })).not.toBeInTheDocument();
   });
 
   it("shows the current activity in the Life Schedule preview panel, regardless of the period selector", async () => {
@@ -249,7 +169,7 @@ describe("Dashboard (real data flow)", () => {
 
     expect(await screen.findByText("Deep work block")).toBeInTheDocument();
 
-    // Exempt from the period selector, same as Portfolio — switching it
+    // Exempt from the period selector — switching it
     // must not hide an activity that's genuinely happening right now.
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Day" }));
