@@ -6,6 +6,8 @@ import { useResolvedTheme } from "@/hooks/useResolvedTheme";
 import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import { useBudgetStore } from "@/features/finance/store/budgetStore";
 import { useTranslation } from "@/i18n/useTranslation";
+import { isNativeGalleryAvailable } from "@/features/finance/slipScanner/gallery/pickImages";
+import { useScanScheduleStore } from "@/features/finance/slipScanner/store/scanScheduleStore";
 
 import GlobalSearch from "./GlobalSearch";
 import NotificationsMenu from "./NotificationsMenu";
@@ -71,7 +73,14 @@ export default function TopBar() {
 
 function GlobalGalleryScan() {
   const { t } = useTranslation();
-  const [scannerLoaded, setScannerLoaded] = useState(false);
+  // On Android with auto-scan enabled (Settings → Auto-scan new slips) the
+  // scanner chunk loads at startup so it can scan on open/resume; otherwise it
+  // stays lazy until the person taps the button, as before.
+  const [autoScan] = useState(() => {
+    const { config } = useScanScheduleStore.getState();
+    return isNativeGalleryAvailable() && config.enabled && config.scanOnStartup;
+  });
+  const [scannerLoaded, setScannerLoaded] = useState(autoScan);
 
   if (!scannerLoaded) {
     return (
@@ -95,7 +104,7 @@ function GlobalGalleryScan() {
         </button>
       }
     >
-      <GalleryScanFlow automaticScan={false} initialOpen />
+      <GalleryScanFlow automaticScan={autoScan} initialOpen={!autoScan} />
     </Suspense>
   );
 }

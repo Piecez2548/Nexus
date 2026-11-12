@@ -16,7 +16,12 @@ export interface UseFullGalleryScan {
   candidates: SlipCandidate[];
   error: string | null;
   scanPickedFiles: (files: File[], incremental?: boolean, dateRange?: ScanOptions["dateRange"]) => Promise<void>;
-  scanNativeGallery: (incremental?: boolean, dateRange?: ScanOptions["dateRange"], exhaustive?: boolean) => Promise<void>;
+  scanNativeGallery: (
+    incremental?: boolean,
+    dateRange?: ScanOptions["dateRange"],
+    exhaustive?: boolean,
+    sinceCursor?: string,
+  ) => Promise<void>;
   pause: () => void;
   resume: () => void;
   cancel: () => void;
@@ -56,7 +61,12 @@ const defaultFullGalleryExtractor: SlipExtractor = (input) =>
     ...input,
     qrOnly: true,
     skipOcrWhenNoQr: true,
-    maxRecoveryAttempts: 2,
+    // Hands-free scans trade completeness for speed: one plain QR decode per
+    // photo, no rotated/brightened retry variants (each costs a full image
+    // decode). Most gallery photos are not slips, so those retries were a
+    // large share of the time. A slip with a crooked or dim QR is still
+    // caught by the manual Scan Gallery button.
+    maxRecoveryAttempts: 0,
   });
 
 // A user-picked image is an explicit slip candidate, so it must retain the
@@ -152,12 +162,13 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
   );
 
   const scanNativeGallery = useCallback(
-    async (incremental = true, dateRange?: ScanOptions["dateRange"], exhaustive = false) => {
+    async (incremental = true, dateRange?: ScanOptions["dateRange"], exhaustive = false, sinceCursor?: string) => {
       await beginNewRun(incremental && !dateRange);
       await gallery.scanNativeGallery(
         incremental,
         exhaustive ? exhaustiveGalleryProcessor : fullGalleryProcessor,
         dateRange,
+        sinceCursor,
       );
       setCandidates(flagBatchDuplicates);
     },

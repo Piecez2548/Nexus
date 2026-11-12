@@ -110,6 +110,23 @@ class OcrWorkerPool {
     this.idle.push(pooled);
   }
 
+  // Starts up to `count` workers in the background so the first real OCR call
+  // finds one ready instead of paying the ~20s engine + language-data startup
+  // while a scan is waiting. Best-effort: a failed warm-up (offline) just
+  // frees the slot and the first real call tries again and reports the error.
+  warm(count = 1): void {
+    const target = Math.min(count, this.maxSize);
+    while (this.totalCount < target) {
+      this.totalCount++;
+      this.spawnWorker().then(
+        (pooled) => this.release(pooled),
+        () => {
+          this.totalCount--;
+        },
+      );
+    }
+  }
+
   async recognize(bytes: Uint8Array): Promise<string> {
     const { pooled: pooledPromise } = this.acquire();
     const pooled = await pooledPromise;
@@ -147,6 +164,11 @@ let sharedPool: OcrWorkerPool | null = null;
 export function getOcrWorkerPool(): OcrWorkerPool {
   if (!sharedPool) sharedPool = new OcrWorkerPool(resolveConcurrency());
   return sharedPool;
+}
+
+// Fire-and-forget: get OCR ready before a scan needs it (see warm()).
+export function prewarmOcr(count = 1): void {
+  getOcrWorkerPool().warm(count);
 }
 
 // Test-only: drop the shared pool (after terminating its idle workers) so

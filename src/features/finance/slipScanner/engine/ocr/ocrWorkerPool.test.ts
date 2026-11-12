@@ -29,6 +29,31 @@ afterEach(async () => {
   await resetOcrWorkerPoolForTests();
 });
 
+describe("OcrWorkerPool.warm", () => {
+  it("starts a worker ahead of time so the first recognize reuses it", async () => {
+    const worker = fakeWorker("warm");
+    createWorker.mockResolvedValue(worker);
+    const pool = getOcrWorkerPool();
+
+    pool.warm(1);
+    await vi.waitFor(() => expect(createWorker).toHaveBeenCalledTimes(1));
+
+    await pool.recognize(new Uint8Array([1]));
+    expect(createWorker).toHaveBeenCalledTimes(1); // no second spawn
+    expect(worker.recognize).toHaveBeenCalledTimes(1);
+  });
+
+  it("frees the slot when warm-up fails so a later call can try again", async () => {
+    createWorker.mockRejectedValueOnce(new Error("offline"));
+    const pool = getOcrWorkerPool();
+    pool.warm(1);
+    await new Promise((r) => setTimeout(r, 0));
+
+    createWorker.mockResolvedValue(fakeWorker("ok"));
+    await expect(pool.recognize(new Uint8Array([1]))).resolves.toBe("ok");
+  });
+});
+
 describe("OcrWorkerPool (via getOcrWorkerPool)", () => {
   it("reuses one worker across sequential calls instead of creating a new one each time", async () => {
     const worker = fakeWorker("a");

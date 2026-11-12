@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { Images } from "lucide-react";
+import { App } from "@capacitor/app";
 
-import ScanControls from "@/features/finance/slipScanner/components/ScanControls";
-import ScanProgressDashboard from "@/features/finance/slipScanner/components/ScanProgressDashboard";
+import { prewarmOcr } from "@/features/finance/slipScanner/engine/ocr/ocrWorkerPool";
+import ScanSuccessBurst from "@/features/finance/slipScanner/components/ScanSuccessBurst";
+import ScanProgressRing from "@/features/finance/slipScanner/components/ScanProgressRing";
 import ImportPreview from "@/features/finance/slipScanner/components/ImportPreview";
 import { useFullGalleryScan } from "@/features/finance/slipScanner/hooks/useFullGalleryScan";
 import { useSmartImport } from "@/features/finance/slipScanner/hooks/useSmartImport";
@@ -35,6 +37,8 @@ type Phase = "idle" | "banks";
 // gallery scan single-flight at module scope so that never creates two scan
 // sessions or duplicate previews.
 let automaticScanInFlight = false;
+
+const AUTO_SCAN_WINDOW_MS = 30 * 86_400_000;
 
 interface Props {
   // Injectable so tests can supply a fake instead of the real jsQR + Tesseract
@@ -75,6 +79,8 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
   const [dateTo, setDateTo] = useState("");
   const [rangeImageCount, setRangeImageCount] = useState<number | null>(null);
   const [isAutomaticScan, setIsAutomaticScan] = useState(false);
+  const [runInBackground, setRunInBackground] = useState(false);
+  const [burstCount, setBurstCount] = useState<number | null>(null);
   const [scanSettled, setScanSettled] = useState(false);
   const [reviewCandidates, setReviewCandidates] = useState<SlipCandidate[]>([]);
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -82,21 +88,35 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
   const scanOriginRef = useRef<"manual" | "automatic">("manual");
 
   const scan = useFullGalleryScan(extractor);
-  const scheduleConfig = useScanScheduleStore((state) => state.config);
-  const lastScanAt = useScanScheduleStore((state) => state.lastScanAt);
   const markScanned = useScanScheduleStore((state) => state.markScanned);
-
-  // On Android, scan only new gallery images when the transaction page opens.
-  // The OS permission is requested once; subsequent visits are hands-free and
-  // the persistent scan cache prevents rescanning the same image.
+  // The resume listener outlives any single render, so it reads the latest
+  // scan controller through a ref instead of capturing a stale closure.
+  const scanRef = useRef(scan);
   useEffect(() => {
-    if (!automaticScan || !isNativeGalleryAvailable() || automaticScanInFlight) return;
+    scanRef.current = scan;
+  });
+
+  // On Android, scan only new gallery images when the app opens and every time
+  // it returns to the foreground. The OS permission is requested once;
+  // afterwards this is hands-free and the persistent scan cache prevents
+  // rescanning the same image. Schedule config and last-scan time are read
+  // fresh from the store on every trigger, so the Settings toggle applies
+  // immediately and resume triggers are throttled by decideScan.
+  useEffect(() => {
+    if (!automaticScan || !isNativeGalleryAvailable()) return;
 
     let active = true;
-    automaticScanInFlight = true;
 
-    void (async () => {
+    async function runAutomaticScan(trigger: "startup" | "resume"): Promise<void> {
+      if (automaticScanInFlight) return;
+      automaticScanInFlight = true;
       try {
+        const { config, lastScanAt } = useScanScheduleStore.getState();
+        // Cheap policy check first so a disabled/throttled trigger never
+        // surfaces an OS permission prompt.
+        const decision = decideScan({ trigger, config, device: await getDeviceState(), lastScanAt });
+        if (!decision.shouldScan || !active) return;
+
         let permission = await galleryPermissionService.check();
         recordScannerDiagnostic("PERMISSION_CHECK");
         if (permission.status === "prompt" || permission.status === "denied") {
@@ -104,25 +124,31 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
         }
         if (!permission.canScanGallery || !active) {
           recordScannerDiagnostic("PERMISSION_DENIED", { errorCategory: "permission" });
-          if (active) toast.error(t(permission.status === "blocked" ? "slipScanner.galleryScan.permissionBlocked" : "slipScanner.galleryScan.permissionDenied"));
+          // Only on app open: a resume can fire every few minutes, and
+          // repeating the error each time would nag someone who said no.
+          if (active && trigger === "startup") toast.error(t(permission.status === "blocked" ? "slipScanner.galleryScan.permissionBlocked" : "slipScanner.galleryScan.permissionDenied"));
           return;
         }
         recordScannerDiagnostic("PERMISSION_GRANTED");
 
-        const decision = decideScan({
-          trigger: "scheduled",
-          config: scheduleConfig,
-          device: await getDeviceState(),
-          lastScanAt,
-        });
-        if (!decision.shouldScan || !active) return;
-
+        autoImportStartedRef.current = false;
+        setRunInBackground(false);
         setIsAutomaticScan(true);
         scanOriginRef.current = "automatic";
-        await scan.scanNativeGallery(
+        // Hands-free scans only look at recent photos (last 30 days, or since
+        // the last scan if the app was closed longer): reading every photo of a
+        // large gallery in full resolution is far too slow for an automatic
+        // run. The scan cache still skips anything already handled, and the
+        // manual "Scan Gallery" button covers the whole gallery.
+        const windowStart = Date.now() - AUTO_SCAN_WINDOW_MS;
+        const sinceCursor = new Date(
+          lastScanAt !== null ? Math.min(windowStart, lastScanAt - 86_400_000) : windowStart,
+        ).toISOString();
+        await scanRef.current.scanNativeGallery(
           AUTOMATIC_GALLERY_SCAN_MODE.incremental,
           undefined,
           AUTOMATIC_GALLERY_SCAN_MODE.exhaustive,
+          sinceCursor,
         );
         if (active) {
           markScanned();
@@ -137,13 +163,19 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
         automaticScanInFlight = false;
         if (active) setIsAutomaticScan(false);
       }
-    })();
+    }
+
+    void runAutomaticScan("startup");
+    const listenerPromise = App.addListener("resume", () => {
+      void runAutomaticScan("resume");
+    });
 
     return () => {
       active = false;
+      void listenerPromise.then((handle) => handle.remove());
     };
-    // Run once for this page visit. Schedule values are intentionally captured
-    // at entry; changing settings applies on the next visit.
+    // Re-subscribing on every render would drop in-flight triggers; all
+    // changing inputs are read through refs/getState above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [automaticScan]);
 
@@ -154,8 +186,9 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
     let active = true;
     void scanCandidateRepository.listCompletedRuns().then((pending) => {
       if (!active || pending.length === 0) return;
+      // Restored silently: the "Review pending" button shows the count, the
+      // sheet opens only when the person taps it.
       setReviewCandidates(pending);
-      setReviewOpen(true);
     });
     return () => {
       active = false;
@@ -200,6 +233,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
     setPhase("idle"); // close the popup before scanning
     setScanSettled(false);
     autoImportStartedRef.current = false;
+    setRunInBackground(false);
     const dateRange: ScanOptions["dateRange"] =
       dateFrom || dateTo ? { from: dateFrom || undefined, to: dateTo || undefined } : undefined;
     // A date range is a one-off request, not a remembered preference (unlike
@@ -285,6 +319,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
       const count = result.importedIds.length;
       const failed = result.failed.length;
       const duplicates = result.skippedDuplicates.length;
+      if (count > 0) setBurstCount(count);
 
       if (failed === 0 && duplicates === 0) {
         toast.success(t("slipScanner.galleryScan.imported", { count }));
@@ -346,8 +381,10 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
     if (candidatesToImport.length === 0) {
       if (visibleCandidates.length > 0) {
         toast.error(t("slipScanner.galleryScan.noVerifiedQr"));
+        // A hands-free scan never pops the sheet open by itself: it leaves the
+        // "Review pending" button instead (a scan the person started opened
+        // the sheet above).
         scan.reset({ preserveCandidateIds: candidatesForReview.map((candidate) => candidate.id) });
-        setReviewOpen(candidatesForReview.length > 0);
       } else {
         toast.error(t("slipScanner.galleryScan.noneFound"));
         scan.reset();
@@ -365,7 +402,6 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
       if (!result) {
         scan.reset({ preserveCandidateIds: visibleCandidates.map((candidate) => candidate.id) });
         setReviewCandidates(visibleCandidates);
-        setReviewOpen(visibleCandidates.length > 0);
         return;
       }
 
@@ -381,7 +417,6 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
       );
       setReviewCandidates(remaining);
       scan.reset({ preserveCandidateIds: remaining.map((candidate) => candidate.id) });
-      setReviewOpen(remaining.length > 0);
     })();
     // scanSettled is the explicit completion signal from the scan promise, so
     // candidates are fully populated before this effect can import them.
@@ -397,18 +432,37 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
   // are all communicated via toast (above) and don't need a lingering modal,
   // which would otherwise have nothing to dismiss it.
   const showScanOverlay = phase === "idle" && busy && !isAutomaticScan;
+  // The hands-free scan gets a full-screen ring so it is hard to miss; the
+  // person can send it to the background and it keeps running behind the
+  // small indicator + Cancel button.
+  const showAutoRing = isAutomaticScan && busy && !runInBackground;
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setPhase("banks")}
+        onClick={() => {
+          // Warm OCR while the person picks banks/files, so the scan itself
+          // doesn't start with a long engine + language-data load.
+          prewarmOcr();
+          setPhase("banks");
+        }}
         disabled={busy || smartImport.running || reviewCandidates.length > 0}
         className="flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 px-4 py-2 transition hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         <Images size={18} className={isAutomaticScan ? "animate-pulse text-brand-400" : ""} />
         {isAutomaticScan ? t("slipScanner.galleryScan.scanningNew") : t("transactions.scanGallery")}
       </button>
+
+      {isAutomaticScan && busy && (
+        <button
+          type="button"
+          onClick={scan.cancel}
+          className="min-h-11 rounded-xl border border-zinc-300 px-3 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+        >
+          {t("slipScanner.galleryScan.cancelAutoScan")}
+        </button>
+      )}
 
       {reviewCandidates.length > 0 && !reviewOpen && (
         <button
@@ -442,13 +496,29 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
         webFolderSelection={!isNativeGalleryAvailable()}
       />
 
-      {showScanOverlay && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md space-y-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-lg">
-            {scan.snapshot && <ScanProgressDashboard progress={scan.snapshot} />}
-            <ScanControls running={scan.status === "running"} onPause={scan.pause} onResume={scan.resume} onCancel={scan.cancel} />
-          </div>
-        </div>
+      {showScanOverlay && !runInBackground && (
+        <ScanProgressRing
+          progress={scan.snapshot}
+          running={scan.status === "running"}
+          onPause={scan.pause}
+          onResume={scan.resume}
+          onCancel={scan.cancel}
+          onBackground={() => setRunInBackground(true)}
+          showDetails
+        />
+      )}
+
+      {burstCount !== null && <ScanSuccessBurst count={burstCount} onDone={() => setBurstCount(null)} />}
+
+      {showAutoRing && (
+        <ScanProgressRing
+          progress={scan.snapshot}
+          running={scan.status === "running"}
+          onPause={scan.pause}
+          onResume={scan.resume}
+          onCancel={scan.cancel}
+          onBackground={() => setRunInBackground(true)}
+        />
       )}
 
       <ImportPreview

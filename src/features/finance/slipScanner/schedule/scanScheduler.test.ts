@@ -25,6 +25,23 @@ describe("decideScan", () => {
     expect(decideScan({ trigger: "startup", config: config({ scanOnStartup: true }), device: charged, lastScanAt: null }).shouldScan).toBe(true);
   });
 
+  it("gates resume on the same switch as startup and throttles rapid resumes", () => {
+    const now = 10_000_000;
+    expect(decideScan({ trigger: "resume", config: config({ scanOnStartup: false }), device: charged, lastScanAt: null, now }).reason).toBe("startup-disabled");
+    const on = config({ scanOnStartup: true });
+    expect(decideScan({ trigger: "resume", config: on, device: charged, lastScanAt: null, now }).shouldScan).toBe(true);
+    expect(decideScan({ trigger: "resume", config: on, device: charged, lastScanAt: now - 60_000, now }).reason).toBe("too-soon");
+    expect(decideScan({ trigger: "resume", config: on, device: charged, lastScanAt: now - 6 * 60_000, now }).shouldScan).toBe(true);
+    // The 6h scheduled interval must not apply to resume.
+    expect(decideScan({ trigger: "resume", config: { ...on, intervalMinutes: 360 }, device: charged, lastScanAt: now - 10 * 60_000, now }).shouldScan).toBe(true);
+  });
+
+  it("keeps automatic scanning opt-in: the default config never starts a startup or resume scan", () => {
+    for (const trigger of ["startup", "resume"] as const) {
+      expect(decideScan({ trigger, config: DEFAULT_SCAN_SCHEDULE, device: charged, lastScanAt: null }).reason).toBe("startup-disabled");
+    }
+  });
+
   it("enforces the scheduled interval", () => {
     const now = 10_000_000;
     const config1 = config({ intervalMinutes: 60 });

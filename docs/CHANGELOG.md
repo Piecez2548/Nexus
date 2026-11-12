@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-11-11 — Slip scanning: auto-scan on open/resume, animated progress, notification auto-save (ported from Nexus Main)
+
+Ported from Nexus Main (PR #8) so the Main workspace served at `/dashboard` has the same scanner behaviour. Nexus's own scanner work (`scannerMode`, `manualGalleryScan`, diagnostics, safe verification mode, cancel-safe candidate writes) is kept as is; the changes were merged into it by hand.
+
+- Android only: with the new Settings switch "Auto-scan new slips" on, the scanner loads at startup and scans new photos when the app opens and each time it returns to the foreground (`resume` trigger, one scan per 5 minutes; battery/charging gates unchanged). It only looks at the last 30 days or since the last scan (`sinceCursor`), with no QR recovery retries, so it is fast. A scan the person starts with the button still scans everything and opens the review sheet.
+- **Opt-in here, unlike Nexus Main:** `scanOnStartup` stays `false` by default in this repo. Automatic scanning was never active in Nexus (the top bar passed `automaticScan={false}`), so turning it on by default would have started reading existing users' photos without their choice.
+- A scan shows a full-screen progress ring (percent and photo count) with Pause, Cancel and "Run in background"; a success animation plays after slips are saved; OCR is warmed up when the Scan Gallery button is pressed.
+- A hands-free scan never opens the review sheet by itself, and pending candidates restored at startup no longer open it either: a "Review pending" button shows the count. The permission-denied toast shows only when the app opens, not on every resume.
+- Optional Settings switch (off by default): trusted payment notifications (bank recognised, amount parsed, recipient categorised before) are saved without the confirm sheet, with an Undo toast; everything else still uses the confirm sheet. Toasts gained an optional action button.
+- Not verified on a physical device.
+
 ## 2026-11-11 — Trading, Portfolio and Nexus Tools link removed
 
 - Removed the Trading module (dashboard, journal, strategies, watchlist, economic calendar, trade drawer) and the Portfolio module, which overlapped with the separate XAU Dashboard. Their routes (`/trading/*`), sidebar and mobile menu group, command palette entries, global-search results, the Dashboard Trading/Portfolio panels, the Executive Trading snapshot, the daily-summary trading P/L line and their translation keys are gone.

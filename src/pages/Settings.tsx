@@ -12,6 +12,7 @@ import PermissionManagerSettings from "@/components/settings/PermissionManagerSe
 import DataSettings from "@/components/settings/DataSettings";
 import TransactionDataSettings from "@/components/settings/TransactionDataSettings";
 import ImportHistorySettings from "@/components/settings/ImportHistorySettings";
+import AutoSlipScanSettings from "@/components/settings/AutoSlipScanSettings";
 import NotificationCaptureSettings from "@/components/settings/NotificationCaptureSettings";
 import DangerZoneSettings from "@/components/settings/DangerZoneSettings";
 import SettingsGroup from "@/components/settings/SettingsGroup";
@@ -45,6 +46,7 @@ export default function Settings() {
         <DataSettings />
         <TransactionDataSettings />
         <ImportHistorySettings />
+        <AutoSlipScanSettings />
         <NotificationCaptureSettings />
       </SettingsGroup>
 

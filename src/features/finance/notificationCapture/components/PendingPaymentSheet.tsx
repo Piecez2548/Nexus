@@ -7,6 +7,7 @@ import { useCategoryStore } from "@/features/finance/store/categoryStore";
 import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "@/i18n/useTranslation";
 
+import { useNotificationAutoSave } from "../hooks/useNotificationAutoSave";
 import { usePendingNotificationCandidates } from "../hooks/usePendingNotificationCandidates";
 
 // Mounted once at the app shell (MainLayout.tsx), same as ScanRecoveryNotice.
@@ -18,7 +19,10 @@ import { usePendingNotificationCandidates } from "../hooks/usePendingNotificatio
 // every other import path uses -- the actual Dexie write only ever happens
 // from that explicit tap.
 export default function PendingPaymentSheet() {
-  const { candidates, acknowledge } = usePendingNotificationCandidates();
+  const { candidates: allCandidates, acknowledge } = usePendingNotificationCandidates();
+  // Opt-in: high-confidence payments are saved without a prompt; the rest
+  // fall through to the confirm sheet below.
+  const candidates = useNotificationAutoSave(allCandidates, acknowledge);
   const { importCandidates } = useSmartImport();
   const allCategories = useCategoryStore((s) => s.categories);
   const toast = useToast();

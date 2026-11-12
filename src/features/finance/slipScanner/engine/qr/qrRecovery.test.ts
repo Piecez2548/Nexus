@@ -57,6 +57,23 @@ describe("recoverQr", () => {
     expect(result).toEqual({ payload: null, recoveredBy: null, attempts: 3 });
   });
 
+  it("never builds a variant when the cap is already reached, or one past the cap", async () => {
+    let built = 0;
+    const counting: ImageVariantGenerator = async function* () {
+      for (const label of ["a", "bb", "ccc"]) {
+        built += 1;
+        yield { label, imageData: { width: label.length, height: 1, data: new Uint8ClampedArray(0) } as ImageData };
+      }
+    };
+
+    const none = await recoverQr(new Uint8Array([0]), { skipOriginal: true, variants: counting, decodeVariant: decodeVariantFor(null), maxAttempts: 0 });
+    expect(none).toEqual({ payload: null, recoveredBy: null, attempts: 0 });
+    expect(built).toBe(0);
+
+    await recoverQr(new Uint8Array([0]), { skipOriginal: true, variants: counting, decodeVariant: decodeVariantFor(null), maxAttempts: 2 });
+    expect(built).toBe(2);
+  });
+
   it("respects maxAttempts", async () => {
     const result = await recoverQr(new Uint8Array([0]), {
       decoder: decoderFor(99),

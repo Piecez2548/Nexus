@@ -6,7 +6,13 @@
 // nullable (unknown on platforms that don't expose them) and never block a scan
 // when unknown.
 
-export type ScanTrigger = "manual" | "startup" | "scheduled";
+// "startup" = app opened, "resume" = app returned to the foreground. Both are
+// gated by `scanOnStartup` (the user-facing "auto-scan" switch) and throttled
+// by RESUME_MIN_GAP_MINUTES so rapid app switching can't trigger back-to-back
+// scans.
+export type ScanTrigger = "manual" | "startup" | "resume" | "scheduled";
+
+export const RESUME_MIN_GAP_MINUTES = 5;
 
 export interface ScanScheduleConfig {
   enabled: boolean; // master switch for automatic (startup/scheduled) scans
@@ -28,6 +34,8 @@ export interface ScanDecision {
 
 export const DEFAULT_SCAN_SCHEDULE: ScanScheduleConfig = {
   enabled: true,
+  // Off by default: scanning the gallery on open reads the person's photos, so
+  // it is opt-in (Settings -> Auto-scan new slips).
   scanOnStartup: false,
   intervalMinutes: 360, // 6h
   minBatteryPercent: 20,
@@ -50,11 +58,14 @@ export function decideScan(params: DecideScanParams): ScanDecision {
   if (trigger === "manual") return { shouldScan: true, reason: "manual" };
 
   if (!config.enabled) return { shouldScan: false, reason: "disabled" };
-  if (trigger === "startup" && !config.scanOnStartup) return { shouldScan: false, reason: "startup-disabled" };
+  if ((trigger === "startup" || trigger === "resume") && !config.scanOnStartup) {
+    return { shouldScan: false, reason: "startup-disabled" };
+  }
 
-  if (trigger === "scheduled" && lastScanAt !== null) {
+  if (lastScanAt !== null) {
     const elapsedMin = (now - lastScanAt) / 60_000;
-    if (elapsedMin < config.intervalMinutes) return { shouldScan: false, reason: "too-soon" };
+    if (trigger === "scheduled" && elapsedMin < config.intervalMinutes) return { shouldScan: false, reason: "too-soon" };
+    if (trigger === "resume" && elapsedMin < RESUME_MIN_GAP_MINUTES) return { shouldScan: false, reason: "too-soon" };
   }
 
   if (config.requireCharging && device.charging === false) {

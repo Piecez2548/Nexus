@@ -33,6 +33,11 @@ export interface ScanOptions {
   // -- a bounded, one-off range scan is never resumed from/into the shared
   // incremental cursor (see scanSessionService.ts's own comment on why).
   dateRange?: { from?: string; to?: string };
+  // Starting point for a fresh incremental run: only assets added after this
+  // ISO timestamp are enumerated, instead of the whole gallery. Ignored when a
+  // date range is set or an interrupted run is being resumed. Used by the
+  // hands-free scan to look at recent photos only.
+  sinceCursor?: string;
   // Optional scan-queue tuning (GS-007); resolved to dynamic/device defaults
   // when omitted.
   concurrency?: number;

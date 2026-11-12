@@ -35,6 +35,19 @@ export default function ToastContainer() {
 
               <p className="flex-1 text-sm text-zinc-900 dark:text-white">{toast.message}</p>
 
+              {toast.action && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.action?.onClick();
+                    dismiss(toast.id);
+                  }}
+                  className="min-h-8 shrink-0 rounded-lg px-2 text-sm font-medium text-zinc-900 underline dark:text-white"
+                >
+                  {toast.action.label}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => dismiss(toast.id)}

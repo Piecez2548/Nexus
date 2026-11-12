@@ -184,6 +184,12 @@ describe("GalleryScanFlow", () => {
 
     render(<GalleryScanFlow />);
 
+    // Restored silently: a "Review pending" button appears, and the preview
+    // opens only when the person taps it.
+    const reviewButton = await screen.findByRole("button", { name: /review/i });
+    expect(screen.queryByText("Import preview")).not.toBeInTheDocument();
+    await userEvent.setup().click(reviewButton);
+
     await waitFor(() => expect(screen.getByText("Import preview")).toBeInTheDocument());
     expect(screen.getByText(/OCR Cafe pending-ocr/)).toBeInTheDocument();
   });
