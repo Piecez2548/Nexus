@@ -5,11 +5,15 @@ for (const mode of ["light", "dark", "mono"]) {
   test(`workspace accessibility ${mode}`, async ({ page }, testInfo) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: 390, height: 900 });
+    // Audit the settled page, not a frame of an entrance fade: mid-animation
+    // colours gave different contrast failures on every retry.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.addInitScript(themeMode => localStorage.setItem("nexus-app-settings", JSON.stringify({ state: { themeMode }, version: 0 })), mode);
     const findings = [];
     for (const route of ["/dashboard", "/finance", "/transactions", "/favorites", "/accounts", "/net-worth", "/subscriptions", "/categories", "/merchants", "/budget", "/goals", "/recipients", "/reports", "/executive", "/ai-analytics", "/todo", "/habits", "/schedule", "/vault", "/workouts", "/settings", "/projects"]) {
       await page.goto(route);
       await expect(page.locator("main h1")).toBeVisible();
+      await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running" || animation.effect?.getComputedTiming().iterations === Infinity));
       await page.addScriptTag({ content: axe });
       const violations = await page.evaluate(async () => {
         const engine = (window as unknown as { axe: { run: (options: object) => Promise<{ violations: { id: string; nodes: { target: string[]; failureSummary: string }[] }[] }> } }).axe;
