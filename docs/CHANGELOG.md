@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-13 — Android: stop logging plugin results to logcat
+
+- Capacitor's default `loggingBehavior` ("debug") wrote every plugin call and its result to logcat in debug builds. That included the app-lock PIN returned by `NativeBiometric.getCredentials`, readable by anyone with USB access to the phone.
+- `capacitor.config.ts` now sets `loggingBehavior: "none"`. Web console output is still available through WebView remote debugging and the in-app scanner diagnostics.
+- Verified on the phone: after installing the new APK and unlocking the app, logcat had no Capacitor lines and no credentials.
+
 ## 2026-11-13 — Slip OCR reads K PLUS slips with a textured background
 
 - Verified on a device: the bank-album filter picked only the "K PLUS" album and found its 4 slips. But OCR read no amount on any of them, so nothing could be saved and the app said "No slips found".
