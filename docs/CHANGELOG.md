@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-13 — Slip OCR reads K PLUS slips with a textured background
+
+- Verified on a device: the bank-album filter picked only the "K PLUS" album and found its 4 slips. But OCR read no amount on any of them, so nothing could be saved and the app said "No slips found".
+- Cause: the new K PLUS slip has fine building artwork behind the text. The OCR preprocessing darkens bright, low-contrast images, raises contrast and sharpens them before binarising, and on this slip that brought the texture back and buried the amount line. Plain binarising (no enhancement) drops the texture and reads the amount correctly.
+- Fix: when the first OCR pass finds no amount, `runOcrFallback` retries once on a plain binarised image (`preprocessForOcr(bytes, { enhance: false })`) and keeps that result only if it found an amount. Slips that already read correctly are unchanged and do not pay for a second pass.
+- The OCR engine version is now "2", so images cached as scanned by the old OCR (including those 4 slips) are scanned again.
+- Checked against two real K PLUS slips with Tesseract on desktop (47.00 and 75.00 baht). Not yet re-checked on the phone.
+
 ## 2026-11-12 — Automatic slip scan reads only banking-app albums (Android)
 
 - The automatic scan (on app open/resume) now looks only in the gallery albums that banking and wallet apps save slips into, such as K PLUS, SCB EASY, Krungthai NEXT, Krungsri, ttb, MyMo, TrueMoney and Thai-named albums such as "สลิป". This makes it faster and means other photos are never opened. Matching is by album name and path (`bankAlbums.ts`).

@@ -39,6 +39,15 @@ export async function runOcrFallback(
   const prepared = await preprocessForOcr(bytes);
   const text = await recognizer.recognize(prepared);
   const fields = extractOcrSlipFields(text);
+  if (fields.amount !== undefined) return { ...fields, text };
 
-  return { ...fields, text };
+  // No amount: retry once on a plain binarised image (no contrast/sharpen).
+  // The enhancement can resurface a textured slip background (K PLUS's
+  // building artwork) and bury the amount; slips that already read fine
+  // never pay for this second pass.
+  const plain = await preprocessForOcr(bytes, { enhance: false });
+  const retryText = await recognizer.recognize(plain);
+  const retryFields = extractOcrSlipFields(retryText);
+  if (retryFields.amount === undefined) return { ...fields, text };
+  return { ...retryFields, text: retryText };
 }

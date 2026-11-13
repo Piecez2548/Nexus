@@ -145,4 +145,20 @@ describe("preprocessForOcr with a faked browser image pipeline", () => {
     expect(target).toBeDefined();
     expect(Math.max(target!.width, target!.height)).toBeLessThanOrEqual(1600); // well within the 1200px-short-edge target for this aspect ratio
   });
+
+  it("skips analysis and enhancement entirely when called with enhance: false", async () => {
+    fillMode = "dark"; // would normally trigger the full-resolution enhance + sharpen path
+    const createImageBitmap = stubBitmap(300, 400);
+
+    await preprocessForOcr(new Uint8Array(4_732_739), { enhance: false });
+
+    // No 64x64 stats sample and no full-resolution intermediate canvas:
+    // only the resize target, drawn straight from the decoded bitmap.
+    expect(createdCanvases.find((c) => c.width === 64)).toBeUndefined();
+    expect(createdCanvases.find((c) => c.width === 300 && c.height === 400)).toBeUndefined();
+    expect(createImageBitmap).toHaveBeenCalledTimes(1);
+    const target = createdCanvases[0]!;
+    const [source] = target.ctx.drawImage.mock.calls[0] as [unknown];
+    expect(source).not.toBeInstanceOf(FakeOffscreenCanvas);
+  });
 });

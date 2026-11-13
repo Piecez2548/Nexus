@@ -41,4 +41,46 @@ describe("runOcrFallback", () => {
     expect(fields.amount).toBe(500);
     expect(fields.time).toBe("08:15");
   });
+
+  it("keeps the first pass and does not retry when it already found the amount", async () => {
+    let calls = 0;
+    const recognizer: OcrTextRecognizer = {
+      async recognize(): Promise<string> {
+        calls += 1;
+        return "จำนวน 47.00 บาท";
+      },
+    };
+    const fields = await runOcrFallback(new Uint8Array([1, 2, 3]), recognizer);
+    expect(fields.amount).toBe(47);
+    expect(calls).toBe(1);
+  });
+
+  it("retries once on a plain binarised image when the first pass finds no amount", async () => {
+    const texts = ["ชำระเงินสำเร็จ\n13 พ.ย. 69 11:33 น.\nจำนวน: ฒ@ฒ8", "จำนวน:\n47.00 บาท\nค่าธรรมเนียม:\n0.00 บาท"];
+    let calls = 0;
+    const recognizer: OcrTextRecognizer = {
+      async recognize(): Promise<string> {
+        return texts[calls++]!;
+      },
+    };
+    const fields = await runOcrFallback(new Uint8Array([1, 2, 3]), recognizer);
+    expect(calls).toBe(2);
+    expect(fields.amount).toBe(47);
+    expect(fields.text).toBe(texts[1]);
+  });
+
+  it("keeps the first pass when the retry finds no amount either", async () => {
+    const texts = ["เวลา 08:15 น.", "random photo text"];
+    let calls = 0;
+    const recognizer: OcrTextRecognizer = {
+      async recognize(): Promise<string> {
+        return texts[calls++]!;
+      },
+    };
+    const fields = await runOcrFallback(new Uint8Array([1, 2, 3]), recognizer);
+    expect(calls).toBe(2);
+    expect(fields.amount).toBeUndefined();
+    expect(fields.time).toBe("08:15");
+    expect(fields.text).toBe(texts[0]);
+  });
 });
