@@ -74,6 +74,10 @@ function extractAmount(text: string): number | undefined {
 const MIN_PLAUSIBLE_YEAR = 2000;
 const MAX_PLAUSIBLE_YEAR = 2100;
 
+// Dots, commas, spaces and a stray SARA U that OCR puts inside an abbreviated
+// Thai month name; stripped when mapping a match back to its month.
+const MONTH_PUNCTUATION = /[.,\s\u0E38]/g;
+
 function extractDate(text: string): string | undefined {
   // Not anchored to digit/dash/x on either side, so the match can't be a
   // fragment inside a longer masked-account or reference-number run (e.g.
@@ -89,17 +93,30 @@ function extractDate(text: string): string | undefined {
     }
   }
 
-  const thaiMonthPattern = Object.keys(THAI_MONTHS)
+  // OCR often drops or misreads the dots and spacing of an abbreviated month
+  // ("11พ.ย.69", "12 พ.ย 69", "12พุย.69" with SARA U for the first dot), so
+  // each abbreviation matches with every dot optional (or read as "," / "ุ")
+  // and is mapped back by its letters alone.
+  const monthByLetters = new Map<string, number>();
+  const monthPatterns = Object.keys(THAI_MONTHS)
     .sort((a, b) => b.length - a.length)
-    .map((m) => m.replace(/\./g, "\\."))
-    .join("|");
-  const thaiMatch = new RegExp(`(\\d{1,2})\\s*(${thaiMonthPattern})\\s*(\\d{2,4})`).exec(text);
+    .map((name) => {
+      monthByLetters.set(name.replace(MONTH_PUNCTUATION, ""), THAI_MONTHS[name]!);
+      if (!name.includes(".")) return name;
+      return name
+        .split(".")
+        .filter(Boolean)
+        .join("[.,\\u0E38]?\\s*") + "[.,]?";
+    });
+  const thaiMatch = new RegExp(`(?<!\\d)(\\d{1,2})\\s*(${monthPatterns.join("|")})\\s*(\\d{2,4})(?!\\d)`).exec(text);
 
   if (thaiMatch) {
     const day = Number(thaiMatch[1]);
-    const month = THAI_MONTHS[thaiMatch[2]];
+    const month = monthByLetters.get(thaiMatch[2]!.replace(MONTH_PUNCTUATION, ""));
     const year = toGregorianYear(Number(thaiMatch[3]));
-    return `${year}-${pad2(month)}-${pad2(day)}`;
+    if (month !== undefined && day >= 1 && day <= 31 && year >= MIN_PLAUSIBLE_YEAR && year <= MAX_PLAUSIBLE_YEAR) {
+      return `${year}-${pad2(month)}-${pad2(day)}`;
+    }
   }
 
   return undefined;

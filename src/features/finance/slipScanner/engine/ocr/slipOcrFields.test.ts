@@ -46,4 +46,11 @@ describe("extractOcrSlipFields", () => {
     expect(fields.reference).toBeUndefined();
     expect(fields.merchant).toBeUndefined();
   });
+
+  it("reads the reference when OCR drops the tone mark from the label", () => {
+    expect(extractOcrSlipFields("เลขทีรายการ:\n016315072726CTF09504").reference).toBe("016315072726CTF09504");
+    expect(extractOcrSlipFields("รหัสอางอิง 2026111312345").reference).toBe("2026111312345");
+    // K PLUS: the QR caption sits on the label line, the number on the next.
+    expect(extractOcrSlipFields("เลขทีรายการ:                สแกน\n016315072726CTF09504   ตรวจสอบสลิป").reference).toBe("016315072726CTF09504");
+  });
 });

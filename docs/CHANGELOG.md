@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-13 — Slip OCR reads the date and reference number on K PLUS slips
+
+- Date: an abbreviated Thai month now matches when OCR drops or misreads its dots and spaces ("11พ.ย.69", "12 พ.ย 69", "12พุย.69"). The day and year are range-checked as for numeric dates.
+- Reference number: the label matches without its tone marks ("เลขทีรายการ", "อางอิง"), and the number may be on the next line after label-line text with no Latin letters or digits (K PLUS prints the QR caption "สแกน" there). The reference helps the importer spot a slip saved twice.
+- Parser version is now "3", so cached slips are parsed again.
+- Checked against the OCR text of three real K PLUS slips: all now give amount, date and reference.
+
 ## 2026-11-13 — E2E suite green again: 44px desktop targets, settled accessibility audit
 
 - Desktop sets the root font size to 80%, so rem-based 44px targets (`min-h-11`) rendered at about 35px: sidebar links were 39px tall and top-bar buttons and the theme switch 35–37px. The 1280px shell and theme E2E tests failed on this. `mainTheme.css` now keeps shell controls and switches at a real 44px on desktop.
