@@ -1,5 +1,6 @@
 import { db } from "@/database/db";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
+import { latestCandidatePerAsset } from "@/features/finance/slipScanner/services/reviewQueue";
 
 // Thin repository over the local (unsynced) slipScanCandidates table — same
 // rationale as scanRunRepository: device-local operational state, not a
@@ -31,7 +32,7 @@ export const scanCandidateRepository = {
     if (completedIds.size === 0) return [];
 
     const rows = await db.slipScanCandidates.toArray();
-    return rows.filter((row) => completedIds.has(row.runId)).map((row) => row.candidate);
+    return latestCandidatePerAsset(rows.filter((row) => completedIds.has(row.runId)));
   },
 
   async clearCandidates(candidateIds: Iterable<string>): Promise<void> {

@@ -30,6 +30,7 @@ import { scanCandidateRepository } from "@/features/finance/slipScanner/reposito
 import ScannerDiagnosticsPanel from "@/features/finance/slipScanner/components/ScannerDiagnosticsPanel";
 import { runManualGalleryScan } from "@/features/finance/slipScanner/services/manualGalleryScan";
 import { AUTOMATIC_GALLERY_SCAN_MODE, scannerSafeVerificationMode } from "@/features/finance/slipScanner/services/scannerMode";
+import { mergeReviewQueue } from "@/features/finance/slipScanner/services/reviewQueue";
 import { recordScannerDiagnostic } from "@/features/finance/slipScanner/services/scannerDiagnostics";
 
 type Phase = "idle" | "banks";
@@ -196,7 +197,8 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
       if (!active || pending.length === 0) return;
       // Restored silently: the "Review pending" button shows the count, the
       // sheet opens only when the person taps it.
-      setReviewCandidates(pending);
+      // Merged under anything a scan already queued this session (newer wins).
+      setReviewCandidates((current) => mergeReviewQueue(pending, current));
     });
     return () => {
       active = false;
@@ -371,7 +373,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
     }
 
     if (scanOriginRef.current === "manual") {
-      setReviewCandidates(visibleCandidates);
+      setReviewCandidates((pending) => mergeReviewQueue(pending, visibleCandidates));
       if (visibleCandidates.length === 0) {
         toast.error(t("slipScanner.galleryScan.noneFound"));
         scan.reset();
@@ -385,7 +387,9 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
 
     const candidatesToImport = visibleCandidates.filter(isVerifiedQrCandidate);
     const candidatesForReview = visibleCandidates.filter((candidate) => !isVerifiedQrCandidate(candidate));
-    setReviewCandidates(candidatesForReview);
+    // Added to the pending queue, never replacing it: an automatic scan that
+    // finds nothing new must not drop slips restored from an earlier scan.
+    setReviewCandidates((pending) => mergeReviewQueue(pending, candidatesForReview));
     if (candidatesToImport.length === 0) {
       if (visibleCandidates.length > 0) {
         toast.error(t("slipScanner.galleryScan.noVerifiedQr"));
@@ -394,7 +398,8 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
         // the sheet above).
         scan.reset({ preserveCandidateIds: candidatesForReview.map((candidate) => candidate.id) });
       } else {
-        toast.error(t("slipScanner.galleryScan.noneFound"));
+        // Nothing new since the last scan is the normal outcome of a
+        // hands-free scan on open/resume, not an error worth a toast.
         scan.reset();
       }
       return;
@@ -409,7 +414,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
       const result = await handleImport(candidatesToImport);
       if (!result) {
         scan.reset({ preserveCandidateIds: visibleCandidates.map((candidate) => candidate.id) });
-        setReviewCandidates(visibleCandidates);
+        setReviewCandidates((pending) => mergeReviewQueue(pending, visibleCandidates));
         return;
       }
 
@@ -423,7 +428,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
       const remaining = visibleCandidates.filter(
         (candidate) => !resolvedIds.has(candidate.id) && (!isVerifiedQrCandidate(candidate) || failedIds.has(candidate.id)),
       );
-      setReviewCandidates(remaining);
+      setReviewCandidates((pending) => mergeReviewQueue(pending.filter((candidate) => !resolvedIds.has(candidate.id)), remaining));
       scan.reset({ preserveCandidateIds: remaining.map((candidate) => candidate.id) });
     })();
     // scanSettled is the explicit completion signal from the scan promise, so
@@ -554,7 +559,8 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
           {t("slipScanner.diagnostics.safeMode")}
         </div>
       )}
-      <ScannerDiagnosticsPanel />
+      {/* Developer aid only: never shown in a built app (APK or web). */}
+      {import.meta.env.DEV && <ScannerDiagnosticsPanel />}
 
     </>
   );

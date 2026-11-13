@@ -46,6 +46,19 @@ describe("scanCandidateRepository review queue", () => {
     expect((await scanCandidateRepository.listCompletedRuns()).map((item) => item.id)).toEqual(["completed"]);
   });
 
+  it("lists only the newest run's candidate when an image was re-scanned", async () => {
+    const run = (startedAt: string) =>
+      db.slipScanRuns.add({ status: "completed", source: "native-media", startedAt, total: 1, done: 1, skipped: 0, failed: 0 });
+    const oldRun = await run("2026-11-13T04:59:00.000Z");
+    const newRun = await run("2026-11-13T06:00:00.000Z");
+    await scanCandidateRepository.add(oldRun, { ...candidate("old-reading"), assetId: "img-1", amount: undefined });
+    await scanCandidateRepository.add(newRun, { ...candidate("new-reading"), assetId: "img-1", amount: 1300 });
+
+    const listed = await scanCandidateRepository.listCompletedRuns();
+    expect(listed.map((item) => item.id)).toEqual(["new-reading"]);
+    expect(listed[0]!.amount).toBe(1300);
+  });
+
   it("removes resolved candidates across their original scan runs", async () => {
     const firstRun = await db.slipScanRuns.add({
       status: "completed",
