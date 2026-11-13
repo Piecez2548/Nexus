@@ -17,11 +17,31 @@ describe("runManualGalleryScan", () => {
     const scan = vi.fn().mockResolvedValue(undefined);
     const onPermissionUnavailable = vi.fn();
 
-    await expect(runManualGalleryScan({ permission, scan, onPermissionUnavailable, dateRange: { from: "2026-10-01" } })).resolves.toBe(true);
+    await expect(
+      runManualGalleryScan({ permission, scan, onPermissionUnavailable, dateRange: { from: "2026-10-01" }, findBankAlbums: async () => null }),
+    ).resolves.toBe(true);
 
     expect(permission.request).not.toHaveBeenCalled();
-    expect(scan).toHaveBeenCalledWith(false, { from: "2026-10-01" }, true);
+    expect(scan).toHaveBeenCalledWith(false, { from: "2026-10-01" }, true, undefined, undefined);
     expect(onPermissionUnavailable).not.toHaveBeenCalled();
+  });
+
+  it("limits the scan to bank albums when the device has them", async () => {
+    const permission = { check: vi.fn().mockResolvedValue(granted), request: vi.fn() };
+    const scan = vi.fn().mockResolvedValue(undefined);
+
+    await runManualGalleryScan({ permission, scan, onPermissionUnavailable: vi.fn(), findBankAlbums: async () => ["kplus"] });
+
+    expect(scan).toHaveBeenCalledWith(false, undefined, true, undefined, ["kplus"]);
+  });
+
+  it("scans the whole gallery when no bank album is found", async () => {
+    const permission = { check: vi.fn().mockResolvedValue(granted), request: vi.fn() };
+    const scan = vi.fn().mockResolvedValue(undefined);
+
+    await runManualGalleryScan({ permission, scan, onPermissionUnavailable: vi.fn(), findBankAlbums: async () => [] });
+
+    expect(scan).toHaveBeenCalledWith(false, undefined, true, undefined, undefined);
   });
 
   it("requests permission when needed and continues only after grant", async () => {

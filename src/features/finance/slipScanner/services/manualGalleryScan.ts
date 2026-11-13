@@ -1,3 +1,4 @@
+import { findBankAlbumIds } from "@/features/finance/slipScanner/gallery/media/bankAlbums";
 import { galleryPermissionService } from "@/features/finance/slipScanner/gallery/permission/galleryPermissionService";
 import type { GalleryPermissionResult } from "@/features/finance/slipScanner/gallery/permission/galleryPermission.types";
 import type { ScanOptions } from "@/features/finance/slipScanner/models/scanTypes";
@@ -6,7 +7,14 @@ import { MANUAL_GALLERY_SCAN_MODE } from "@/features/finance/slipScanner/service
 
 export interface ManualGalleryScanDependencies {
   permission?: Pick<typeof galleryPermissionService, "check" | "request">;
-  scan: (incremental: boolean, dateRange: ScanOptions["dateRange"], exhaustive: boolean) => Promise<void>;
+  scan: (
+    incremental: boolean,
+    dateRange: ScanOptions["dateRange"],
+    exhaustive: boolean,
+    sinceCursor?: string,
+    bucketIds?: readonly string[],
+  ) => Promise<void>;
+  findBankAlbums?: () => Promise<string[] | null>;
   onPermissionUnavailable: (result: GalleryPermissionResult) => void;
   dateRange?: ScanOptions["dateRange"];
 }
@@ -19,6 +27,7 @@ export async function runManualGalleryScan({
   scan,
   onPermissionUnavailable,
   dateRange,
+  findBankAlbums = findBankAlbumIds,
 }: ManualGalleryScanDependencies): Promise<boolean> {
   recordScannerDiagnostic("MANUAL_SCAN_STARTED");
   let result: GalleryPermissionResult;
@@ -42,7 +51,17 @@ export async function runManualGalleryScan({
 
   recordScannerDiagnostic("PERMISSION_GRANTED");
   // Manual is always a full, non-incremental extraction pass. Automatic
-  // startup remains configured separately by GalleryScanFlow.
-  await scan(MANUAL_GALLERY_SCAN_MODE.incremental, dateRange, MANUAL_GALLERY_SCAN_MODE.exhaustive);
+  // startup remains configured separately by GalleryScanFlow. Like the
+  // automatic scan, it reads only the albums banking apps save slips into:
+  // OCR on every camera photo took hours and found nothing. No bank album
+  // found falls back to the whole gallery.
+  const bankAlbumIds = await findBankAlbums();
+  await scan(
+    MANUAL_GALLERY_SCAN_MODE.incremental,
+    dateRange,
+    MANUAL_GALLERY_SCAN_MODE.exhaustive,
+    undefined,
+    bankAlbumIds && bankAlbumIds.length > 0 ? bankAlbumIds : undefined,
+  );
   return true;
 }

@@ -6,6 +6,26 @@ import { recordScannerDiagnostic } from "@/features/finance/slipScanner/services
 
 export type SlipExtractor = (input: ExtractSlipInput) => Promise<SlipCandidate | null>;
 
+// An OCR reading with no amount, date or reference is an ordinary photo, not
+// a slip. A gallery scan must not list it for review: a whole album of such
+// photos filled the queue with empty rows. QR candidates always stay, since
+// the QR itself marks the image as a slip.
+export function hasSlipFields(candidate: SlipCandidate): boolean {
+  return (
+    candidate.source !== "ocr" ||
+    candidate.amount !== undefined ||
+    candidate.date !== undefined ||
+    candidate.reference !== undefined
+  );
+}
+
+export function skipUnreadable(extractor: SlipExtractor): SlipExtractor {
+  return async (input) => {
+    const candidate = await extractor(input);
+    return candidate && hasSlipFields(candidate) ? candidate : null;
+  };
+}
+
 // The real per-image work for the GS-006 scan orchestration (the concurrent,
 // byte-budgeted, cacheable, pause/resume/cancel-able queue) — closes the gap
 // the architecture review found: `createScanSession` has always defaulted to

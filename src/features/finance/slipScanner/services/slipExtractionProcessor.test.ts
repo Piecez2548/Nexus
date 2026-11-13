@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import type { GalleryAssetRef } from "@/features/finance/slipScanner/models/scanTypes";
 
-import { createSlipExtractionProcessor } from "./slipExtractionProcessor";
+import { createSlipExtractionProcessor, hasSlipFields, skipUnreadable } from "./slipExtractionProcessor";
 
 const asset: GalleryAssetRef = { assetId: "a1" };
 
@@ -95,5 +95,30 @@ describe("createSlipExtractionProcessor", () => {
     );
 
     await expect(processor.process(asset, new Uint8Array([1]), "hash", 1, () => false)).rejects.toThrow("extraction failed");
+  });
+});
+
+describe("skipUnreadable", () => {
+  const input = { assetId: "a1", bytes: new Uint8Array([1]) };
+
+  it("drops an OCR reading with no amount, date or reference", async () => {
+    const extractor = skipUnreadable(async () => fakeCandidate({ confidence: 0 }));
+    await expect(extractor(input)).resolves.toBeNull();
+  });
+
+  it.each([{ amount: 47 }, { date: "2026-11-12" }, { reference: "016315123456" }])(
+    "keeps an OCR reading that has %o",
+    async (fields) => {
+      const candidate = fakeCandidate(fields);
+      await expect(skipUnreadable(async () => candidate)(input)).resolves.toBe(candidate);
+    },
+  );
+
+  it("keeps a QR candidate even without fields", () => {
+    expect(hasSlipFields(fakeCandidate({ source: "qr" }))).toBe(true);
+  });
+
+  it("passes a filtered (null) image through", async () => {
+    await expect(skipUnreadable(async () => null)(input)).resolves.toBeNull();
   });
 });
