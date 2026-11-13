@@ -7,6 +7,12 @@
 - Parser version is now "3", so cached slips are parsed again.
 - Checked against the OCR text of three real K PLUS slips: all now give amount, date and reference.
 
+## 2026-11-13 — E2E suite green again: 44px desktop targets, settled accessibility audit
+
+- Desktop sets the root font size to 80%, so rem-based 44px targets (`min-h-11`) rendered at about 35px: sidebar links were 39px tall and top-bar buttons and the theme switch 35–37px. The 1280px shell and theme E2E tests failed on this. `mainTheme.css` now keeps shell controls and switches at a real 44px on desktop.
+- `formal-accessibility.spec.ts` audited pages mid entrance animation, so contrast failures changed on every retry (fading text and buttons). It now runs with reduced motion and waits for finite animations to finish before running axe.
+- Checked locally: the three specs plus the header spec pass twice in a row (62 runs).
+
 ## 2026-11-13 — Slip review queue survives scans; diagnostics panel hidden
 
 - The "Review slips" button disappeared after an automatic scan that found nothing new: a finished scan replaced the review queue instead of adding to it, so slips restored from an earlier scan were dropped. Scans now add to the queue (`mergeReviewQueue`); a newer reading of the same image replaces the older one.

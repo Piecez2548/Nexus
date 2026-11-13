@@ -26,6 +26,11 @@
   .nexus-main .main-level { width: 16rem; }
   .nexus-main .main-user-menu { width: 14rem; }
 }
+/* Desktop scales the root font to 80% (index.css), which shrinks rem-based
+   44px targets (min-h-11) to ~35px. Keep shell controls at a real 44px. */
+@media (min-width: 1024px) {
+  .nexus-main [data-shell-audit] :is(button, a), .nexus-main [role='switch'] { min-width: 44px; min-height: 44px; }
+}
 @media (max-width: 1023px) {
   .nexus-main [data-shell-audit='sidebar'] { display: none; }
   .nexus-main [data-shell-audit='mobile-navigation'] { display: flex; }
