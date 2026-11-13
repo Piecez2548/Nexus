@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-13 — Slip review queue survives scans; diagnostics panel hidden
+
+- The "Review slips" button disappeared after an automatic scan that found nothing new: a finished scan replaced the review queue instead of adding to it, so slips restored from an earlier scan were dropped. Scans now add to the queue (`mergeReviewQueue`); a newer reading of the same image replaces the older one.
+- The queue restored on start lists only the newest candidate per image (`latestCandidatePerAsset`), so a slip re-scanned after the OCR/parser fixes is not listed twice (old reading without an amount and the new one).
+- An automatic scan that finds nothing new no longer shows the "No slips found" error toast.
+- The Scanner diagnostics panel is shown only in development (`import.meta.env.DEV`), not in the APK or the deployed web app.
+
 ## 2026-11-13 — Android: stop logging plugin results to logcat
 
 - Capacitor's default `loggingBehavior` ("debug") wrote every plugin call and its result to logcat in debug builds. That included the app-lock PIN returned by `NativeBiometric.getCredentials`, readable by anyone with USB access to the phone.
