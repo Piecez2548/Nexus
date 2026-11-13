@@ -30,6 +30,27 @@ beforeEach(() => {
 });
 
 describe("NativeMediaProvider", () => {
+  it("limits count and paging to the given albums", async () => {
+    count.mockResolvedValue({ total: 1 });
+    page.mockResolvedValue({ assets: [asset("1", "2026-01-01T00:00:00.000Z")] });
+    const provider = new NativeMediaProvider(["kplus", "scb"]);
+
+    await provider.count();
+    const seen: string[] = [];
+    for await (const ref of provider.enumerate()) seen.push(ref.assetId);
+
+    expect(seen).toEqual(["1"]);
+    expect(count).toHaveBeenCalledWith(expect.objectContaining({ bucketIds: ["kplus", "scb"] }));
+    expect(page).toHaveBeenCalledWith(expect.objectContaining({ bucketIds: ["kplus", "scb"], offset: 0 }));
+  });
+
+  it("sends no album filter when none or an empty list is given", async () => {
+    count.mockResolvedValue({ total: 0 });
+    await new NativeMediaProvider().count();
+    await new NativeMediaProvider([]).count();
+    for (const [options] of count.mock.calls) expect(options).not.toHaveProperty("bucketIds");
+  });
+
   it("counts through the native plugin, converting an ISO since-cursor to epoch ms", async () => {
     count.mockResolvedValue({ total: 42 });
     const provider = new NativeMediaProvider();
