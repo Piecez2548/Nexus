@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-13 — K PLUS slips: correct payee, more references, no amount cut from a long number
+
+- Payee: every K PLUS slip showed the amount label "จำนวน:" (or "จ้านวน:", or a biller number) as the payee. OCR puts a short token in front of the account line ("J   XXX-X-X5327-x") and reads the masking x as "%", so the payer's account was missed and the scan started after the payee's account. The account line now allows both, a bare amount label line is skipped, and icon noise before the name ("ซู", "oO", "69") is dropped. A name needs at least 3 letters, so lines of digits and symbols are skipped.
+- Reference: the label also matches when OCR drops the vowel ("เลขทรายการ"), and the number may be two lines down (K PLUS sometimes prints "สแกน" on its own line in between).
+- Amount: a number with more digits after its 2 decimals is not an amount (a misread reference "0.0163171133100" gave 0.01).
+- Parser version is now "4", so cached slips are parsed again.
+- Checked against the OCR text of 5 real K PLUS slips from the phone: 4 now give the right amount, date, reference and payee; the fifth is mostly unreadable OCR and now gives no amount instead of 0.01.
+
 ## 2026-11-13 — Sync works on the current Supabase project
 
 - The current Supabase project gave the `authenticated` role no SELECT/INSERT/UPDATE/DELETE on any app table, so every sync failed with "permission denied for table synced_records" and the server held no rows. The old project got these grants by default; newer projects do not.

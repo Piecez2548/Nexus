@@ -53,4 +53,9 @@ describe("extractOcrSlipFields", () => {
     // K PLUS: the QR caption sits on the label line, the number on the next.
     expect(extractOcrSlipFields("เลขทีรายการ:                สแกน\n016315072726CTF09504   ตรวจสอบสลิป").reference).toBe("016315072726CTF09504");
   });
+
+  it("reads the reference when OCR drops the vowel and the number is two lines down", () => {
+    expect(extractOcrSlipFields("เลขทรายการ:     สแกน\n016316095838CPM11659 ตรวจสอบสลิป").reference).toBe("016316095838CPM11659");
+    expect(extractOcrSlipFields("เลขทีรายการ:\nสแกน\n016316182653DQR07129 ตรวจสอบสลิป").reference).toBe("016316182653DQR07129");
+  });
 });
