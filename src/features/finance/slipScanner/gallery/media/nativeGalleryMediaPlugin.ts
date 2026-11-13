@@ -7,6 +7,15 @@ export interface GalleryMediaAsset {
   filename: string;
 }
 
+// One MediaStore bucket (a gallery album/folder). `path` is the album's
+// RELATIVE_PATH (e.g. "Pictures/K PLUS/") on Android 10+, "" before that.
+export interface GalleryAlbum {
+  id: string;
+  name: string;
+  path: string;
+  count: number;
+}
+
 // Native contract for MediaStore-backed gallery enumeration (Slip
 // Intelligence Phase 8). Backed by the same native class/name as
 // GalleryPermissions (galleryPermissionPlugin.ts) -- GalleryMediaPlugin.java
@@ -14,8 +23,11 @@ export interface GalleryMediaAsset {
 // the same string name just returns another differently-typed proxy onto
 // that one native registration.
 export interface NativeGalleryMediaPlugin {
-  count(options: { sinceCursorMs?: number; untilCursorMs?: number }): Promise<{ total: number }>;
-  page(options: { sinceCursorMs?: number; untilCursorMs?: number; offset: number; limit: number }): Promise<{ assets: GalleryMediaAsset[] }>;
+  // `bucketIds` limits the query to those albums; omitted or empty = every album.
+  count(options: { sinceCursorMs?: number; untilCursorMs?: number; bucketIds?: string[] }): Promise<{ total: number }>;
+  page(options: { sinceCursorMs?: number; untilCursorMs?: number; bucketIds?: string[]; offset: number; limit: number }): Promise<{ assets: GalleryMediaAsset[] }>;
+  // Albums with photo counts. Missing on APKs built before it was added.
+  albums(): Promise<{ albums: GalleryAlbum[] }>;
   // `data` is base64 (Capacitor's JSON bridge has no raw binary transport).
   readBytes(options: { assetId: string }): Promise<{ data: string }>;
 }

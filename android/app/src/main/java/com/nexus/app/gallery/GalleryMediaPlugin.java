@@ -24,7 +24,9 @@ import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.TimeZone;
 
@@ -139,9 +141,31 @@ public class GalleryMediaPlugin extends Plugin {
         }
     }
 
-    private static DateRangeSelection buildDateRangeSelection(Long sinceCursorMs, Long untilCursorMs) {
+    // Reads the optional "bucketIds" array (album ids from albums()). Missing
+    // or empty means "every album", so callers that never pass it -- and JS
+    // built before this option existed -- keep scanning the whole gallery.
+    private static List<String> readBucketIds(PluginCall call) {
+        List<String> ids = new ArrayList<>();
+        JSArray raw = call.getArray("bucketIds");
+        if (raw == null) return ids;
+        for (int i = 0; i < raw.length(); i++) {
+            String id = raw.optString(i, null);
+            if (id != null && !id.isEmpty()) ids.add(id);
+        }
+        return ids;
+    }
+
+    private static DateRangeSelection buildSelection(Long sinceCursorMs, Long untilCursorMs, List<String> bucketIds) {
         List<String> clauses = new ArrayList<>();
         List<String> args = new ArrayList<>();
+        if (bucketIds != null && !bucketIds.isEmpty()) {
+            StringBuilder in = new StringBuilder(MediaStore.Images.Media.BUCKET_ID + " IN (");
+            for (int i = 0; i < bucketIds.size(); i++) {
+                in.append(i == 0 ? "?" : ",?");
+                args.add(bucketIds.get(i));
+            }
+            clauses.add(in.append(")").toString());
+        }
         if (sinceCursorMs != null) {
             clauses.add(MediaStore.Images.Media.DATE_ADDED + " > ?");
             args.add(String.valueOf(sinceCursorMs / 1000L));
@@ -158,9 +182,10 @@ public class GalleryMediaPlugin extends Plugin {
     public void count(PluginCall call) {
         Long sinceCursorMs = call.getLong("sinceCursorMs");
         Long untilCursorMs = call.getLong("untilCursorMs");
+        List<String> bucketIds = readBucketIds(call);
         execute(() -> {
             try {
-                DateRangeSelection range = buildDateRangeSelection(sinceCursorMs, untilCursorMs);
+                DateRangeSelection range = buildSelection(sinceCursorMs, untilCursorMs, bucketIds);
                 String selection = range.selection;
                 String[] selectionArgs = range.selectionArgs;
                 int total = 0;
@@ -182,16 +207,72 @@ public class GalleryMediaPlugin extends Plugin {
         });
     }
 
+    // Lists the gallery's albums (MediaStore buckets) with their photo counts,
+    // so the scanner can pick out the folders banking apps save slips into.
+    // Only names, paths and counts are returned -- no image is opened.
+    @PluginMethod
+    public void albums(PluginCall call) {
+        execute(() -> {
+            try {
+                boolean hasRelativePath = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
+                String[] projection = hasRelativePath
+                    ? new String[] {
+                        MediaStore.Images.Media.BUCKET_ID,
+                        MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+                        MediaStore.Images.Media.RELATIVE_PATH,
+                    }
+                    : new String[] { MediaStore.Images.Media.BUCKET_ID, MediaStore.Images.Media.BUCKET_DISPLAY_NAME };
+                Map<String, JSObject> byId = new LinkedHashMap<>();
+                Map<String, Integer> counts = new LinkedHashMap<>();
+                try (Cursor cursor = getContext().getContentResolver().query(IMAGES_URI, projection, null, null, null)) {
+                    if (cursor != null) {
+                        int idCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID);
+                        int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
+                        int pathCol = hasRelativePath ? cursor.getColumnIndex(MediaStore.Images.Media.RELATIVE_PATH) : -1;
+                        while (cursor.moveToNext()) {
+                            String id = cursor.getString(idCol);
+                            if (id == null) continue;
+                            Integer seen = counts.get(id);
+                            counts.put(id, seen == null ? 1 : seen + 1);
+                            if (seen != null) continue;
+                            JSObject album = new JSObject();
+                            album.put("id", id);
+                            String name = cursor.getString(nameCol);
+                            album.put("name", name != null ? name : "");
+                            String path = pathCol >= 0 ? cursor.getString(pathCol) : null;
+                            album.put("path", path != null ? path : "");
+                            byId.put(id, album);
+                        }
+                    }
+                }
+                JSArray albums = new JSArray();
+                for (Map.Entry<String, JSObject> entry : byId.entrySet()) {
+                    JSObject album = entry.getValue();
+                    album.put("count", counts.get(entry.getKey()));
+                    albums.put(album);
+                }
+                JSObject result = new JSObject();
+                result.put("albums", albums);
+                call.resolve(result);
+            } catch (SecurityException e) {
+                call.reject("Gallery permission not granted", "PERMISSION_DENIED", e);
+            } catch (Exception e) {
+                call.reject("Failed to list gallery albums", e);
+            }
+        });
+    }
+
     @PluginMethod
     public void page(PluginCall call) {
         Long sinceCursorMs = call.getLong("sinceCursorMs");
         Long untilCursorMs = call.getLong("untilCursorMs");
         int offset = call.getInt("offset", 0);
         int limit = call.getInt("limit", DEFAULT_PAGE_LIMIT);
+        List<String> bucketIds = readBucketIds(call);
 
         execute(() -> {
             try {
-                DateRangeSelection range = buildDateRangeSelection(sinceCursorMs, untilCursorMs);
+                DateRangeSelection range = buildSelection(sinceCursorMs, untilCursorMs, bucketIds);
                 String selection = range.selection;
                 String[] selectionArgs = range.selectionArgs;
                 String sortOrder = MediaStore.Images.Media.DATE_ADDED + " ASC, " + MediaStore.Images.Media._ID + " ASC";

@@ -33,8 +33,13 @@ export function useGalleryScan() {
   // gallery -- see ScanOptions.dateRange for why this is never combined with
   // `incremental` (scanSessionService forces it off internally regardless).
   const scanNativeGallery = useCallback(
-    (incremental = true, processor?: ScanProcessor, dateRange?: ScanOptions["dateRange"], sinceCursor?: string) =>
-      start(new NativeMediaProvider(), { source: "native-media", incremental, dateRange, sinceCursor }, processor),
+    (
+      incremental = true,
+      processor?: ScanProcessor,
+      dateRange?: ScanOptions["dateRange"],
+      sinceCursor?: string,
+      bucketIds?: readonly string[],
+    ) => start(new NativeMediaProvider(bucketIds), { source: "native-media", incremental, dateRange, sinceCursor }, processor),
     [start]
   );
 

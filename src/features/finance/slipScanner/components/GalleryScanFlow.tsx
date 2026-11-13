@@ -10,6 +10,7 @@ import { useFullGalleryScan } from "@/features/finance/slipScanner/hooks/useFull
 import { useSmartImport } from "@/features/finance/slipScanner/hooks/useSmartImport";
 import { isNativeGalleryAvailable } from "@/features/finance/slipScanner/gallery/pickImages";
 import { NativeMediaProvider } from "@/features/finance/slipScanner/gallery/media/NativeMediaProvider";
+import { findBankAlbumIds } from "@/features/finance/slipScanner/gallery/media/bankAlbums";
 import { galleryPermissionService } from "@/features/finance/slipScanner/gallery/permission/galleryPermissionService";
 import type { ScanOptions } from "@/features/finance/slipScanner/models/scanTypes";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
@@ -131,6 +132,12 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
         }
         recordScannerDiagnostic("PERMISSION_GRANTED");
 
+        // Only the albums banking apps save slips into: faster, and the
+        // person's other photos are never opened. No bank album found (or an
+        // older APK that cannot list albums) falls back to the whole gallery.
+        const bankAlbumIds = await findBankAlbumIds();
+        if (!active) return;
+
         autoImportStartedRef.current = false;
         setRunInBackground(false);
         setIsAutomaticScan(true);
@@ -149,6 +156,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
           undefined,
           AUTOMATIC_GALLERY_SCAN_MODE.exhaustive,
           sinceCursor,
+          bankAlbumIds && bankAlbumIds.length > 0 ? bankAlbumIds : undefined,
         );
         if (active) {
           markScanned();

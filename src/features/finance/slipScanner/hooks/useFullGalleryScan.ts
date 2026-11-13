@@ -21,6 +21,7 @@ export interface UseFullGalleryScan {
     dateRange?: ScanOptions["dateRange"],
     exhaustive?: boolean,
     sinceCursor?: string,
+    bucketIds?: readonly string[],
   ) => Promise<void>;
   pause: () => void;
   resume: () => void;
@@ -162,13 +163,20 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
   );
 
   const scanNativeGallery = useCallback(
-    async (incremental = true, dateRange?: ScanOptions["dateRange"], exhaustive = false, sinceCursor?: string) => {
+    async (
+      incremental = true,
+      dateRange?: ScanOptions["dateRange"],
+      exhaustive = false,
+      sinceCursor?: string,
+      bucketIds?: readonly string[],
+    ) => {
       await beginNewRun(incremental && !dateRange);
       await gallery.scanNativeGallery(
         incremental,
         exhaustive ? exhaustiveGalleryProcessor : fullGalleryProcessor,
         dateRange,
         sinceCursor,
+        bucketIds,
       );
       setCandidates(flagBatchDuplicates);
     },
