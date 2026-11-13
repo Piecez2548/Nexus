@@ -175,4 +175,17 @@ describe("parseSlipText", () => {
   it("never returns a zero amount", () => {
     expect(parseSlipText("ค่าธรรมเนียม 0.00 บาท").amount).toBeUndefined();
   });
+
+  it.each([
+    ["11พ.ย.69 07:27น.", "2026-11-11"],
+    ["12 พ.ย 69 09:58 น.", "2026-11-12"],
+    ["12พุย.69 09:58 น.", "2026-11-12"],
+    ["3 ม.ค, 2569", "2026-01-03"],
+  ])("reads an OCR-mangled abbreviated Thai month (%s)", (line, expected) => {
+    expect(parseSlipText(line).date).toBe(expected);
+  });
+
+  it("rejects an impossible day in a Thai-month date", () => {
+    expect(parseSlipText("45 พ.ย. 69").date).toBeUndefined();
+  });
 });

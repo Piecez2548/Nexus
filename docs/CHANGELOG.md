@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-13 — Slip OCR reads the date and reference number on K PLUS slips
+
+- Date: an abbreviated Thai month now matches when OCR drops or misreads its dots and spaces ("11พ.ย.69", "12 พ.ย 69", "12พุย.69"). The day and year are range-checked as for numeric dates.
+- Reference number: the label matches without its tone marks ("เลขทีรายการ", "อางอิง"), and the number may be on the next line after label-line text with no Latin letters or digits (K PLUS prints the QR caption "สแกน" there). The reference helps the importer spot a slip saved twice.
+- Parser version is now "3", so cached slips are parsed again.
+- Checked against the OCR text of three real K PLUS slips: all now give amount, date and reference.
+
 ## 2026-11-13 — Slip review queue survives scans; diagnostics panel hidden
 
 - The "Review slips" button disappeared after an automatic scan that found nothing new: a finished scan replaced the review queue instead of adding to it, so slips restored from an earlier scan were dropped. Scans now add to the queue (`mergeReviewQueue`); a newer reading of the same image replaces the older one.
