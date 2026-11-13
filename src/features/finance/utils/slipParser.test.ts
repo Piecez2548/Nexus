@@ -155,4 +155,24 @@ describe("parseSlipText", () => {
     ].join("\n");
     expect(parseSlipText(text).recipient).toBe("สมหญิง รักดี");
   });
+
+  it("skips the zero fee line when OCR garbles the amount's currency marker (K PLUS)", () => {
+    const text = ["โอนเงินสำเร็จ", "11 พ.ย. 69 07:27 น.", "จํานวน:", "1,300.00 นบาท", "ค่าธรรมเนียม:", "0.00 บาท"].join("\n");
+    expect(parseSlipText(text).amount).toBe(1300);
+  });
+
+  it("reads the amount label when OCR splits SARA AM into two code points", () => {
+    // NIKHAHIT + SARA AA (U+0E4D U+0E32) instead of SARA AM (U+0E33) in "จำนวน".
+    const text = ["ยอดคงเหลือ 9,999.00", "จํานวน: 47.00 บาท"].join("\n");
+    expect(parseSlipText(text).amount).toBe(47);
+  });
+
+  it("does not guess an OCR-noise number when the only currency-marked amount is the zero fee", () => {
+    const text = ["อาหารตามสั่ง 1.05 551", "จํานวน: . ว 0", "ค่าธรรมเนียม 0.00 บาท"].join("\n");
+    expect(parseSlipText(text).amount).toBeUndefined();
+  });
+
+  it("never returns a zero amount", () => {
+    expect(parseSlipText("ค่าธรรมเนียม 0.00 บาท").amount).toBeUndefined();
+  });
 });

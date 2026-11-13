@@ -40,25 +40,33 @@ function extractAmount(text: string): number | undefined {
   // first 2-decimal number.
   const DECIMAL = "\\d{1,3}(?:,\\d{3})*\\.\\d{2}";
 
-  // Most specific: the amount label "จำนวน/จำนวนเงิน" (never "ค่าธรรมเนียม"/fee).
-  const amountLabel = new RegExp(`(?:จำนวนเงิน|จำนวน)\\s*[:\\-]?\\s*(${DECIMAL})`, "i").exec(text);
-  if (amountLabel?.[1]) return toAmount(amountLabel[1]);
+  // Each anchored rule takes its first *positive* match. A zero is never a
+  // slip amount but is common on the fee line ("ค่าธรรมเนียม 0.00 บาท"), so
+  // when OCR garbles the real amount's currency marker (K PLUS "1,300.00
+  // นบาท") the fee must not end the search with no amount.
+  const firstPositive = (pattern: RegExp): number | undefined => {
+    for (const match of text.matchAll(pattern)) {
+      const amount = match[1] ? toAmount(match[1]) : undefined;
+      if (amount !== undefined) return amount;
+    }
+    return undefined;
+  };
 
-  const beforeCurrency = new RegExp(`(${DECIMAL})\\s*(?:บาท|฿|THB|บ\\.)`, "i").exec(text);
-  if (beforeCurrency?.[1]) return toAmount(beforeCurrency[1]);
+  const currency = new RegExp(`(${DECIMAL})\\s*(?:บาท|฿|THB|บ\\.)`, "gi");
+  const anchored =
+    // Most specific: the amount label "จำนวน/จำนวนเงิน" (never "ค่าธรรมเนียม"/fee).
+    firstPositive(new RegExp(`(?:จำนวนเงิน|จำนวน)\\s*[:\\-]?\\s*(${DECIMAL})`, "gi")) ??
+    firstPositive(currency) ??
+    firstPositive(new RegExp(`฿\\s*(${DECIMAL})`, "gi")) ??
+    firstPositive(new RegExp(`(?:${DEFAULT_OCR_LABELS.amount.join("|")})\\s*[:\\-]?\\s*(${DECIMAL})`, "gi"));
+  if (anchored !== undefined) return anchored;
 
-  const afterSymbol = new RegExp(`฿\\s*(${DECIMAL})`, "i").exec(text);
-  if (afterSymbol?.[1]) return toAmount(afterSymbol[1]);
-
-  const afterLabel = new RegExp(
-    `(?:${DEFAULT_OCR_LABELS.amount.join("|")})\\s*[:\\-]?\\s*(${DECIMAL})`,
-    "i",
-  ).exec(text);
-  if (afterLabel?.[1]) return toAmount(afterLabel[1]);
-
-  const matches = text.match(new RegExp(DECIMAL, "g"));
-  if (!matches || matches.length === 0) return undefined;
-  return toAmount(matches[0]);
+  // Guess from an unanchored number only when the text has no currency-marked
+  // number at all. A slip whose only marked amount is the zero fee means the
+  // real amount was misread; guessing would pick OCR noise (e.g. "1.05").
+  currency.lastIndex = 0;
+  if (currency.test(text)) return undefined;
+  return firstPositive(new RegExp(`(${DECIMAL})`, "g"));
 }
 
 // Plausible Gregorian year bounds for a slip date — rejects a fabricated year
@@ -168,7 +176,10 @@ export interface ParsedSlip {
 
 // Best-effort extraction from raw OCR text — always meant to pre-fill an
 // editable form for user review, never to save a transaction unattended.
-export function parseSlipText(text: string): ParsedSlip {
+export function parseSlipText(rawText: string): ParsedSlip {
+  // Tesseract often emits SARA AM as NIKHAHIT + SARA AA ("จํานวน"), which
+  // would never match the "จำนวน" label; fold it back to the single code point.
+  const text = rawText.replace(/\u0E4D\u0E32/g, "\u0E33");
   const amount = extractAmount(text);
   const date = extractDate(text);
   const recipient = extractRecipient(text);

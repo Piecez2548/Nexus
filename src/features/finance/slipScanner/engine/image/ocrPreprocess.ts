@@ -40,11 +40,20 @@ import { otsuThreshold } from "@/features/finance/slipScanner/engine/image/otsu"
 const TARGET_SHORT_EDGE = 1200;
 const MAX_UPSCALE = 2;
 
-export async function preprocessForOcr(bytes: Uint8Array): Promise<Uint8Array> {
+export interface OcrPreprocessOptions {
+  // false skips the brightness/contrast/sharpen step and only resizes and
+  // binarises. Used as an OCR retry: on bright slips with a fine textured
+  // background (e.g. K PLUS's building artwork) the contrast boost and
+  // sharpen bring the texture back up past the Otsu threshold and it buries
+  // the amount line, while plain Otsu drops it cleanly.
+  enhance?: boolean;
+}
+
+export async function preprocessForOcr(bytes: Uint8Array, options: OcrPreprocessOptions = {}): Promise<Uint8Array> {
   if (typeof createImageBitmap !== "function") return bytes;
 
   try {
-    const stats = await analyzeImage(bytes);
+    const stats = options.enhance === false ? null : await analyzeImage(bytes);
     const plan = stats ? planEnhancements(stats) : null;
     const needsEnhancement = plan !== null && isEnhancementNeeded(plan);
 
