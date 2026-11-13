@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-13 — Sync works on the current Supabase project
+
+- The current Supabase project gave the `authenticated` role no SELECT/INSERT/UPDATE/DELETE on any app table, so every sync failed with "permission denied for table synced_records" and the server held no rows. The old project got these grants by default; newer projects do not.
+- Migration `20261113120000_grant_authenticated_table_access.sql` grants them on the six app tables. Row-level security still limits each user to their own rows. `mfa_backup_code_attempts` stays without grants (only the redeem function uses it).
+- Applied to the project from the SQL editor on 2026-11-13. A sync from Nexus Finance then pushed 32 transactions, 2 accounts and 1 category.
+
 ## 2026-11-13 — Slip OCR reads the date and reference number on K PLUS slips
 
 - Date: an abbreviated Thai month now matches when OCR drops or misreads its dots and spaces ("11พ.ย.69", "12 พ.ย 69", "12พุย.69"). The day and year are range-checked as for numeric dates.
