@@ -31,12 +31,13 @@ function extractTime(text: string): string | undefined {
 
 // Capture the reference/transaction number that follows a known label (Thai or
 // English). References are long alphanumeric tokens, so a 6+ char floor rejects
-// stray fragments. Tone marks are optional because OCR often drops them
-// ("เลขทีรายการ", "อางอิง"). The value may be on the next line, after label-line
-// text with no Latin letters or digits (K PLUS prints the QR caption "สแกน").
+// stray fragments. Vowels and tone marks are optional because OCR often drops
+// them ("เลขทีรายการ", "เลขทรายการ", "อางอิง"). The value may be up to two lines
+// down, after lines with no Latin letters or digits (K PLUS prints the QR
+// caption "สแกน" beside the label or on its own line).
 function extractReference(text: string): string | undefined {
   const match =
-    /(?:เลขที่?รายการ|รหัสอ้?างอิง|หมายเลขอ้?างอิง|เลขที่?อ้?างอิง|อ้?างอิง|Ref(?:erence)?(?:\s*(?:No\.?|Number|ID))?|Transaction\s*(?:No\.?|ID))\s*[:#.]?[^A-Za-z0-9\n]*(?:\n[^A-Za-z0-9\n]*)?([A-Za-z0-9]{6,})/i.exec(
+    /(?:เลขที?่?รายการ|รหัสอ้?างอิง|หมายเลขอ้?างอิง|เลขที่?อ้?างอิง|อ้?างอิง|Ref(?:erence)?(?:\s*(?:No\.?|Number|ID))?|Transaction\s*(?:No\.?|ID))\s*[:#.]?[^A-Za-z0-9\n]*(?:\n[^A-Za-z0-9\n]*){0,2}([A-Za-z0-9]{6,})/i.exec(
       text,
     );
   return match?.[1]?.trim() || undefined;

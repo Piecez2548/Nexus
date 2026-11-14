@@ -38,7 +38,9 @@ function extractAmount(text: string): number | undefined {
   // (the "20 → 520" bug). Prefer the number anchored to a currency marker
   // (X.XX บาท / ฿X.XX / THB) or an amount label, and only then fall back to the
   // first 2-decimal number.
-  const DECIMAL = "\\d{1,3}(?:,\\d{3})*\\.\\d{2}";
+  // Not followed by a further digit, so a slice of a long number ("0.01" out of
+  // a reference misread as "0.0163171133100") is not taken for an amount.
+  const DECIMAL = "\\d{1,3}(?:,\\d{3})*\\.\\d{2}(?!\\d)";
 
   // Each anchored rule takes its first *positive* match. A zero is never a
   // slip amount but is common on the fee line ("ค่าธรรมเนียม 0.00 บาท"), so
@@ -132,7 +134,10 @@ const MERCHANT_MARKERS = /(ร้าน|ห้าง|บริษัท|บจ�
 // the same OCR line like "A/C: 006-xxxxxxxx-6996"). The optional prefix is an
 // account-specific label only (not any word) so an unrelated labelled digit run
 // — e.g. "โทร: 0812345678" — isn't mistaken for the account anchor.
-const ACCOUNT_LINE = /^(?:(?:เลขที่บัญชี|เลขบัญชี|บัญชี|A\/?C|ACCT|Account)\s*[:-]?\s*)?[0-9xX][0-9xX\s-]{7,}$/i;
+// OCR also reads the slip's icons as a short token in front ("J   XXX-X-X5327-x")
+// and the masking x as "%" ("%%%-%-%4983-%"); a digit is still required.
+const ACCOUNT_LINE =
+  /^(?:\S{1,2}\s+)?(?:(?:เลขที่บัญชี|เลขบัญชี|บัญชี|A\/?C|ACCT|Account)\s*[:-]?\s*)?(?=[^\n]*\d)[0-9xX%][0-9xX%\s-]{7,}$/i;
 // Recipient label words. Derived from the shared registry (Thai entries only —
 // its generic English hints "to"/"name" are too short to use as a bare
 // substring match without risking a false capture) so this list can't drift
@@ -146,13 +151,38 @@ const RECIPIENT_LABEL_WORDS = DEFAULT_OCR_LABELS.recipient.filter((w) => /[฀-�
 const BANK_LABEL_LINE = /^(?:ธนาคาร|ธ\.)\s*\S/i;
 // Lines that are never the payee name. Amount labels must be followed by a
 // number (so a generic word like "ยอด" in a real name — "ยอดรัก", "ร้านยอดเยี่ยม"
-// — isn't skipped), while date/reference/recipient/fee labels are distinctive
-// enough to match as plain substrings.
+// — isn't skipped), or stand alone on the line (K PLUS prints "จำนวน:" above
+// the amount; OCR may read it "จ้านวน:"), while date/reference/recipient/fee
+// labels are distinctive enough to match as plain substrings.
+const AMOUNT_LABELS = [...DEFAULT_OCR_LABELS.amount, "จ้านวน"].join("|");
 const META_LINE = new RegExp(
-  `(?:${DEFAULT_OCR_LABELS.amount.join("|")})\\s*[:\\-]?\\s*\\d` +
+  `(?:${AMOUNT_LABELS})\\s*[:\\-]?\\s*\\d` +
+    `|^(?:${AMOUNT_LABELS})\\s*[:\\-]?$` +
     `|${[...DEFAULT_OCR_LABELS.date, ...DEFAULT_OCR_LABELS.reference, ...RECIPIENT_LABEL_WORDS].join("|")}|ค่าธรรมเนียม|รายละเอียด|เวลา`,
   "i",
 );
+
+// At least 3 letters: digits and symbols alone (OCR noise such as "Qs  [3")
+// are not a name.
+function isNameLike(line: string): boolean {
+  return line.replace(/[^\p{L}]/gu, "").length >= 3;
+}
+
+// OCR reads the slip's avatar/shop icon as a short token in front of the
+// name ("ซู อาหารตามสั่ง", "oO  Gaiauan Fried Chicken", "69  นาย ..."). Drop
+// symbols and a 1–2 character token there, unless it is a title, and only
+// while the rest still reads as a name.
+const LEADING_NOISE = /^(?:[^\p{L}\p{M}\p{N}\s]+\s*|(?!(?:mr|ms|dr)\b)[\p{L}\p{M}\p{N}]{1,2}[^\p{L}\p{M}\p{N}\s]*\s+)/iu;
+
+function stripLeadingNoise(line: string): string {
+  let name = line;
+  for (let i = 0; i < 2; i++) {
+    const stripped = name.replace(LEADING_NOISE, "");
+    if (stripped === name || !isNameLike(stripped)) break;
+    name = stripped;
+  }
+  return name.trim();
+}
 
 function extractRecipient(text: string): string | undefined {
   // 1) Explicit recipient label.
@@ -170,13 +200,12 @@ function extractRecipient(text: string): string | undefined {
   //    "name-like" line after the payer's account number (skipping the payee's
   //    own account, amount/meta lines, a bare bank-label line, and
   //    arrow/punctuation-only lines).
-  const isNameLike = (line: string): boolean => line.replace(/[^\p{L}\p{N}]/gu, "").length >= 3;
   const firstAccount = lines.findIndex((line) => ACCOUNT_LINE.test(line));
   if (firstAccount >= 0) {
     for (let j = firstAccount + 1; j < lines.length; j++) {
       const candidate = lines[j]!;
       if (ACCOUNT_LINE.test(candidate) || META_LINE.test(candidate) || BANK_LABEL_LINE.test(candidate) || !isNameLike(candidate)) continue;
-      return candidate;
+      return stripLeadingNoise(candidate);
     }
   }
 
