@@ -14,7 +14,9 @@ export interface ManualGalleryScanDependencies {
     sinceCursor?: string,
     bucketIds?: readonly string[],
   ) => Promise<void>;
-  findBankAlbums?: () => Promise<string[] | null>;
+  findBankAlbums?: (bankIds?: readonly string[]) => Promise<string[] | null>;
+  // Banks chosen in the scan setup; empty or absent means every bank.
+  bankIds?: readonly string[];
   onPermissionUnavailable: (result: GalleryPermissionResult) => void;
   dateRange?: ScanOptions["dateRange"];
 }
@@ -28,6 +30,7 @@ export async function runManualGalleryScan({
   onPermissionUnavailable,
   dateRange,
   findBankAlbums = findBankAlbumIds,
+  bankIds,
 }: ManualGalleryScanDependencies): Promise<boolean> {
   recordScannerDiagnostic("MANUAL_SCAN_STARTED");
   let result: GalleryPermissionResult;
@@ -53,9 +56,10 @@ export async function runManualGalleryScan({
   // Manual is always a full, non-incremental extraction pass. Automatic
   // startup remains configured separately by GalleryScanFlow. Like the
   // automatic scan, it reads only the albums banking apps save slips into:
-  // OCR on every camera photo took hours and found nothing. No bank album
+  // OCR on every camera photo took hours and found nothing. With banks
+  // chosen, only their albums (plus generic slip albums). No bank album
   // found falls back to the whole gallery.
-  const bankAlbumIds = await findBankAlbums();
+  const bankAlbumIds = await findBankAlbums(bankIds);
   await scan(
     MANUAL_GALLERY_SCAN_MODE.incremental,
     dateRange,

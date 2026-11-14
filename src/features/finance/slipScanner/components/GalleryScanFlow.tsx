@@ -257,6 +257,7 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
         const started = await runManualGalleryScan({
           scan: scan.scanNativeGallery,
           dateRange,
+          bankIds,
         onPermissionUnavailable: (permission) => {
             const key = permission.status === "blocked"
               ? "slipScanner.galleryScan.permissionBlocked"

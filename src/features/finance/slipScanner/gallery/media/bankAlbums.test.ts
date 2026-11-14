@@ -6,7 +6,7 @@ vi.mock("./nativeGalleryMediaPlugin", () => ({
   NativeGalleryMedia: { albums: (...args: unknown[]) => albums(...args) },
 }));
 
-const { findBankAlbumIds, isBankAlbum } = await import("./bankAlbums");
+const { albumBankId, findBankAlbumIds, isBankAlbum } = await import("./bankAlbums");
 
 const album = (name: string, path = "") => ({ name, path });
 
@@ -72,5 +72,42 @@ describe("findBankAlbumIds", () => {
   it("returns null when albums cannot be listed (older APK)", async () => {
     albums.mockRejectedValue(new Error("albums is not implemented on android"));
     await expect(findBankAlbumIds()).resolves.toBeNull();
+  });
+
+  it("limits the albums to the chosen banks, keeping generic slip albums", async () => {
+    albums.mockResolvedValue({
+      albums: [
+        { id: "1", name: "K PLUS", path: "Pictures/K PLUS/", count: 40 },
+        { id: "2", name: "SCB EASY", path: "Pictures/SCB EASY/", count: 12 },
+        { id: "3", name: "สลิป", path: "Pictures/สลิป/", count: 5 },
+        { id: "4", name: "MAKE", path: "Pictures/MAKE/", count: 2 },
+      ],
+    });
+    await expect(findBankAlbumIds(["kbank"])).resolves.toEqual(["1", "3", "4"]);
+    await expect(findBankAlbumIds(["scb"])).resolves.toEqual(["2", "3"]);
+    await expect(findBankAlbumIds([])).resolves.toEqual(["1", "2", "3", "4"]);
+  });
+});
+
+describe("albumBankId", () => {
+  it.each([
+    ["K PLUS", "kbank"],
+    ["MAKE", "kbank"],
+    ["SCB EASY", "scb"],
+    ["Krungthai NEXT", "ktb"],
+    ["NEXT", "ktb"],
+    ["KMA", "bay"],
+    ["ttb touch", "ttb"],
+    ["UOB TMRW", "uob"],
+    ["MyMo", "gsb"],
+    ["เป๋าตัง", "paotang"],
+    ["CIMB THAI", "other"],
+    ["e-slip", "other"],
+  ])("maps %s to %s", (name, bankId) => {
+    expect(albumBankId(album(name))).toBe(bankId);
+  });
+
+  it("returns null for an ordinary album", () => {
+    expect(albumBankId(album("Camera", "DCIM/Camera/"))).toBeNull();
   });
 });

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-14 — Choosing banks narrows which gallery albums are scanned
+
+- Ticking only some banks in the scan setup still read every bank album; the choice only hid other banks' slips afterwards. The album patterns are now grouped by bank id (`albumBankId`), and a scan with banks chosen reads only those banks' albums plus generic slip albums ("สลิป", "e-slip", banks without an id), which may hold any bank's slips. "Scan all photos" still reads every bank album.
+- When none of the chosen banks has an album, the scan still falls back to the whole gallery, as before.
+
 ## 2026-11-13 — Scan Gallery reads only bank albums and skips photos with no slip
 
 - The Scan Gallery button OCR-read every photo on the device (1,426 on the test phone, about 7 a minute, so over three hours), and the bank checkboxes did not narrow it. It now reads only the albums banking apps save slips into, the same as the automatic scan. A device with no bank album still scans the whole gallery; slips saved elsewhere can still be read by picking the files.

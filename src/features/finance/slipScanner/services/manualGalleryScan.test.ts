@@ -35,6 +35,17 @@ describe("runManualGalleryScan", () => {
     expect(scan).toHaveBeenCalledWith(false, undefined, true, undefined, ["kplus"]);
   });
 
+  it("passes the chosen banks to the album lookup", async () => {
+    const permission = { check: vi.fn().mockResolvedValue(granted), request: vi.fn() };
+    const scan = vi.fn().mockResolvedValue(undefined);
+    const findBankAlbums = vi.fn().mockResolvedValue(["kplus"]);
+
+    await runManualGalleryScan({ permission, scan, onPermissionUnavailable: vi.fn(), findBankAlbums, bankIds: ["kbank"] });
+
+    expect(findBankAlbums).toHaveBeenCalledWith(["kbank"]);
+    expect(scan).toHaveBeenCalledWith(false, undefined, true, undefined, ["kplus"]);
+  });
+
   it("scans the whole gallery when no bank album is found", async () => {
     const permission = { check: vi.fn().mockResolvedValue(granted), request: vi.fn() };
     const scan = vi.fn().mockResolvedValue(undefined);
