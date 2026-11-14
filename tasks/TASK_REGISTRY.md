@@ -12,7 +12,22 @@ The user reported the whole-device slip scanner was not working, prompting a sco
 
 Validation evidence: `npm run build` passed; `npx vitest run src/features/finance/slipScanner` passed 94 files / 476 tests; focused flow/hooks/media/OCR tests passed 7 files / 38 tests; TopBar/i18n passed 2 files / 13 tests; scoped Oxlint/ESLint passed; `npx cap sync android` passed. Android `assembleDebug` repeatedly failed before task configuration with `java.io.IOException: Unable to establish loopback connection`; no APK or post-change physical scan is claimed. Real-slip OCR accuracy and browser directory behavior remain unverified. Full record: [docs/SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md](../docs/SLIP_SCANNER_SYSTEM_FIX_2026-09-30.md).
 
-**Last Updated:** 2026-09-14
+**Last Updated:** 2026-11-14
+
+## Slip scanner, sync and Android — 2026-11-13 to 2026-11-14
+
+| Task | Status | Scope / evidence |
+|---|---|---|
+| Nexus Finance standalone Android app | Done | `com.nexus.finance`, opens on `/dashboard`, installs beside `com.nexus.app` |
+| K PLUS date and reference parsing | Done | OCR-tolerant Thai month and reference label; parser version 3 |
+| Review queue survives scans | Done | `mergeReviewQueue`, `latestCandidatePerAsset` |
+| Supabase table grants | Done | Migration `20261113120000`; applied to the live project; sync verified (32 transactions) |
+| Scan Gallery reads only bank albums; skip photos with no slip | Done | `findBankAlbumIds`, `skipUnreadable`; verified on the phone (5 K PLUS slips in about 30 s) |
+| K PLUS payee, reference and amount fixes | Done | Parser version 4; checked against the OCR text of 5 real slips |
+| Scan only the chosen banks' albums | In review | PR #18; on-device check pending |
+| Consolidate code shared with the Nexus Main repo | Planned | Needs a plan |
+| Own-account transfer detection | Planned | |
+| Investigate WebView crash after biometric unlock | Planned | Needs the phone |
 
 ## Release readiness coordination — 2026-09-12
 
