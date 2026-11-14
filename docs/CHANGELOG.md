@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-14 — Choosing banks narrows which gallery albums are scanned
+
+- Ticking only some banks in the scan setup still read every bank album; the choice only hid other banks' slips afterwards. The album patterns are now grouped by bank id (`albumBankId`), and a scan with banks chosen reads only those banks' albums plus generic slip albums ("สลิป", "e-slip", banks without an id), which may hold any bank's slips. "Scan all photos" still reads every bank album.
+- When none of the chosen banks has an album, the scan still falls back to the whole gallery, as before.
+
 ## 2026-11-13 — K PLUS slips: correct payee, more references, no amount cut from a long number
 
 - Payee: every K PLUS slip showed the amount label "จำนวน:" (or "จ้านวน:", or a biller number) as the payee. OCR puts a short token in front of the account line ("J   XXX-X-X5327-x") and reads the masking x as "%", so the payer's account was missed and the scan started after the payee's account. The account line now allows both, a bare amount label line is skipped, and icon noise before the name ("ซู", "oO", "69") is dropped. A name needs at least 3 letters, so lines of digits and symbols are skipped.
