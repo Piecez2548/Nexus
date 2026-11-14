@@ -17,4 +17,9 @@ Attach executed agreements and configuration screenshots to the controlled compl
 - Current Vercel production deployables are Nexus All/Main (`nexus-lemon-eight-32.vercel.app`), Nexus-Tools (`nexus-tools-chi.vercel.app`) and DataLens (`datalens-piecez2548s-projects.vercel.app`). Runtime processing regions, log retention, Blob retention and Vercel contracting/DPA facts remain VERIFY.
 - Sentry and the AI provider are optional code paths. Their enablement, account, region, retention, subprocessors and contracts remain UNKNOWN until the target deployment configuration is captured.
 
+## Engineering facts updated 2026-11-13
+
+- The project above (`hgstufaswzmxjezanpyh`) no longer exists in either Supabase organization of the owner. The app now uses project `mvaejnupixlrashztlyc` ("nexus", region `eu-west-3`). The processing region therefore changed from Tokyo to Paris; the transfer-safeguard and DPA columns must be reviewed for the new region.
+- The new project's `authenticated` role had no table privileges until 2026-11-13, so no user data reached it before then.
+
 These facts advance the engineering portion of RB-006; they do not replace the required Privacy/Legal review.

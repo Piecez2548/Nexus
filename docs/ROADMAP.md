@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last Updated:** 2026-10-02
+**Last Updated:** 2026-11-14
 
 ### Product entry and ScreenTutor integrity (2026-10-02)
 - [x] Make Nexus All the shared web/native root and move ScreenTutor to `/screentutor`; update SPA shell and PWA identity.
@@ -133,6 +133,8 @@ Removed because they overlapped with the separate XAU Dashboard (Dexie v28 drops
 
 ## Recently Shipped (detailed)
 
+- **Nexus Finance Android app and slip-scan fixes (2026-11-13).** A standalone `com.nexus.finance` app opens straight on the Dashboard. K PLUS slips now read amount, date, reference and payee (OCR-tolerant month, label and account-line parsing); the review queue survives scans; Scan Gallery reads only bank albums and skips photos with no slip. Sync works again on the current Supabase project after the missing table grants were added. See [CHANGELOG.md](CHANGELOG.md).
+
 - **Slip scan setup simplification (2026-09-13).** Gallery scanning now offers a one-tap “Scan all photos” path for the common case; bank/date filters remain available under optional advanced controls, and using the unfiltered path does not overwrite the remembered bank preference. [Evidence](UX_SLIP_SCAN_SETUP_2026-09-13.md).
 
 - **Quick Add transaction entry (2026-09-13).** New transactions begin with the essential fields while date, time, recipient, notes and recurring settings remain available under “More”. Existing and imported/template drafts keep metadata visible for review, and category suggestions continue to run while recipient input is collapsed. [Evidence](UX_QUICK_ADD_2026-09-13.md).
@@ -191,7 +193,10 @@ Removed because they overlapped with the separate XAU Dashboard (Dexie v28 drops
 
 ## Planned
 
-No items currently queued — the "AI Gateway integration" line that lived here (wiring a real LLM provider now that the client-side-API-key blocker is resolved) shipped above; see [SECURITY.md](SECURITY.md), [DECISIONS.md](DECISIONS.md) for the resulting design.
+- **Scan only the chosen banks' albums** — implemented in PR #18, in review; needs an on-device check.
+- **Consolidate the code shared with the Nexus Main repository** (slip scanner, Android plugins) — needs a plan and a decision first.
+- **Own-account transfer detection** — a transfer to the user's own account (e.g. the 1,300 THB K PLUS slip) should not count as an expense.
+- **Credit-card statement import from PDF** and **month-over-month spending comparison**.
 
 ## Future
 
