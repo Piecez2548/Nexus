@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-13 — Scan Gallery reads only bank albums and skips photos with no slip
+
+- The Scan Gallery button OCR-read every photo on the device (1,426 on the test phone, about 7 a minute, so over three hours), and the bank checkboxes did not narrow it. It now reads only the albums banking apps save slips into, the same as the automatic scan. A device with no bank album still scans the whole gallery; slips saved elsewhere can still be read by picking the files.
+- A gallery photo that OCR finds no amount, date or reference in is no longer listed for review (`skipUnreadable`). Before, each camera photo became an empty row in the review queue. Files the person picks are still always listed, and QR slips are always kept.
+
 ## 2026-11-13 — Sync works on the current Supabase project
 
 - The current Supabase project gave the `authenticated` role no SELECT/INSERT/UPDATE/DELETE on any app table, so every sync failed with "permission denied for table synced_records" and the server held no rows. The old project got these grants by default; newer projects do not.

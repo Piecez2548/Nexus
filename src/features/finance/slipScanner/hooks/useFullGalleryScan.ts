@@ -8,7 +8,7 @@ import { scanRunRepository } from "@/features/finance/slipScanner/repositories/s
 import type { GalleryAssetRef, ScanOptions, ScanStatus } from "@/features/finance/slipScanner/models/scanTypes";
 import type { SlipCandidate } from "@/features/finance/slipScanner/models/slipCandidate";
 import { computeScanProgress, type ScanProgressSnapshot } from "@/features/finance/slipScanner/progress/scanProgress";
-import { createSlipExtractionProcessor, type SlipExtractor } from "@/features/finance/slipScanner/services/slipExtractionProcessor";
+import { createSlipExtractionProcessor, skipUnreadable, type SlipExtractor } from "@/features/finance/slipScanner/services/slipExtractionProcessor";
 
 export interface UseFullGalleryScan {
   status: ScanStatus;
@@ -127,7 +127,12 @@ export function useFullGalleryScan(extractor: SlipExtractor = defaultFullGallery
   // A person-requested whole-gallery scan favors completeness and includes
   // OCR-only slips. Scheduled background scans retain the QR-prefiltered
   // processor so they do not OCR every ordinary photo without user intent.
-  const exhaustiveGalleryProcessor = pickedFileProcessor;
+  // Unlike files the person picked, a gallery photo OCR finds nothing in is
+  // dropped rather than listed for review (see skipUnreadable).
+  const exhaustiveGalleryProcessor = useMemo(
+    () => createSlipExtractionProcessor(onCandidate, skipUnreadable(pickedFileExtractor)),
+    [onCandidate, pickedFileExtractor],
+  );
 
   // Seeds from any candidates left over from an interrupted run (app kill,
   // crash, reload) instead of always starting empty -- the counterpart to
