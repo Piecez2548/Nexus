@@ -151,4 +151,10 @@ describe("candidateToTransaction", () => {
     });
     expect(tx.category).toBe("Shopping");
   });
+
+  it("imports an own-account transfer as a transfer with no spending category", () => {
+    const tx = candidateToTransaction(candidate({ type: "transfer", merchant: "นาย สมชาย ใจดี", amount: 1300 }));
+    expect(tx.type).toBe("transfer");
+    expect(tx.category).toBeUndefined();
+  });
 });

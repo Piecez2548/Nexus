@@ -104,4 +104,17 @@ describe("scanCandidateRepository review queue", () => {
 
     expect((await scanCandidateRepository.listByRun(runId)).map((item) => item.id)).toEqual(["keep"]);
   });
+
+  it("deletes candidates of cancelled runs and keeps the rest", async () => {
+    const run = (status: "completed" | "cancelled") =>
+      db.slipScanRuns.add({ status, source: "native-media", startedAt: "2026-11-13T00:00:00.000Z", total: 1, done: 1, skipped: 0, failed: 0 });
+    const cancelledRun = await run("cancelled");
+    const completedRun = await run("completed");
+    await scanCandidateRepository.add(cancelledRun, candidate("empty-photo"));
+    await scanCandidateRepository.add(completedRun, candidate("real-slip"));
+
+    await scanCandidateRepository.clearCancelledRuns();
+
+    expect((await db.slipScanCandidates.toArray()).map((row) => row.candidate.id)).toEqual(["real-slip"]);
+  });
 });
