@@ -35,6 +35,14 @@ export const scanCandidateRepository = {
     return latestCandidatePerAsset(rows.filter((row) => completedIds.has(row.runId)));
   },
 
+  // A cancelled run never reaches the review queue (only completed runs do),
+  // so its candidates would otherwise stay in the table forever.
+  async clearCancelledRuns(): Promise<void> {
+    const cancelled = await db.slipScanRuns.where("status").equals("cancelled").primaryKeys();
+    if (cancelled.length === 0) return;
+    await db.slipScanCandidates.where("runId").anyOf(cancelled).delete();
+  },
+
   async clearCandidates(candidateIds: Iterable<string>): Promise<void> {
     const ids = new Set(candidateIds);
     if (ids.size === 0) return;

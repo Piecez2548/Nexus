@@ -84,4 +84,12 @@ describe("buildSlipCandidate", () => {
     const corrupted = buildSlipCandidate({ assetId: "c2", emvco: emvco(false), bank, ocr });
     expect(corrupted.confidence).toBeLessThan(clean.confidence);
   });
+
+  it("marks an OCR slip whose payee is the payer as an own-account transfer", () => {
+    const own = buildSlipCandidate({ assetId: "a", ocr: { amount: 1300, payer: "นาย สมชาย ใ", merchant: "นาย สมชาย ใจดี" } });
+    expect(own.type).toBe("transfer");
+
+    const other = buildSlipCandidate({ assetId: "b", ocr: { amount: 47, payer: "นาย สมชาย ใ", merchant: "ร้านอาหารตามสั่ง" } });
+    expect(other.type).toBeUndefined();
+  });
 });

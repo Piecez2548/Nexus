@@ -193,13 +193,16 @@ export default function GalleryScanFlow({ extractor, automaticScan = true, initi
   // silently discard a financial record that still needs confirmation.
   useEffect(() => {
     let active = true;
-    void scanCandidateRepository.listCompletedRuns().then((pending) => {
-      if (!active || pending.length === 0) return;
-      // Restored silently: the "Review pending" button shows the count, the
-      // sheet opens only when the person taps it.
-      // Merged under anything a scan already queued this session (newer wins).
-      setReviewCandidates((current) => mergeReviewQueue(pending, current));
-    });
+    void scanCandidateRepository
+      .clearCancelledRuns()
+      .then(() => scanCandidateRepository.listCompletedRuns())
+      .then((pending) => {
+        if (!active || pending.length === 0) return;
+        // Restored silently: the "Review pending" button shows the count, the
+        // sheet opens only when the person taps it.
+        // Merged under anything a scan already queued this session (newer wins).
+        setReviewCandidates((current) => mergeReviewQueue(pending, current));
+      });
     return () => {
       active = false;
     };

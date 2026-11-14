@@ -229,4 +229,13 @@ describe("parseSlipText", () => {
   it("does not read an amount out of a longer number", () => {
     expect(parseSlipText("0 0.0163171133100ด04431 ตรวจสอบสลิป").amount).toBeUndefined();
   });
+
+  it("reads the payer above the first account line", () => {
+    const text = ["-- โอนเงินสําเร็จ", "C7 ไ11พ.ย.69 07:27 w.", "นาย สมชาย ใ", "ธ.กสิกรไทย", "J   XXX-X-X1234-%", "69  นาย มานะ ใจดี", "XXX-X-X5678-x"].join("\n");
+    expect(parseSlipText(text).payer).toBe("นาย สมชาย ใ");
+  });
+
+  it("leaves the payer empty when only the heading is above the account", () => {
+    expect(parseSlipText(["ชำระเงินสำเร็จ 13:20", "XXX-X-X1234-x", "ร้านค้า"].join("\n")).payer).toBeUndefined();
+  });
 });

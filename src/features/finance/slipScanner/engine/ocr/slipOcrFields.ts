@@ -10,6 +10,8 @@ export interface OcrSlipFields {
   time?: string;
   reference?: string;
   merchant?: string;
+  // The payer's name as printed on a transfer slip (see parseSlipText).
+  payer?: string;
 }
 
 // Match HH:MM or HH:MM:SS (Thai slips often suffix time with "น."). Amounts and
@@ -51,5 +53,6 @@ export function extractOcrSlipFields(text: string): OcrSlipFields {
     time: extractTime(text),
     reference: extractReference(text),
     merchant: base.recipient,
+    payer: base.payer,
   };
 }
