@@ -1,11 +1,11 @@
 import { type GalleryAlbum, NativeGalleryMedia } from "@/features/finance/slipScanner/gallery/media/nativeGalleryMediaPlugin";
 
 // Thai banking and wallet apps save each transfer slip into their own gallery
-// album (for example "Pictures/K PLUS/"). Limiting the automatic scan to
-// those albums makes it much faster and means the scanner never opens the
-// person's other photos. The manual Scan Gallery button still scans
-// everything, so slips saved elsewhere (screenshots, chat downloads) can
-// still be found.
+// album (for example "Pictures/K PLUS/"). Limiting both the automatic scan
+// and the Scan Gallery button to those albums makes them much faster and
+// means the scanner never opens the person's other photos. Slips saved
+// elsewhere (screenshots, chat downloads) can still be read by picking the
+// files, and a device with no bank album still scans the whole gallery.
 
 // Matched against the album name and its path, lower-cased, with "_-./"
 // turned into spaces. Latin patterns use word boundaries so short codes such
