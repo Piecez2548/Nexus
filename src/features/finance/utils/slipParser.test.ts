@@ -188,4 +188,45 @@ describe("parseSlipText", () => {
   it("rejects an impossible day in a Thai-month date", () => {
     expect(parseSlipText("45 พ.ย. 69").date).toBeUndefined();
   });
+
+  // K PLUS slips as Tesseract reads them on the phone (names made up): icon
+  // noise before the account and name lines, "%" for the masking x, and the
+  // amount label alone on its own line.
+  it("takes the payee after a noisy K PLUS account line, not the amount label", () => {
+    const transfer = [
+      "-- โอนเงินสําเร็จ IK",
+      "C7 ไ11พ.ย.69 07:27 w. +",
+      "นาย สมชาย ใ",
+      "ธ.กสิกรไทย",
+      "J   XXX-X-X1234-%",
+      "Qs              [3",
+      "69  นาย มานะ ใจดี",
+      "ธ.กสิกรไทย",
+      "XXX-X-X5678-x",
+      "จํานวน:",
+      "1,300.00 um",
+    ].join("\n");
+    expect(parseSlipText(transfer).recipient).toBe("นาย มานะ ใจดี");
+
+    const payment = [
+      "ง   %%%-%-%1234-%",
+      "ซู ร้านอาหารตามสั่ง/ชาบู",
+      "นาย มานะ ใจดี",
+      "202611133172554",
+      "จ้านวน:",
+      "40.00 บาท",
+    ].join("\n");
+    expect(parseSlipText(payment).recipient).toBe("ร้านอาหารตามสั่ง/ชาบู");
+
+    const bill = ["ง   XXX-X-X1234-x", "oO  Fried Chicken Shop", "006000003194284", "จํานวน:", "75.00 บาท"].join("\n");
+    expect(parseSlipText(bill).recipient).toBe("Fried Chicken Shop");
+  });
+
+  it("keeps a title and a real short word at the start of a name", () => {
+    expect(parseSlipText(["XXX-X-X1234-x", "Mr John Smith"].join("\n")).recipient).toBe("Mr John Smith");
+  });
+
+  it("does not read an amount out of a longer number", () => {
+    expect(parseSlipText("0 0.0163171133100ด04431 ตรวจสอบสลิป").amount).toBeUndefined();
+  });
 });

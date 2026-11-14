@@ -20,8 +20,10 @@ import type { EngineVersions } from "@/features/finance/slipScanner/cache/scanCa
 //               recipient extraction changes (this covers the most churn --
 //               it's been touched in nearly every slip-quality fix so far;
 //               "2" for the 2026-11-13 zero-fee skip and SARA AM fold; "3" for
-//               OCR-tolerant Thai month and reference labels).
-export const CURRENT_ENGINE_VERSIONS: EngineVersions = { ocr: "2", payload: "0", parser: "3" };
+//               OCR-tolerant Thai month and reference labels; "4" for the K PLUS
+//               payee after a noisy account line and amounts not cut from
+//               longer numbers).
+export const CURRENT_ENGINE_VERSIONS: EngineVersions = { ocr: "2", payload: "0", parser: "4" };
 
 // Cross-run retry policy for remembered failures: re-attempt a failed image on
 // later scans up to this many times before giving up and skipping it. This is
