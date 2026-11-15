@@ -4,7 +4,8 @@ import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 
-import { exportBackup, importBackup, MAX_BACKUP_BYTES } from "@/database/backupService";
+import { useBackupStatusStore } from "@/database/backupStatusStore";
+import { exportBackup, importBackup, summarizeBackup, MAX_BACKUP_BYTES } from "@/database/backupService";
 import { dedupeAccountsAndCategories } from "@/features/finance/utils/dedupeAccountsAndCategories";
 import {
   findTransactionDuplicates,
@@ -63,6 +64,8 @@ export default function DataSettings() {
   const { loadCategories } = useCategoryStore();
   const { transactions, loadTransactions } = useTransactionStore();
   const { t } = useTranslation();
+  const lastBackupAt = useBackupStatusStore((s) => s.lastBackupAt);
+  const markBackedUp = useBackupStatusStore((s) => s.markBackedUp);
 
   useEffect(() => {
     loadTransactions();
@@ -104,6 +107,7 @@ export default function DataSettings() {
         URL.revokeObjectURL(url);
       }
 
+      markBackedUp();
       setStatus(t("settings.exportSuccess"));
       toast.success(t("settings.exportSuccess"));
     } catch (err) {
@@ -129,15 +133,35 @@ export default function DataSettings() {
       return;
     }
 
-    const confirmed = window.confirm(t("settings.importConfirmDialog"));
-    if (!confirmed) return;
-
     setError(null);
     setStatus(null);
+
+    let text: string;
+    try {
+      text = await file.text();
+      // Reject an invalid file before asking anything, and show what the
+      // backup holds next to what it will replace.
+      const summary = summarizeBackup(text, t);
+      const confirmed = window.confirm(
+        `${t("settings.importConfirmSummary", {
+          date: new Date(summary.exportedAt).toLocaleDateString(),
+          backupCount: summary.transactionCount,
+          currentCount: transactions.length,
+        })}
+
+${t("settings.importConfirmDialog")}`
+      );
+      if (!confirmed) return;
+    } catch (err) {
+      const message = toErrorMessage(err);
+      setError(message);
+      toast.error(message);
+      return;
+    }
+
     setBusy(true);
 
     try {
-      const text = await file.text();
       await importBackup(text, t);
       setStatus(t("settings.importSuccessReloading"));
       toast.success(t("settings.importSuccess"));
@@ -228,7 +252,11 @@ export default function DataSettings() {
         <DataTile
           icon={<Download size={20} />}
           label={t("settings.exportBackup")}
-          description={t("settings.exportBackupDescription")}
+          description={
+            lastBackupAt
+              ? t("settings.lastBackup", { date: new Date(lastBackupAt).toLocaleDateString() })
+              : t("settings.neverBackedUp")
+          }
           onClick={handleExport}
           disabled={busy}
         />

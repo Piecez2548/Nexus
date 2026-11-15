@@ -41,3 +41,6 @@ Thumbs.db
 .github/agents/
 .github/hooks/
 .github/skills/
+
+# Nexus Finance web build in CI (VITE_APP_TARGET=finance)
+dist-finance

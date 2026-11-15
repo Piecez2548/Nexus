@@ -16,6 +16,29 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // One source, two apps: "hub" is Nexus (com.nexus.app), "finance" is
+    // Nexus Finance (com.nexus.finance, opens on the finance Dashboard). Build
+    // with scripts/build-android.ps1 -Target hub|finance, which also builds
+    // the web assets for that target.
+    flavorDimensions = ["target"]
+    productFlavors {
+        hub {
+            dimension "target"
+            applicationId "com.nexus.app"
+            resValue "string", "app_name", "Nexus"
+            resValue "string", "title_activity_main", "Nexus"
+            resValue "string", "package_name", "com.nexus.app"
+            resValue "string", "custom_url_scheme", "com.nexus.app"
+        }
+        finance {
+            dimension "target"
+            applicationId "com.nexus.finance"
+            resValue "string", "app_name", "Nexus Finance"
+            resValue "string", "title_activity_main", "Nexus Finance"
+            resValue "string", "package_name", "com.nexus.finance"
+            resValue "string", "custom_url_scheme", "com.nexus.finance"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false

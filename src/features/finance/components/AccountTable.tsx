@@ -7,7 +7,8 @@ import { toErrorMessage } from "@/utils/asyncState";
 import { useToast } from "@/hooks/useToast";
 import IconBadge from "@/components/ui/IconBadge";
 import { useTranslation } from "@/i18n/useTranslation";
-import type { Account } from "@/features/finance/types";
+import { calculateAccountBalances } from "@/features/finance/utils/accountBalance";
+import type { Account, Transaction } from "@/features/finance/types";
 
 const ACCOUNT_TYPE_LABEL_KEYS: Record<Account["type"], string> = {
   cash: "accounts.types.cash",
@@ -22,11 +23,12 @@ const ACCOUNT_TYPE_LABEL_KEYS: Record<Account["type"], string> = {
 
 interface Props {
   accounts: Account[];
+  transactions: Transaction[];
   onEdit: (account: Account) => void;
   onMerge: (account: Account) => void;
 }
 
-export default function AccountTable({ accounts, onEdit, onMerge }: Props) {
+export default function AccountTable({ accounts, transactions, onEdit, onMerge }: Props) {
   const { deleteAccount } = useAccountStore();
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const toast = useToast();
@@ -45,6 +47,8 @@ export default function AccountTable({ accounts, onEdit, onMerge }: Props) {
       toast.error(message);
     }
   }
+
+  const balances = calculateAccountBalances(accounts, transactions);
 
   const canMerge = (account: Account) => accounts.some((a) => a.id !== account.id);
 
@@ -74,6 +78,21 @@ export default function AccountTable({ accounts, onEdit, onMerge }: Props) {
                   <div className="text-sm text-zinc-600 dark:text-zinc-500">
                     {t(ACCOUNT_TYPE_LABEL_KEYS[account.type])}
                   </div>
+                </div>
+              </div>
+
+              <div className="ml-auto mr-2 shrink-0 whitespace-nowrap text-right">
+                <div
+                  className={`font-semibold ${
+                    balances.get(account.name)?.owed == null && (balances.get(account.name)?.balance ?? 0) < 0
+                      ? "text-red-500"
+                      : ""
+                  }`}
+                >
+                  ฿{(balances.get(account.name)?.owed ?? balances.get(account.name)?.balance ?? 0).toLocaleString()}
+                </div>
+                <div className="text-xs text-zinc-500">
+                  {t(balances.get(account.name)?.owed == null ? "accounts.balance" : "accounts.owed")}
                 </div>
               </div>
 

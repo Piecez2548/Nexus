@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
 import { useAccountStore } from "@/features/finance/store/accountStore";
+import { useTransactionStore } from "@/features/finance/store/transactionStore";
 import AccountTable from "@/features/finance/components/AccountTable";
 import AccountForm from "@/features/finance/components/AccountForm";
 import MergeAccountForm from "@/features/finance/components/MergeAccountForm";
@@ -19,12 +20,14 @@ type DrawerState =
 
 export default function Accounts() {
   const { accounts, loading, error, loadAccounts } = useAccountStore();
+  const { transactions, loadTransactions } = useTransactionStore();
   const [drawerState, setDrawerState] = useState<DrawerState>({ mode: "closed" });
   const { t } = useTranslation();
 
   useEffect(() => {
     loadAccounts();
-  }, [loadAccounts]);
+    loadTransactions();
+  }, [loadAccounts, loadTransactions]);
 
   const closeDrawer = () => setDrawerState({ mode: "closed" });
 
@@ -52,11 +55,15 @@ export default function Accounts() {
           {t("accounts.emptyState")}
         </div>
       ) : (
-        <AccountTable
-          accounts={accounts}
-          onEdit={(account) => setDrawerState({ mode: "edit", account })}
-          onMerge={(account) => setDrawerState({ mode: "merge", account })}
-        />
+        <>
+          <p className="text-sm text-zinc-500">{t("accounts.balanceNote")}</p>
+          <AccountTable
+            accounts={accounts}
+            transactions={transactions}
+            onEdit={(account) => setDrawerState({ mode: "edit", account })}
+            onMerge={(account) => setDrawerState({ mode: "merge", account })}
+          />
+        </>
       )}
 
       <Drawer open={drawerState.mode !== "closed"} onClose={closeDrawer}>

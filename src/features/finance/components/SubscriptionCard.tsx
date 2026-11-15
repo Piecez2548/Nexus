@@ -69,7 +69,8 @@ export default function SubscriptionCard({ subscription, onEdit }: Props) {
           <div>
             <h3 className="font-semibold">{subscription.name}</h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-500">
-              {t(FREQUENCY_LABEL_KEYS[subscription.billingFrequency])} · ฿{subscription.amount.toLocaleString()}
+              {t(FREQUENCY_LABEL_KEYS[subscription.billingFrequency])} · {subscription.kind === "income" ? "+" : ""}฿{subscription.amount.toLocaleString()}
+              {subscription.kind === "income" && ` · ${t("subscriptions.kindIncome")}`}
             </p>
           </div>
         </div>

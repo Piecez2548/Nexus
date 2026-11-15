@@ -25,11 +25,16 @@ async function reminderFor(subscription: Subscription) {
   const at = reminderFireTime(subscription.nextBillingDate);
   if (at.getTime() <= Date.now()) return; // already past -- nothing to schedule
 
+  const isIncome = subscription.kind === "income";
+
   await scheduleReminder({
     namespace: REMINDER_NAMESPACE.subscription,
     entityId: subscription.id,
-    title: translate("subscriptions.reminderTitle"),
-    body: translate("subscriptions.reminderBody", { name: subscription.name, amount: subscription.amount }),
+    title: translate(isIncome ? "subscriptions.reminderTitleIncome" : "subscriptions.reminderTitle"),
+    body: translate(isIncome ? "subscriptions.reminderBodyIncome" : "subscriptions.reminderBody", {
+      name: subscription.name,
+      amount: subscription.amount,
+    }),
     repeat: { frequency: "once", at: at.toISOString() },
   });
 }

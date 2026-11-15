@@ -1,4 +1,6 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
+
+import { APP_TARGET } from "@/config/appTarget";
 import { lazy, Suspense } from "react";
 
 import AccountRouteGate from "./AccountRouteGate";
@@ -31,13 +33,17 @@ import {
 import PasswordRecoveryScreen from "@/features/sync/components/PasswordRecoveryScreen";
 import AlgoVizRedirect from "./AlgoVizRedirect";
 const projectHub = <Suspense fallback={null}><ProjectHub /></Suspense>;
+// Nexus Finance opens straight on the finance Dashboard; the hub stays
+// reachable at /projects. Signed-out people are sent to sign in by
+// AccountRouteGate and come back to /dashboard afterwards.
+const rootElement = APP_TARGET === "finance" ? <Navigate to="/dashboard" replace /> : projectHub;
 const MainRoute = lazy(() => import("./MainRoute"));
 export const appRoutes = [
   { path: "/forgot-password", element: <Suspense fallback={null}><PasswordRecoveryScreen /></Suspense> },
   { id: "algoviz-redirect", path: "/algoviz/*", element: <AlgoVizRedirect /> },
   { element: <AccountRouteGate />, children: [
-  { id: "nexus-all-root", path: "/", element: projectHub },
-  { id: "nexus-all-index", path: "/index.html", element: projectHub },
+  { id: "nexus-all-root", path: "/", element: rootElement },
+  { id: "nexus-all-index", path: "/index.html", element: rootElement },
   { id: "nexus-all-projects", path: "/projects", element: projectHub },
   { id: "nexus-all-projects-index", path: "/projects/index.html", element: projectHub },
   {

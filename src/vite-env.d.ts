@@ -18,6 +18,8 @@ interface ImportMetaEnv {
   readonly VITE_AI_MODEL: string;
   readonly VITE_AI_TIMEOUT_MS: string;
   readonly VITE_NEXUS_SCANNER_SAFE_MODE?: string;
+  // "finance" builds Nexus Finance; anything else builds the Nexus hub.
+  readonly VITE_APP_TARGET?: string;
 }
 
 interface ImportMeta {

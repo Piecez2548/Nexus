@@ -66,7 +66,7 @@ export async function generateDueTransactions(
       await addTransaction({
         title: subscription.name,
         amount: subscription.amount,
-        type: "expense",
+        type: subscription.kind ?? "expense",
         account: subscription.account,
         category: subscription.category,
         date: dueDate,
