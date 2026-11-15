@@ -4,7 +4,7 @@
 
 - **One source, two apps.** `VITE_APP_TARGET=finance` builds Nexus Finance: `/` opens the finance Dashboard and the Project Hub stays at `/projects` (`src/config/appTarget.ts`). Android has two Gradle product flavors, `hub` (`com.nexus.app`, "Nexus") and `finance` (`com.nexus.finance`, "Nexus Finance"); `scripts/build-android.ps1 -Target hub|finance` builds either. CI also builds the finance web target.
 - **Finance features brought over from Nexus Main:** account opening balance and per-account balances, recurring income on subscriptions (excluded from spending totals; income reminders), upcoming-bill warning on the Dashboard, backup reminder and last-backup date, and a backup summary before restore.
-- The slip scanner keeps this repository's newer version. Nexus Main's desktop app, ScreenTutor, in-app AlgoViz pages and its own hub/login designs are not brought over; see [CONSOLIDATION_PLAN_2026-11-14.md](CONSOLIDATION_PLAN_2026-11-14.md).
+- The slip scanner keeps this repository's newer version. Nexus Main's desktop app (Electron), ScreenTutor and in-app AlgoViz pages are dropped by the owner's decision, and its own hub/login designs are not brought over; see [CONSOLIDATION_PLAN_2026-11-14.md](CONSOLIDATION_PLAN_2026-11-14.md).
 
 ## 2026-11-14 — Own-account transfers, cancelled-scan cleanup, consolidation plan
 

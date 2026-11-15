@@ -4,7 +4,7 @@
 
 ## Overview
 
-Nexus ships to three targets from one codebase: the web (Vite build + PWA), Android (Capacitor), and desktop (Electron). There is no backend to deploy — Supabase (cloud sync + auth) is a managed third-party service configured entirely via environment variables, not something this repository deploys itself.
+Nexus ships to two targets from one codebase: the web (Vite build + PWA) and Android (Capacitor), each as two apps (Nexus and Nexus Finance, see below). There is no desktop build: the Electron app that lived in Nexus Main was dropped on 2026-11-15. There is no backend to deploy — Supabase (cloud sync + auth) is a managed third-party service configured entirely via environment variables, not something this repository deploys itself.
 
 ## Development Environment
 
@@ -14,11 +14,6 @@ npm run dev           # Vite dev server, http://localhost:5173
 ```
 
 No `.env` file is required to develop — every optional integration (Supabase sync, Sentry) detects its own absence and no-ops. Copy `.env.example` to `.env` only if you want to develop against real sync/error-monitoring locally.
-
-**Desktop, during development:**
-```bash
-npm run electron:dev  # runs the Vite dev server and Electron together (concurrently)
-```
 
 ## Production Build
 
@@ -53,13 +48,6 @@ One source builds two apps, chosen with `scripts/build-android.ps1 -Target hub|f
 | `finance` | `com.nexus.finance` | Nexus Finance | `/dashboard` | `android/app/build/outputs/apk/finance/debug/app-finance-debug.apk` |
 
 The application id and launcher name come from the product flavors in `android/app/build.gradle`; `capacitor.config.ts` follows `VITE_APP_TARGET`. A web build for Nexus Finance is `VITE_APP_TARGET=finance npm run build` (CI builds it into `dist-finance`). One `patch-package` patch is applied automatically on every `npm install` (`patches/@capgo+capacitor-native-biometric+8.6.2.patch`) — required for biometric unlock to work correctly on-device, see [CHANGELOG.md](CHANGELOG.md) and [SECURITY.md](SECURITY.md). No release/signed-APK pipeline exists in this repository (no keystore config, no Play Store submission automation) — `assembleDebug` only.
-
-### Desktop (Electron)
-```bash
-npm run electron:preview  # vite build, then launch Electron against the built output
-npm run electron:build    # vite build, then package via electron-builder
-```
-`electron-builder` config lives inline in `package.json`'s `"build"` key: targets `nsis` (Windows installer), `AppImage` (Linux), `dmg` (macOS), output to `release/`. `electron/main.cjs`, `electron/preload.cjs`, `electron/staticServer.cjs` are the three Electron-side files (outside `src/`, not Vite-processed).
 
 ### CI/CD
 `.github/workflows/ci.yml` runs on every push/PR to `main`: install → lint → type-check → unit/integration tests → build → Playwright install → e2e tests, uploading the Playwright report as an artifact only on failure. **This pipeline verifies the app builds and passes its test suite — it does not deploy anywhere.** There is no CD (continuous deployment) step in this repository; deployment to any target is currently a manual, local operation.
@@ -97,7 +85,7 @@ Until both the Edge Function is deployed and its `ANTHROPIC_API_KEY` secret is s
 
 ## Current Status
 
-Web, Android (debug), and Electron (all three OS targets) builds are all fully functional today. CI enforces quality gates on every push/PR but does not deploy.
+Web and Android (debug) builds of both apps are fully functional today. CI enforces quality gates on every push/PR but does not deploy.
 
 ## Future Improvements
 

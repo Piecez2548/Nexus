@@ -7,7 +7,7 @@
 - **Step 1 done:** open PRs merged; both repos tagged `pre-consolidation-2026-11`.
 - **Step 2 done for the finance features:** account opening balance and balances (`accountBalance.ts`), recurring income on subscriptions (`kind: "income"`), upcoming-bill warning, backup reminder and last-backup date, backup summary before restore, and their translations. Own-account transfers were already in both. The slip scanner keeps Nexus's version, which is newer (diagnostics, cancellation guard, review before any import).
 - **Step 3 done:** `VITE_APP_TARGET` (`src/config/appTarget.ts`), finance root → `/dashboard`, Gradle flavors `hub`/`finance`, `build-android.ps1 -Target`, and a CI build of the finance target. Both APKs build with the right app id and name.
-- **Not brought over yet (owner decision):** Nexus Main's desktop app (Electron, `electron/`), ScreenTutor, the in-app AlgoViz pages (Nexus redirects `/algoviz` to the separate AlgoViz site), Nexus Main's own Project Hub and login designs (the finance target uses Nexus's newer ones), and the unused `dompurify` dependency.
+- **Dropped (owner decision, 2026-11-15):** Nexus Main's desktop app (Electron, `electron/`), ScreenTutor and the in-app AlgoViz pages. Also not brought over: Nexus Main's own Project Hub and login designs (the finance target uses Nexus's newer ones) and the unused `dompurify` dependency.
 
 ## Problem
 
@@ -66,6 +66,6 @@ Rough effort: step 2 one to two sessions, step 3 one session, steps 4–6 short 
 
 ## Decisions needed from the owner
 
-1. Nexus as the single repository (recommended), or Nexus Main?
-2. Keep AlgoViz and ScreenTutor in the finance target, or drop them?
-3. Approval to archive Nexus Main after step 4.
+1. Nexus as the single repository — **approved 2026-11-15**.
+2. Nexus Main's desktop app (Electron), ScreenTutor and in-app AlgoViz pages — **dropped 2026-11-15**; they stay only in the archived Nexus Main history (tag `pre-consolidation-2026-11`). `/algoviz` keeps redirecting to the separate AlgoViz site.
+3. Approval to archive Nexus Main after step 4 — pending.
