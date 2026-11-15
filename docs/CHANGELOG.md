@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-15 — Consolidation finished; Nexus-Main archived
+
+- The `nexus-main` Vercel project (https://nexus-main-phi.vercel.app) now deploys from this repository with `VITE_APP_TARGET=finance`; it also got the Supabase variables it had been missing, so sign-in works there again.
+- The Nexus Finance APK built from this repository is installed on the phone in place of the old one; data and sync were checked.
+- Nexus-Main is archived on GitHub. Make all changes here.
+
 ## 2026-11-15 — Nexus builds Nexus Finance too (consolidation steps 1–3)
 
 - **One source, two apps.** `VITE_APP_TARGET=finance` builds Nexus Finance: `/` opens the finance Dashboard and the Project Hub stays at `/projects` (`src/config/appTarget.ts`). Android has two Gradle product flavors, `hub` (`com.nexus.app`, "Nexus") and `finance` (`com.nexus.finance`, "Nexus Finance"); `scripts/build-android.ps1 -Target hub|finance` builds either. CI also builds the finance web target.

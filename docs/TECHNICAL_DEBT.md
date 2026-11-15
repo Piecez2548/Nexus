@@ -4,7 +4,7 @@
 
 ## November 13–14 slip scanner, sync and Android findings
 
-- **Duplicated code across repositories (High).** The slip scanner and the Android plugin Java exist in both this repository and the Nexus Main repository (which builds Nexus Finance), so every fix lands twice. The copies have started to diverge (`GalleryScanFlow.tsx`; the manual scan lives in `services/manualGalleryScan.ts` only in this repository). Consolidation is Planned and needs a design decision.
+- **Duplicated code across repositories — resolved 2026-11-15.** Nexus now builds both apps (`VITE_APP_TARGET`, Gradle flavors) and Nexus-Main is archived; see [CONSOLIDATION_PLAN_2026-11-14.md](CONSOLIDATION_PLAN_2026-11-14.md).
 - **User data lost with the old Supabase project.** Transactions synced to the deleted project `hgstufaswzmxjezanpyh` were restored only from the 2026-09-08 device backup (32 transactions); entries from 2026-09-08 to 2026-09-24 are gone. The device that still held them was uninstalled after its sync cursors looked complete.
 - **The DEK escrow (recovery key) is not on the new Supabase project** until the user runs "Update backup key" in Settings → Encryption; until then a forgotten PIN cannot be recovered.
 - **On-device OCR differs from desktop OCR** for the same slip (one K PLUS slip gave amount 47 on the phone and none on desktop), so parser fixes need the phone's own OCR text to verify.

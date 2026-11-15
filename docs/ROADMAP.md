@@ -194,7 +194,7 @@ Removed because they overlapped with the separate XAU Dashboard (Dexie v28 drops
 ## Planned
 
 - **Scan only the chosen banks' albums** — implemented in PR #18, in review; needs an on-device check.
-- **Consolidate the code shared with the Nexus Main repository** (slip scanner, Android plugins) — needs a plan and a decision first.
+- ~~Consolidate the code shared with the Nexus Main repository~~ — done 2026-11-15 ([plan](CONSOLIDATION_PLAN_2026-11-14.md)).
 - **Own-account transfer detection** — a transfer to the user's own account (e.g. the 1,300 THB K PLUS slip) should not count as an expense.
 - **Credit-card statement import from PDF** and **month-over-month spending comparison**.
 

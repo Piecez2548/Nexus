@@ -25,7 +25,7 @@ Validation evidence: `npm run build` passed; `npx vitest run src/features/financ
 | Scan Gallery reads only bank albums; skip photos with no slip | Done | `findBankAlbumIds`, `skipUnreadable`; verified on the phone (5 K PLUS slips in about 30 s) |
 | K PLUS payee, reference and amount fixes | Done | Parser version 4; checked against the OCR text of 5 real slips |
 | Scan only the chosen banks' albums | In review | PR #18; on-device check pending |
-| Consolidate code shared with the Nexus Main repo | Planned | Needs a plan |
+| Consolidate code shared with the Nexus Main repo | Done | Nexus builds both apps; Nexus-Main archived 2026-11-15 |
 | Own-account transfer detection | Planned | |
 | Investigate WebView crash after biometric unlock | Planned | Needs the phone |
 
