@@ -3,6 +3,7 @@ import type { BankIdentification } from "@/features/finance/slipScanner/engine/b
 import type { EmvcoPayload } from "@/features/finance/slipScanner/engine/emvco/emvcoPayloadParser";
 import type { OcrSlipFields } from "@/features/finance/slipScanner/engine/ocr/slipOcrFields";
 import type { CategoryType } from "@/features/finance/types";
+import { isOwnAccountTransfer } from "@/features/finance/utils/ownTransfer";
 
 // The unified record the Import Preview lists and Smart Import consumes — one
 // per scanned slip, assembled from the extraction stages (QR/EMVCo GS-010, bank
@@ -44,7 +45,9 @@ export interface SlipCandidate {
   // unlike a scanned slip, which is always an outgoing payment (see
   // candidateToTransaction.ts, which defaults to "expense" when this is
   // absent, matching every other source's existing behavior unchanged).
-  type?: CategoryType;
+  // "transfer" when OCR shows the payee is the payer themself (money moved
+  // between the person's own accounts), so it is not counted as spending.
+  type?: CategoryType | "transfer";
 }
 
 export interface SlipCandidateInput {
@@ -130,6 +133,7 @@ export function buildSlipCandidate(input: SlipCandidateInput): SlipCandidate {
     merchant,
     reference,
     payload: emvco?.raw ?? null,
+    ...(!qrUsable && isOwnAccountTransfer(ocr?.payer, merchant) ? { type: "transfer" as const } : {}),
     source,
     isDuplicate: input.isDuplicate ?? false,
     confidence: slipConfidence({ emvco, qrUsable, ocr, bank: input.bank }),

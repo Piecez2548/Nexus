@@ -150,6 +150,11 @@ export default function ImportPreview({ open, onClose, candidates, onImport, saf
                         <span className="font-medium">
                           {candidate.bankName ?? t("slipScanner.importPreview.unknownBank")}
                         </span>
+                        {candidate.type === "transfer" && (
+                          <span className="rounded bg-sky-500/20 px-1.5 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-300">
+                            {t("slipScanner.importPreview.ownTransferBadge")}
+                          </span>
+                        )}
                         {candidate.isDuplicate && (
                           <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
                             {t("slipScanner.importPreview.duplicateBadge")}

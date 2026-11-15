@@ -94,8 +94,10 @@ export function candidateToTransaction(candidate: SlipCandidate, options: Candid
   // guesses that make sense for the candidate's own type, e.g. still
   // recognising "เงินเดือน"/"Salary" for an incoming payment instead of
   // leaving every income row uncategorised on principle.
+  // A transfer between the person's own accounts is not spending, so it gets
+  // no spending category.
   const guess = categorize(title, learnedCategories);
-  const guessedCategory = isSafeCategoryGuess(guess, type) ? guess.category : undefined;
+  const guessedCategory = type !== "transfer" && isSafeCategoryGuess(guess, type) ? guess.category : undefined;
   // A Review Queue correction is a person's explicit choice from their own
   // live category list — trust it directly, skip the guess-validation path.
   const category =

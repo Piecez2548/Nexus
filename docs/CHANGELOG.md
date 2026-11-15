@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-11-14 — Own-account transfers, cancelled-scan cleanup, consolidation plan
+
+- **Own-account transfers:** the parser now also reads the payer's name (the name above the payer's account line; K PLUS prints it shortened, e.g. "นาย สมชาย ใ"). When the payee is the same person (first names equal, allowing one misread character in a name of 5+ characters), the slip is imported as a `transfer` instead of an `expense`, with no spending category, and the review list shows an "Own account" badge. Checked on a real K PLUS transfer to the owner's own account; two shop payments stay expenses. `isOwnAccountTransfer` lives in `utils/ownTransfer.ts`. Parser version is now "5".
+- **Cancelled scans:** candidates of cancelled scan runs were never shown or deleted. They are removed when the review queue is restored (`clearCancelledRuns`).
+- **Month-over-month comparison** already exists (Dashboard cards, `MonthlyOverviewPanel`, the AI Analytics category comparison), so nothing was added.
+- **Consolidation plan:** [CONSOLIDATION_PLAN_2026-11-14.md](CONSOLIDATION_PLAN_2026-11-14.md) proposes building both apps from one repository; it needs a decision before any work.
+
 ## 2026-11-14 — Choosing banks narrows which gallery albums are scanned
 
 - Ticking only some banks in the scan setup still read every bank album; the choice only hid other banks' slips afterwards. The album patterns are now grouped by bank id (`albumBankId`), and a scan with banks chosen reads only those banks' albums plus generic slip albums ("สลิป", "e-slip", banks without an id), which may hold any bank's slips. "Scan all photos" still reads every bank album.

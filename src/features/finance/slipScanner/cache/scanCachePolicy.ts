@@ -22,8 +22,9 @@ import type { EngineVersions } from "@/features/finance/slipScanner/cache/scanCa
 //               "2" for the 2026-11-13 zero-fee skip and SARA AM fold; "3" for
 //               OCR-tolerant Thai month and reference labels; "4" for the K PLUS
 //               payee after a noisy account line and amounts not cut from
-//               longer numbers).
-export const CURRENT_ENGINE_VERSIONS: EngineVersions = { ocr: "2", payload: "0", parser: "4" };
+//               longer numbers; "5" for the payer name, used to mark
+//               transfers to the person's own account).
+export const CURRENT_ENGINE_VERSIONS: EngineVersions = { ocr: "2", payload: "0", parser: "5" };
 
 // Cross-run retry policy for remembered failures: re-attempt a failed image on
 // later scans up to this many times before giving up and skipping it. This is

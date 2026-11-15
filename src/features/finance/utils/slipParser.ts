@@ -213,10 +213,31 @@ function extractRecipient(text: string): string | undefined {
   return lines.find((line) => MERCHANT_MARKERS.test(line)) || undefined;
 }
 
+// The payer's name: on Thai transfer slips the payer block is name → bank →
+// account, so it is the nearest name-like line above the first account line
+// (skipping the bank label, the date/time line and the status heading).
+const STATUS_OR_TIME_LINE = /\d{1,2}:\d{2}|สำเร็จ|successful/i;
+
+function extractPayer(text: string): string | undefined {
+  const lines = text
+    .split(/[\n\r]+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const firstAccount = lines.findIndex((line) => ACCOUNT_LINE.test(line));
+  for (let j = firstAccount - 1; j >= 0; j--) {
+    const candidate = lines[j]!;
+    if (BANK_LABEL_LINE.test(candidate) || META_LINE.test(candidate) || !isNameLike(candidate)) continue;
+    if (STATUS_OR_TIME_LINE.test(candidate)) return undefined;
+    return stripLeadingNoise(candidate);
+  }
+  return undefined;
+}
+
 export interface ParsedSlip {
   amount?: number;
   date?: string;
   recipient?: string;
+  payer?: string;
   title?: string;
 }
 
@@ -229,11 +250,13 @@ export function parseSlipText(rawText: string): ParsedSlip {
   const amount = extractAmount(text);
   const date = extractDate(text);
   const recipient = extractRecipient(text);
+  const payer = extractPayer(text);
 
   return {
     amount,
     date,
     recipient,
+    payer,
     title: recipient ? `โอนเงินให้ ${recipient}` : undefined,
   };
 }
