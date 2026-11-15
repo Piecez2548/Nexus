@@ -1,4 +1,10 @@
-param([switch]$SkipWebSync)
+# -Target hub     builds Nexus (com.nexus.app), the default.
+# -Target finance builds Nexus Finance (com.nexus.finance), opening on the
+#                 finance Dashboard. The web assets are built for the same target.
+param(
+  [ValidateSet("hub", "finance")][string]$Target = "hub",
+  [switch]$SkipWebSync
+)
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -32,6 +38,7 @@ $env:JAVA_TOOL_OPTIONS = (@($env:JAVA_TOOL_OPTIONS, $unixSocketOption) |
 
 Push-Location $projectRoot
 try {
+  $env:VITE_APP_TARGET = $Target
   if (-not $SkipWebSync) {
     npm run build
     if ($LASTEXITCODE -ne 0) { throw "Web build failed." }
@@ -43,7 +50,8 @@ try {
 
   Push-Location (Join-Path $projectRoot "android")
   try {
-    .\gradlew.bat assembleDebug --no-daemon
+    $flavor = $Target.Substring(0, 1).ToUpper() + $Target.Substring(1)
+    .\gradlew.bat "assemble${flavor}Debug" --no-daemon
     if ($LASTEXITCODE -ne 0) { throw "Android build failed." }
   } finally {
     Pop-Location
@@ -52,6 +60,6 @@ try {
   Pop-Location
 }
 
-$apk = Join-Path $projectRoot "android\app\build\outputs\apk\debug\app-debug.apk"
+$apk = Join-Path $projectRoot "android\app\build\outputs\apk\$Target\debug\app-$Target-debug.apk"
 if (-not (Test-Path -LiteralPath $apk)) { throw "Android build completed without the expected APK." }
 Write-Output $apk

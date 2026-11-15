@@ -40,6 +40,7 @@ const blankValues: SubscriptionFormData = {
   billingFrequency: "monthly",
   nextBillingDate: toLocalDateString(new Date()),
   status: "active",
+  kind: "expense",
   icon: "credit-card",
   color: "#dc2626",
   reminderEnabled: false,
@@ -53,7 +54,7 @@ interface Props {
 export default function SubscriptionForm({ subscription, onDone }: Props) {
   const { addSubscription, updateSubscription } = useSubscriptionStore();
   const { accounts } = useAccountStore();
-  const categories = useCategoryStore((s) => s.categories).filter((c) => c.type === "expense");
+  const allCategories = useCategoryStore((s) => s.categories);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const toast = useToast();
   const { t } = useTranslation();
@@ -76,6 +77,8 @@ export default function SubscriptionForm({ subscription, onDone }: Props) {
   }, [subscription, reset]);
 
   const SelectedIcon = getIcon(watch("icon"));
+  const kind = watch("kind") ?? "expense";
+  const categories = allCategories.filter((c) => c.type === kind);
 
   async function onSubmit(data: SubscriptionFormData) {
     setSubmitError(null);
@@ -124,6 +127,13 @@ export default function SubscriptionForm({ subscription, onDone }: Props) {
           placeholder={t("subscriptions.namePlaceholder")}
           className={inputClassName}
         />
+      </FormField>
+
+      <FormField label={t("subscriptions.kindLabel")} htmlFor="subscription-kind">
+        <select id="subscription-kind" {...register("kind")} className={inputClassName}>
+          <option value="expense">{t("subscriptions.kindExpense")}</option>
+          <option value="income">{t("subscriptions.kindIncome")}</option>
+        </select>
       </FormField>
 
       <div className="grid grid-cols-2 gap-4">

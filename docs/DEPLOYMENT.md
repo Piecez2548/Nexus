@@ -43,9 +43,16 @@ The output of `vite build` (`dist/`) is a static site — deployable to any stat
 ```bash
 npm run cap:sync    # vite build, then cap sync android (copies web assets + syncs native deps)
 npm run cap:open    # opens the android/ project in Android Studio
-npm run cap:build   # vite build && cap sync android && cd android && gradlew.bat assembleDebug
+npm run cap:build   # scripts/build-android.ps1 (hub target)
 ```
-Produces a debug APK under `android/app/build/outputs/apk/debug/`. App identity: `appId: "com.nexus.app"`, `appName: "Nexus"` (`capacitor.config.ts`). One `patch-package` patch is applied automatically on every `npm install` (`patches/@capgo+capacitor-native-biometric+8.6.2.patch`) — required for biometric unlock to work correctly on-device, see [CHANGELOG.md](CHANGELOG.md) and [SECURITY.md](SECURITY.md). No release/signed-APK pipeline exists in this repository (no keystore config, no Play Store submission automation) — `assembleDebug` only.
+One source builds two apps, chosen with `scripts/build-android.ps1 -Target hub|finance` (it sets `VITE_APP_TARGET` for the web build and runs the matching Gradle flavor):
+
+| Target | App id | Name | Opens on | APK |
+|---|---|---|---|---|
+| `hub` (default) | `com.nexus.app` | Nexus | Project Hub | `android/app/build/outputs/apk/hub/debug/app-hub-debug.apk` |
+| `finance` | `com.nexus.finance` | Nexus Finance | `/dashboard` | `android/app/build/outputs/apk/finance/debug/app-finance-debug.apk` |
+
+The application id and launcher name come from the product flavors in `android/app/build.gradle`; `capacitor.config.ts` follows `VITE_APP_TARGET`. A web build for Nexus Finance is `VITE_APP_TARGET=finance npm run build` (CI builds it into `dist-finance`). One `patch-package` patch is applied automatically on every `npm install` (`patches/@capgo+capacitor-native-biometric+8.6.2.patch`) — required for biometric unlock to work correctly on-device, see [CHANGELOG.md](CHANGELOG.md) and [SECURITY.md](SECURITY.md). No release/signed-APK pipeline exists in this repository (no keystore config, no Play Store submission automation) — `assembleDebug` only.
 
 ### Desktop (Electron)
 ```bash

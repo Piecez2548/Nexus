@@ -1,6 +1,13 @@
 # Consolidation Plan — Nexus and Nexus Main (2026-11-14)
 
-**Status:** Proposed. Nothing below is implemented; it needs the owner's decision first.
+**Status:** Approved 2026-11-15. Steps 1–3 implemented in Nexus (branch `feat/consolidate-finance-target`); steps 4–6 pending.
+
+### Progress (2026-11-15)
+
+- **Step 1 done:** open PRs merged; both repos tagged `pre-consolidation-2026-11`.
+- **Step 2 done for the finance features:** account opening balance and balances (`accountBalance.ts`), recurring income on subscriptions (`kind: "income"`), upcoming-bill warning, backup reminder and last-backup date, backup summary before restore, and their translations. Own-account transfers were already in both. The slip scanner keeps Nexus's version, which is newer (diagnostics, cancellation guard, review before any import).
+- **Step 3 done:** `VITE_APP_TARGET` (`src/config/appTarget.ts`), finance root → `/dashboard`, Gradle flavors `hub`/`finance`, `build-android.ps1 -Target`, and a CI build of the finance target. Both APKs build with the right app id and name.
+- **Not brought over yet (owner decision):** Nexus Main's desktop app (Electron, `electron/`), ScreenTutor, the in-app AlgoViz pages (Nexus redirects `/algoviz` to the separate AlgoViz site), Nexus Main's own Project Hub and login designs (the finance target uses Nexus's newer ones), and the unused `dompurify` dependency.
 
 ## Problem
 

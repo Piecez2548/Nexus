@@ -14,6 +14,7 @@ export function subscriptionSchema(t: TranslateFn) {
     billingFrequency: subscriptionFrequencyEnum,
     nextBillingDate: z.string().min(1, t("validation.subscription.nextBillingDateRequired")),
     status: subscriptionStatusEnum,
+    kind: z.enum(["expense", "income"]).optional(),
     category: z.string().optional(),
     account: z.string().optional(),
     note: z.string().optional(),

@@ -22,7 +22,11 @@ export interface SubscriptionStats {
 // total, not deleting/re-adding it.
 export function calculateSubscriptionStats(subscriptions: Subscription[]): SubscriptionStats {
   const active = subscriptions.filter((s) => s.status === "active");
-  const totalMonthly = active.reduce((sum, s) => sum + monthlyEquivalent(s.amount, s.billingFrequency), 0);
+  // Recurring income is tracked here but is not a cost -- keep it out of the
+  // spend totals.
+  const totalMonthly = active
+    .filter((s) => (s.kind ?? "expense") === "expense")
+    .reduce((sum, s) => sum + monthlyEquivalent(s.amount, s.billingFrequency), 0);
 
   return {
     activeCount: active.length,

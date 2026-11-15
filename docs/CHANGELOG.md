@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-15 — Nexus builds Nexus Finance too (consolidation steps 1–3)
+
+- **One source, two apps.** `VITE_APP_TARGET=finance` builds Nexus Finance: `/` opens the finance Dashboard and the Project Hub stays at `/projects` (`src/config/appTarget.ts`). Android has two Gradle product flavors, `hub` (`com.nexus.app`, "Nexus") and `finance` (`com.nexus.finance`, "Nexus Finance"); `scripts/build-android.ps1 -Target hub|finance` builds either. CI also builds the finance web target.
+- **Finance features brought over from Nexus Main:** account opening balance and per-account balances, recurring income on subscriptions (excluded from spending totals; income reminders), upcoming-bill warning on the Dashboard, backup reminder and last-backup date, and a backup summary before restore.
+- The slip scanner keeps this repository's newer version. Nexus Main's desktop app, ScreenTutor, in-app AlgoViz pages and its own hub/login designs are not brought over; see [CONSOLIDATION_PLAN_2026-11-14.md](CONSOLIDATION_PLAN_2026-11-14.md).
+
 ## 2026-11-14 — Own-account transfers, cancelled-scan cleanup, consolidation plan
 
 - **Own-account transfers:** the parser now also reads the payer's name (the name above the payer's account line; K PLUS prints it shortened, e.g. "นาย สมชาย ใ"). When the payee is the same person (first names equal, allowing one misread character in a name of 5+ characters), the slip is imported as a `transfer` instead of an `expense`, with no spending category, and the review list shows an "Own account" badge. Checked on a real K PLUS transfer to the owner's own account; two shop payments stay expenses. `isOwnAccountTransfer` lives in `utils/ownTransfer.ts`. Parser version is now "5".

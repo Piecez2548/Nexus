@@ -257,7 +257,7 @@ function isNexusBackup(value: unknown): value is NexusBackup {
   );
 }
 
-export async function importBackup(jsonText: string, translate: TranslateFn): Promise<void> {
+function parseBackup(jsonText: string, translate: TranslateFn): NexusBackup {
   if (new TextEncoder().encode(jsonText).length > MAX_BACKUP_BYTES) {
     throw new Error(translate("settings.backupTooLarge"));
   }
@@ -273,7 +273,24 @@ export async function importBackup(jsonText: string, translate: TranslateFn): Pr
     throw new Error(translate("settings.backupInvalidStructure"));
   }
 
-  const { data } = parsed;
+  return parsed;
+}
+
+export interface BackupSummary {
+  exportedAt: string;
+  transactionCount: number;
+}
+
+// Validates a backup file exactly as importBackup would and reports what it
+// contains, without touching the database -- lets the UI show the user what
+// is about to replace their data before they confirm.
+export function summarizeBackup(jsonText: string, translate: TranslateFn): BackupSummary {
+  const { exportedAt, data } = parseBackup(jsonText, translate);
+  return { exportedAt, transactionCount: data.transactions.length };
+}
+
+export async function importBackup(jsonText: string, translate: TranslateFn): Promise<void> {
+  const { data } = parseBackup(jsonText, translate);
   const dek = residentDekOrNull();
 
   const [

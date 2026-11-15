@@ -11,6 +11,8 @@ import TodoPreviewPanel from "@/features/dashboard/components/TodoPreviewPanel";
 import HabitPreviewPanel from "@/features/dashboard/components/HabitPreviewPanel";
 import SchedulePreviewPanel from "@/features/dashboard/components/SchedulePreviewPanel";
 import AiDailySummaryPanel from "@/features/dashboard/components/AiDailySummaryPanel";
+import BackupReminderCard from "@/features/dashboard/components/BackupReminderCard";
+import UpcomingBillsWarning from "@/features/dashboard/components/UpcomingBillsWarning";
 import WeeklyDigestCard from "@/features/automation/components/WeeklyDigestCard";
 import InsightsPanel from "@/features/finance/components/InsightsPanel";
 import LoadingState from "@/components/ui/LoadingState";
@@ -62,6 +64,8 @@ export default function Dashboard() {
 
       <DashboardPeriodSelector />
 
+      <BackupReminderCard transactionCount={transactions.length} />
+
       <WeeklyDigestCard />
 
       {error ? (
@@ -70,6 +74,8 @@ export default function Dashboard() {
         <LoadingState label={t("dashboard.loadingDashboard")} />
       ) : (
         <>
+          <UpcomingBillsWarning balance={balance} transactions={transactions} />
+
           <SummaryCardsGrid
             balance={balance}
             income={income}

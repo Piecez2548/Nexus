@@ -26,6 +26,42 @@ describe("Accounts page (add / edit / delete flow)", () => {
     expect((await db.accounts.toArray())[0].name).toBe("Savings");
   });
 
+  it("shows the balance from the opening balance and transactions", async () => {
+    await db.accounts.add({
+      name: "Cash",
+      type: "cash",
+      icon: "wallet",
+      color: "#3b82f6",
+      openingBalance: 1000,
+    });
+    await db.transactions.add({
+      title: "Coffee",
+      amount: 150,
+      type: "expense",
+      category: "Food",
+      account: "Cash",
+      date: "2026-07-21",
+      status: "completed",
+    });
+
+    render(<Accounts />);
+
+    expect(await screen.findByText("฿850")).toBeInTheDocument();
+  });
+
+  it("saves the opening balance from the form", async () => {
+    const user = userEvent.setup();
+    render(<Accounts />);
+
+    await user.click(screen.getByRole("button", { name: /add account/i }));
+    await user.type(await screen.findByLabelText("Account name"), "Savings");
+    await user.type(screen.getByLabelText("Opening balance"), "2500");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("฿2,500")).toBeInTheDocument();
+    expect((await db.accounts.toArray())[0].openingBalance).toBe(2500);
+  });
+
   it("edits an existing account in place", async () => {
     await db.accounts.add({ name: "Cash", type: "cash", icon: "wallet", color: "#3b82f6" });
 

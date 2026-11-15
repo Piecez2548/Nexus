@@ -141,6 +141,19 @@ export default function AccountForm({ account, onDone }: Props) {
         />
       </FormField>
 
+      <FormField label={t("accounts.openingBalanceLabel")} htmlFor="account-opening-balance">
+        <input
+          id="account-opening-balance"
+          type="number"
+          step="any"
+          {...register("openingBalance", {
+            setValueAs: (value) => (value === "" || value == null ? undefined : Number(value)),
+          })}
+          className={inputClassName}
+        />
+        <p className="mt-1 text-xs text-zinc-500">{t("accounts.openingBalanceHint")}</p>
+      </FormField>
+
       {submitError && (
         <p className="text-sm text-red-500">{submitError}</p>
       )}

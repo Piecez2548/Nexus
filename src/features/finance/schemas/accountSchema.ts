@@ -19,6 +19,7 @@ export function accountSchema(t: TranslateFn) {
     type: accountTypeEnum,
     icon: z.string().min(1, t("validation.common.iconRequired")),
     color: z.string().min(1, t("validation.common.colorRequired")),
+    openingBalance: z.number().optional(),
   });
 }
 

@@ -250,4 +250,34 @@ describe("generateDueTransactions", () => {
     expect(secondResult).toEqual({ transactionCount: 0, subscriptionCount: 0 });
     expect(addTransaction).not.toHaveBeenCalled();
   });
+
+  it("generates an income transaction for recurring income", async () => {
+    const addTransaction = vi.fn();
+    const updateSubscription = vi.fn();
+
+    await generateDueTransactions(
+      [subscription({ name: "Salary", amount: 30000, kind: "income", nextBillingDate: "2026-08-18" })],
+      addTransaction,
+      updateSubscription,
+      TODAY
+    );
+
+    expect(addTransaction).toHaveBeenCalledTimes(1);
+    expect(addTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Salary", amount: 30000, type: "income", date: "2026-08-18" })
+    );
+  });
+
+  it("still generates an expense when kind is absent (legacy subscriptions)", async () => {
+    const addTransaction = vi.fn();
+
+    await generateDueTransactions(
+      [subscription({ nextBillingDate: "2026-08-18" })],
+      addTransaction,
+      vi.fn(),
+      TODAY
+    );
+
+    expect(addTransaction).toHaveBeenCalledWith(expect.objectContaining({ type: "expense" }));
+  });
 });

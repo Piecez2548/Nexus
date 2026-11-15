@@ -270,3 +270,15 @@ describe("calculateSubscriptionStats", () => {
     expect(paused.pausedCount).toBe(1);
   });
 });
+
+describe("calculateSubscriptionStats with recurring income", () => {
+  it("excludes active income from monthly/yearly spend totals", () => {
+    const stats = calculateSubscriptionStats([
+      subscription({ amount: 100 }),
+      subscription({ amount: 30000, kind: "income" }),
+    ]);
+
+    expect(stats.totalMonthly).toBe(100);
+    expect(stats.totalYearly).toBe(1200);
+  });
+});

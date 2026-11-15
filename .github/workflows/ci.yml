@@ -51,6 +51,13 @@ jobs:
       - name: Build
         run: npm run build:release
 
+      # Same source, second app: Nexus Finance (see src/config/appTarget.ts).
+      # Built into its own folder so the hub's dist/ stays the one E2E serves.
+      - name: Build (Nexus Finance target)
+        run: npx vite build --outDir dist-finance
+        env:
+          VITE_APP_TARGET: finance
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 

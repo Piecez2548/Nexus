@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { exportBackup, importBackup, MAX_BACKUP_BYTES, MAX_BACKUP_ROWS, resetAllData } from "./backupService";
+import { exportBackup, importBackup, summarizeBackup, MAX_BACKUP_BYTES, MAX_BACKUP_ROWS, resetAllData } from "./backupService";
 import { db } from "./db";
 import { useAppLockStore } from "@/store/appLockStore";
 import { useEncryptionSessionStore } from "@/features/encryption/store/encryptionSessionStore";
@@ -735,6 +735,27 @@ describe("backupService", () => {
       const rawRow = await db.recipientProfiles.where("recipientKey").equals("0812345678").first();
       expect(rawRow).toHaveProperty("encryptedContent");
       expect((rawRow as unknown as { alias?: string })?.alias).toBeUndefined();
+    });
+  });
+
+  describe("summarizeBackup", () => {
+    const backup = (transactions: unknown[]) =>
+      JSON.stringify({
+        version: 1,
+        exportedAt: "2026-10-01T00:00:00.000Z",
+        data: { transactions, accounts: [], categories: [], trades: [], recipientProfiles: [], merchants: [], budgets: [], goals: [] },
+      });
+
+    it("reports the export date and transaction count without touching the database", async () => {
+      const summary = summarizeBackup(backup([{ title: "a" }, { title: "b" }]), t);
+
+      expect(summary).toEqual({ exportedAt: "2026-10-01T00:00:00.000Z", transactionCount: 2 });
+      expect(await db.transactions.count()).toBe(0);
+    });
+
+    it("rejects invalid JSON and invalid structure like importBackup does", () => {
+      expect(() => summarizeBackup("not json", t)).toThrow("settings.backupInvalidJson");
+      expect(() => summarizeBackup("{}", t)).toThrow("settings.backupInvalidStructure");
     });
   });
 });
