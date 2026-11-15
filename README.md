@@ -17,7 +17,7 @@ The app screens behind sign-in (finance, trading, routines) are not shown here b
 | Repository | Role |
 | --- | --- |
 | **Nexus** (this repo) | Source workspace: shared modules and the Android shell |
-| [Nexus-Main](https://github.com/Piecez2548/Nexus-Main) | Independently deployable web/Android build of the finance and planning workspace |
+| [Nexus-Main](https://github.com/Piecez2548/Nexus-Main) | Archived 2026-11-15. Nexus Finance (web and Android) is now built from this repository with `VITE_APP_TARGET=finance` |
 | [Nexus-Tools](https://github.com/Piecez2548/Nexus-Tools) | Bilingual PDF, image, OCR, QR and business-document toolkit |
 
 Routes: Nexus All is the entry point at `/`; Nexus Main lives under `/dashboard`.

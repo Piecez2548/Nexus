@@ -1,11 +1,14 @@
 # Consolidation Plan — Nexus and Nexus Main (2026-11-14)
 
-**Status:** Approved 2026-11-15. Steps 1–3 implemented in Nexus (branch `feat/consolidate-finance-target`); steps 4–6 pending.
+**Status:** Done 2026-11-15. All six steps are complete; Nexus is the only source repository.
 
 ### Progress (2026-11-15)
 
 - **Step 1 done:** open PRs merged; both repos tagged `pre-consolidation-2026-11`.
 - **Step 2 done for the finance features:** account opening balance and balances (`accountBalance.ts`), recurring income on subscriptions (`kind: "income"`), upcoming-bill warning, backup reminder and last-backup date, backup summary before restore, and their translations. Own-account transfers were already in both. The slip scanner keeps Nexus's version, which is newer (diagnostics, cancellation guard, review before any import).
+- **Step 4 done:** the Nexus Finance APK built from Nexus is installed on the phone over the old one; data, Dashboard, account balances, sync and the cancelled-scan cleanup checked.
+- **Step 5 done:** the `nexus-main` Vercel project deploys from this repository with `VITE_APP_TARGET=finance` and the Supabase variables; https://nexus-main-phi.vercel.app opens sign-in, then `/dashboard`.
+- **Step 6 done:** Nexus-Main archived on GitHub (read-only, README notice).
 - **Step 3 done:** `VITE_APP_TARGET` (`src/config/appTarget.ts`), finance root → `/dashboard`, Gradle flavors `hub`/`finance`, `build-android.ps1 -Target`, and a CI build of the finance target. Both APKs build with the right app id and name.
 - **Dropped (owner decision, 2026-11-15):** Nexus Main's desktop app (Electron, `electron/`), ScreenTutor and the in-app AlgoViz pages. Also not brought over: Nexus Main's own Project Hub and login designs (the finance target uses Nexus's newer ones) and the unused `dompurify` dependency.
 
@@ -68,4 +71,4 @@ Rough effort: step 2 one to two sessions, step 3 one session, steps 4–6 short 
 
 1. Nexus as the single repository — **approved 2026-11-15**.
 2. Nexus Main's desktop app (Electron), ScreenTutor and in-app AlgoViz pages — **dropped 2026-11-15**; they stay only in the archived Nexus Main history (tag `pre-consolidation-2026-11`). `/algoviz` keeps redirecting to the separate AlgoViz site.
-3. Approval to archive Nexus Main after step 4 — pending.
+3. Archive Nexus Main — **approved and done 2026-11-15**.
