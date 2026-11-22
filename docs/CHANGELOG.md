@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-22 — Dependency security updates
+
+- `npm audit` went from 12 advisories (3 high) to 0: vitest and @vitest/coverage-v8 to 4.1.12, plus `overrides` for undici, fast-uri, serialize-javascript, glob, minimatch and brace-expansion in the build-tool chains. `@testing-library/dom` is now an explicit dev dependency because installs need `--legacy-peer-deps` (npm's peer-set bug).
+
 ## 2026-11-15 — Consolidation finished; Nexus-Main archived
 
 - The `nexus-main` Vercel project (https://nexus-main-phi.vercel.app) now deploys from this repository with `VITE_APP_TARGET=finance`; it also got the Supabase variables it had been missing, so sign-in works there again.
